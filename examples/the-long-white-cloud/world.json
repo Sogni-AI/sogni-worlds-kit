@@ -1,0 +1,1861 @@
+{
+  "format": "sogni-world@1",
+  "id": "the-long-white-cloud",
+  "title": "The Long White Cloud",
+  "subtitle": "A trip through Aotearoa New Zealand, told in our own photographs",
+  "credit": "Photographs and voices by Mark and Jen, March–April 2023. Every film was rendered on the Sogni Supernet with MiniMax H3 (FastH3 first-and-last-frame, two-stage 2K), objects traced with Segment Anything 3, and narration spoken in cloned voices with Qwen3-TTS. Built by coding agents with a human approving every take.",
+  "aspect": {
+    "width": 2304,
+    "height": 1536
+  },
+  "start": "round-door",
+  "order": [
+    "round-door",
+    "forest-stage",
+    "haka",
+    "waiata",
+    "sound-deck",
+    "sound-together",
+    "three-falls",
+    "stirling-falls",
+    "cloud-wall",
+    "hot-pool",
+    "red-car",
+    "aoraki",
+    "helipad",
+    "glacier-poles",
+    "that-way",
+    "blue-ice",
+    "glacier-walk",
+    "hooker-valley",
+    "hooker-bridge",
+    "bridge-walk",
+    "blue-beanie",
+    "green-hills"
+  ],
+  "music": null,
+  "speakers": {
+    "Mark": {
+      "avatar": "https://worlds.sogni.ai/the-long-white-cloud/speakers/mark.jpg"
+    },
+    "Jen": {
+      "avatar": "https://worlds.sogni.ai/the-long-white-cloud/speakers/jen.jpg"
+    }
+  },
+  "places": [
+    {
+      "id": "round-door",
+      "title": "The Round Door",
+      "chapter": "Hobbiton · Matamata",
+      "caption": "Kia ora — hello, goodbye and thank you, all in two words.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/round-door-v2.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-loop-r2-2k.d3cd143c20c39b10cbbac0f3018236c78d8b3368ca07e9bec8d75ad85f1409ac.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-loop-r2.ef45e1a63668274033cdf9c91c9a1ef858ad61f0c3811bcf37185e77251fca1c.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/round-door.f7989abad81087c650161de24356387a21051bf0e19b157b9a804545eec45508.mp3",
+        "lines": [
+          {
+            "text": "Kia ora!",
+            "speaker": "Mark",
+            "start": 0.349,
+            "end": 1
+          },
+          {
+            "text": "So this is Hobbiton, near Matamata, right near the end of our road trip.",
+            "speaker": "Mark",
+            "start": 1.602,
+            "end": 5.457
+          },
+          {
+            "text": "Everything here is hobbit-sized, so mind your head.",
+            "speaker": "Mark",
+            "start": 6.314,
+            "end": 8.827
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "door",
+          "label": "Duck through the round door",
+          "hint": "It opens a long way from a hallway",
+          "at": [
+            0.44,
+            0.62
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M737 432L789 435L790 437L819 441L832 448L831 453L821 463L819 476L812 478L819 480L821 493L825 499L828 519L826 522L806 530L794 546L795 560L791 575L789 599L795 613L795 621L801 627L808 648L804 654L795 658L792 663L788 663L789 667L778 676L773 685L755 702L761 716L758 737L764 750L772 757L772 776L770 781L774 787L774 794L778 798L779 807L785 816L783 824L789 824L789 819L793 818L798 821L799 827L802 829L802 836L806 832L813 833L816 842L814 852L803 861L796 858L757 864L702 864L673 867L626 864L613 858L599 859L595 855L584 855L571 844L568 838L552 833L545 828L535 818L533 813L536 806L533 800L536 796L543 796L544 800L548 801L550 795L552 795L550 791L556 790L557 786L561 789L566 789L567 793L569 793L569 788L567 787L570 787L571 782L574 781L572 778L574 773L571 772L570 762L567 760L570 755L567 754L562 757L549 749L554 746L551 740L555 738L552 735L555 734L555 728L551 727L554 723L550 721L554 716L549 712L549 705L544 703L544 700L548 699L549 690L544 688L549 687L550 690L553 689L547 680L554 675L553 670L558 665L558 662L549 654L543 654L539 661L535 661L535 658L539 656L534 654L536 650L534 646L535 634L531 631L530 627L538 628L545 626L548 622L546 616L549 615L547 611L542 615L538 612L530 614L532 608L537 607L532 605L534 595L543 589L538 586L540 576L543 575L541 569L547 564L545 559L549 557L560 533L577 516L581 507L592 499L595 493L610 480L618 477L626 469L635 466L641 460L646 459L648 456L654 457L663 449L673 444L720 437L728 433Z"
+          },
+          "to": "forest-stage",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-door-r3-2k.5d8c2316968bc4601bc605f2de671a06cc765c18a5eccf834f35104d47ecc52e.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-door-r3.8750afabaabe6ee251201da8936e43df22558c61c829ca2cae1129049fa3b4c5.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/round-door-door-r3-2k.5d8c2316968bc4601bc605f2de671a06cc765c18a5eccf834f35104d47ecc52e.rewind.6907d06d77875d74b5d55702bcf5f8cbc8e49246d0b194af756c88ed1f005552.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "hill",
+          "label": "Climb the hill over the door",
+          "hint": "The Shire keeps going",
+          "at": [
+            0.5,
+            0.26
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M619 177L663 179L665 181L681 182L707 179L733 185L736 183L743 184L745 191L740 212L743 215L741 226L744 230L739 239L737 239L742 244L739 247L740 251L738 253L735 241L730 243L732 257L730 265L726 268L697 280L692 280L686 286L673 290L664 300L644 307L632 315L606 324L602 328L584 335L569 348L563 349L558 354L553 354L546 358L523 361L492 375L477 379L455 395L441 402L433 403L419 413L403 417L388 425L350 436L336 443L328 444L321 451L311 456L283 464L244 482L218 488L185 502L142 510L139 515L134 515L131 518L124 515L121 517L113 516L109 519L109 514L104 512L101 525L92 530L28 534L24 536L0 536L0 311L11 312L12 310L6 308L7 306L21 310L22 306L19 306L18 302L22 301L35 302L38 305L47 306L69 303L71 305L99 307L97 309L98 312L120 312L128 308L138 309L140 307L164 305L180 309L185 313L204 316L246 316L261 314L265 311L268 314L304 314L311 317L339 319L354 309L368 312L389 303L411 298L418 293L437 286L479 280L483 277L503 272L503 264L499 260L493 259L496 252L519 231L531 227L533 220L539 214L565 200L576 183L589 179ZM775 183L785 185L786 187L800 185L827 190L880 192L898 197L992 201L1010 206L1013 208L1015 215L1023 214L1026 217L1031 216L1026 213L1026 209L1033 210L1034 214L1032 216L1036 219L1025 220L1022 227L1017 229L1005 229L1014 232L1002 235L1003 240L1009 245L1019 245L1022 243L1027 246L1030 244L1029 240L1031 239L1042 247L1060 245L1066 240L1066 229L1072 223L1077 223L1078 218L1082 218L1088 223L1093 232L1090 237L1097 238L1096 244L1098 248L1106 253L1123 252L1143 239L1154 236L1166 237L1176 233L1189 221L1193 214L1226 214L1232 217L1242 217L1244 218L1243 220L1228 222L1228 230L1232 233L1220 239L1211 250L1200 251L1200 255L1208 255L1209 262L1197 265L1210 266L1218 275L1224 277L1236 277L1244 266L1254 266L1248 260L1253 258L1254 250L1250 246L1255 243L1255 240L1260 237L1267 240L1273 233L1292 227L1293 218L1298 214L1310 211L1314 215L1331 214L1335 218L1331 221L1323 221L1320 227L1314 227L1309 235L1304 236L1307 241L1321 241L1335 237L1340 229L1351 225L1351 218L1357 213L1363 216L1373 211L1397 208L1431 214L1435 216L1435 219L1429 226L1433 230L1433 234L1429 236L1431 241L1431 268L1438 269L1438 279L1441 288L1441 291L1432 294L1437 295L1441 299L1442 305L1430 308L1448 314L1447 319L1455 331L1453 340L1456 343L1456 354L1459 356L1464 368L1469 371L1468 376L1474 389L1473 397L1477 402L1477 404L1469 409L1465 409L1459 419L1462 421L1468 419L1475 421L1481 429L1494 438L1498 448L1504 454L1510 464L1510 468L1516 475L1514 482L1524 485L1524 493L1532 501L1533 505L1536 505L1536 537L1527 538L1525 541L1518 539L1499 540L1498 538L1490 538L1471 531L1415 529L1411 525L1327 514L1312 509L1299 500L1287 499L1277 492L1251 483L1245 483L1230 475L1203 467L1191 459L1181 457L1163 445L1117 427L1114 423L1094 415L1084 408L1062 400L1046 388L1021 379L1019 376L1006 373L998 367L989 365L982 359L965 352L960 347L926 333L915 322L856 298L832 281L795 269L789 263L787 256L782 254L782 250L778 254L775 253L773 243L776 236L773 225L776 215L775 206L778 203Z"
+          },
+          "to": "green-hills",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-hill-r2-2k.f5818ec3bbda9af119b8a2c405197c4e8ba96847f8a5ce04a38568e38d92812a.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/round-door-hill-r2.35e3d34769c7c061dcc68232a16bd8d30a39fe7f2391bf0a3ff483aafb9bf947.mp4",
+            "seconds": 8
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/round-door-hill-r2-2k.f5818ec3bbda9af119b8a2c405197c4e8ba96847f8a5ce04a38568e38d92812a.rewind.08e01c508b96cac132254762bb47f76f2a3cb65ce4d35316cee28686c0422cd9.mp4",
+            "seconds": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "forest-stage",
+      "title": "The Challenge",
+      "chapter": "Te Pā Tū · Rotorua",
+      "caption": "Stand still. This is how a welcome begins.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/forest-stage.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-loop-r1-2k.5aaf8190644b026445693fad80c533923d10091f865323e8e070596507d613ff.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-loop-r1.a10b999866d394a9c7f3171b248f50406fcf1296d1dc6cd96fa1572171663069.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/forest-stage.763278c90bd1e4b6c51111de3f3eeed167c52073c853e4ac5edcdd7e2aa885c8.mp3",
+        "lines": [
+          {
+            "text": "This is Te Pā Tū, a Māori village in the forest outside Rotorua.",
+            "speaker": "Mark",
+            "start": 0.246,
+            "end": 3.993
+          },
+          {
+            "text": "Before anyone is welcomed in, a warrior comes out with a challenge, and you have to answer it.",
+            "speaker": "Mark",
+            "start": 4.763,
+            "end": 9.116
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "warrior",
+          "label": "Accept the challenge",
+          "hint": "A warrior lays down a token for you",
+          "at": [
+            0.43,
+            0.58
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M672 437L696 438L708 447L717 465L717 475L714 482L723 487L727 496L725 500L734 503L741 512L746 514L769 544L777 549L776 553L787 556L791 564L800 570L807 585L807 597L799 602L800 615L804 616L804 618L794 627L784 657L782 661L778 662L763 658L762 653L755 649L758 644L756 634L761 629L758 622L766 617L775 616L778 611L775 595L769 589L772 587L772 584L768 584L764 588L767 591L766 593L759 591L758 586L752 585L761 585L760 581L755 579L751 580L750 583L747 580L742 580L739 583L733 582L732 585L732 595L735 599L733 604L737 609L736 615L732 619L733 632L736 632L741 637L744 646L752 658L752 665L755 670L752 677L746 680L742 680L740 675L737 676L737 705L742 711L744 720L745 747L764 790L767 832L772 859L786 878L786 884L782 888L770 890L761 888L750 833L734 806L730 786L723 777L705 733L697 720L696 713L684 694L679 694L668 704L664 717L651 726L630 749L630 788L622 812L620 833L621 859L606 864L562 865L556 863L559 857L592 846L597 838L599 828L599 791L596 782L598 772L597 737L607 718L615 691L619 689L621 680L626 673L628 653L632 649L633 644L630 635L621 636L620 627L611 620L608 614L607 583L612 572L615 556L618 555L624 541L629 538L635 529L637 521L645 516L660 498L659 473L656 462L652 457L658 442Z"
+          },
+          "to": "haka",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-warrior-r1-2k.0bd363dc0029429e32b7f4a39ad9eca2fbe2760d6ecc07915f268f9de40fba83.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-warrior-r1.79624d027016760436a821580bdcc46b8df2ee5b6ec52f4d9c4afeee8532fdcc.mp4",
+            "seconds": 15.083
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/forest-stage-warrior-r1-2k.0bd363dc0029429e32b7f4a39ad9eca2fbe2760d6ecc07915f268f9de40fba83.rewind.c0f2a2ce58814a935591a81284b9f0dc4a522489672e21a4e96feb790925cc7b.mp4",
+            "seconds": 15.083
+          }
+        },
+        {
+          "id": "ferns",
+          "label": "Follow the rain",
+          "hint": "Every drop here ends up in a waterfall somewhere",
+          "at": [
+            0.22,
+            0.14
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 0L522 0L522 2L530 5L542 5L528 6L522 11L520 24L523 31L529 34L539 25L556 21L561 16L573 16L572 21L568 23L571 27L566 30L571 35L566 40L562 40L569 47L565 52L574 51L580 53L584 51L589 55L587 59L595 67L617 66L626 75L634 74L642 68L663 69L675 81L674 93L685 98L691 104L691 109L694 112L694 123L716 132L730 128L748 128L753 131L753 139L748 143L748 148L742 150L731 161L730 166L740 176L744 195L751 202L752 207L756 211L756 216L752 220L747 220L746 218L736 220L732 218L730 221L724 221L724 223L715 222L721 224L721 226L711 225L704 229L705 238L707 239L705 245L707 246L708 254L716 262L719 269L723 270L728 276L731 284L734 285L734 309L727 311L721 307L714 306L710 298L700 289L697 292L690 290L678 296L682 301L679 301L675 306L668 305L665 308L656 309L648 314L632 312L633 307L629 306L628 303L625 303L623 306L620 306L617 302L609 305L604 301L603 294L600 291L595 296L592 295L591 293L594 289L589 289L587 286L589 283L595 283L595 281L589 275L582 272L585 268L579 269L576 264L564 261L553 266L545 265L541 268L543 273L548 276L538 283L546 287L535 292L531 288L524 291L523 288L514 286L513 291L509 294L503 292L501 287L496 286L497 284L505 285L508 283L506 279L497 280L501 277L499 274L493 277L492 273L486 273L485 277L476 280L476 278L480 277L476 273L476 263L478 261L473 256L470 259L462 260L459 257L462 257L464 252L456 251L456 258L453 260L453 274L458 279L457 281L434 278L432 275L435 267L428 263L427 260L422 259L417 263L415 271L409 272L409 279L395 286L398 288L398 291L373 291L368 293L368 305L361 308L345 307L338 310L332 321L334 326L331 327L335 334L329 339L333 343L337 343L334 347L322 350L317 356L310 355L306 358L305 355L300 355L297 361L292 360L291 357L279 358L276 361L275 367L271 364L258 364L247 369L236 360L226 362L222 352L215 351L217 346L216 335L219 333L217 320L210 323L207 318L202 318L191 323L184 323L178 329L177 327L167 326L165 321L159 318L155 307L151 307L149 321L153 330L149 331L148 334L136 330L134 324L130 322L134 316L131 312L131 302L126 300L126 296L123 294L123 285L117 283L121 281L122 276L126 275L114 275L95 261L87 262L91 258L86 255L86 250L75 242L73 234L66 233L69 232L69 229L64 226L62 218L44 212L42 203L38 199L33 198L30 193L14 189L9 192Z"
+          },
+          "to": "three-falls",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-ferns-r2-2k.fd4b270c574498da2d11589e788e74105b502cf19fe5d2c22eb3293b57ba9151.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/forest-stage-ferns-r2.aebeab16793c5ecc9451be4804969fd35a03355648aba5859fc042c0fc894c87.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/forest-stage-ferns-r2-2k.fd4b270c574498da2d11589e788e74105b502cf19fe5d2c22eb3293b57ba9151.rewind.8b3d45efcd15b62f7ca3ebb3de7655c6c8dc2a1274a0c153a380f90d3722f9b2.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "haka",
+      "title": "The Haka",
+      "chapter": "Te Pā Tū · Rotorua",
+      "caption": "You feel this one in your chest.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/haka.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/haka-loop-r1-2k.b37b850480cf6cfce659377ad18113f2b80b121bc83a8cc9f81978c247b37586.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/haka-loop-r1.52007d7ac4cc88e7e9e26ba560ebdcd5998169406f4a91374f7c715ef69a84ce.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/haka.486423765a93e548d4e47c8134b2cf6536d66d66d0b395e46c6138035c678dfc.mp3",
+        "lines": [
+          {
+            "text": "Then the haka.",
+            "speaker": "Mark",
+            "start": 0.361,
+            "end": 0.999
+          },
+          {
+            "text": "The Māori had no written language, so song, dance and music carried their history.",
+            "speaker": "Mark",
+            "start": 1.583,
+            "end": 5.437
+          },
+          {
+            "text": "Honestly, the faces and the posturing were the highlight for me.",
+            "speaker": "Mark",
+            "start": 6.089,
+            "end": 8.659
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "leader",
+          "label": "Stay for the song",
+          "hint": "After the haka, harmony",
+          "at": [
+            0.47,
+            0.4
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M724 204L745 208L755 212L762 218L763 222L777 236L778 242L782 246L782 251L793 269L794 278L798 279L799 286L804 290L806 306L802 307L802 309L812 313L812 317L805 317L805 319L814 319L821 331L830 334L847 346L853 355L858 369L867 374L870 380L881 386L887 394L891 395L917 421L918 425L923 429L930 446L930 457L933 459L930 475L926 479L921 478L914 467L904 466L898 454L883 446L877 437L872 436L871 432L861 429L850 418L840 415L825 399L821 399L814 407L815 411L812 422L806 433L803 447L811 463L811 471L808 474L807 483L809 485L809 506L810 512L814 517L813 521L819 527L819 532L827 542L836 564L845 573L852 589L857 593L858 603L861 606L861 608L855 608L853 613L856 635L858 637L857 651L860 656L858 660L864 663L867 678L871 682L875 693L878 709L877 720L883 722L888 735L890 735L893 741L898 772L898 806L902 834L913 858L935 875L950 882L958 890L959 901L953 906L937 907L921 902L880 880L876 859L875 836L863 808L842 770L837 736L832 721L825 712L824 705L812 691L805 677L803 675L794 675L795 669L787 662L768 662L761 669L748 669L753 675L757 675L759 671L762 672L762 676L759 678L763 680L765 685L761 687L742 685L738 681L740 677L738 675L739 669L735 652L719 642L718 627L716 626L706 627L704 639L698 642L698 649L683 651L674 661L665 665L660 670L636 681L620 704L628 740L629 759L626 773L624 810L628 841L633 855L632 864L622 870L593 872L558 880L541 881L530 877L532 869L556 861L581 845L587 839L592 829L592 812L589 797L575 757L573 726L567 701L567 688L570 677L575 672L584 650L592 637L599 616L614 589L611 583L611 574L614 572L615 567L621 564L621 560L629 556L659 525L662 481L666 479L663 474L668 449L668 431L665 420L661 420L652 430L642 436L631 451L606 465L591 469L585 473L572 473L569 471L565 473L538 473L531 482L526 480L509 482L503 476L506 460L508 456L514 453L531 451L530 437L540 440L546 447L564 444L569 442L573 435L601 419L615 406L625 391L634 366L647 342L664 330L677 328L694 320L696 316L696 303L684 276L687 235L694 221L705 208Z"
+          },
+          "to": "waiata",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/haka-leader-r3-2k.5177f3af7c9ff3848402ee02096ba73ebff7350023fc5f03d441733f0db98f57.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/haka-leader-r3.4874938862f7c356e809f8c4a3f3665a69b708024d6f19a81fdc530a329fe8ee.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/haka-leader-r3-2k.5177f3af7c9ff3848402ee02096ba73ebff7350023fc5f03d441733f0db98f57.rewind.d093a3553d5eedb5c52a0becc0a3508fa3f5e45db5b36e581276a0fad70f7617.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "waiata",
+      "title": "The Song",
+      "chapter": "Te Pā Tū · Rotorua",
+      "caption": "Everybody ends up singing.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/waiata.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/waiata-loop-r1-2k.15971fd8fdae930829aa194731680e5287b9fda616f879c1d17253259be94857.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/waiata-loop-r1.0c11349a2ec77942d48bcd4c16a2dc0ccaaedd6b8d04de0d5ccae99aa51cdb40.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/waiata.5a9272bd01c52be325ca714a82a669f1a242bbbb5b46cd367e8f185c8ecd4d88.mp3",
+        "lines": [
+          {
+            "text": "After the haka there’s a guitar, and everybody sings, with sticks keeping time.",
+            "speaker": "Mark",
+            "start": 0.376,
+            "end": 4.713
+          },
+          {
+            "text": "Dinner is a hāngī, cooked for hours in an earth oven.",
+            "speaker": "Mark",
+            "start": 5.363,
+            "end": 8.409
+          },
+          {
+            "text": "It was surprisingly musical, and really interactive.",
+            "speaker": "Mark",
+            "start": 9,
+            "end": 11.765
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "guitar",
+          "label": "Into the sound hole",
+          "hint": "Next stop: Milford Sound",
+          "at": [
+            0.5,
+            0.64
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1052 387L1059 389L1069 408L1075 413L1075 416L1070 421L1060 423L1056 431L1045 437L1041 442L1023 450L1016 449L1018 454L1011 460L1005 459L993 462L979 467L969 476L951 477L946 480L944 474L945 467L949 466L969 443L975 442L981 433L995 425L998 419L1021 410L1026 403L1032 403L1034 399L1042 397L1048 388ZM901 494L906 495L906 505L910 510L909 514L920 524L920 528L915 533L909 535L901 550L883 561L874 574L860 587L849 591L847 595L848 604L845 605L845 607L857 606L862 608L862 611L855 611L853 613L854 616L862 619L866 626L873 627L872 631L884 641L882 646L887 651L887 661L880 676L879 686L870 696L842 715L833 727L828 730L826 738L820 745L819 752L813 759L809 770L800 782L799 788L792 794L792 799L769 807L767 810L756 805L748 805L743 808L742 805L737 803L717 805L705 802L704 799L700 798L693 783L690 781L683 752L678 741L676 716L674 714L675 689L679 686L689 687L691 685L690 680L696 680L698 676L708 672L713 664L715 654L718 653L719 648L724 642L722 638L725 640L739 639L744 634L755 632L765 622L771 622L772 628L775 630L783 627L787 620L787 605L792 600L792 591L782 582L782 578L777 572L774 572L771 576L769 573L779 562L786 558L787 553L798 551L809 545L822 552L832 552L834 557L850 555L855 548L862 546L869 534L873 532L873 528L894 517L896 510L892 507L892 497Z"
+          },
+          "to": "sound-deck",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/waiata-guitar-r1-2k.f8932c0324e210e0c459256fbff564ccfe03491ca94221139e4a3f59cf2a98b0.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/waiata-guitar-r1.4a49c2a860f4930ae0bd405f6131c6095461669ee1f0f1fbf2cb5d341f6e7806.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/waiata-guitar-r1-2k.f8932c0324e210e0c459256fbff564ccfe03491ca94221139e4a3f59cf2a98b0.rewind.c481faa2c5230ddcb2d6fed4f2b7163363f32954df814f20a41e7793ec5c42f4.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "sound-deck",
+      "title": "Milford Sound",
+      "chapter": "Milford Sound · Fiordland",
+      "caption": "A birthday on the water, and it is raining. Perfect.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/sound-deck.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-loop-r1-2k.0037980d132c6f008cb091736815cb8c0752a75c3cc40a41c1d45ad441b0109d.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-loop-r1.2ec7f430e350c54f3786a87e599dd1e012aa3678a8bcb390cfa17af5bf9b3dd8.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/sound-deck.28948631b7cc214b5c5eb3e6ad1722f1abba64a0cb20e81dc47503f9566ce60c.mp3",
+        "lines": [
+          {
+            "text": "We spent a night on Milford Sound, on the Fiordland Jewel, for my wife’s birthday.",
+            "speaker": "Mark",
+            "start": 0.372,
+            "end": 4.142
+          },
+          {
+            "text": "It rained, of course.",
+            "speaker": "Mark",
+            "start": 4.773,
+            "end": 5.582
+          },
+          {
+            "text": "And the drive down from Queenstown is worth it all by itself.",
+            "speaker": "Mark",
+            "start": 5.743,
+            "end": 8.51
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "her",
+          "label": "Go and stand with him",
+          "hint": "The best view is shared",
+          "at": [
+            0.2,
+            0.66
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M323 553L333 554L344 563L348 588L340 595L340 603L355 609L365 620L373 634L373 656L356 670L359 693L356 711L360 733L359 767L361 777L356 790L355 820L352 832L357 840L361 842L363 849L360 855L350 861L338 862L333 859L337 846L337 837L335 824L332 819L330 799L328 794L317 793L311 796L308 803L305 831L318 843L318 853L299 863L286 863L285 853L287 852L288 836L283 798L279 794L268 795L259 792L252 789L249 785L258 755L262 720L273 667L272 654L265 648L263 641L274 614L287 603L302 600L307 596L303 589L306 568L312 560Z"
+          },
+          "to": "sound-together",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-her-r1-2k.546c64ab7cb3a08cfac456ac115322deb3337ddb1554c3bdd014160e4d8098b4.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-her-r1.e0a885c45ffa83ee3978820d98fdf14daee338c4dfed4c6f38947cb45d15ffda.mp4",
+            "seconds": 5.875
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/sound-deck-her-r1-2k.546c64ab7cb3a08cfac456ac115322deb3337ddb1554c3bdd014160e4d8098b4.rewind.275a794d8ce70c6118538724ec9d40f1e83ade44c9f4ce053428e3fc8ca05607.mp4",
+            "seconds": 5.875
+          }
+        },
+        {
+          "id": "helipad",
+          "label": "The H is for helicopter",
+          "hint": "Somebody painted a landing pad on the ferry",
+          "at": [
+            0.52,
+            0.95
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M802 944L803 946L813 947L813 950L816 946L822 947L823 950L829 947L843 947L852 950L859 963L860 973L868 993L871 1004L869 1011L841 1011L838 1009L833 993L826 990L818 992L814 988L807 987L800 987L800 991L796 992L795 988L791 986L759 986L739 990L738 994L743 998L738 1004L739 1008L733 1012L708 1012L703 1009L703 965L706 950L714 947L737 949L740 953L744 954L742 960L745 964L749 962L746 960L746 956L751 955L751 950L754 947L759 951L758 956L762 956L764 952L768 952L771 955L771 951L775 948L780 951L787 951L788 947L792 945Z"
+          },
+          "to": "helipad",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-helipad-r1-2k.aa28ede66951b4510ea1552d8667c3ee6b776beaa3a70eb7e3b9d236bf188166.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-deck-helipad-r1.3f4a1ce70c842a27ee0beafe153cbafc3f5f86aca47609f470ddc70a8fa7b81c.mp4",
+            "seconds": 15.083
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/sound-deck-helipad-r1-2k.aa28ede66951b4510ea1552d8667c3ee6b776beaa3a70eb7e3b9d236bf188166.rewind.559f5c45f99bd61d72b539606da963c744d838a860bee824c52dbfeb0d161d7e.mp4",
+            "seconds": 15.083
+          }
+        }
+      ]
+    },
+    {
+      "id": "sound-together",
+      "title": "Together at the Rail",
+      "chapter": "Milford Sound · Fiordland",
+      "caption": "The cliffs do not care, and that is the point.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/sound-together.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-loop-r1-2k.bebc4a7b99447c4718af033208d897bceec42a858d0f5e3ebda439e4be2b360c.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-loop-r1.2f359ddf575df77bd0de7ea3f71551ec0b97625c735b8b8a9f855c8a2e96f2ec.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/sound-together-with-jen.260da8500b53228cd94d53994c208e7cba7c2d31f4f8f38fbba959a1dfd70b9f.mp3",
+        "lines": [
+          {
+            "text": "Same view, better company.",
+            "speaker": "Mark",
+            "start": 0.405,
+            "end": 1.958
+          },
+          {
+            "text": "Milford is one of the wettest places on Earth, which is exactly why every cliff is pouring.",
+            "speaker": "Mark",
+            "start": 2.706,
+            "end": 6.785
+          },
+          {
+            "text": "Best birthday ever!",
+            "speaker": "Jen",
+            "start": 7.66,
+            "end": 8.454
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "cliff",
+          "label": "Sail along the cliff",
+          "hint": "Waterfalls ahead",
+          "at": [
+            0.78,
+            0.28
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M929 0L1536 0L1536 601L1524 604L1514 602L1506 605L1498 602L1478 603L1475 601L1457 603L1454 600L1448 599L1420 600L1413 597L1394 598L1391 596L1377 596L1370 599L1340 598L1334 595L1284 597L1283 595L1277 596L1267 593L1254 594L1248 592L1202 596L1197 594L1172 594L1158 589L1145 592L1117 591L1114 593L1096 594L1089 593L1086 590L1082 592L1062 591L1057 593L1055 591L1048 592L1021 588L1019 591L1002 590L993 593L983 590L946 590L942 588L924 590L920 588L869 589L824 587L812 586L799 581L794 570L803 561L810 537L817 525L821 510L828 499L831 480L835 471L836 452L841 437L840 419L848 375L853 322L861 291L863 265L873 223L876 173L890 129L893 110L905 82L905 70L916 25L923 8Z"
+          },
+          "to": "three-falls",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-cliff-r1-2k.b8114d8936a67c087f4c26b70bf08b05c3e615e63193efdccb58923d92ea5110.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-cliff-r1.edf68ba3cf4c5fa73b6f5a42320a25a6138d31838ccdaf5690f43b2c2e6c1374.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/sound-together-cliff-r1-2k.b8114d8936a67c087f4c26b70bf08b05c3e615e63193efdccb58923d92ea5110.rewind.64a22ca2d2dd0359558dda872ec68427cda52114ed36eb459200afde6daa90ea.mp4",
+            "seconds": 10.125
+          }
+        },
+        {
+          "id": "wake",
+          "label": "Watch the ship from the sky",
+          "hint": "You were never as big as the Sound",
+          "at": [
+            0.32,
+            0.74
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M535 661L660 663L660 681L655 682L655 677L652 677L652 710L649 719L645 721L645 731L641 733L643 739L636 741L643 744L642 759L637 772L639 777L642 780L646 780L649 777L665 784L665 789L662 790L664 796L661 812L656 817L646 815L646 818L650 818L650 820L642 818L640 821L632 824L625 822L604 822L600 824L594 822L578 825L572 823L558 829L548 826L541 828L538 824L534 823L519 825L487 823L473 828L468 825L458 825L455 827L453 825L434 826L428 824L376 825L372 828L366 828L357 824L338 823L328 825L316 822L310 816L318 817L318 815L315 815L315 812L324 808L324 805L320 804L317 807L316 804L319 801L315 800L313 796L309 800L303 801L303 803L299 799L295 799L299 795L298 791L300 791L300 787L294 784L296 781L295 776L299 774L299 770L305 767L313 770L316 767L323 767L324 763L316 764L311 762L306 765L301 762L289 767L289 764L292 764L289 758L293 758L294 761L300 760L294 757L291 750L293 747L300 746L300 736L304 735L300 732L300 729L304 728L305 725L309 725L308 721L300 718L302 712L289 709L297 709L306 706L306 704L309 707L313 707L314 704L344 707L348 706L350 701L358 700L359 690L364 694L367 693L364 687L369 678L368 675L362 675L363 686L359 686L357 676L352 675L350 685L342 684L346 688L342 690L340 697L330 696L327 698L324 696L325 690L321 689L322 695L317 700L312 694L315 693L317 688L325 687L324 669L320 668L322 663L330 663L332 665L336 663L352 663L354 666L358 663L364 665L377 663L415 663L418 665L421 663L438 663L442 667L437 668L431 678L437 681L437 687L441 690L454 685L448 682L448 679L453 678L448 676L448 672L451 671L447 668L449 664L478 662L481 664L501 663L505 665L506 663ZM896 662L926 665L929 667L929 671L937 670L943 672L944 675L940 677L940 686L945 691L950 691L951 687L953 687L953 692L955 692L953 697L940 698L946 707L952 709L949 713L958 712L961 706L977 708L983 706L1003 706L1007 709L1003 711L972 712L972 714L976 714L978 717L981 714L986 714L987 718L984 721L987 724L982 725L978 722L975 725L970 725L968 722L967 726L962 726L966 734L968 734L968 738L974 737L971 743L967 744L968 748L971 748L972 745L980 747L982 745L980 741L983 738L986 740L993 740L995 738L996 740L1007 742L1010 747L1013 747L1014 743L1009 741L1022 741L1018 743L1018 746L1023 747L1024 752L1005 753L995 762L997 767L990 768L990 770L989 768L981 768L980 771L976 772L978 776L989 780L995 777L994 772L1005 777L1006 782L1004 783L994 784L988 782L983 784L988 786L986 792L989 795L997 792L999 796L1002 796L999 804L992 803L993 800L998 799L997 797L983 798L985 802L982 800L976 802L975 812L973 812L974 816L956 817L951 816L953 812L950 812L940 822L933 822L931 824L921 820L878 821L863 819L857 823L854 821L829 821L825 818L820 818L817 811L813 810L812 786L816 783L814 783L814 775L811 771L808 756L811 745L810 727L812 725L831 724L832 719L830 716L835 699L832 691L833 677L831 674L834 670L827 666L833 663L848 664L850 666L853 664Z"
+          },
+          "to": "stirling-falls",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-wake-r1-2k.25b64cc0db4c4ca5c305b7f6dfc777c7d33d6af9c62b8ff2b03c0bb60c6d2169.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/sound-together-wake-r1.12eedf0ade19b87e38a989ad77f67709bef84f20a9a29a47bfcd12a23761af50.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/sound-together-wake-r1-2k.25b64cc0db4c4ca5c305b7f6dfc777c7d33d6af9c62b8ff2b03c0bb60c6d2169.rewind.24e038231955b8e189d108155fe20454d31d73297a0a4eb7af07af1bc88405f3.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "three-falls",
+      "title": "Three Waterfalls",
+      "chapter": "Milford Sound · Fiordland",
+      "caption": "Look up. Keep looking up.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/three-falls.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-loop-r1-2k.fef1865de97be0c710fd227c7124239f0ee07a558ac030b976577d73b8ee71d5.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-loop-r1.8c9651089986d5c8d3fa8a77be0287fe94a0a8d7835375c8400c1eecec2b6ee8.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/three-falls.722b52ab7147da2452599d653183c13c7578d2cbeced8881c3ea6044f1fbce88.mp3",
+        "lines": [
+          {
+            "text": "After heavy rain, hundreds of waterfalls show up on these cliffs.",
+            "speaker": "Mark",
+            "start": 0.226,
+            "end": 3.316
+          },
+          {
+            "text": "They’re gone again soon after it stops, so look up while you can.",
+            "speaker": "Mark",
+            "start": 3.861,
+            "end": 6.797
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "spray",
+          "label": "Fly through the spray",
+          "hint": "The biggest fall is around the corner",
+          "at": [
+            0.43,
+            0.58
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M699 414L703 414L704 419L698 427L696 450L693 459L694 479L689 503L689 515L685 526L684 561L679 581L680 586L676 591L676 610L670 628L667 630L668 635L665 641L665 649L669 656L667 658L666 672L663 676L664 689L662 692L664 695L663 700L665 701L663 707L665 708L666 717L663 725L664 731L661 733L658 744L660 748L657 755L660 768L659 779L653 783L648 793L638 797L628 796L619 791L619 764L626 727L630 718L629 690L633 685L637 671L639 623L643 614L643 602L649 577L650 552L661 519L658 514L657 491L659 481L666 471L675 424L680 417L686 419L690 416Z"
+          },
+          "to": "stirling-falls",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-spray-r1-2k.585a15a6e75ccb3641d6fd7d07917364ae0a27e93efc3891f466828123c11670.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-spray-r1.d5ea61df2f8036e68167a5c0618efc98590374a884dd16c8ed2d5c6c15002ff4.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/three-falls-spray-r1-2k.585a15a6e75ccb3641d6fd7d07917364ae0a27e93efc3891f466828123c11670.rewind.c191201a489ade3cdf9defa6013192f404f04982d0924b328d838348cbb9bfa5.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "left-fall",
+          "label": "Stand under the falls",
+          "hint": "The coldest shower in Fiordland, then the warmest bath in Queenstown",
+          "at": [
+            0.2,
+            0.55
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M341 362L348 362L350 364L350 386L339 430L334 468L328 488L327 508L321 528L322 532L310 576L303 620L304 639L301 649L302 653L298 657L298 667L295 674L290 677L288 683L288 706L284 708L287 712L287 721L278 730L274 730L265 736L259 736L256 739L247 740L229 750L223 757L220 757L209 752L207 747L204 746L204 743L206 743L204 736L206 734L203 733L203 729L207 727L203 726L203 723L199 720L207 714L212 706L216 705L224 697L226 691L239 674L241 663L245 659L252 643L255 632L254 618L265 582L265 563L267 561L269 545L276 532L276 523L286 483L288 462L305 394L306 378L310 370L317 365Z"
+          },
+          "to": "hot-pool",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-waterfall-r2-2k.630ffc9e3248901c9ae932de7844311bd03329ef4e890199d0879c01728cc6ec.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-waterfall-r2.ce248728431854c66790a09fa051361ac8ad9d7d24729eed509ad62dddaba24a.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/three-falls-waterfall-r2-2k.630ffc9e3248901c9ae932de7844311bd03329ef4e890199d0879c01728cc6ec.rewind.4a45b7c0e327dfe8ba07eabb5212f8228c6308942a5b77ef8db24eca2fd21137.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "cloud",
+          "label": "Look up into the cloud",
+          "hint": "The falls start somewhere up there",
+          "at": [
+            0.35,
+            0.1
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M213 0L1189 0L1189 19L1191 24L1194 21L1194 16L1197 14L1198 5L1198 13L1202 13L1206 18L1210 19L1209 21L1202 19L1203 24L1210 25L1213 28L1219 26L1221 29L1225 29L1223 32L1225 37L1223 42L1225 45L1217 44L1217 46L1212 46L1211 50L1206 52L1213 55L1220 54L1218 59L1224 58L1222 70L1225 71L1227 68L1231 68L1231 71L1227 72L1231 77L1226 78L1223 75L1219 84L1211 82L1211 86L1207 86L1207 88L1210 88L1210 92L1204 92L1200 96L1206 102L1201 103L1198 108L1195 107L1194 103L1191 103L1188 108L1182 108L1187 111L1186 116L1195 115L1189 117L1190 121L1195 121L1195 126L1191 126L1184 121L1179 122L1179 125L1183 126L1189 134L1182 136L1185 141L1178 147L1177 153L1171 156L1169 168L1164 177L1160 181L1138 190L1133 199L1134 205L1127 204L1113 223L1108 222L1102 217L1097 224L1088 223L1086 218L1082 217L1079 210L1075 208L1076 203L1069 205L1062 202L1064 193L1069 187L1067 185L1048 185L1043 188L1025 189L1022 186L1009 184L1005 179L994 178L987 184L973 187L969 190L952 190L943 193L941 195L944 198L941 198L936 205L930 206L919 213L891 215L871 205L867 205L861 196L841 190L813 189L809 186L808 182L799 180L786 181L781 179L779 181L772 181L770 179L764 181L757 179L754 181L746 175L733 176L734 180L726 177L725 174L720 174L719 177L714 175L706 176L699 173L705 170L701 166L702 161L688 161L688 163L693 164L691 168L688 168L693 173L688 174L685 171L687 163L684 160L673 157L671 160L657 161L658 164L661 164L661 167L658 167L657 170L666 168L663 174L658 175L657 178L652 178L651 181L640 178L639 181L630 179L628 182L623 182L625 185L631 182L639 184L642 189L644 189L645 185L653 185L653 183L655 185L673 186L673 188L666 189L666 192L673 193L672 196L667 196L660 189L651 192L650 195L646 195L646 192L650 192L650 189L639 191L638 195L633 192L626 195L625 192L628 192L626 189L613 197L621 199L633 197L634 199L639 199L641 201L640 204L637 204L639 209L635 212L641 214L652 214L652 216L659 213L682 214L682 217L679 219L680 223L679 221L674 221L673 225L669 225L673 231L677 231L677 234L673 235L672 238L659 240L655 236L645 238L639 232L633 235L630 235L627 231L622 231L621 233L621 229L624 228L632 229L642 226L650 228L662 227L660 218L646 224L639 217L634 217L634 219L623 217L621 212L619 217L608 220L606 223L593 221L583 223L576 216L571 216L569 220L562 220L562 223L559 225L570 232L569 234L561 232L563 240L570 245L570 248L563 252L557 252L553 248L553 243L557 240L554 232L556 225L552 219L552 214L546 214L546 216L551 217L548 221L549 231L545 236L545 241L550 243L550 245L546 248L546 251L537 253L536 255L539 258L535 260L533 258L525 258L527 254L516 243L507 243L507 248L503 249L501 247L501 240L499 237L496 237L499 235L499 232L494 232L490 238L482 236L482 240L475 244L444 248L418 247L415 244L401 243L399 240L374 236L365 237L364 234L352 230L338 232L322 228L320 230L306 231L301 230L305 227L303 224L283 223L281 220L274 221L270 218L258 218L246 222L243 218L229 217L228 214L231 211L228 207L214 208L214 206L201 203L190 208L181 208L178 204L166 206L148 202L115 202L103 199L100 195L95 197L87 195L84 199L71 199L63 196L61 193L55 193L52 196L38 196L35 194L0 192L0 114L10 109L22 92L31 88L40 79L53 74L58 69L102 50L115 48L127 42L150 37L161 31L180 27L190 19L192 13Z"
+          },
+          "to": "cloud-wall",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-cloud-r2-2k.6e43bcff1ceaac3c35e9c7081c38eedd2408a317229f51873311000bf9208cf0.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/three-falls-cloud-r2.debb20599dcf8bb00ad788e5aba13f879ffb2345f8a4c6a289ff1c6a472bb2fa.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/three-falls-cloud-r2-2k.6e43bcff1ceaac3c35e9c7081c38eedd2408a317229f51873311000bf9208cf0.rewind.ae56412271ba7b2a063c886a97abba6fce7141c98add100e1855bc348a6765f3.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "stirling-falls",
+      "title": "Stirling Falls",
+      "chapter": "Milford Sound · Fiordland",
+      "caption": "Scale is the whole joke here.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/stirling-falls.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-loop-r1-2k.afc361316a5400056b13c7ed2c101033f52a234710b246321bc85a6d1ab5e218.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-loop-r1.70e0fde9ac5a833c338bc2cd8b3e763914a8899ae382c5f2ffd63c5d736e8ccb.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/stirling-falls.7df4480ce06b182404bddd1f9035d8fa1df09f2c5276956b0f6e35002b374b6b.mp3",
+        "lines": [
+          {
+            "text": "That’s Stirling Falls, about 150 metres tall.",
+            "speaker": "Mark",
+            "start": 0.3,
+            "end": 3.2
+          },
+          {
+            "text": "And that tiny white boat at the bottom? That’s a full-size ferry.",
+            "speaker": "Mark",
+            "start": 3.86,
+            "end": 7.04
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "falls",
+          "label": "Follow the falls up",
+          "hint": "Its top is lost in the cloud",
+          "at": [
+            0.22,
+            0.6
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M280 424L292 431L301 432L324 443L334 452L348 474L349 479L346 484L332 485L335 487L335 490L331 490L329 487L325 488L329 492L326 494L326 498L329 499L326 504L329 506L331 515L336 517L338 533L351 542L352 551L354 557L357 558L359 566L368 564L368 568L360 567L356 572L362 580L374 585L368 588L370 604L375 608L382 606L383 609L381 616L383 628L380 629L378 626L374 628L387 637L387 639L381 638L378 641L379 647L382 650L377 656L381 662L382 675L385 681L390 684L390 689L392 690L390 700L391 723L393 726L395 748L398 752L397 766L391 773L394 775L398 787L396 790L397 796L395 797L398 808L395 843L397 844L396 850L403 862L402 874L405 876L405 881L411 886L410 891L415 896L412 902L415 904L416 914L419 915L416 918L418 922L416 929L411 930L414 932L413 935L408 935L408 926L405 923L404 914L396 906L395 900L391 898L389 893L384 891L377 881L373 870L361 863L352 852L346 841L341 838L339 830L337 830L337 826L334 824L334 819L330 818L330 814L327 814L328 811L332 814L334 813L333 808L335 805L332 801L335 800L335 791L331 788L333 782L330 778L329 765L322 760L325 758L326 748L325 739L323 738L325 737L325 717L320 676L315 667L313 655L306 650L308 645L305 644L304 647L301 647L300 644L303 641L299 640L296 635L297 601L294 593L293 562L290 553L292 542L286 529L287 524L283 522L283 517L279 511L280 505L278 500L276 500L279 494L278 487L269 476L260 440L261 434L264 433L270 436L274 428Z"
+          },
+          "to": "cloud-wall",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-falls-r1-2k.7f20d89f2281b2bf68d1d5cc694e97e87f8cd9ae8bae02563ca3e5d2c0d897f2.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-falls-r1.d43e4a6b854a3047f2876daeb2293360a5f0e07e3e9dd1822d79c34ef38398bf.mp4",
+            "seconds": 8
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/stirling-falls-falls-r1-2k.7f20d89f2281b2bf68d1d5cc694e97e87f8cd9ae8bae02563ca3e5d2c0d897f2.rewind.0b351bcdb6bc0a69dc74cd23d6b611a1f2771e0dd7248250f740f7b85e43e9b5.mp4",
+            "seconds": 8
+          }
+        },
+        {
+          "id": "boat",
+          "label": "Catch the little boat",
+          "hint": "It is closer than it looks",
+          "at": [
+            0.37,
+            0.94
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M573 932L576 933L578 941L583 946L590 948L595 954L601 972L600 980L552 979L546 975L545 965L558 951L570 942L570 935Z"
+          },
+          "to": "three-falls",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-boat-r3-2k.d89d0594bc34b28b676ac4a5d1cba4b71d65ebb1103258c085f841ea7026ce13.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/stirling-falls-boat-r3.195c97e6c0d210e0054beaffd6925939c07eff49ea73ab235fc1b14c57a60e3f.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/stirling-falls-boat-r3-2k.d89d0594bc34b28b676ac4a5d1cba4b71d65ebb1103258c085f841ea7026ce13.rewind.b831357be0605f76dfff82911939c9f0caed3c6c9bcc43c8f100f86096ee2054.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "cloud-wall",
+      "title": "The Cloud Wall",
+      "chapter": "Milford Sound · Fiordland",
+      "caption": "There is blue sky somewhere above all that.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/cloud-wall.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-loop-r1-2k.8efe2c2f7a8a6d03ae941d4b9d9775de17b5dcd0bae621219f1ce9b92ff7a202.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-loop-r1.29e4743b9f53d8fdf275f93922f50d4cd3a13117e3ae53fd393fba03823a9fda.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/cloud-wall.c3d95acf48c998360272e6c8c1a57dfd65fc08d228233c694159dd3e4b3033ac.mp3",
+        "lines": [
+          {
+            "text": "They call it a sound, but Milford is really a fiord, carved out by glaciers.",
+            "speaker": "Mark",
+            "start": 0.178,
+            "end": 4.458
+          },
+          {
+            "text": "There’s blue sky somewhere above all that.",
+            "speaker": "Mark",
+            "start": 4.792,
+            "end": 6.56
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "cliff",
+          "label": "Step back from the view",
+          "hint": "Somebody is looking at this one",
+          "at": [
+            0.5,
+            0.66
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1000 427L1020 430L1026 437L1033 436L1036 439L1036 443L1043 443L1047 453L1044 458L1048 463L1056 462L1056 460L1063 457L1065 452L1079 447L1103 445L1113 449L1120 449L1122 445L1125 446L1123 449L1125 454L1116 455L1111 452L1107 457L1103 453L1100 454L1099 459L1102 461L1097 463L1097 473L1103 474L1103 476L1099 477L1097 483L1089 482L1089 473L1092 471L1088 470L1087 467L1090 464L1087 462L1070 471L1070 475L1078 481L1075 486L1069 483L1071 492L1076 493L1080 499L1085 498L1087 503L1094 507L1097 517L1100 517L1101 528L1107 527L1112 537L1128 538L1133 535L1133 530L1136 530L1136 527L1133 526L1135 512L1132 508L1132 501L1134 499L1131 497L1133 482L1140 478L1143 473L1146 474L1149 483L1150 478L1155 473L1168 473L1173 476L1187 478L1203 486L1208 486L1216 492L1217 496L1224 500L1224 507L1227 509L1228 514L1231 516L1231 521L1237 526L1238 530L1243 531L1244 534L1248 530L1252 530L1253 535L1256 535L1254 539L1246 541L1247 544L1252 545L1255 553L1257 553L1261 543L1266 548L1270 544L1274 544L1274 548L1270 549L1272 551L1278 549L1279 543L1277 543L1277 539L1280 529L1278 521L1281 518L1288 519L1294 514L1298 522L1305 519L1312 523L1314 528L1318 528L1319 531L1322 525L1331 524L1337 527L1343 538L1344 550L1351 560L1358 559L1363 563L1367 557L1373 557L1381 559L1388 566L1397 568L1399 571L1406 569L1404 577L1409 582L1397 584L1402 591L1407 591L1412 583L1417 582L1420 586L1425 586L1430 595L1437 595L1442 587L1447 591L1455 587L1456 590L1451 591L1453 593L1459 592L1461 588L1465 587L1466 596L1470 596L1472 593L1472 583L1469 582L1469 579L1480 583L1486 582L1490 590L1495 585L1499 586L1502 590L1502 587L1508 584L1494 584L1493 580L1498 578L1493 575L1495 571L1507 574L1506 578L1508 580L1512 580L1521 587L1527 588L1533 595L1531 597L1532 604L1536 606L1536 905L1499 908L1491 904L1484 904L1481 900L1476 901L1476 906L1460 907L1431 907L1427 905L1366 906L1363 903L1354 907L1342 905L1324 906L1321 904L1313 906L1302 906L1299 904L1280 905L1278 903L1264 906L1257 904L1207 904L1199 906L1145 904L1133 906L1130 904L1112 905L1108 901L1102 904L1041 902L1029 905L1022 901L1015 903L942 901L908 903L883 903L878 901L870 903L775 903L771 901L757 903L595 903L577 902L574 896L571 896L569 899L562 898L557 902L518 902L508 899L499 902L411 903L387 900L384 895L378 894L371 888L367 888L365 891L365 885L360 876L351 881L343 879L339 889L332 888L318 895L310 894L310 896L306 897L303 892L291 892L280 884L283 879L279 877L282 872L278 870L280 865L277 855L281 851L277 850L275 843L268 841L271 837L266 826L270 822L266 820L267 815L265 811L269 808L265 806L264 800L261 801L262 806L249 803L248 799L254 799L250 798L252 791L244 786L242 786L244 796L242 796L237 807L237 811L240 813L235 822L241 826L239 830L241 842L240 848L234 852L240 854L239 859L245 863L245 866L253 869L256 887L255 893L249 901L232 898L227 902L209 900L205 902L156 903L153 905L147 903L109 905L105 901L87 903L81 900L78 902L65 901L48 905L33 904L21 906L19 900L12 903L5 898L6 896L15 897L19 895L19 892L11 891L7 893L4 890L19 890L20 887L0 884L0 546L3 546L0 542L20 541L24 539L24 536L35 536L58 530L72 532L76 529L118 534L142 533L166 539L181 535L196 543L206 545L215 554L228 559L230 562L235 563L237 567L242 568L242 571L254 571L258 577L263 578L263 582L273 582L302 588L312 595L316 595L311 600L318 598L332 602L333 607L345 606L349 614L367 614L370 608L381 612L387 610L387 608L394 608L396 610L390 613L393 615L430 617L443 614L437 610L443 603L452 603L460 600L452 596L439 597L435 595L444 592L448 592L451 595L452 593L462 593L466 590L475 589L482 585L481 583L474 582L475 580L487 578L495 583L497 589L508 589L510 587L511 574L521 571L523 566L530 565L537 558L548 556L557 546L579 543L579 537L585 538L598 532L606 533L615 526L622 529L627 525L630 528L638 527L659 532L667 538L670 544L688 550L692 557L713 556L716 562L722 557L732 557L729 553L731 549L788 547L790 543L800 538L809 539L807 535L814 531L820 533L822 539L819 542L813 541L812 543L818 545L826 544L827 547L821 548L825 554L831 555L839 562L843 562L845 559L851 561L862 546L861 542L873 541L876 530L873 522L865 520L863 514L860 511L856 511L856 504L862 505L864 498L864 485L853 482L856 462L861 462L865 456L873 456L874 465L877 467L877 480L894 483L901 457L910 456L916 469L920 493L927 492L930 495L936 496L941 491L950 491L950 488L959 490L960 487L964 487L966 490L969 490L969 487L960 484L962 474L969 476L970 472L980 468L983 459L993 454L990 450L994 443L992 435L994 430Z"
+          },
+          "to": "hot-pool",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-mist-r4-2k.5dcb43b14df6a899e76a50dfc8c99505d5f155c3a340799733badf111321d558.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-mist-r4.f14d770d8d5c2e168f987c22eac63a184f9c3db5829a02adc9ae33d83a9b1a85.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/cloud-wall-mist-r4-2k.5dcb43b14df6a899e76a50dfc8c99505d5f155c3a340799733badf111321d558.rewind.0d81932fc77213f864b10d203d6f97c145eeaf4dd58ec1b53a24d0f083d64701.mp4",
+            "seconds": 10.125
+          }
+        },
+        {
+          "id": "mist",
+          "label": "Fly over the mountains",
+          "hint": "Queenstown is on the other side",
+          "at": [
+            0.5,
+            0.2
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 0L1536 0L1536 488L1533 488L1531 491L1514 490L1513 488L1510 490L1495 490L1492 494L1489 494L1487 491L1482 493L1473 492L1469 485L1462 485L1452 490L1450 497L1481 498L1487 495L1494 499L1493 502L1489 504L1462 504L1460 502L1450 504L1447 501L1440 500L1440 495L1427 493L1415 479L1389 473L1385 466L1378 466L1377 460L1361 443L1357 442L1353 437L1346 436L1344 433L1332 428L1326 430L1312 428L1310 433L1298 430L1290 435L1271 434L1264 436L1237 436L1232 433L1218 434L1197 431L1189 423L1182 420L1175 421L1174 416L1159 413L1158 410L1154 409L1144 386L1145 382L1141 378L1126 373L1109 374L1107 372L1095 372L1090 374L1083 364L1074 358L1070 358L1071 353L1047 344L1042 336L1026 335L1023 333L1009 336L1000 328L995 329L993 326L989 326L988 318L983 315L980 307L969 298L940 300L926 308L919 307L914 312L883 320L866 321L851 315L826 313L800 322L736 321L729 324L706 323L701 326L679 327L663 332L658 337L650 339L647 345L637 348L608 344L598 345L576 337L574 334L555 332L554 330L526 329L508 331L492 335L489 338L480 339L483 344L466 345L463 348L454 345L451 347L452 350L450 350L450 346L443 344L449 340L447 337L449 332L446 330L450 326L449 318L437 311L386 313L382 317L370 321L354 321L351 323L335 319L328 313L323 313L308 323L301 317L274 317L274 322L262 324L261 326L277 327L277 331L274 332L276 337L258 339L261 341L260 344L248 344L250 339L237 337L234 331L231 331L222 338L214 338L212 332L210 332L207 336L195 339L201 342L201 344L183 344L194 339L187 337L173 338L170 336L169 331L164 335L161 335L159 331L151 333L152 328L164 329L172 326L173 322L170 317L162 319L159 315L151 315L135 316L130 319L125 314L161 314L170 312L171 305L169 302L165 302L161 306L161 301L170 299L216 299L225 300L229 303L225 309L217 310L218 304L215 303L196 302L194 304L188 302L177 312L195 312L202 315L197 316L195 320L189 317L185 321L175 324L175 326L219 326L237 329L254 327L257 326L257 318L254 315L249 317L246 315L231 316L224 320L223 323L218 323L214 317L208 316L208 314L216 312L235 313L235 303L230 300L256 299L257 295L254 288L236 287L237 284L245 285L254 282L250 278L240 281L235 272L229 269L228 261L222 258L215 259L211 254L208 254L208 250L201 243L198 243L194 248L194 243L191 242L186 234L181 235L181 238L184 240L176 242L149 241L151 213L169 213L169 188L168 186L157 188L149 184L150 180L152 180L150 178L150 167L152 165L149 156L151 152L149 146L151 144L134 142L132 140L122 144L119 150L124 147L128 148L130 153L134 153L137 150L134 156L122 157L109 154L107 157L97 158L96 164L92 165L92 169L89 172L90 177L87 181L92 184L93 191L95 185L105 183L107 185L107 198L105 200L87 199L86 209L90 212L83 215L78 213L66 215L66 241L62 245L62 255L51 254L52 252L57 252L58 249L56 248L56 243L48 243L47 249L51 252L42 257L13 257L11 261Z"
+          },
+          "to": "hot-pool",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-mist-r5-2k.e7d83a8ff385e20e533fbd84fb826b292d9ff313b28ca5c4bad818df91478cbb.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-mist-r5.ca5707980ddcc5f517b4ecbc84094d0e035acf8d0e0b4e3cdb20c592404dfff3.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/cloud-wall-mist-r5-2k.e7d83a8ff385e20e533fbd84fb826b292d9ff313b28ca5c4bad818df91478cbb.rewind.aed0b4429034b0f1b99a1b9a48db92564e626059caac4484528a2fc6b940f8e9.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "summit",
+          "label": "Rise above the weather",
+          "hint": "There is blue sky on top of every cloud",
+          "at": [
+            0.6,
+            0.42
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M953 309L970 309L979 316L983 324L984 338L990 351L1006 348L1034 349L1045 352L1050 358L1058 361L1064 367L1065 376L1069 381L1089 389L1112 388L1116 389L1119 393L1133 395L1132 401L1140 403L1139 407L1147 410L1143 415L1151 419L1154 428L1179 436L1193 437L1199 444L1209 444L1212 446L1275 444L1289 449L1292 445L1297 445L1298 443L1301 445L1317 444L1318 439L1323 439L1324 441L1329 439L1342 440L1346 445L1358 449L1360 455L1377 475L1393 484L1406 485L1402 489L1411 488L1415 496L1420 497L1425 503L1444 510L1448 516L1464 523L1467 529L1475 535L1480 547L1498 553L1501 567L1510 571L1511 576L1514 577L1512 582L1521 585L1518 591L1516 591L1515 587L1510 587L1508 590L1504 589L1504 587L1495 589L1492 584L1495 582L1503 583L1503 580L1495 580L1492 578L1492 573L1488 573L1486 576L1482 573L1477 573L1469 581L1474 585L1457 585L1460 583L1457 580L1450 588L1447 588L1449 590L1448 593L1441 592L1432 596L1429 587L1423 585L1423 577L1417 571L1412 570L1403 575L1405 577L1417 578L1411 580L1408 578L1402 579L1403 583L1408 583L1409 585L1403 587L1402 590L1398 590L1397 586L1393 586L1394 583L1398 582L1394 578L1396 573L1392 576L1388 575L1388 565L1384 560L1376 561L1373 559L1367 561L1364 558L1357 560L1346 557L1328 563L1324 561L1323 557L1319 557L1332 555L1337 558L1337 556L1343 555L1344 544L1340 540L1333 540L1333 538L1329 537L1325 541L1326 546L1319 545L1322 547L1321 551L1316 551L1315 554L1313 552L1306 552L1303 555L1303 549L1296 545L1296 541L1300 540L1298 534L1301 531L1299 530L1291 533L1291 536L1286 536L1282 533L1282 543L1284 541L1290 541L1291 543L1287 544L1286 547L1279 548L1278 551L1274 552L1274 555L1269 557L1264 557L1264 555L1254 551L1252 548L1249 548L1248 551L1243 551L1242 547L1238 544L1233 544L1233 541L1238 541L1241 537L1236 530L1226 532L1226 536L1200 531L1192 539L1205 541L1207 544L1212 541L1216 542L1216 545L1208 549L1210 554L1206 555L1205 558L1200 557L1200 554L1205 554L1205 552L1197 554L1193 544L1185 546L1188 543L1187 541L1179 544L1178 548L1174 548L1174 550L1169 550L1173 545L1163 547L1162 544L1154 542L1154 545L1149 545L1151 550L1142 548L1141 551L1135 551L1135 554L1140 555L1140 557L1136 558L1133 556L1133 559L1128 560L1129 564L1121 562L1119 565L1115 565L1108 559L1104 561L1094 559L1089 565L1078 566L1058 561L1044 572L1041 572L1035 566L1030 566L1028 570L1020 572L1019 570L1025 567L1021 564L1022 559L1015 560L1018 558L1017 555L1012 558L1004 555L1001 559L993 556L988 559L993 564L987 566L986 562L979 557L981 555L979 547L975 549L975 555L978 557L975 559L975 567L972 568L972 566L961 561L961 558L966 553L963 553L958 546L951 546L952 542L944 543L949 538L941 535L938 545L928 547L928 544L922 544L922 547L912 554L898 554L889 548L876 547L874 544L871 544L862 551L857 552L851 561L834 561L830 566L817 569L813 568L811 560L806 556L820 552L814 552L813 549L809 549L809 545L800 546L798 551L791 547L789 551L783 552L783 554L789 555L789 558L783 561L773 558L775 552L772 549L760 554L751 548L743 549L738 547L734 551L720 549L714 552L703 551L696 555L690 548L680 548L668 543L671 540L670 536L666 534L658 535L656 532L643 530L638 524L630 525L621 520L618 528L615 529L611 518L606 523L601 519L594 521L589 518L585 524L587 526L586 530L575 533L574 537L567 533L566 538L568 539L565 544L560 544L557 539L555 544L544 548L542 555L534 554L528 562L521 565L517 564L515 560L516 554L522 546L521 542L518 542L512 549L514 554L513 564L506 566L496 564L493 561L495 558L495 548L492 548L490 557L479 553L480 558L475 558L474 555L478 552L475 552L474 548L481 547L481 544L473 544L473 547L467 552L460 549L459 557L452 560L444 558L439 561L433 558L429 561L428 557L423 557L423 547L425 545L421 545L421 541L418 539L420 536L418 533L420 527L418 525L402 524L389 530L388 533L385 533L385 537L389 538L385 543L389 543L390 540L393 543L381 551L380 549L383 545L377 539L374 539L378 537L378 533L373 531L365 532L367 526L371 525L366 523L366 519L373 519L373 523L377 524L378 520L386 515L399 516L399 506L395 506L395 509L390 509L386 504L382 513L375 510L371 514L366 511L366 506L363 509L358 508L358 505L363 504L361 502L354 504L352 506L353 511L351 512L343 510L337 514L333 511L332 514L327 515L322 510L327 498L333 504L350 504L347 501L348 498L351 498L352 502L357 502L358 497L383 497L384 495L380 494L380 492L384 491L384 488L388 486L387 484L380 486L376 482L371 486L365 483L360 488L356 484L348 487L342 482L345 478L342 477L338 480L339 474L334 473L334 471L332 474L327 474L331 476L331 481L328 484L322 482L323 477L316 479L320 477L320 473L312 468L314 462L319 461L314 457L314 450L318 448L320 452L332 454L334 458L335 455L340 454L337 451L340 445L336 444L334 437L330 439L325 438L323 432L322 437L318 441L305 439L307 431L304 431L303 428L316 425L310 417L315 416L316 411L318 411L317 407L323 401L322 396L326 396L327 391L333 389L340 390L343 395L347 391L352 391L351 398L354 401L356 398L362 397L358 394L360 389L358 389L357 383L352 383L350 387L348 383L343 383L348 381L349 378L352 381L359 379L361 374L353 376L358 371L352 369L353 366L358 364L359 360L362 362L362 372L364 374L369 373L370 364L372 367L379 367L382 364L385 367L385 374L389 374L388 368L395 367L396 369L394 369L393 374L400 374L401 376L394 377L394 381L391 383L411 379L405 376L405 374L411 372L415 372L419 376L447 376L465 373L466 371L463 368L466 366L469 367L469 372L473 372L476 359L483 359L489 362L495 360L495 352L503 348L516 349L525 346L542 347L546 350L559 350L566 353L565 358L573 358L578 365L628 361L631 359L648 362L653 358L663 356L666 350L676 350L680 347L686 347L688 344L696 344L700 340L707 344L711 338L722 344L728 344L732 338L738 338L746 339L749 345L754 343L759 345L772 343L781 348L786 345L792 347L796 344L797 339L813 325L835 323L844 325L845 329L851 327L856 330L872 332L889 331L896 325L910 326L919 322L931 324L945 310Z"
+          },
+          "to": "aoraki",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-cloud-r2-2k.240dcddd8fe6c33eff2328632c562578f8f019703c7fde462bd0075222f2f900.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/cloud-wall-cloud-r2.2cbdc670f6918458ba33a0029cb87734f0dcc1f287b9825d80bd55c963a65e5e.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/cloud-wall-cloud-r2-2k.240dcddd8fe6c33eff2328632c562578f8f019703c7fde462bd0075222f2f900.rewind.a611cc3969dc23cd633935f4d97c228678bc3c0f8fb1960cf28256c6ac5353e7.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "hot-pool",
+      "title": "The Hot Pool",
+      "chapter": "Queenstown · Lake Wakatipu",
+      "caption": "Nobody is in a hurry to get out.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/hot-pool.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-loop-r1-2k.3062b5ed2dd6f50cbcc065d89851e13cfc8d83cafc3899eb99a5d8cf249b92ca.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-loop-r1.bf9c73fad4906be9b99464425adf08480a578043132f2ca71953daab0f986790.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/hot-pool-with-jen.c89ade9e96043eab70ba58a023d26d28c30621f183ce12903fd9581df717bf95.mp3",
+        "lines": [
+          {
+            "text": "A hot tub, a wall of glass, and the lake going grey in the mist.",
+            "speaker": "Mark",
+            "start": 0.368,
+            "end": 4.169
+          },
+          {
+            "text": "This is Queenstown, where our road trip north started.",
+            "speaker": "Mark",
+            "start": 4.862,
+            "end": 7.542
+          },
+          {
+            "text": "I’m never getting out of this tub.",
+            "speaker": "Jen",
+            "start": 8.22,
+            "end": 9.921
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "lake",
+          "label": "Hit the road",
+          "hint": "The lake road runs all the way to the mountains",
+          "at": [
+            0.6,
+            0.52
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M23 463L82 466L250 467L257 472L258 482L261 485L256 491L258 500L264 507L264 510L270 510L272 518L266 522L247 521L243 525L273 545L272 557L265 563L236 566L233 568L237 578L244 582L231 591L217 606L213 624L207 633L203 636L195 637L196 640L203 641L203 643L196 647L191 647L190 650L188 648L179 648L179 645L172 647L168 643L164 646L157 643L154 647L151 647L146 641L161 641L161 643L164 643L166 640L180 640L186 634L178 635L177 633L171 633L166 635L165 633L152 633L147 625L119 625L112 632L107 632L105 635L101 633L94 635L92 633L85 633L81 639L75 638L80 636L79 633L72 637L62 628L55 628L46 632L44 629L36 629L35 632L33 629L26 629L25 632L21 632L20 636L17 636L15 633L7 636L8 630L0 632L4 628L0 626L0 623L4 621L0 619L0 468L7 465ZM471 465L476 470L480 470L482 467L544 467L561 472L569 470L573 578L571 585L572 604L568 625L563 624L554 614L551 614L547 618L517 621L510 628L507 628L505 632L494 630L480 613L477 605L462 584L452 577L453 559L441 555L445 542L445 528L439 512L449 482L459 475L461 471L467 472ZM754 468L767 470L905 470L964 474L983 472L1002 474L1038 473L1085 476L1104 475L1129 479L1173 477L1183 479L1236 478L1239 480L1299 480L1302 478L1320 478L1324 480L1366 478L1532 480L1536 481L1536 596L1527 597L1526 594L1516 591L1497 593L1493 599L1494 603L1491 605L1457 605L1449 603L1391 605L1372 602L1362 604L1351 611L1345 612L1344 616L1339 619L1330 619L1321 612L1298 606L1289 617L1282 616L1274 621L1261 621L1253 613L1248 612L1246 608L1227 609L1219 605L1214 599L1195 592L1186 594L1178 604L1164 600L1145 609L1133 610L1129 614L1109 610L1090 610L1086 604L1063 605L1054 608L1022 611L1013 607L995 592L973 583L967 583L958 579L914 581L908 578L903 582L885 587L866 598L849 615L838 620L835 625L835 631L828 629L823 632L822 630L814 630L813 627L797 628L791 625L776 626L769 620L765 612L759 610L751 603L737 604L731 607L723 616L723 621L716 625L713 618L707 616L700 607L683 604L675 600L670 592L663 592L654 598L647 598L640 588L628 577L622 578L619 585L605 599L603 594L604 588L598 582L600 577L598 562L596 561L600 551L601 527L599 524L601 523L601 498L599 495L602 493L602 482L607 479L610 473L623 472L626 469L697 472Z"
+          },
+          "to": "red-car",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-lake-r2-2k.e4074d8226c48d350f8fc65f3ec6a2e7faec5aa164351a5a7e650093bd9cef28.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-lake-r2.2d46e123e9b3721ae0ca68d67832a3a8e22ee95982f06334fe41d7c4496d76f9.mp4",
+            "seconds": 15.083
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/hot-pool-lake-r2-2k.e4074d8226c48d350f8fc65f3ec6a2e7faec5aa164351a5a7e650093bd9cef28.rewind.0f0ca231e0414d3abd1099f8d9bb4500ebd98745dbdb66f940d977a2c2c4cc78.mp4",
+            "seconds": 15.083
+          }
+        },
+        {
+          "id": "water",
+          "label": "Duck under",
+          "hint": "From the hottest water to the coldest ice",
+          "at": [
+            0.3,
+            0.93
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1090 850L1191 858L1215 862L1219 865L1262 878L1312 879L1350 883L1393 892L1411 899L1477 903L1531 913L1536 915L1536 1024L1193 1024L1191 1021L1188 974L1172 934L1144 905L1115 892L1108 891L1108 883L1102 877L1107 875L1107 873L1103 872L1102 869L1091 867L1088 863ZM699 870L702 870L703 874L701 876L694 876L695 880L687 884L687 887L683 890L683 895L681 897L674 897L669 901L679 909L666 930L668 944L656 966L655 984L659 997L666 1004L669 1016L672 1018L670 1024L194 1024L191 1021L176 1021L174 1018L170 1021L161 1019L166 1015L182 1010L184 1007L195 1005L197 1001L213 995L220 989L253 977L259 972L277 967L290 959L314 953L338 941L450 905L479 900L542 897L559 893L588 891L615 884L639 881L642 878L671 876L684 872Z"
+          },
+          "to": "blue-ice",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-water-r1-2k.ca9ba63ba7e462abb6d8caa57d035d7e239444d381d59777ef32a0b7f9612ab4.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hot-pool-water-r1.d11ac8a2c7644a9a56503c6b931d7d730f87ce2dc431247d38b5e4e70de77ca7.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/hot-pool-water-r1-2k.ca9ba63ba7e462abb6d8caa57d035d7e239444d381d59777ef32a0b7f9612ab4.rewind.e5114afb8080095e39906a9e7024b354c0a0dc18c73da678b250d82a48d8d708.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "red-car",
+      "title": "The Road to Aoraki",
+      "chapter": "On the road to Aoraki",
+      "caption": "Somewhere in that cloud is a glacier with our name on it.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/red-car.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-loop-r1-2k.3ccb9c1c2585d3bd5c6a0dcc09cd39b7eb969b7827fb2319c7e6cdd459b726bd.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-loop-r1.b7f57298e2592245d3a308999b0f5c1c786e15990c2dca8090e1f4c4dcbd7cb1.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/red-car-with-jen.2392e5431a732b3ded26ac2c0715aa1799d5e39b5ee698760b2a5cf87a851f66.mp3",
+        "lines": [
+          {
+            "text": "The drive from Queenstown to Aoraki Mount Cook is dramatic.",
+            "speaker": "Mark",
+            "start": 0,
+            "end": 2.521
+          },
+          {
+            "text": "The whole valley gets swallowed up by mountains and cloud, and the Tasman Glacier is hiding right in the middle of it.",
+            "speaker": "Mark",
+            "start": 2.691,
+            "end": 8.386
+          },
+          {
+            "text": "I made him pull over for this one.",
+            "speaker": "Jen",
+            "start": 8.86,
+            "end": 10.694
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "camera",
+          "label": "Look through her lens",
+          "hint": "She is framing the tallest mountain in the country",
+          "at": [
+            0.17,
+            0.7
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M257 594L275 601L279 606L281 614L293 624L308 626L319 631L324 639L333 647L343 665L343 674L339 682L332 688L306 702L307 723L313 759L308 775L313 796L316 832L323 849L330 921L324 927L311 927L305 930L302 958L295 955L294 946L289 943L287 935L282 932L257 936L236 934L224 940L218 937L212 920L212 901L209 886L210 860L214 848L212 777L208 767L207 755L211 730L205 717L200 696L186 688L176 678L174 671L175 656L187 645L188 641L201 627L209 622L218 622L226 616L236 613L244 599Z"
+          },
+          "to": "aoraki",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-camera-r1-2k.8d44c53cb226ca57afa597f7fc27cd244a8ceba1272bf837841c2cbb3d024d41.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-camera-r1.df1d906d70c452c8b87d88cf792a594a17196bec0e0a8af6b0f5394e98247cd7.mp4",
+            "seconds": 8.708
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/red-car-camera-r1-2k.8d44c53cb226ca57afa597f7fc27cd244a8ceba1272bf837841c2cbb3d024d41.rewind.8e10deb681311df99c854a08bf03916a0eec6532d7e22a3d5f004d4da0638f3d.mp4",
+            "seconds": 8.708
+          }
+        },
+        {
+          "id": "car",
+          "label": "Drive on to the heli base",
+          "hint": "Somebody out there has an orange hat for you",
+          "at": [
+            0.84,
+            0.75
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1533 125L1536 125L1536 608L1526 613L1531 616L1530 624L1532 628L1521 630L1521 632L1530 634L1528 637L1518 637L1517 639L1518 635L1511 628L1515 624L1514 615L1510 612L1505 612L1504 615L1508 615L1509 619L1504 620L1502 623L1503 628L1499 628L1496 625L1493 629L1488 629L1485 624L1484 630L1486 632L1482 637L1483 644L1477 645L1479 653L1483 653L1485 658L1488 657L1489 653L1494 655L1493 658L1489 658L1489 661L1493 664L1491 666L1485 665L1484 671L1487 672L1489 667L1494 670L1489 673L1489 675L1493 676L1493 679L1490 681L1494 683L1494 687L1490 689L1495 691L1493 696L1496 700L1500 696L1504 698L1499 703L1502 704L1504 701L1509 701L1509 706L1503 708L1503 714L1497 716L1504 723L1502 727L1494 725L1494 729L1490 729L1488 734L1474 739L1467 746L1472 749L1474 754L1481 754L1482 758L1488 758L1490 762L1495 760L1504 762L1505 758L1508 758L1509 761L1505 762L1507 766L1503 767L1502 770L1500 768L1493 769L1499 776L1504 776L1502 779L1497 780L1504 783L1502 786L1498 786L1498 789L1502 790L1503 794L1502 796L1495 795L1492 800L1489 800L1489 803L1496 803L1502 806L1498 807L1495 815L1490 815L1490 819L1483 823L1482 828L1479 828L1476 824L1473 825L1473 840L1484 852L1482 857L1478 857L1476 853L1473 853L1472 856L1479 861L1486 858L1487 861L1493 861L1494 863L1474 863L1473 867L1476 873L1469 872L1469 875L1473 878L1476 878L1477 875L1486 876L1491 873L1488 871L1489 867L1492 867L1499 874L1503 874L1503 871L1510 871L1511 867L1514 867L1514 871L1511 872L1513 877L1506 876L1506 880L1512 884L1499 886L1502 898L1498 899L1497 903L1495 903L1494 899L1490 898L1493 895L1493 887L1488 882L1482 881L1479 884L1478 881L1474 881L1471 883L1474 888L1472 893L1473 913L1476 914L1477 920L1477 923L1474 923L1472 927L1476 932L1481 933L1478 938L1473 939L1473 943L1478 947L1477 952L1473 954L1474 966L1472 971L1474 980L1472 982L1472 998L1469 1000L1473 1003L1473 1006L1463 1009L1457 1015L1459 1019L1423 1022L1245 1021L1241 1022L1241 1024L1186 1024L1186 1022L1143 1021L1139 1019L1134 1021L1115 1019L1102 1021L1070 1019L1010 1021L998 1019L993 1013L993 989L998 973L996 958L998 926L1000 916L1003 913L999 908L1005 899L1004 892L1007 885L1005 879L1009 873L1008 862L1011 859L1010 854L1015 851L1021 837L1029 829L1029 825L1026 824L1026 815L1033 811L1032 791L1035 789L1036 776L1041 770L1038 767L1038 762L1045 759L1042 757L1042 750L1048 749L1046 746L1048 739L1054 735L1064 721L1074 716L1083 705L1098 697L1100 692L1107 690L1109 686L1120 682L1121 679L1116 677L1123 677L1127 673L1135 671L1139 667L1139 663L1150 655L1162 653L1161 649L1167 641L1170 639L1177 641L1183 639L1185 634L1193 633L1196 630L1203 630L1208 624L1209 610L1212 606L1224 603L1224 598L1228 596L1226 592L1235 589L1230 583L1218 582L1212 585L1209 582L1212 577L1220 580L1222 576L1232 570L1235 570L1236 573L1242 573L1251 568L1266 569L1268 559L1265 559L1263 555L1273 554L1278 546L1275 544L1274 537L1275 524L1280 515L1280 510L1286 503L1288 494L1294 486L1299 469L1309 460L1310 450L1317 443L1318 437L1323 434L1329 421L1333 418L1332 413L1342 396L1347 390L1351 389L1355 378L1364 369L1368 357L1372 354L1372 350L1379 344L1380 339L1389 329L1393 319L1402 309L1404 300L1415 290L1421 275L1432 264L1438 251L1453 231L1455 231L1457 222L1476 201L1479 192L1486 187L1490 179L1494 178L1500 164L1508 158L1508 155L1522 136L1530 131Z"
+          },
+          "to": "helipad",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-car-r8-2k.aa0afc5e0d6c35db3011bdcca9cbe57d25b3e08135106f7b81df7f33b12e95b2.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-car-r8.03105b47d94fe716ad1e93aee7759b1ee5e712f28c04f6d308961185d17762bb.mp4",
+            "seconds": 15.083
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/red-car-car-r8-2k.aa0afc5e0d6c35db3011bdcca9cbe57d25b3e08135106f7b81df7f33b12e95b2.rewind.ae1deb35a2b730728a5d3d28c2a728519627e92fcbaf44406bc4db9950eb2b71.mp4",
+            "seconds": 15.083
+          }
+        },
+        {
+          "id": "mirror",
+          "label": "Check the mirror",
+          "hint": "Keep an eye on the car around here",
+          "at": [
+            0.78,
+            0.46
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1226 403L1256 403L1263 405L1270 410L1276 428L1279 449L1280 485L1273 520L1273 534L1267 550L1262 552L1259 559L1254 562L1241 562L1195 554L1143 536L1129 526L1122 516L1116 500L1115 469L1117 456L1120 454L1122 445L1134 432L1139 428L1179 412L1211 405Z"
+          },
+          "to": null,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-kea-r2-2k.05b78d4cd47fe666a82a8232ae36d1b2ed5d16fde7e98ea5c01b21e54a203801.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/red-car-kea-r2.0b17f6764f0e047847fd5da64e14724d5470f7e1da2493afb263489f35d144de.mp4",
+            "seconds": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "aoraki",
+      "title": "Aoraki",
+      "chapter": "Aoraki / Mount Cook",
+      "caption": "The cloud piercer.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/aoraki.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-loop-r2-2k.71ab5792c949cb67f63e203f253d880890adaea8758d8b7710c2f4650bef50d3.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-loop-r2.884d7ba5a892f3d71b7367ab282505eee73adeceb921d76e3e850099c52236bd.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/aoraki.6f6825468af9118fcbb3c85383966eb372441adb78a65a571a6842276464d137.mp3",
+        "lines": [
+          {
+            "text": "That’s Aoraki, Mount Cook, the tallest mountain in Aotearoa, at 3,724 metres.",
+            "speaker": "Mark",
+            "start": 0,
+            "end": 7.068
+          },
+          {
+            "text": "Its name is usually translated as cloud piercer.",
+            "speaker": "Mark",
+            "start": 7.65,
+            "end": 9.981
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "cloud",
+          "label": "Drop through the cloud",
+          "hint": "The heli base is down in the valley",
+          "at": [
+            0.4,
+            0.32
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 132L37 135L85 146L119 147L125 149L153 149L170 146L192 156L213 161L236 164L260 164L278 167L296 174L314 173L323 178L340 181L353 187L401 195L434 210L472 206L504 193L532 193L541 190L553 190L572 184L591 184L610 188L657 192L675 179L704 174L761 173L793 183L803 183L806 181L841 182L849 184L877 199L889 201L902 210L916 211L916 214L921 215L916 226L904 230L896 237L894 242L896 250L902 253L910 262L930 268L947 268L958 274L986 282L998 288L1002 293L1011 295L1012 299L1020 306L1028 309L1032 315L1042 319L1052 317L1063 307L1075 305L1080 298L1090 293L1129 291L1137 287L1148 287L1162 291L1165 297L1169 298L1177 309L1190 315L1203 317L1222 311L1254 326L1271 327L1291 324L1293 326L1328 329L1336 325L1352 323L1357 319L1372 314L1384 314L1400 319L1411 319L1436 326L1441 322L1449 323L1462 320L1486 322L1499 327L1505 335L1515 334L1536 338L1536 491L1533 491L1528 498L1512 502L1502 508L1497 508L1496 511L1484 519L1460 524L1459 530L1447 532L1444 536L1432 532L1387 529L1376 529L1369 532L1330 532L1313 529L1305 524L1273 514L1263 508L1242 504L1206 506L1204 508L1187 510L1154 507L1145 503L1121 505L1081 503L1067 509L1072 514L1065 518L1046 519L1039 523L1031 520L1032 525L1026 531L1011 533L1005 531L995 535L951 538L951 543L940 545L933 549L915 553L907 552L905 554L897 552L901 557L892 556L881 559L840 558L834 560L828 556L826 558L818 557L817 559L775 562L772 564L767 562L752 564L703 562L679 565L673 563L664 564L660 561L646 561L644 563L620 562L606 558L598 560L556 559L553 557L534 558L531 555L527 555L526 552L517 554L516 552L508 553L496 550L441 550L434 553L433 551L426 550L406 552L403 548L392 548L384 545L377 547L347 547L319 543L278 543L281 538L262 535L260 530L255 529L252 522L219 520L217 518L197 519L196 517L189 520L174 515L162 515L162 510L154 507L146 508L139 503L124 504L119 502L113 504L89 497L70 497L67 495L62 497L24 495Z"
+          },
+          "to": "helipad",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-cloud-r1-2k.81e235c72c2eb3d0ca0b3e2bb24d70082c60f3a5efac93f6105afd933000ba2c.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-cloud-r1.b0f74f363c14561990c9098f9ba18e5b00199f59804c27ec606cad7c92d83428.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/aoraki-cloud-r1-2k.81e235c72c2eb3d0ca0b3e2bb24d70082c60f3a5efac93f6105afd933000ba2c.rewind.3ea695bbb82d2c409175635bc0261d5e2f40b9c027ab977d4ad008756fe5febd.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "peak",
+          "label": "Drop onto the glacier",
+          "hint": "Aoraki’s ice comes all the way down",
+          "at": [
+            0.82,
+            0.2
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1435 78L1442 80L1463 101L1475 101L1486 110L1492 111L1499 119L1517 132L1526 143L1536 148L1536 333L1517 334L1510 332L1486 319L1474 315L1452 320L1421 319L1405 316L1390 310L1372 311L1343 322L1325 320L1317 323L1299 324L1292 318L1291 314L1287 314L1271 319L1268 323L1259 323L1222 305L1213 305L1202 310L1181 308L1181 297L1165 290L1162 285L1150 287L1146 285L1132 285L1120 289L1083 291L1078 294L1075 301L1058 307L1048 316L1039 316L1017 299L1012 292L1005 290L996 283L994 280L996 271L983 274L972 272L965 268L956 269L949 264L925 264L914 260L904 250L899 248L899 246L912 240L914 236L930 230L944 230L957 226L1035 228L1048 221L1076 214L1100 188L1116 179L1133 180L1152 166L1160 152L1185 124L1186 119L1212 90L1216 92L1221 100L1234 108L1244 122L1251 123L1255 116L1264 112L1272 111L1283 116L1308 114L1314 111L1321 102L1338 97L1362 83L1392 93L1408 94L1418 89L1425 82Z"
+          },
+          "to": "glacier-poles",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-peak-r1-2k.8ab7d491f6116190a37b0b0c371729f45fd9bf9089eb675cc4db4fed734920ce.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/aoraki-peak-r1.6eac39a30da1625cab8919aecd8daa3c6da3c67deaed2c94c234b5a248db13b9.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/aoraki-peak-r1-2k.8ab7d491f6116190a37b0b0c371729f45fd9bf9089eb675cc4db4fed734920ce.rewind.0149328286a2e34f587f67c75ed9c410a6aa42911584c229ac5be298120dcd98.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "helipad",
+      "title": "The Heli Base",
+      "chapter": "Tasman Valley",
+      "caption": "We made the cut. Hold on to your hat.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/helipad.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/helipad-loop-r1-2k.7afeae0631a9a1a250f7892b8822e65b059693d945f732fd799850a9e54b1485.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/helipad-loop-r1.ff190f9dd345353b667077341b7fcd9743391b25ea0a3616e8c02bdf259ffe6e.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/helipad-with-jen.c1bff1cd92d8d45b06fdb30cb60f6d4022a0da78f77dbc5ef629c37f9130acf0.mp3",
+        "lines": [
+          {
+            "text": "Heli-hikes up here get called off at the last minute all the time.",
+            "speaker": "Mark",
+            "start": 0.306,
+            "end": 3.674
+          },
+          {
+            "text": "You don’t know until a few hours before whether the weather lets you fly.",
+            "speaker": "Mark",
+            "start": 4.156,
+            "end": 7.853
+          },
+          {
+            "text": "We made the cut.",
+            "speaker": "Mark",
+            "start": 8.167,
+            "end": 8.796
+          },
+          {
+            "text": "It’s freezing. Is my hat on straight?",
+            "speaker": "Jen",
+            "start": 9.34,
+            "end": 11.263
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "helicopter",
+          "label": "Take off",
+          "hint": "The glacier landing is ten minutes up the valley",
+          "at": [
+            0.41,
+            0.36
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M519 257L570 260L614 268L623 273L630 271L631 261L634 261L636 269L639 270L647 270L658 265L671 265L699 274L713 272L722 275L729 273L733 276L736 274L763 276L770 274L775 276L780 274L785 276L794 275L795 279L784 282L737 283L735 281L721 281L719 283L700 283L692 287L685 286L682 290L681 304L685 307L701 309L708 315L714 335L712 339L713 347L718 347L723 351L733 354L739 353L741 355L773 359L778 355L781 350L780 346L783 344L785 321L788 319L786 307L793 303L796 308L792 320L792 334L790 335L786 362L795 369L818 371L818 378L809 379L801 377L787 380L787 394L785 396L787 398L785 403L787 408L780 406L777 387L774 382L769 381L764 385L732 391L722 395L721 397L728 403L726 405L728 419L724 422L718 418L720 416L719 412L711 409L709 406L704 406L703 408L708 410L705 415L709 416L713 412L714 416L695 419L694 425L683 428L677 434L672 434L670 431L662 434L654 429L646 429L640 432L636 442L632 442L631 438L634 435L630 431L610 429L602 439L601 454L598 459L593 460L591 452L595 447L594 442L597 441L599 428L561 413L557 401L557 378L578 338L583 333L595 329L602 324L615 321L622 322L629 319L632 309L631 302L634 301L636 306L651 306L655 302L656 292L653 287L647 287L644 284L637 286L607 285L604 287L568 290L523 291L520 293L503 291L501 290L502 288L511 285L593 280L601 276L598 273L586 270L556 269L526 263L514 263L513 260Z"
+          },
+          "to": "glacier-poles",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/helipad-helicopter-r1-2k.005fde46eec75c76d635516bcc5428656b8934cc3ad191c7202524d0611c7844.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/helipad-helicopter-r1.5e75ccc89ab1adbd1b2812804daecd60cd365536fdcc49bf7f18e13e875b495d.mp4",
+            "seconds": 15.083
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/helipad-helicopter-r1-2k.005fde46eec75c76d635516bcc5428656b8934cc3ad191c7202524d0611c7844.rewind.c357480a4fbfecb53dcf08f98ac1e8bbf61e2eef0b652f03b959d40c3fa91ea8.mp4",
+            "seconds": 15.083
+          }
+        }
+      ]
+    },
+    {
+      "id": "glacier-poles",
+      "title": "On the Ice",
+      "chapter": "Tasman Glacier",
+      "caption": "Walk where the guide walks.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/glacier-poles.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-loop-r1-2k.f3eb2f645dda082239767189dea36b4e45bdf60d0e29d5e1f34b49f5537730fd.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-loop-r1.2b13d8bae889731bc5d4e433bc8812fd34e6649c6afb8176f4b091aeb4a7393b.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/glacier-poles.55be6ac5031d9d5ac81e2e4a8fcb79f2e5138ffd829bda7cb0eb069f7aa3691b.mp3",
+        "lines": [
+          {
+            "text": "It was our first time on a glacier with crampons and hiking poles.",
+            "speaker": "Mark",
+            "start": 0.19,
+            "end": 3.23
+          },
+          {
+            "text": "The Tasman is the longest glacier in New Zealand.",
+            "speaker": "Mark",
+            "start": 3.71,
+            "end": 5.8
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "her",
+          "label": "Ask her which way",
+          "hint": "She has been listening to the guide",
+          "at": [
+            0.66,
+            0.5
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M912 182L928 182L948 186L965 193L975 202L982 216L988 222L988 230L993 232L988 266L988 277L991 280L1012 283L1031 296L1058 294L1090 304L1100 315L1130 335L1135 348L1142 355L1149 368L1151 374L1150 388L1144 393L1134 408L1121 420L1105 428L1105 434L1116 456L1119 471L1129 497L1130 507L1135 514L1135 519L1144 539L1145 548L1151 563L1154 586L1163 609L1167 627L1183 654L1192 720L1198 738L1202 766L1219 778L1235 797L1249 823L1259 853L1265 879L1264 884L1252 892L1238 896L1236 899L1239 908L1252 906L1251 916L1244 923L1255 931L1256 934L1253 935L1253 940L1256 944L1267 948L1277 968L1276 982L1270 985L1264 992L1239 995L1229 990L1213 990L1202 983L1197 975L1196 942L1195 936L1192 935L1189 927L1189 920L1185 914L1180 913L1178 908L1171 903L1157 914L1159 934L1154 941L1147 943L1143 948L1135 950L1118 951L1114 948L1106 935L1106 916L1112 912L1114 907L1111 897L1115 886L1111 871L1100 861L1097 853L1093 851L1074 861L1063 841L1065 816L1059 809L1051 789L1037 772L1026 752L1023 741L1002 722L985 714L970 698L965 686L962 670L955 662L953 635L949 628L941 622L936 595L937 588L931 576L924 550L925 546L915 515L908 508L904 512L898 513L894 517L894 521L887 519L884 522L875 523L861 516L848 500L845 492L844 474L841 471L841 467L837 464L837 460L839 450L847 437L851 407L855 394L877 360L907 333L904 320L909 315L912 292L900 282L895 272L894 260L885 237L885 225L889 209L909 184Z"
+          },
+          "to": "that-way",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-her-r3-2k.66b01f26856a41d456152402d8ab1fa933c42f2139b0dfde4ab966b9a7cb85c3.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-her-r3.2db5e2e9bc5870135629fa2bd7e906542bdd5896fb72e87761e9a900cb6e0d47.mp4",
+            "seconds": 8
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/glacier-poles-her-r3-2k.66b01f26856a41d456152402d8ab1fa933c42f2139b0dfde4ab966b9a7cb85c3.rewind.6905835d9346b6c28b1f4bfa47fc399b05d2c3139145eb950c7043196d1b72bf.mp4",
+            "seconds": 8
+          }
+        },
+        {
+          "id": "crevasse",
+          "label": "Follow her into the ice cave",
+          "hint": "It glows blue inside",
+          "at": [
+            0.18,
+            0.8
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M102 728L112 730L120 737L117 745L119 756L127 755L132 757L136 755L144 759L141 762L143 765L140 769L141 771L153 771L156 769L162 772L167 770L174 771L176 766L180 766L191 777L192 784L202 796L202 801L205 805L217 807L222 804L226 807L232 807L238 813L242 804L253 799L259 799L256 797L256 794L270 791L271 795L264 800L265 806L260 811L254 811L253 809L253 816L261 814L270 823L270 828L281 829L285 832L298 832L304 829L306 825L312 824L319 825L325 823L336 825L341 824L346 819L356 821L358 818L367 815L370 811L380 818L398 822L405 829L410 829L413 832L416 830L425 831L434 827L446 827L447 829L454 830L478 828L481 831L485 831L488 826L477 826L473 823L474 819L470 819L471 823L469 824L464 824L462 821L454 821L452 824L449 824L443 820L447 814L452 813L451 809L457 809L456 805L479 797L490 805L490 813L494 816L492 821L495 823L494 826L490 827L497 828L503 834L505 832L513 833L513 840L519 838L516 833L536 829L541 819L545 819L547 816L553 817L554 815L572 819L572 823L577 830L574 833L575 840L573 845L566 845L572 842L566 836L551 837L546 844L539 845L538 848L533 849L529 848L535 845L533 843L517 844L513 850L517 856L509 861L503 854L500 857L502 869L497 871L494 877L488 878L481 884L472 887L461 888L454 885L451 886L451 891L450 886L445 884L443 879L433 878L433 876L426 875L425 873L418 874L412 869L408 861L404 863L376 862L352 872L326 889L314 892L302 899L295 899L292 902L280 904L271 909L250 910L242 908L238 913L231 913L222 906L219 906L218 903L215 903L211 908L206 904L192 907L178 906L174 913L149 914L147 913L149 907L143 906L147 900L142 896L138 896L136 901L141 904L141 907L132 909L140 909L141 912L139 914L132 914L130 907L127 905L127 899L119 894L125 892L143 893L147 888L147 880L143 879L142 876L140 879L135 879L140 884L130 889L128 883L129 876L126 876L121 867L114 865L105 855L105 844L102 842L102 837L96 827L97 822L93 820L95 816L91 815L90 810L87 810L90 804L81 801L83 793L81 793L77 777L72 777L74 772L66 766L68 763L66 761L68 748L64 747L63 740L68 737L85 738L96 730Z"
+          },
+          "to": "blue-ice",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-crevasse-r1-2k.27526a642f19f7f5bd79162d6524fbf3b3243e32ed4c5b4c43ffacc969e29380.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-poles-crevasse-r1.3bbd183ba8ac2d5829870b022bd99a60448e999dd427a4c374ba103e26dd211c.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/glacier-poles-crevasse-r1-2k.27526a642f19f7f5bd79162d6524fbf3b3243e32ed4c5b4c43ffacc969e29380.rewind.48b86ad04c14eda930f380e299d8c6665202304faa648447616ce2a82fc2fb75.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "that-way",
+      "title": "That Way",
+      "chapter": "Tasman Glacier",
+      "caption": "Trust her.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/that-way.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-loop-r1-2k.2da4e0bd455704be45ae7ee327486fcd2dc2859cf8553f6bed85c025346f4999.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-loop-r1.236ca4541490240949f16f1508f8a04c7bd6123878c0b5d26e6ea81d641ca44c.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/that-way-with-jen.25d0b547c4d2dd220f1c5972fb74ab20cb23f306da03afaca985c08aee917ceb.mp3",
+        "lines": [
+          {
+            "text": "It’s this way. Trust me!",
+            "speaker": "Jen",
+            "start": 0,
+            "end": 1.789
+          },
+          {
+            "text": "She knows exactly where she’s going.",
+            "speaker": "Mark",
+            "start": 2.589,
+            "end": 3.939
+          },
+          {
+            "text": "Trust her.",
+            "speaker": "Mark",
+            "start": 4.619,
+            "end": 4.979
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "her",
+          "label": "Follow her into the ice",
+          "hint": "She has found a cave",
+          "at": [
+            0.43,
+            0.4
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M669 139L683 139L697 145L732 173L733 177L752 189L766 203L789 237L803 274L804 327L802 344L799 351L801 355L822 353L823 355L820 358L827 361L821 364L820 372L814 377L808 375L812 371L804 369L804 366L807 364L800 364L801 368L797 370L800 379L789 392L787 399L773 415L767 427L758 433L754 445L762 454L764 465L768 469L770 476L776 479L779 486L788 492L788 514L805 528L817 531L818 533L835 532L860 538L884 539L891 546L893 552L917 558L931 569L961 583L968 591L1003 617L1010 632L1022 649L1029 652L1046 668L1058 674L1074 688L1084 692L1098 703L1125 734L1133 735L1135 738L1143 740L1156 758L1159 767L1170 778L1201 786L1229 801L1245 814L1250 815L1267 832L1284 844L1286 849L1295 858L1295 867L1299 870L1329 873L1336 871L1369 871L1379 874L1387 882L1389 889L1378 901L1341 904L1324 908L1330 923L1336 929L1339 948L1337 959L1334 962L1332 983L1323 1001L1313 1005L1304 1012L1295 1014L1249 1013L1248 1007L1250 1000L1254 998L1253 993L1242 990L1212 992L1176 986L1145 963L1122 965L1120 967L1106 965L1070 938L1043 928L1027 925L1006 909L987 898L982 892L973 888L957 874L946 870L941 864L934 861L931 851L921 839L921 834L915 831L914 860L919 894L919 935L916 944L918 1020L916 1022L898 1021L891 1022L891 1024L264 1024L262 1021L251 1021L243 1013L236 1014L233 1012L222 1021L204 1019L196 1022L177 1022L171 1019L174 972L177 962L181 959L177 954L177 940L185 920L185 904L181 895L179 860L177 847L171 834L171 825L186 785L207 755L211 751L221 749L219 742L221 737L233 737L236 735L235 731L231 731L232 728L238 728L232 726L235 717L240 714L248 693L256 680L263 674L266 667L286 641L329 611L359 585L366 582L367 579L389 564L410 557L423 550L451 543L465 537L464 513L461 511L462 505L473 501L473 496L486 486L488 480L505 479L507 476L513 475L508 473L508 467L512 465L515 452L525 441L530 427L536 426L539 418L536 395L528 387L528 378L522 372L522 354L525 348L523 338L527 321L530 313L535 311L538 295L542 289L539 274L539 251L542 248L541 242L548 222L553 217L556 208L563 202L569 192L579 185L581 179L602 167L636 157L652 147Z"
+          },
+          "to": "blue-ice",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-point-r1-2k.ee630aeef6ad3124491515b1b00c42f460c26bb4de3ca2e0c20d88dd7c258038.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-point-r1.31d24f77c75a595946512500ca09a16e67b8f0122e656eea2dc6ebc4740dffb5.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/that-way-point-r1-2k.ee630aeef6ad3124491515b1b00c42f460c26bb4de3ca2e0c20d88dd7c258038.rewind.41c6025bd062e86dac0497eba31d4237297855096745752ef4c0390540cac7c2.mp4",
+            "seconds": 10.125
+          }
+        },
+        {
+          "id": "finger",
+          "label": "Go where she points",
+          "hint": "Down the valley, over the river",
+          "at": [
+            0.85,
+            0.89
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1223 849L1246 855L1248 859L1252 860L1257 860L1261 857L1282 860L1295 867L1310 870L1339 871L1359 869L1377 872L1384 876L1390 885L1390 891L1387 895L1377 902L1365 905L1338 906L1330 908L1326 912L1326 917L1332 920L1334 927L1338 930L1341 949L1333 976L1331 992L1324 1000L1310 1005L1310 1008L1304 1012L1295 1013L1294 1015L1290 1013L1249 1012L1250 1010L1257 1010L1260 1007L1273 1004L1260 1002L1258 999L1254 999L1251 993L1240 992L1232 988L1218 989L1217 986L1208 984L1170 983L1168 978L1157 970L1155 962L1157 957L1155 955L1153 962L1148 962L1145 956L1138 955L1138 951L1135 948L1135 939L1137 937L1136 925L1138 923L1141 925L1140 930L1143 933L1142 938L1144 940L1155 938L1157 925L1153 922L1159 917L1155 901L1148 898L1147 890L1150 888L1155 895L1156 889L1159 886L1166 885L1168 877L1175 873L1180 862L1191 854Z"
+          },
+          "to": "hooker-valley",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-finger-r1-2k.20c6c6cd57de9bf74c9cd12275d2bb55e3a5279f6d28b6e0c8acaf91f74a2df6.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/that-way-finger-r1.cd8d897803bccb6f14b96c6c0ac7e8b0e7a857ae52173dd0b8360ed054d987ba.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/that-way-finger-r1-2k.20c6c6cd57de9bf74c9cd12275d2bb55e3a5279f6d28b6e0c8acaf91f74a2df6.rewind.5fe706ee9da1d222aa89b8d3b65422a0af03020067b3646c4fef4878ffcb68a7.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "blue-ice",
+      "title": "Blue Ice",
+      "chapter": "Tasman Glacier",
+      "caption": "The blue is the ice itself, packed so hard the air is squeezed out.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/blue-ice.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-loop-r1-2k.58245765b569e2c4fff65ada929d925e5229f186f07b41fed039508695d00693.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-loop-r1.8ed12cf211a478130c9edff51fc3e4c031a51b487a9b9dbbfe1281b3c9b73f07.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/blue-ice-with-jen.8be02597284cb1b30ce5ddeb6afce80e471440c3d76eb22cb12a84257fbd3a66.mp3",
+        "lines": [
+          {
+            "text": "The glacier has ice caves right on its surface.",
+            "speaker": "Mark",
+            "start": 0.289,
+            "end": 2.889
+          },
+          {
+            "text": "Inside, the ice glows turquoise, and that slit of daylight is the way out.",
+            "speaker": "Mark",
+            "start": 3.344,
+            "end": 8.48
+          },
+          {
+            "text": "Oh my gosh, look at this blue!",
+            "speaker": "Jen",
+            "start": 8.78,
+            "end": 10.511
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "light",
+          "label": "Climb toward the light",
+          "hint": "The others are waiting up top",
+          "at": [
+            0.44,
+            0.26
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M743 127L755 129L755 133L758 134L760 139L759 144L762 155L759 159L761 160L762 170L759 172L761 175L759 187L763 202L763 235L768 250L766 262L773 273L773 278L769 278L768 273L759 272L756 275L757 280L765 283L757 285L757 288L761 289L761 291L753 289L757 293L753 296L756 301L751 302L750 305L742 303L731 311L733 314L731 320L734 321L732 326L741 328L742 334L738 338L729 339L735 342L735 344L731 345L730 349L727 350L728 361L725 362L724 366L727 372L724 381L725 387L718 393L707 394L702 401L699 401L692 395L685 393L673 379L658 367L658 356L668 333L661 313L661 293L672 274L671 264L667 255L670 235L669 222L672 219L673 210L680 204L685 195L681 174L686 162L689 160L689 154L692 152L695 140L707 136L729 134Z"
+          },
+          "to": "glacier-walk",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-light-r1-2k.28944bf75f2f1422207f2affece563a5da5785ff49a4a91ecb62a42eda669d5b.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-light-r1.c4d8b4b715335b23ec9012c35ef3660becda57c20f571daefb4980230fb63653.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/blue-ice-light-r1-2k.28944bf75f2f1422207f2affece563a5da5785ff49a4a91ecb62a42eda669d5b.rewind.be6d2426b671b7e561f6e19de001c333a2f5cc2870cebee3b22ce9983757d1ef.mp4",
+            "seconds": 10.125
+          }
+        },
+        {
+          "id": "ice",
+          "label": "Warm your hands",
+          "hint": "You know exactly where to go",
+          "at": [
+            0.52,
+            0.68
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 0L1536 0L1536 1024L957 1024L950 1015L949 1004L945 1001L946 997L944 995L943 978L946 968L944 966L945 961L943 960L943 949L945 932L943 928L944 910L940 890L933 874L931 861L923 856L918 847L913 845L910 837L904 830L903 819L900 816L902 799L902 790L899 786L900 779L893 771L887 756L890 708L886 701L883 678L880 674L880 663L877 657L878 648L872 642L869 632L872 621L869 588L866 585L862 567L853 557L852 549L848 546L846 538L837 532L834 526L817 511L818 489L821 487L822 480L827 473L827 432L815 403L809 401L805 395L785 385L782 381L762 379L747 380L725 388L718 393L708 407L698 409L696 418L686 424L685 429L676 435L678 438L675 446L676 470L670 477L671 489L667 492L669 500L656 506L658 511L664 511L667 514L668 520L671 521L669 525L675 525L676 530L666 538L664 543L654 548L645 556L643 571L610 570L603 576L603 580L606 592L611 598L613 609L622 623L623 635L632 662L631 667L633 671L630 674L634 678L635 686L638 689L647 717L667 747L668 759L676 789L682 799L695 808L712 833L715 844L715 863L714 870L710 873L708 881L711 890L715 894L715 898L720 903L723 914L729 918L732 927L739 931L745 943L749 944L756 954L763 959L771 973L782 979L787 986L793 986L798 990L803 998L807 1000L808 1005L813 1004L820 1013L825 1015L824 1021L796 1018L788 1022L761 1022L761 1024Z"
+          },
+          "to": "hot-pool",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-wall-r1-2k.0511079701ceb4aa132b0f88ff9baf5784123a88cec4e2f537349f926f5cf0ea.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-ice-wall-r1.a1c856e8defb38cf4b8dc176543f37c7c798daba85fb0ddce7a06ed6e93e36e8.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/blue-ice-wall-r1-2k.0511079701ceb4aa132b0f88ff9baf5784123a88cec4e2f537349f926f5cf0ea.rewind.d5b5ff2653b57154c9bc19c313bd68ed62de13ca4cb44a5b9d5008c880c84847.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "glacier-walk",
+      "title": "Single File",
+      "chapter": "Tasman Glacier",
+      "caption": "Almost back to the helicopter.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/glacier-walk.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-loop-r1-2k.bcf778c7e8bbdf92b0ed96f6436097678eba6330eda955c7da8d5b5eccf0c4d2.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-loop-r1.0cb135a6c2b82c283080d5bc70a25f1e4f0f8d7e8358073208aa58f09fdc0c27.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/glacier-walk.d89357b613f5e10e19e3eca34c9486a91bea835b1003f1516d22804685c57f86.mp3",
+        "lines": [
+          {
+            "text": "Back across the ice in single file, poles tapping, all the way to the helicopter.",
+            "speaker": "Mark",
+            "start": 0,
+            "end": 4.576
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "ridge",
+          "label": "Over the ridge",
+          "hint": "The next valley is in late sun",
+          "at": [
+            0.9,
+            0.2
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1462 0L1536 0L1536 429L1533 429L1529 434L1516 431L1506 432L1507 428L1503 427L1502 423L1480 419L1438 420L1433 417L1420 419L1417 416L1410 419L1404 416L1401 418L1382 417L1382 419L1378 420L1373 410L1366 410L1366 415L1357 419L1354 416L1347 415L1351 410L1341 410L1346 415L1339 415L1338 412L1331 408L1326 410L1319 409L1316 405L1304 399L1273 397L1272 393L1267 390L1261 391L1258 386L1247 385L1242 371L1239 369L1239 361L1234 356L1233 345L1229 342L1226 332L1217 323L1206 300L1200 293L1195 291L1189 281L1171 270L1165 269L1165 258L1169 255L1169 251L1175 243L1193 235L1216 214L1234 205L1252 201L1284 186L1293 178L1306 174L1318 165L1327 162L1339 152L1347 149L1356 140L1387 120L1396 108L1402 88L1413 68L1444 39L1452 16Z"
+          },
+          "to": "hooker-valley",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-ridge-r1-2k.9fa6b3e9c2317986f8c6bf1e7987e54a57b5d525d0bd453fae33ee2ff0a1b69c.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-ridge-r1.5cb2ea6e7ec061abd1ebfe1f8d6d75717c248d2d076857536e4f583e985d9059.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/glacier-walk-ridge-r1-2k.9fa6b3e9c2317986f8c6bf1e7987e54a57b5d525d0bd453fae33ee2ff0a1b69c.rewind.cdeb2a345d4f89de92ab459f39294a7290acef622aafc771cdecbe512fe168f1.mp4",
+            "seconds": 12.25
+          }
+        },
+        {
+          "id": "beanie",
+          "label": "Swap hats",
+          "hint": "The orange one has done its job",
+          "at": [
+            0.71,
+            0.16
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1084 124L1095 124L1123 132L1138 151L1143 163L1139 219L1130 220L1124 213L1112 207L1096 203L1066 204L1050 211L1044 219L1038 216L1036 193L1042 180L1040 174L1042 162L1058 139L1067 135L1075 128Z"
+          },
+          "to": "blue-beanie",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-beanie-r2-2k.7b92b46ed2a9609116de39414d2145fa18c4b0112016c30d309eea4cbbf260a3.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/glacier-walk-beanie-r2.b14a36cb6a821c7b57b12b468895c2aefa6e9dacd9c5479fcacde1da819394c5.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/glacier-walk-beanie-r2-2k.7b92b46ed2a9609116de39414d2145fa18c4b0112016c30d309eea4cbbf260a3.rewind.e6f2fb4123fc02c2d061672f8c5c8b6ecf03ddfe83c0fdb549dc76ae282584ef.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "hooker-valley",
+      "title": "Hooker Valley",
+      "chapter": "Hooker Valley Track",
+      "caption": "One of the best short walks in the country.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/hooker-valley.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-valley-loop-r1-2k.c6e7122ec7366237831d3513243bc6cc37ec3961c01fa0605163c0d57f673a4f.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-valley-loop-r1.d293a569826f39b786855ebbcf4667661a1155d04175535fc065a24be609c39f.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/hooker-valley.c07815655f14b2cf7caee712064db1398c4c6af6b764a776929673c4011c1643.mp3",
+        "lines": [
+          {
+            "text": "Late sun on the Hooker Valley Track, and a glacial river the colour of milk.",
+            "speaker": "Mark",
+            "start": 0.232,
+            "end": 3.798
+          },
+          {
+            "text": "There are three swing bridges on the way to Hooker Lake.",
+            "speaker": "Mark",
+            "start": 4.6,
+            "end": 6.8
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "bridge",
+          "label": "Cross the swing bridge",
+          "hint": "There are three of them on the way to the lake",
+          "at": [
+            0.56,
+            0.62
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1035 530L1062 531L1065 544L1065 572L1067 575L1081 580L1079 583L1068 584L1065 591L1051 587L1009 607L999 609L965 627L929 639L926 643L915 645L899 654L882 659L881 661L875 661L852 672L832 676L830 679L821 682L815 689L809 690L809 693L807 693L806 689L799 689L779 699L762 701L751 705L745 722L741 721L735 714L727 715L721 711L713 710L707 704L700 709L700 703L696 702L697 684L694 681L694 673L699 667L699 622L701 619L708 617L724 620L743 620L747 637L744 646L746 652L748 652L747 657L753 659L752 668L757 671L771 670L789 662L792 655L800 654L800 650L792 645L790 636L785 634L788 634L790 630L795 629L797 626L816 618L829 616L840 620L838 625L841 627L840 632L842 636L839 639L849 637L860 626L863 626L863 628L859 629L858 632L866 633L867 635L866 631L873 632L873 630L870 629L870 625L865 625L865 623L876 625L877 628L888 628L890 621L887 618L888 616L900 616L903 618L914 616L913 612L908 612L905 608L901 611L895 611L895 609L903 605L910 608L912 604L921 601L922 603L917 604L918 608L924 608L925 605L933 608L951 607L961 599L961 595L967 590L976 593L1002 585L1007 577L1003 576L1001 572L996 572L997 568L1004 569L1009 575L1014 575L1028 569L1032 551L1032 537Z"
+          },
+          "to": "hooker-bridge",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-valley-bridge-r4-2k.27fe04a06e626f272e608a2d6d8f9ffb7e3e34b0fe6f352bca7e107b598c2a4c.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-valley-bridge-r4.81354df01dd629c7769e60737999535fbedde92efd8256e2014d01755a93b332.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/hooker-valley-bridge-r4-2k.27fe04a06e626f272e608a2d6d8f9ffb7e3e34b0fe6f352bca7e107b598c2a4c.rewind.add5759930ac5c69ed8e88f80cd9d2b0f2c98a5cd7a9d6ac1183d61701185374.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "hooker-bridge",
+      "title": "The Second Bridge",
+      "chapter": "Hooker Valley Track",
+      "caption": "Somebody is crossing.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/hooker-bridge.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-bridge-loop-r1-2k.fb34e970ff7d254fe603f426f81d16c50fbdfce8eabd45517d877ee5fdf88257.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-bridge-loop-r1.42e2b6128d5cefe077345a92f0d0b72f621a2d0cc0a874575068b1d1b240c037.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/hooker-bridge.fc547d52823df5e0dc0197a1063dce0ede454337e7c616ca31b0323a2a31c4c7.mp3",
+        "lines": [
+          {
+            "text": "Another long swing bridge across the gorge, with a snow face lit up behind it.",
+            "speaker": "Mark",
+            "start": 0,
+            "end": 3.816
+          },
+          {
+            "text": "Somebody is crossing.",
+            "speaker": "Mark",
+            "start": 4.294,
+            "end": 5.335
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "walker",
+          "label": "Meet her on the bridge",
+          "hint": "She is waiting in the middle",
+          "at": [
+            0.45,
+            0.68
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1202 583L1208 584L1213 590L1233 590L1259 594L1278 594L1284 591L1290 597L1287 607L1292 613L1288 617L1291 628L1282 631L1285 619L1281 615L1276 614L1274 621L1262 637L1262 644L1259 644L1257 650L1254 650L1252 645L1255 642L1256 634L1265 624L1266 612L1272 607L1270 603L1272 598L1218 596L1217 600L1220 602L1221 607L1226 610L1226 620L1230 622L1233 632L1238 635L1241 641L1240 644L1234 645L1230 642L1232 638L1223 629L1224 620L1222 616L1214 614L1214 609L1212 609L1213 614L1209 618L1201 615L1202 602L1200 598L1202 595L1200 591L1202 588L1199 585ZM336 641L348 644L387 645L391 647L405 647L408 641L408 646L418 651L429 648L438 653L446 651L452 655L457 650L459 656L464 658L487 660L493 658L516 658L525 662L547 662L562 667L584 669L591 672L594 677L602 674L610 679L632 680L646 689L655 689L656 692L651 698L651 703L663 708L673 703L670 698L677 694L705 694L714 697L733 698L742 700L750 705L782 709L791 713L797 708L803 708L810 715L836 716L848 720L849 726L846 728L841 742L850 746L855 742L852 723L854 721L861 723L865 738L864 746L869 748L869 753L866 754L869 760L860 761L855 760L852 756L837 756L834 752L823 749L809 741L781 743L760 737L754 738L750 735L718 730L708 725L658 717L655 713L577 700L563 692L550 694L516 686L503 687L466 681L455 677L445 677L440 674L408 670L394 665L334 659L331 656L327 656L326 652L330 652ZM876 729L890 729L893 734L899 733L901 734L900 740L905 740L906 735L910 733L915 734L919 741L926 737L928 742L933 743L935 747L942 743L946 754L944 760L947 777L950 772L959 774L965 770L967 758L964 751L969 748L971 751L970 772L978 776L984 776L984 781L977 779L966 785L964 783L938 780L926 772L917 774L916 772L909 773L908 771L903 771L900 766L904 766L908 762L907 751L902 749L907 745L905 742L892 742L890 744L892 749L889 756L889 765L882 764L880 761L874 760L879 756L876 751L880 747L880 744L875 742L875 738L872 735Z"
+          },
+          "to": "bridge-walk",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-bridge-walker-r2-2k.d04cb90a59f15bc4ba6344ee87da16b2d54fba08f0d6904f2504099696f9d0bd.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/hooker-bridge-walker-r2.3efcc51acef65504c895cb19a949f538bf0e2e18882a8a3c32bedbc28cc9b941.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/hooker-bridge-walker-r2-2k.d04cb90a59f15bc4ba6344ee87da16b2d54fba08f0d6904f2504099696f9d0bd.rewind.9cc6350b97bf1f9ecf57425d8af5155938783f716a90fa448756e377b3fdce8b.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "bridge-walk",
+      "title": "Halfway Across",
+      "chapter": "Hooker Valley Track",
+      "caption": "Do not look down. Actually, do.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/bridge-walk.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/bridge-walk-loop-r1-2k.cdf6a0739c798763fa843499929024f73eaff7066a8fb79a80fbfbc11dd463e0.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/bridge-walk-loop-r1.24dcef363f9626a2c757913c835227d7da20328b225e7a9e0c6b0c99895ce3f1.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/bridge-walk-with-jen.937e5919f6a9aefc193414efc1b9362e5d9b8e0eedad4c1fda859664d5346385.mp3",
+        "lines": [
+          {
+            "text": "The bridge sways a little underfoot. She doesn’t seem to mind.",
+            "speaker": "Mark",
+            "start": 0.314,
+            "end": 3.31
+          },
+          {
+            "text": "Don’t look down. Actually, do.",
+            "speaker": "Mark",
+            "start": 3.475,
+            "end": 4.937
+          },
+          {
+            "text": "It’s bouncing! Why is it bouncing?",
+            "speaker": "Jen",
+            "start": 5.58,
+            "end": 7.32
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "her",
+          "label": "Say hello",
+          "hint": "She has something to tell you",
+          "at": [
+            0.5,
+            0.55
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M759 360L775 365L784 372L789 385L787 389L789 401L783 409L780 422L785 427L803 431L810 435L826 454L846 491L847 506L852 513L853 523L857 531L855 536L861 542L857 563L855 619L852 624L843 627L846 644L852 657L858 681L858 696L851 700L822 706L823 731L820 766L814 774L808 777L809 791L802 791L797 795L784 795L780 790L780 784L775 781L774 776L776 773L773 768L771 740L765 750L762 763L749 767L741 778L730 778L722 772L722 762L726 756L727 727L722 722L720 714L716 679L716 649L712 641L710 643L696 643L693 639L694 626L691 622L690 603L683 589L679 574L678 556L682 550L679 534L684 515L695 496L699 477L712 449L723 441L736 436L745 425L745 417L733 415L732 407L735 400L736 382L749 364Z"
+          },
+          "to": "blue-beanie",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/bridge-walk-her-r4-2k.d51e56fdce5875c9d2c7233cd1433dd7c314692d3c66e4eef40fde53f022325b.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/bridge-walk-her-r4.4a002133a3840e867235aab959a39efd42d15c1eb2c60e9a65fd5d396cf2c2b1.mp4",
+            "seconds": 8
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/bridge-walk-her-r4-2k.d51e56fdce5875c9d2c7233cd1433dd7c314692d3c66e4eef40fde53f022325b.rewind.27a490550a47b07f9c320cfc6da74de737f5a935ad922fa31b9621e109d298e0.mp4",
+            "seconds": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "blue-beanie",
+      "title": "Hello",
+      "chapter": "Hooker Valley Track",
+      "caption": "She is very pleased with the view.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/blue-beanie.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-loop-r1-2k.4382bce711b6cd2f5b6f202e1649789d55c3783e61353b8d5a6118c0170cd9e4.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-loop-r1.df5b038164b7c7cafe8c569c494f0233f8cbc65b2ad4d9ea089a058e9f8a3054.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/blue-beanie-with-jen.90016b2e6b95a6add0377a68c8da5b7caa24e99d22e0a614e31f22eedacafb79.mp3",
+        "lines": [
+          {
+            "text": "Cold cheeks, a navy beanie, and a smile.",
+            "speaker": "Mark",
+            "start": 0.15,
+            "end": 2.23
+          },
+          {
+            "text": "She was very pleased with the view.",
+            "speaker": "Mark",
+            "start": 2.39,
+            "end": 4.05
+          },
+          {
+            "text": "Get the mountain in, not just my face!",
+            "speaker": "Jen",
+            "start": 4.78,
+            "end": 7.112
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "breath",
+          "label": "Fog up the lens",
+          "hint": "It is cold up here. Wipe it and see.",
+          "at": [
+            0.72,
+            0.64
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M1063 257L1108 257L1161 264L1204 276L1263 302L1306 330L1339 361L1340 365L1348 373L1351 382L1360 389L1361 394L1370 403L1371 410L1380 417L1384 429L1388 432L1399 455L1404 460L1404 465L1410 474L1410 479L1418 492L1418 496L1424 502L1430 517L1431 528L1434 531L1434 539L1438 548L1437 554L1440 555L1445 577L1447 624L1445 627L1445 653L1441 679L1442 699L1445 700L1449 710L1457 716L1454 721L1459 723L1458 728L1462 733L1462 738L1468 743L1469 749L1474 755L1475 763L1480 765L1487 794L1491 801L1491 806L1494 808L1494 824L1497 826L1496 829L1491 830L1485 835L1483 832L1479 832L1476 828L1472 827L1476 824L1474 821L1466 825L1457 834L1459 841L1463 844L1463 856L1467 866L1465 877L1461 879L1461 882L1465 884L1461 884L1460 888L1453 890L1455 902L1451 904L1451 907L1456 916L1451 918L1452 923L1446 928L1447 943L1442 950L1443 956L1437 962L1435 972L1431 975L1431 987L1425 990L1415 1007L1410 1008L1412 1012L1401 1012L1401 1007L1386 1007L1383 1008L1384 1012L1375 1012L1356 1019L1347 1015L1341 1016L1315 1012L1315 1008L1312 1007L1287 1005L1266 1024L811 1024L811 1022L772 1020L678 1021L676 1017L681 1016L690 1008L697 1007L704 1000L716 997L722 992L727 991L734 979L745 973L757 958L770 953L779 943L795 937L802 928L806 928L811 924L808 918L794 912L793 908L786 904L778 893L768 886L766 881L755 871L747 867L726 870L718 866L711 856L705 835L694 815L696 808L692 808L691 805L689 808L683 808L680 798L681 764L686 753L688 733L691 730L691 723L696 715L696 706L703 703L703 698L707 696L704 693L703 684L709 682L716 674L723 672L725 668L728 668L730 664L733 664L738 659L738 648L741 646L744 636L751 631L750 616L752 609L748 605L748 601L752 596L752 588L758 571L757 567L762 556L763 545L765 544L763 539L765 524L771 521L769 517L772 514L771 506L776 486L787 461L787 451L793 443L794 433L806 404L817 389L818 384L824 379L826 372L839 361L847 348L865 332L898 309L957 280L962 280L1000 266L1029 260Z"
+          },
+          "to": "green-hills",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-breath-r1-2k.c84aa3435616e48594eaf191e0d881a9b6b12cdcf6dd587808435a4b69cbedc8.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-breath-r1.ab0973f600e2683fa06110a59d8f723618df1f3800d94b1643b75f55b5734ae2.mp4",
+            "seconds": 8.708
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/blue-beanie-breath-r1-2k.c84aa3435616e48594eaf191e0d881a9b6b12cdcf6dd587808435a4b69cbedc8.rewind.59511b1b98501fa2e8e2fcc5f82e1b50e2e00d79e7be9e9aacc5b0a576548cf7.mp4",
+            "seconds": 8.708
+          }
+        },
+        {
+          "id": "mountain",
+          "label": "Look past her at the mountain",
+          "hint": "It is hard to say which view is better",
+          "at": [
+            0.38,
+            0.26
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 41L10 43L11 47L17 47L19 43L18 48L24 52L41 53L41 63L45 71L63 73L62 79L67 88L51 85L48 93L44 95L47 95L51 101L48 103L49 107L55 107L58 104L58 100L53 99L53 97L61 94L75 102L80 102L80 100L75 99L77 96L83 99L84 102L76 109L83 109L87 112L87 116L83 118L87 122L87 127L82 132L82 135L89 148L96 149L101 147L101 149L106 149L107 147L103 143L110 143L111 150L126 152L129 156L137 158L135 162L146 157L152 159L154 162L151 164L151 171L159 171L161 167L168 166L174 172L173 177L175 178L182 178L182 175L185 174L186 179L184 180L190 180L192 183L187 187L195 190L193 198L185 201L187 204L185 208L188 209L189 213L191 212L190 206L194 201L199 206L207 203L209 207L217 206L219 209L222 209L223 204L228 201L232 206L238 208L250 205L277 215L299 216L307 215L307 211L323 211L332 207L350 207L352 205L382 200L398 193L428 187L445 176L458 173L465 165L478 161L483 157L488 157L494 152L499 151L501 147L510 146L515 139L520 137L526 127L546 116L563 114L589 105L654 101L680 113L690 125L698 129L718 159L727 164L757 171L776 186L791 190L792 193L796 191L804 192L811 188L819 187L816 183L844 173L863 174L872 181L884 185L887 183L894 184L905 175L923 172L930 168L975 168L979 170L983 166L989 166L993 161L1015 157L1028 157L1039 154L1064 155L1080 150L1101 151L1116 160L1148 188L1155 191L1175 212L1191 219L1231 217L1233 219L1273 220L1275 223L1287 229L1296 230L1298 233L1314 223L1339 222L1355 225L1357 229L1363 229L1362 233L1369 232L1371 236L1385 236L1387 239L1385 244L1380 241L1374 242L1374 244L1366 243L1370 247L1365 248L1362 246L1360 252L1364 253L1369 261L1366 263L1367 274L1369 275L1367 283L1375 284L1376 288L1381 288L1383 284L1386 286L1382 293L1379 294L1384 294L1387 302L1391 304L1389 307L1390 311L1388 316L1382 318L1386 321L1385 323L1377 321L1370 325L1368 330L1358 329L1358 333L1355 330L1346 332L1343 329L1328 329L1326 326L1317 329L1316 325L1294 317L1288 309L1282 309L1260 295L1250 292L1223 277L1202 272L1195 267L1180 262L1148 259L1132 254L1115 254L1107 251L1063 251L1038 254L999 261L976 268L909 297L905 302L894 306L887 310L884 315L874 319L857 335L852 336L824 367L821 375L803 393L800 403L787 421L787 428L784 430L781 438L782 443L776 449L770 449L772 454L763 460L759 467L760 473L752 477L741 476L733 478L733 480L727 481L731 486L721 486L712 494L699 496L703 499L703 502L696 501L692 504L692 508L695 510L692 512L692 515L689 514L685 506L676 510L678 514L674 515L670 522L653 523L653 528L658 528L656 532L671 532L673 537L681 541L681 543L673 545L664 544L661 540L643 540L639 547L642 560L645 560L643 559L645 555L662 553L661 549L664 547L674 548L673 552L668 552L674 555L672 559L667 560L660 566L652 563L649 566L643 566L643 568L660 568L671 571L659 574L647 572L644 574L643 579L640 573L618 573L610 574L606 577L589 578L586 581L587 589L578 590L574 586L561 585L548 578L536 565L517 557L518 552L503 543L501 536L482 521L479 511L471 500L473 495L469 493L469 487L464 483L463 478L453 465L455 460L451 459L451 453L434 443L430 443L433 439L419 430L417 424L410 417L398 414L398 410L390 404L378 401L376 396L370 395L365 390L352 387L342 375L333 373L326 365L314 362L304 353L288 347L287 343L280 337L281 332L276 330L265 317L265 314L247 301L248 296L242 290L242 286L237 281L232 281L232 279L228 278L219 269L221 264L218 264L216 260L204 253L202 243L198 242L198 244L194 245L193 242L196 239L188 240L189 236L194 234L191 229L186 229L186 234L184 235L181 233L183 231L182 228L172 230L175 225L165 228L154 227L149 223L150 218L147 214L113 212L119 209L115 202L108 203L106 200L92 198L96 195L95 186L92 185L91 188L86 188L85 185L80 184L85 177L84 173L68 169L78 166L75 161L79 158L74 156L74 154L79 151L77 147L81 147L80 142L75 141L80 136L72 135L66 141L63 138L64 133L61 129L54 129L58 133L56 135L45 135L38 128L32 126L35 122L29 122L27 128L23 129L24 134L17 132L11 136L13 142L11 144L12 149L9 152L12 155L5 157L4 154Z"
+          },
+          "to": "aoraki",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-mountain-r2-2k.ab15f1d94d8c108b5d6f9ecf2307b812d939cdf4be950132c3463bb77e021c6f.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/blue-beanie-mountain-r2.578d0887935cf0c55d36ed6dc8d33479f05a57fc23b073f624912800ab92db4a.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/blue-beanie-mountain-r2-2k.ab15f1d94d8c108b5d6f9ecf2307b812d939cdf4be950132c3463bb77e021c6f.rewind.830f6a5c3e8fd73d29145d0f85f1d3877bd69710bfe32df82e064b813dbf86d4.mp4",
+            "seconds": 10.125
+          }
+        }
+      ]
+    },
+    {
+      "id": "green-hills",
+      "title": "Sheep Country",
+      "chapter": "Waikato",
+      "caption": "Aotearoa: the land of the long white cloud.",
+      "still": "https://worlds.sogni.ai/the-long-white-cloud/green-hills.jpg",
+      "loop": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-loop-r3-sound1-r1-2k.3508d079ba4a55d9c7a5694e36d1389c00ce9dcfab4380f0dfc984d2940a74ea.mp4",
+        "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-loop-r3-sound1-r1.6edbb3ed5fe629f5a43575e9abb7f3e1c356d19b5b5f0a2ed32f8f2dcfc05166.mp4",
+        "seconds": 8
+      },
+      "narration": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/narration/green-hills.7233494a8181a6e508107d4909d3a317671ef3a94eacf94bb2f34934f733455a.mp3",
+        "lines": [
+          {
+            "text": "Out here it’s rolling green farmland in every direction.",
+            "speaker": "Mark",
+            "start": 0.609,
+            "end": 3.207
+          },
+          {
+            "text": "New Zealand has about five sheep for every person, and I think most of them live right here.",
+            "speaker": "Mark",
+            "start": 3.796,
+            "end": 7.84
+          }
+        ]
+      },
+      "hotspots": [
+        {
+          "id": "sheep",
+          "label": "Follow the sheep",
+          "hint": "They know a shortcut into the Shire",
+          "at": [
+            0.48,
+            0.62
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M646 291L652 293L656 302L656 309L646 309L640 311L638 315L631 315L635 312L633 309L626 310L623 308L624 303L622 300L626 297L634 298L640 293ZM604 298L617 298L620 301L615 303L612 308L606 306L592 308L591 302ZM514 304L521 306L532 305L534 307L532 311L528 312L532 314L531 319L533 322L540 325L537 330L519 331L520 337L516 339L516 342L514 342L513 338L507 336L508 332L505 330L498 331L494 339L490 335L483 333L491 327L506 328L509 323L506 314L510 312L509 307ZM592 317L597 317L601 320L602 331L606 335L606 337L597 339L597 341L603 344L592 355L592 359L604 365L585 365L588 362L586 360L580 361L582 365L573 364L570 362L572 358L571 350L575 346L569 343L562 344L560 332L564 329L567 334L570 334L575 328L583 326L586 319ZM700 317L717 322L713 323L713 329L707 329L705 325L698 323L693 323L690 329L689 325L685 324L684 321ZM405 324L411 324L416 328L412 337L410 339L404 337L394 338L393 340L401 344L407 340L420 342L422 341L422 333L429 332L432 334L432 337L427 347L433 350L432 355L435 359L423 360L419 358L421 356L419 347L408 350L407 353L401 353L402 358L399 361L402 363L402 366L398 368L393 367L391 362L390 369L384 370L381 376L384 376L386 380L403 383L406 379L405 375L409 374L419 378L409 380L410 384L417 385L426 382L427 377L431 375L450 376L450 378L470 378L475 376L471 370L475 366L483 365L486 362L490 362L492 368L496 372L501 373L502 376L505 376L506 379L502 380L500 376L496 377L495 379L500 380L501 383L496 384L494 388L490 388L488 384L483 384L478 379L459 381L457 383L460 384L460 387L455 388L453 393L442 392L445 400L441 410L437 408L437 393L420 389L413 389L409 396L400 396L402 404L398 409L386 403L383 397L375 394L363 396L363 400L370 404L361 408L355 407L351 402L343 402L342 400L345 398L354 400L358 398L355 394L343 395L339 393L338 389L345 386L342 380L343 375L354 382L356 389L366 387L367 391L374 391L373 380L368 370L370 355L371 364L375 367L378 367L382 362L388 361L388 353L378 351L387 344L387 339L379 335L381 325L389 328L387 333L391 336L396 333L395 328ZM652 327L654 327L654 331L662 332L665 337L661 339L661 344L655 351L646 353L649 358L642 358L635 352L625 353L620 351L616 353L613 351L612 343L618 341L620 336L638 337L642 333L654 333L650 330ZM839 328L840 333L844 336L843 340L847 344L837 345L835 344L837 339L825 337L825 335L829 335L834 330ZM1197 332L1202 339L1213 341L1220 341L1221 335L1230 332L1233 344L1220 347L1224 350L1230 350L1233 345L1241 345L1243 349L1251 354L1251 358L1246 363L1239 363L1238 365L1246 365L1254 372L1245 374L1240 380L1230 382L1231 386L1228 386L1229 382L1225 380L1215 379L1218 373L1225 372L1221 367L1211 370L1210 379L1200 379L1197 377L1193 380L1168 381L1166 373L1153 372L1168 369L1178 371L1181 368L1192 370L1194 361L1186 361L1190 357L1185 352L1180 351L1177 339L1169 335L1175 333L1194 335ZM1132 335L1138 338L1147 338L1149 341L1153 336L1157 336L1161 338L1163 344L1156 351L1149 345L1144 353L1139 350L1128 352L1122 347L1121 342L1122 340L1128 341L1129 338L1127 336ZM914 338L919 338L922 342L921 351L917 353L910 352L910 346L901 344L903 341L912 341ZM1079 344L1087 345L1093 351L1084 355L1075 351ZM518 345L535 347L540 349L540 352L534 355L521 351L520 348L515 347ZM706 345L731 345L737 350L746 349L749 351L737 351L734 354L730 352L718 353L719 358L709 358L708 356L702 357L702 359L688 358L699 357L700 347ZM859 350L865 350L871 357L874 357L863 360L868 372L862 376L860 376L861 360L856 354ZM1286 353L1310 353L1321 358L1347 359L1354 364L1354 369L1359 372L1354 375L1350 375L1347 372L1342 376L1335 374L1331 380L1318 381L1313 379L1311 381L1304 381L1301 379L1303 366L1298 366L1295 361L1292 361L1287 366L1279 358ZM321 356L324 356L327 361L332 357L340 359L340 365L335 367L322 366L319 361ZM1083 359L1090 360L1089 368L1092 368L1094 361L1108 360L1113 364L1121 359L1141 360L1147 371L1146 373L1135 374L1134 380L1127 380L1127 375L1121 375L1119 378L1110 381L1115 386L1117 392L1128 394L1127 400L1132 404L1137 399L1153 397L1169 397L1171 399L1176 390L1183 397L1187 398L1188 401L1176 409L1167 409L1164 413L1167 417L1166 420L1149 423L1145 435L1135 431L1132 431L1129 435L1119 431L1107 431L1106 443L1095 445L1093 443L1094 432L1088 429L1088 425L1092 417L1100 416L1101 413L1107 415L1107 413L1104 413L1104 403L1106 401L1113 402L1114 397L1111 396L1106 399L1100 396L1097 400L1094 400L1095 396L1087 393L1085 389L1080 394L1079 384L1084 384L1085 388L1087 384L1087 380L1078 379L1079 373L1077 371L1079 367L1077 364ZM1270 367L1274 367L1274 375L1280 378L1280 382L1283 382L1287 376L1290 376L1292 378L1290 388L1303 389L1303 391L1300 394L1296 394L1291 391L1281 392L1274 388L1266 387L1269 383L1269 374L1266 371ZM562 369L572 378L570 386L573 389L577 386L575 378L582 377L587 382L590 382L593 372L601 372L603 382L606 385L606 389L601 392L602 401L599 402L594 398L588 401L574 402L573 407L569 409L562 406L549 410L555 413L569 412L574 421L565 423L564 429L559 431L536 435L537 440L530 439L528 442L529 446L526 448L520 448L518 445L515 425L521 425L530 430L536 429L539 426L537 423L539 410L533 408L526 410L496 408L494 411L499 415L496 419L492 419L493 407L485 405L486 414L483 419L467 415L474 408L475 403L506 403L521 398L523 395L524 378L518 377L518 374L523 374L525 377L537 375L541 382L548 382L551 387L558 387L558 378L562 376ZM148 370L158 372L161 375L161 379L153 382L144 382L144 374ZM1364 371L1386 371L1385 379L1381 380L1380 384L1372 386L1368 383L1367 378L1370 381L1375 381L1377 378L1372 374ZM706 375L715 378L713 383L707 387L704 385L709 382L700 380L700 378ZM648 384L653 388L666 387L675 389L677 394L665 401L654 401L647 391ZM791 385L806 389L805 393L791 395L786 391L781 400L775 401L773 398L774 391L771 389ZM1308 385L1311 386L1312 392L1316 395L1321 395L1324 391L1328 392L1329 408L1317 409L1312 418L1293 415L1302 411L1301 404L1306 394L1304 389ZM711 396L720 399L719 407L712 407L708 404ZM1223 406L1229 407L1227 408L1226 415L1218 417L1215 415L1215 412ZM353 411L358 413L357 418L361 420L363 428L357 429L355 424L349 423L353 419L350 413ZM653 414L657 429L654 431L640 429L645 425L644 420L651 418ZM1181 431L1186 436L1191 431L1199 431L1202 435L1206 435L1200 438L1201 443L1203 444L1208 437L1213 449L1206 457L1206 466L1210 472L1201 473L1194 480L1189 479L1187 472L1181 472L1181 470L1188 468L1191 459L1191 452L1186 450L1186 441L1177 436ZM1169 435L1174 435L1171 445L1173 450L1165 451L1165 458L1153 462L1149 458L1149 449L1152 451L1161 450L1163 445L1167 443ZM826 440L835 442L831 445L831 452L835 457L823 456L823 448L825 446L821 442ZM1085 441L1087 442L1087 458L1098 460L1087 466L1084 466L1081 458L1074 457L1074 447L1081 454ZM1249 445L1253 449L1254 459L1252 461L1246 460L1249 454L1247 450ZM1266 452L1270 453L1271 458L1269 464L1263 466L1262 469L1266 473L1273 470L1278 478L1266 480L1264 486L1259 489L1260 493L1245 502L1233 501L1224 503L1219 509L1213 507L1210 502L1200 502L1199 499L1205 496L1204 492L1207 491L1215 497L1232 498L1234 489L1237 489L1240 495L1241 489L1255 483L1255 472L1250 472L1249 466L1253 465L1254 462L1261 461L1261 457ZM454 457L460 457L473 463L479 463L484 460L493 465L488 470L487 475L464 482L458 479L459 474L456 470L459 467L449 466L445 463L445 460ZM1334 459L1337 459L1342 464L1337 473L1330 472ZM34 468L41 469L43 473L41 483L34 483L32 480L30 472ZM770 471L774 474L772 487L765 484L765 474ZM1079 475L1084 477L1082 481L1084 502L1086 503L1089 498L1092 498L1098 504L1098 507L1089 507L1083 510L1084 519L1082 521L1092 522L1094 519L1098 519L1099 525L1093 530L1085 531L1081 528L1070 527L1063 528L1058 532L1055 529L1054 523L1049 524L1049 526L1041 524L1038 515L1036 515L1037 511L1041 509L1054 509L1056 513L1059 513L1063 508L1063 503L1071 500L1075 493ZM1160 483L1166 483L1170 489L1175 489L1174 485L1178 485L1176 488L1177 495L1170 497L1171 500L1180 501L1185 510L1183 517L1177 511L1166 513L1162 517L1166 519L1166 522L1160 524L1155 521L1158 516L1158 510L1155 506L1154 498L1138 499L1105 493L1106 491L1118 490L1121 487L1134 487L1138 493L1145 493L1149 488L1156 489ZM1282 492L1292 494L1296 500L1282 500ZM1125 502L1129 502L1129 504L1125 505L1120 521L1116 522L1113 506ZM582 505L592 506L582 520L590 527L590 532L583 530L577 533L572 525L572 513L573 511L581 512L580 506ZM1191 507L1210 508L1210 518L1213 520L1213 523L1205 521L1206 516L1204 513L1197 520L1189 512ZM1012 530L1028 530L1027 542L1023 545L1015 544L1010 547L1009 533ZM1197 530L1206 531L1208 543L1186 544L1186 541L1193 540ZM1037 542L1039 550L1038 561L1046 563L1046 571L1041 579L1025 580L1024 577L1027 577L1030 569L1034 567L1034 562L1030 560L1031 546ZM594 543L598 545L606 543L609 545L609 548L604 552L599 547L598 551L594 552L592 548ZM642 548L646 558L643 565L637 566L632 561L631 556L634 556L634 560L638 560ZM1010 552L1014 556L1023 555L1024 557L1019 559L1017 565L1010 565L1008 562ZM562 554L567 555L568 558L576 562L576 567L581 570L581 580L574 577L570 579L564 578L565 569L569 562L567 562L566 558L562 558ZM971 554L975 555L974 564L977 573L970 578L957 579L961 575L958 569L964 568L965 559ZM1094 556L1097 556L1104 566L1104 568L1097 570L1103 579L1094 579L1091 584L1092 589L1089 589L1090 583L1083 581L1079 581L1076 586L1073 586L1071 574L1076 571L1085 570L1072 569L1070 567L1070 560ZM599 568L604 570L599 573L602 575L601 579L585 581L585 576L589 574L590 570ZM19 655L27 656L31 662L30 670L25 674L17 671L16 659ZM770 656L772 656L771 660L774 663L771 671L760 670L759 664L765 663ZM811 657L824 658L825 662L824 664L818 662L817 668L809 669L807 665ZM510 669L522 670L526 675L518 680L504 679L503 677ZM805 672L815 674L816 683L814 690L806 693L797 693L785 687L784 677L801 676L802 673ZM1101 680L1105 683L1106 687L1109 683L1116 685L1112 690L1106 689L1103 693L1100 693L1096 683ZM594 686L610 688L607 691L598 691L598 696L606 696L608 698L606 701L595 706L573 706L579 705L582 698L591 696L591 691ZM758 686L773 687L774 693L778 695L779 703L782 704L781 707L777 707L778 713L786 718L793 717L800 721L801 724L799 726L796 726L793 722L786 724L784 721L777 719L766 723L755 723L763 727L764 737L751 736L752 742L746 745L738 742L737 746L743 747L741 757L737 757L737 751L731 750L730 747L725 747L723 750L717 749L723 747L733 736L751 735L752 723L749 720L754 717L763 717L758 715L757 711L752 706L749 706L741 696L733 696L739 692L745 692L749 688ZM1069 689L1074 694L1081 695L1079 697L1083 705L1079 709L1083 712L1081 715L1071 716L1073 708L1068 702L1073 698L1069 697L1067 692ZM1042 691L1055 691L1058 706L1051 706L1050 704L1032 706L1029 703L1031 698ZM471 695L479 696L486 701L484 706L467 708L470 724L475 729L488 733L488 735L481 735L478 742L468 732L461 730L457 736L454 732L454 728L459 724L458 712L461 710L459 700L461 697L469 698ZM884 698L890 698L892 702L892 710L889 714L882 714L879 711L880 703ZM47 699L54 700L59 705L56 721L51 720L47 714L39 712L33 707L34 703ZM728 699L734 699L743 705L745 714L740 716L728 714L725 706ZM520 700L534 704L534 710L530 712L519 708L517 703ZM903 702L910 703L917 710L910 713ZM919 711L924 712L924 717L920 720L904 722L895 717L916 715ZM621 714L625 716L625 720L622 722L621 735L626 737L628 745L623 750L615 748L617 752L610 752L601 758L594 757L592 762L581 763L578 760L573 765L570 758L573 754L578 755L579 758L579 755L583 753L582 741L565 730L586 732L594 741L601 743L605 737L592 734L602 729L603 722L611 721L615 715ZM717 716L728 717L733 729L723 730L715 728L713 719ZM539 718L548 718L550 722L558 723L558 727L555 727L554 733L547 737L548 743L545 750L531 751L529 744L525 742L526 734L529 732L536 733L538 729L549 724L538 721L537 719ZM988 721L993 723L994 729L990 735L986 734L985 730L978 728L980 723ZM809 730L817 730L818 740L814 745L807 745L803 752L804 756L792 755L787 758L770 756L785 753L780 747L781 741L791 742L797 735L802 735L802 738L804 738L803 733ZM754 755L760 756L761 760L756 762L751 770L744 773L744 777L740 775L722 778L712 777L717 774L713 769L722 760L739 760L746 764ZM647 756L652 757L655 761L655 763L650 764L653 777L659 773L659 777L656 777L654 782L651 779L646 779L644 776L644 770L648 764L644 759ZM589 779L592 780L591 785L600 790L600 792L595 793L590 801L585 801L586 790L580 789L578 791L571 789L571 787L585 785ZM817 793L824 793L832 798L831 810L825 810L815 805L814 796ZM861 799L877 802L871 805L862 826L858 819L849 818L849 815L853 813L849 808L857 807ZM625 801L635 801L639 806L639 810L633 816L633 821L624 820ZM760 801L763 810L766 810L770 802L773 802L773 806L777 808L777 813L771 815L761 813L759 810ZM453 803L462 803L462 808L448 807L446 809L452 810L454 813L441 813L445 810L445 804Z"
+          },
+          "to": "round-door",
+          "next": true,
+          "shortcut": false,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-sheep-r4-2k.96faa4dc90f89e72c3200a7bfba534e60a648d08099610b7ef845bf240525c40.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-sheep-r4.d26048668879cd7620f6c2a58c1e5fd5f936515a0792e125044e7a985f733b78.mp4",
+            "seconds": 10.125
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/green-hills-sheep-r4-2k.96faa4dc90f89e72c3200a7bfba534e60a648d08099610b7ef845bf240525c40.rewind.8241050dad9bb8a735bb22c018a8f2d157d53351eaba7f1076d639266f9295a3.mp4",
+            "seconds": 10.125
+          }
+        },
+        {
+          "id": "cloud",
+          "label": "Ride the long white cloud",
+          "hint": "It is going all the way to Fiordland",
+          "at": [
+            0.55,
+            0.04
+          ],
+          "outline": {
+            "width": 1536,
+            "height": 1024,
+            "path": "M0 0L1536 0L1536 174L1532 174L1529 178L1523 178L1514 174L1500 173L1502 169L1496 170L1495 167L1488 166L1491 161L1486 160L1471 163L1471 166L1464 164L1461 167L1454 167L1453 165L1453 169L1441 170L1433 166L1426 167L1421 165L1416 167L1406 162L1395 163L1378 159L1377 153L1373 153L1370 149L1366 148L1360 133L1347 126L1340 119L1333 117L1327 108L1311 100L1296 102L1289 109L1275 117L1236 121L1231 124L1208 129L1203 133L1197 132L1176 136L1168 129L1148 127L1134 130L1123 143L1106 141L1104 137L1098 137L1097 133L1079 137L1078 134L1067 130L1064 124L1059 121L1059 115L1054 102L1043 92L1032 88L1012 88L999 95L991 103L964 103L957 101L947 75L933 62L921 63L900 77L897 87L892 93L834 87L816 82L788 79L683 76L630 83L595 95L527 108L499 95L491 88L490 79L492 74L488 58L482 50L475 47L459 50L448 46L423 47L410 53L407 58L395 66L390 67L381 78L359 80L329 95L316 80L300 81L295 79L289 81L279 79L276 81L259 82L243 92L229 93L222 97L209 92L200 94L184 93L177 89L166 87L158 81L141 74L130 65L98 61L94 57L87 57L78 62L71 63L65 61L62 54L55 53L51 55L44 71L40 75L38 84L30 91L24 103L15 102L10 105L9 110L5 109L4 104Z"
+          },
+          "to": "cloud-wall",
+          "next": false,
+          "shortcut": true,
+          "film": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-cloud-r1-2k.94309b7aa7ecc57a40c90605665945b662118c79234447ca149673a84b08fd85.mp4",
+            "src720": "https://cdn.sogni.ai/sogni-world/v1/worlds/the-long-white-cloud/videos/green-hills-cloud-r1.86060323b3dcc959ea54d31deba654b1bef3eb9cdb9af65937d3f502f8d88316.mp4",
+            "seconds": 12.25
+          },
+          "rewind": {
+            "src": "https://cdn.sogni.ai/sogni-world/v1/rewinds/green-hills-cloud-r1-2k.94309b7aa7ecc57a40c90605665945b662118c79234447ca149673a84b08fd85.rewind.5b7527ba2ad498903d0298060934df1d7b66174dec9d51f367c8cd19c656d8ff.mp4",
+            "seconds": 12.25
+          }
+        }
+      ]
+    }
+  ]
+}

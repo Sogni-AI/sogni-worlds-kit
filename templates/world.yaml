@@ -1,0 +1,78 @@
+# The plan for one Sogni World. Your agent fills this in; you approve it.
+# Reference: docs/world-yaml.md   Craft rules: docs/directing-films.md
+# `node world lint` checks it. `node world next` says what to do now.
+
+id: __ID__
+title: __TITLE__
+subtitle: ""
+# One paragraph: what this world is, its tone, who is in it.
+story: ""
+
+# linear: a story told in order; each place offers the way to the next one first,
+# and any other crossing is labelled a shortcut. free: every way is equal.
+order: linear
+
+# The first place. `ingest` sets it to the first photo if left empty.
+start: ""
+
+# Every place shares one canvas; `ingest` picks it from your photos.
+# 3:2 is 1152x768 (films arrive as 2304x1536), 16:9 is 1344x768, and so on.
+canvas: ""
+
+# Sogni's safe-content filter on generated films: on or off.
+contentFilter: off
+
+# Optional voices for narration. Clone only a voice you own or have permission to use.
+voices: {}
+#  narrator:
+#    clone: voices/narrator.m4a         # 10–30 s of clean speech
+#    transcript: "Exactly what is said in the recording."
+#  guide:
+#    design: "A warm, unhurried woman in her forties, close to the microphone."
+
+# Optional music under the whole world.
+music: null
+#  prompt: "Gentle fingerpicked acoustic guitar and soft strings, warm and unhurried, loops cleanly"
+#  seconds: 120
+# or, only for music you have the rights to:
+#  file: music/my-song.mp3
+#  credit: "Song title — Artist"
+
+# One entry per photograph, in story order. `ingest` adds them from photos/.
+places: []
+#  - id: harbour
+#    photo: photos/IMG_0012.jpg
+#    still: stills/harbour.jpg          # written by ingest; never edit the image
+#    title: The Harbour
+#    chapter: "Day 1 · Wellington"
+#    caption: "One line shown when you arrive."
+#    # What is really in the picture, written after looking at it at full size.
+#    seen: >
+#      A wide shot of ...
+#    narration:
+#      voice: narrator
+#      lines:
+#        - "We got in just after sunrise."
+#    loop:                              # the living photograph: static camera, still at both ends
+#      frames: 192
+#      idea: "Gulls wheel, rigging taps, the water glitters."
+#      action: >
+#        Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: ...
+#      sound: >
+#        Gulls call over the water and halyards tap against a mast.
+#    objects:
+#      - id: ferry
+#        label: Board the ferry         # what happens, as an action
+#        hint: It leaves every hour
+#        at: [0.62, 0.55]                # where the label sits (fractions of width, height)
+#        select:                         # SAM 3 clicks on the object
+#          positive: [[0.62, 0.55]]
+#          negative: [[0.40, 0.70]]
+#        goes: beach                     # a crossing to another place; omit it for a moment that stays here
+#        film:
+#          frames: 243                   # 124 + 17n, 124–362 (5.2–15.1 s)
+#          idea: "The camera follows the ferry out of the harbour and round the headland to the beach."
+#          action: >
+#            Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: ...
+#          sound: >
+#            The ferry horn sounds twice; engines churn the water.

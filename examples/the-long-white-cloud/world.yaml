@@ -1,0 +1,1724 @@
+# The Long White Cloud — the real plan behind https://worlds.sogni.ai/demo/the-long-white-cloud
+
+# Every film direction below is the exact text that rendered the film now live in that world
+# (MiniMax H3 FastH3 first-and-last-frame, two-stage 2K, 1152x768 canvas delivered at 2304x1536),
+# with the seed it used. `node world lint-examples` checks it; the kit rebuilds each prompt
+# byte for byte from `action` and `sound`.
+
+# What is NOT in this repository:
+#   - the stills: they are Mark’s own photographs. The playable copy of this world
+#     (examples/the-long-white-cloud/world.json) streams them and the films from Sogni’s CDN.
+#   - the voice recordings the narration was cloned from, and the two keyframe stills of
+#     "Say hello" (paths are listed so the plan reads as it was built).
+#   - the music: the live world plays a commercial recording, so `music` is null here.
+
+# Use it as a worked example of seen / loop / objects / select / film, then make your own
+# with `node world new <id>`.
+
+id: the-long-white-cloud
+title: The Long White Cloud
+subtitle: A trip through Aotearoa New Zealand
+story: A road trip through New Zealand in March and April 2023, told in twenty-two of Mark’s own photographs, each one quietly alive. Every way on is carried by something in the picture — a door, a guitar, a helicopter, a breath on the lens — and where the trip jumps a thousand kilometres, the camera passes through a doorway, a cloud, a water surface or a reflection to get there. Mark narrates each place like a phone call home; Jen joins in where she is in the picture.
+order: linear
+start: round-door
+canvas: 1152x768
+contentFilter: off
+voices:
+  mark:
+    clone: voices/mark.m4a
+    transcript: Mark’s own 22.8-second recording and his transcript of it (not included).
+  jen:
+    clone: voices/jen.m4a
+    transcript: Jen’s own 15.6-second recording and her transcript of it (not included).
+music: null
+places:
+  - id: round-door
+    still: stills/round-door.jpg
+    title: The Round Door
+    chapter: Hobbiton · Matamata
+    caption: Kia ora — hello, goodbye and thank you, all in two words.
+    seen: "Wide eye-level shot at Hobbiton: a round doorway in a curved timber frame under a carved gable with a wooden finial, set into a grassy hillside; the red door stands open, swung inward at right, showing a dim wood-panelled hall. In front of it a man with short dark hair and a goatee in a grey t-shirt, dark jeans and boots, with a crossbody strap and a dark jacket over his arm, stands with a woman with a black bob in a sheer pink patterned top, a black pinafore dress, black boots and a large black tote bag on her shoulder; her arm is around his shoulders and her head leans against him; both smile at the camera. A lantern hangs at each side of the door; a stone wall with a round leaded window at far left; a painted green log at left; yellow marigolds and orange flowers at lower left; a wooden stool and a small red table with tools and a little yellow-roofed lamp at right; a stepping-stone path; pines, a hedge and a leafy branch above."
+    narration:
+      voice: mark
+      lines:
+        - Kia ora!
+        - So this is Hobbiton, near Matamata, right near the end of our road trip.
+        - Everything here is hobbit-sized, so mind your head.
+    loop:
+      frames: 192
+      seed: 924240034
+      idea: A breeze through the Shire; she nestles into his shoulder and he squeezes her.
+      action: "Live-action, cinematic, a static wide shot at eye level holds the position and framing established by Picture 1: the man in the grey t-shirt and the woman in the black pinafore dress stand arm in arm in front of the open round doorway of the hobbit hole. A breeze moves through the whole scene: the long grass on the turf roof ripples, the leafy branch at top right sways, the yellow marigolds nod and the candles flicker inside the hanging lanterns. She nestles her head against his shoulder with a grin, he gives her shoulders a small squeeze, the jacket over his arm sways, and they both settle back and smile at the camera. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A tūī sings a gurgling, bell-like phrase from the pines and a bee hums among the marigolds. Leaves rustle in a light breeze and the lantern creaks faintly on its hook.
+    objects:
+      - id: door
+        label: Duck through the round door
+        hint: It opens a long way from a hallway
+        at:
+          - 0.44
+          - 0.62
+        select:
+          positive:
+            - - 0.47
+              - 0.58
+            - - 0.4
+              - 0.62
+            - - 0.46
+              - 0.72
+          negative:
+            - - 0.56
+              - 0.6
+            - - 0.63
+              - 0.62
+            - - 0.33
+              - 0.6
+          box:
+            - 0.35
+            - 0.42
+            - 0.56
+            - 0.86
+        goes: forest-stage
+        film:
+          frames: 294
+          seed: 924241009
+          idea: The couple duck through the open round door and walk out of a root-lined passage into a Rotorua clearing, becoming the two audience silhouettes that frame the warriors.
+          action: "Live-action, cinematic, a wide eye-level shot begins in the position and framing established by Picture 1: the man in the grey t-shirt and the woman in the black pinafore dress stand arm in arm in front of the open round doorway of the hobbit hole, the red door swung inward, yellow marigolds below and a lantern glowing at each side. Cool green light glows from deep inside the hall. They glance at each other, grin, and duck through the low round doorway one after the other, her black tote bag swinging. The camera glides forward after them through the round doorway into a short earthen passage lined with roots and hanging ferns, the two of them walking ahead toward a bright green opening. They step out of the passage into the back of a watching crowd at the edge of a wet clearing in a rainforest of tree ferns and flax, and move aside to the left out of the frame. The camera settles behind the crowd, the dark heads of two spectators soft in the foreground at the left and right edges, looking past them at a carved wooden gateway where a row of bare-chested Māori performers in woven flax skirts plant their feet on the wet ground, gripping long wooden taiaha, and the lead warrior in the brown feathered cloak drops into a low wide stance. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The open door creaks on its hinges as they brush past it; boots scuff across flagstones into a soft earthen passage. Birdsong gives way to rain dripping from tree-fern fronds, a hushed crowd shifting on wet gravel and bare feet slapping the wet ground in one heavy stamp.
+      - id: hill
+        label: Climb the hill over the door
+        hint: The Shire keeps going
+        at:
+          - 0.5
+          - 0.26
+        select:
+          positive:
+            - - 0.2
+              - 0.38
+            - - 0.47
+              - 0.25
+            - - 0.8
+              - 0.36
+            - - 0.67
+              - 0.24
+          negative:
+            - - 0.1
+              - 0.2
+            - - 0.6
+              - 0.5
+            - - 0.53
+              - 0.1
+          box:
+            - 0
+            - 0.15
+            - 1
+            - 0.52
+        goes: green-hills
+        shortcut: true
+        film:
+          frames: 192
+          seed: 924240031
+          idea: A crane move up over the hobbit hole’s turf roof reveals the real Waikato farmland Hobbiton sits in.
+          action: "Live-action, cinematic, a wide eye-level shot begins in the position and framing established by Picture 1: the man in the grey t-shirt and the woman in the black pinafore dress stand arm in arm in front of the open round doorway beneath the grass-covered roof. They look up and wave as the camera rises: it pedestals smoothly up past the carved gable and its wooden finial and over the long grass of the turf roof, the blades bending in the breeze, past the hedge along the top of the hill. As it clears the crest the view opens onto a valley of rolling green pasture under a grey sky, dotted with grazing white sheep and a few cattle, a lone round tree in the middle distance and a wire fence running up the slope. The camera tilts down gently and glides out over the valley above a wooden post fence and long grass. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A breeze combs the long grass of the roof and a tūī sings a bright, gurgling phrase from the pines. Over the crest the wind opens out; sheep bleat across the valley and a cow lows far below.
+  - id: forest-stage
+    still: stills/forest-stage.jpg
+    title: The Challenge
+    chapter: Te Pā Tū · Rotorua
+    caption: Stand still. This is how a welcome begins.
+    seen: "Rotorua: a wet clearing in rainforest of tree ferns and flax before a carved wooden gateway with carved figures; seven bare-chested Māori performers in woven flax skirts hold long wooden taiaha in wide stances, the lead warrior at center in a brown feathered cloak crouched low, one at right with his tongue out; three women watch from a palisade above; two dark soft-focus audience heads frame the left and right foreground."
+    narration:
+      voice: mark
+      lines:
+        - This is Te Pā Tū, a Māori village in the forest outside Rotorua.
+        - Before anyone is welcomed in, a warrior comes out with a challenge, and you have to answer it.
+    loop:
+      frames: 192
+      seed: 924240036
+      idea: The warriors hold their stances, breathing hard, hands quivering on the taiaha; rain drips from the ferns.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: bare-chested Māori performers with long wooden taiaha hold wide stances on the wet ground before the carved gateway, the lead warrior at center in his brown feathered cloak. Their chests rise and fall with hard breaths and their hands quiver on the taiaha shafts; the performer at right flicks his tongue and widens his eyes, and the lead warrior shifts his weight lower in his stance. The feathers of his cloak stir, raindrops fall from the tree-fern fronds and the flax leaves tremble. The women on the palisade watch, and the dark heads of the audience at the edges sway slightly. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Rain drips steadily from the ferns onto wet ground and a bird calls from the forest. The performers breathe in hard rhythmic bursts and bare feet shift on wet gravel.
+    objects:
+      - id: warrior
+        label: Accept the challenge
+        hint: A warrior lays down a token for you
+        at:
+          - 0.43
+          - 0.58
+        select:
+          positive:
+            - - 0.43
+              - 0.58
+            - - 0.43
+              - 0.45
+            - - 0.41
+              - 0.66
+            - - 0.4
+              - 0.78
+          negative:
+            - - 0.33
+              - 0.62
+            - - 0.52
+              - 0.6
+          box:
+            - 0.36
+            - 0.41
+            - 0.53
+            - 0.88
+        goes: haka
+        film:
+          frames: 362
+          seed: 924240005
+          idea: "The wero: the lead warrior advances, lays a leaf before the visitors, it is picked up, and the performers lead the way through the carved gateway into the meeting house, where the haka erupts."
+          action: "Live-action, cinematic, a wide eye-level shot begins in the position and framing established by Picture 1: bare-chested Māori performers in woven flax skirts stand in wide stances with long wooden taiaha on wet ground before a carved wooden gateway, the lead warrior at center in a brown feathered cloak, women watching from the palisade above, the dark heads of the audience at the left and right edges. The lead warrior advances toward the camera in slow deliberate steps, eyes wide and tongue out, twirling his taiaha and slapping his thigh. He crouches low a few paces away and lays a green leaf on the wet ground, his eyes fixed on the camera. A hand reaches in from the lower left and picks up the leaf. The warrior rises, turns and leads the way, and the camera follows the line of performers through the carved gateway into shadow. The shadow opens into a dark meeting house with rafters painted red, black and white, where stage light falls on three bare-chested men in red-and-white woven belts and fringed flax skirts. They drop into deep wide stances with a single stamp, eyes bulging and mouths wide, a woman in a brown dress behind them with her arms spread. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Rain drips from the tree ferns and the crowd falls silent; bare feet slap the wet ground, the taiaha whirs through the air and a palm slaps a thigh. The leaf rustles as it is lifted, footsteps echo into a wooden hall, and a deep collective shout rings out as bare feet stamp the stage in unison.
+      - id: ferns
+        label: Follow the rain
+        hint: Every drop here ends up in a waterfall somewhere
+        at:
+          - 0.22
+          - 0.14
+        select:
+          positive:
+            - - 0.1
+              - 0.12
+            - - 0.25
+              - 0.1
+            - - 0.4
+              - 0.15
+            - - 0.18
+              - 0.25
+          negative:
+            - - 0.62
+              - 0.1
+          box:
+            - 0
+            - 0
+            - 0.5
+            - 0.35
+        goes: three-falls
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924241019
+          idea: One raindrop falls from a tree-fern frond into a puddle; the camera plunges in after it and surfaces in Milford Sound beside a ship, rising onto the deck behind three passengers watching three waterfalls.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the performers in their stances before the carved gateway in the rainforest clearing, tree ferns overhead. The camera rises slowly into the tree ferns above the gateway to a young frond still curled tight into a green spiral, a koru, beaded with rain. The koru slowly unfurls toward the lens, its spiral opening and filling the view with curling green. The camera glides through the open centre of the spiral and out into soft grey mist, which thins over a wide dark fjord, where a cliff of rainforest pours with three tall waterfalls beneath a cap of cloud. The camera descends over the white railing of a ship onto its deck and settles behind three passengers — a white-haired man in a blue sweater, a woman in a green jacket pointing up and a woman in a navy hooded jacket — who face the three waterfalls. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Rain patters on fern fronds and a young frond creaks softly as it uncurls. A hush of damp air, then the thunder of three waterfalls and the hum of a ship’s engine fill the air.
+  - id: haka
+    still: stills/haka.jpg
+    title: The Haka
+    chapter: Te Pā Tū · Rotorua
+    caption: You feel this one in your chest.
+    seen: Dark stage under carved rafters painted with red, black and white patterns; three bare-chested men in red-and-white woven belts and fringed dark flax skirts in deep wide stances, eyes bulging and mouths wide in pūkana — at left a young man, at center an older man with long dreadlocks, a bone pendant and a tattooed arm, at right a young man with a greenstone pendant; behind them a woman in a brown dress with arms spread and a man in a dark feathered cloak.
+    narration:
+      voice: mark
+      lines:
+        - Then the haka.
+        - The Māori had no written language, so song, dance and music carried their history.
+        - Honestly, the faces and the posturing were the highlight for me.
+    loop:
+      frames: 192
+      seed: 924240037
+      idea: "The pūkana held: eyes wide, hands quivering in the wiri, chests heaving, a stamp."
+      action: "Live-action, cinematic, a static low wide shot holds the position and framing established by Picture 1: three bare-chested men in deep wide stances on the dark stage beneath the carved rafters, eyes bulging and mouths wide. Their outstretched hands quiver rapidly, their chests heave, and all three stamp one foot together and settle back into the stance, eyes wide. The woman in brown behind them sways with her arms spread and the fringes of their flax skirts swing and settle. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Bare feet stamp the stage in one heavy beat that booms through the hall, followed by deep rapid breathing and palms slapping against chests. A deep collective shout rises and falls.
+    objects:
+      - id: leader
+        label: Stay for the song
+        hint: After the haka, harmony
+        at:
+          - 0.47
+          - 0.4
+        select:
+          positive:
+            - - 0.47
+              - 0.25
+            - - 0.47
+              - 0.39
+            - - 0.47
+              - 0.57
+            - - 0.41
+              - 0.78
+          negative:
+            - - 0.23
+              - 0.4
+            - - 0.32
+              - 0.5
+            - - 0.58
+              - 0.45
+          box:
+            - 0.33
+            - 0.18
+            - 0.63
+            - 0.9
+        goes: waiata
+        film:
+          frames: 243
+          seed: 924240020
+          idea: The haka ends in one last stamp and the same performers regroup as the camera trucks along the stage, taking up sticks as the guitarist sits and strikes up the waiata.
+          action: "Live-action, cinematic, a low wide shot begins in the position and framing established by Picture 1: three men in fierce pūkana stances on the dark stage beneath the carved rafters. They hold their stances with hands quivering, stamp once together and straighten, breathing hard, their faces relaxing into smiles. A woman in a brown dress walks on from the right holding a bundle of short wooden sticks against her chest, and the camera trucks slowly right along the stage with her as she hands a pair of sticks to each performer in turn: the older man with long dreadlocks and a bone pendant takes his pair and leans forward, a woman in brown kneels beside him with hers, and at right a woman in a green dress kneels and raises her two sticks above her head as a young man steps up behind her with his. A heavyset man with curly hair and a cloak of dark feathers sits down at the front of the stage with an acoustic guitar, lifts its neck and strums, and the singers raise their faces and sing. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Heavy breathing and one last thunderous stamp on the stage; short wooden sticks clack softly as they are handed out. An acoustic guitar strums a warm bright chord and voices rise together in a gentle harmonised song over the rhythmic tapping of sticks.
+  - id: waiata
+    still: stills/waiata.jpg
+    title: The Song
+    chapter: Te Pā Tū · Rotorua
+    caption: Everybody ends up singing.
+    seen: "Same dark carved stage: a heavyset man with curly hair and a dark feathered cloak sits at the front center strumming an acoustic guitar; at right a woman in a green dress kneels with two short sticks raised above her head, white poi at her waist; a young man stands behind her with sticks; at left the dreadlocked man leans forward with a pair of sticks, a woman in brown kneels, a young man and a woman in blue hold sticks; short sticks lie on the stage floor; an ukulele hangs on a carved post."
+    narration:
+      voice: mark
+      lines:
+        - After the haka there’s a guitar, and everybody sings, with sticks keeping time.
+        - Dinner is a hāngī, cooked for hours in an earth oven.
+        - It was surprisingly musical, and really interactive.
+    loop:
+      frames: 192
+      seed: 924240038
+      idea: "Guitar and song: sticks tap, the singers sway."
+      action: "Live-action, cinematic, a static low wide shot holds the position and framing established by Picture 1: the curly-haired guitarist strums at the front of the dark carved stage, the singers kneeling and standing behind him with short sticks. He strums with his eyes half closed; the woman in the green dress sways and sings with her sticks raised; the dreadlocked man and the others tap their sticks together in time and sing. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: An acoustic guitar strums a gentle, warm chord pattern while voices sing together in soft harmony and short wooden sticks tap in rhythm.
+    objects:
+      - id: guitar
+        label: Into the sound hole
+        hint: "Next stop: Milford Sound"
+        at:
+          - 0.5
+          - 0.64
+        select:
+          positive:
+            - - 0.48
+              - 0.64
+            - - 0.51
+              - 0.7
+            - - 0.6
+              - 0.48
+            - - 0.67
+              - 0.4
+          negative:
+            - - 0.5
+              - 0.47
+          box:
+            - 0.43
+            - 0.37
+            - 0.71
+            - 0.8
+        goes: sound-deck
+        film:
+          frames: 294
+          seed: 924240001
+          idea: The camera pushes into the guitar’s sound hole and comes out of a dark ship’s cabin doorway onto the deck at Milford Sound — a sound hole into the Sound.
+          action: "Live-action, cinematic, a low wide shot begins in the position and framing established by Picture 1: the curly-haired guitarist strums at the front of the dark carved stage, singers kneeling and standing behind him with sticks raised. He leans the guitar toward the camera as he strums, and the camera pushes in toward its round sound hole; the strings shiver across the frame and the dark mouth of the guitar fills the view. In the darkness a grey doorway of daylight grows ahead, and the camera glides out of a ship’s cabin onto an open stern deck under a grey sky: a pale blue deck painted with a yellow circle and a yellow letter H, a white railing, and two people standing apart at the rail looking out at a misty fjord — at left a person in a long black coat and black cap, at right a man in a dark jacket and white cap with a bag over his shoulder — the wake churning away between towering rainforest cliffs. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The guitar chord rings and sustains, its wooden body humming as the singing drifts away into the dark. The hum deepens into the low throb of a ship’s engine, cold wind across an open deck and the steady churn of the wake.
+          allow:
+            dark-screen: The dark is the guitar’s own sound hole, a physical opening the camera pushes into, with daylight growing inside it. Approved.
+  - id: sound-deck
+    still: stills/sound-deck.jpg
+    title: Milford Sound
+    chapter: Milford Sound · Fiordland
+    caption: A birthday on the water, and it is raining. Perfect.
+    seen: "Milford Sound from the stern deck of a ferry: a pale blue deck painted with a yellow circle and a yellow letter H; white railing; two people stand apart at the rail looking out — at left a person in a long black coat and black cap, at right a man in a dark jacket, white cap and shoulder bag; the wake churns across dark water; a sheer rainforest cliff at right, misty headlands at left, grey cloud filling the sky."
+    narration:
+      voice: mark
+      lines:
+        - We spent a night on Milford Sound, on the Fiordland Jewel, for my wife’s birthday.
+        - It rained, of course.
+        - And the drive down from Queenstown is worth it all by itself.
+    loop:
+      frames: 192
+      seed: 924240039
+      idea: Wind on the stern deck, the wake churning, mist drifting along the cliffs.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: two people stand apart at the white stern railing looking out at the misty fjord, the yellow H on the pale blue deck in front. The wake churns and spreads across the dark water and mist drifts slowly past the headlands. Her long black coat flutters in the wind; the man in the white cap turns his head toward the cliff and back, and she shifts her hands on the rail. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: The ship’s engine thrums under a steady cold wind, the wake hisses and churns, and a coat flaps against the railing.
+    objects:
+      - id: her
+        label: Go and stand with him
+        hint: The best view is shared
+        at:
+          - 0.2
+          - 0.66
+        select:
+          positive:
+            - - 0.2
+              - 0.66
+            - - 0.2
+              - 0.57
+            - - 0.2
+              - 0.79
+          negative:
+            - - 0.27
+              - 0.66
+          box:
+            - 0.16
+            - 0.53
+            - 0.25
+            - 0.85
+        goes: sound-together
+        film:
+          frames: 141
+          seed: 924240002
+          idea: "A small true moment: she walks along the rail and leans her head on his shoulder."
+          action: "Live-action, cinematic, a static wide shot at standing eye level begins in the position and framing established by Picture 1: two people stand apart at the white stern railing looking out at the misty fjord, the person in the long black coat and black cap at left and the man in the white cap at right, the yellow H painted on the deck in the foreground. The person in the black coat lets go of the rail and walks along it to the right; the man glances over his shoulder as she arrives, and she leans against his side and rests her head on his shoulder as they look out together. The wake churns behind the ship and the cliffs stand still. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Wind flutters the long coat and sneakers pad across the wet deck; the ship’s engine thrums and the wake hisses behind the stern.
+      - id: helipad
+        label: The H is for helicopter
+        hint: Somebody painted a landing pad on the ferry
+        at:
+          - 0.52
+          - 0.95
+        select:
+          positive:
+            - - 0.49
+              - 0.955
+            - - 0.55
+              - 0.955
+            - - 0.52
+              - 0.93
+          negative:
+            - - 0.4
+              - 0.95
+          box:
+            - 0.45
+            - 0.91
+            - 0.58
+            - 0.99
+        goes: helipad
+        shortcut: true
+        film:
+          frames: 362
+          seed: 924240006
+          idea: "The painted H turns out to mean it: a helicopter shadow crosses it, the camera chases the helicopter up the cliffs and over the Alps to a gravel heli base, where she is pulling on the orange beanie."
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the stern deck with the yellow circle and H, two people at the white railing and the misty fjord beyond. A shadow sweeps across the painted H, and the camera tilts up to a blue, white and red helicopter passing low over the deck. The camera rises and tracks behind it as it climbs the sheer rainforest cliff, over the misty rim of the fjord and above snow-streaked mountain ridges under grey cloud. Ahead a wide gravel valley opens between dark snow-dusted peaks; the helicopter banks, descends and settles on its skids on a landing pad beside a small white fuel trailer, and a ground crew member in an orange high-visibility vest steps out beneath the slowing rotor. The camera sinks to eye level on the gravel in front of a woman in a navy helicopter-company jacket, who pulls an orange fleece beanie down over her ears with both hands and looks into the camera. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Rotor blades thud in, louder and louder, and pass overhead; wind roars past as the camera climbs. The rotor wash rattles the gravel and the turbine whines down to a slow whup-whup as the skids crunch onto the pad.
+  - id: sound-together
+    still: stills/sound-together.jpg
+    title: Together at the Rail
+    chapter: Milford Sound · Fiordland
+    caption: The cliffs do not care, and that is the point.
+    seen: "The same stern deck and view: the person in the long black coat now stands against the man in the white cap at the center of the rail, her head resting on his shoulder; the yellow circle and H in the foreground; wake, cliff and mist unchanged."
+    narration:
+      voice: mark
+      lines:
+        - Same view, better company.
+        - Milford is one of the wettest places on Earth, which is exactly why every cliff is pouring.
+        - voice: jen
+          text: Best birthday ever!
+    loop:
+      frames: 192
+      seed: 924240040
+      idea: "Together at the rail: she nestles closer, he tilts his head to hers."
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: the two travellers stand close together at the center of the white stern railing, her head on his shoulder, the yellow H on the deck in front. She nestles closer against his shoulder and he tilts his head toward hers; her coat flutters in the wind. The wake churns across the dark water and mist drifts along the cliffs. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: The engine hums beneath the deck and the wake hisses; wind flutters the long coat and a waterfall murmurs far off.
+    objects:
+      - id: cliff
+        label: Sail along the cliff
+        hint: Waterfalls ahead
+        at:
+          - 0.78
+          - 0.28
+        select:
+          positive:
+            - - 0.8
+              - 0.25
+            - - 0.7
+              - 0.4
+            - - 0.92
+              - 0.12
+          negative:
+            - - 0.4
+              - 0.2
+            - - 0.48
+              - 0.62
+          box:
+            - 0.52
+            - 0
+            - 1
+            - 0.58
+        goes: three-falls
+        film:
+          frames: 243
+          seed: 925250201
+          idea: The ship swings toward the cliff; the camera turns from the two of you at the stern onto the wet rock and sails along it until three waterfalls pour from the cloud, where three passengers stand at the rail.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: on the stern deck of a ferry painted with a yellow circle and a yellow letter H, a couple stands close together at the white railing with their backs to the camera, her head on his shoulder, the wake churning across dark water toward misty headlands and a sheer rainforest cliff rising at right under grey cloud. The ship swings slowly to the right and the camera turns with it, gliding along the railing toward the cliff as the couple passes out of the left edge of the frame. The dark wet rock and dripping rainforest of the cliff fill the view as the ship sails close alongside it. Farther along, three tall waterfalls pour from the cloud-capped cliff into the fjord, thin streams threading down from above. The camera eases back along the deck behind three passengers at the white railing, a white-haired man in a blue sweater, a woman in a green jacket raising her arm to point up at the falls and a woman in a navy hooded jacket. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The ship’s engine hums and the wake churns behind the stern; wind and fine rain sweep the deck. The roar of three waterfalls swells as the ship sails along the cliff, and a passenger gasps at the view.
+          allow:
+            dark-screen: The dark is the wet cliff face itself, filling the view as the ship sails alongside. Approved.
+      - id: wake
+        label: Watch the ship from the sky
+        hint: You were never as big as the Sound
+        at:
+          - 0.32
+          - 0.74
+        select:
+          positive:
+            - - 0.41
+              - 0.76
+            - - 0.3
+              - 0.74
+            - - 0.58
+              - 0.77
+          negative:
+            - - 0.47
+              - 0.66
+            - - 0.52
+              - 0.68
+          box:
+            - 0.2
+            - 0.64
+            - 0.66
+            - 0.82
+        goes: stirling-falls
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240011
+          idea: From the couple at the rail the camera rises and pulls away until their ship is the tiny white boat under Stirling Falls in the next photograph.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the two travellers stand close together at the stern railing, her head on his shoulder, the yellow H on the deck and the wake churning out between the cliffs. The camera rises smoothly straight up over the couple and the painted H until the whole white ship is visible below, its wake curving out behind it across the dark water. The ship turns toward the foot of a huge waterfall pouring down a sheer rainforest cliff, and the camera swings around and pulls far back across the fjord as the cliff grows to fill the view, the ship shrinking to a tiny white boat resting in the spray beneath the falls. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The engine thrums and wind rushes as the camera climbs over the hissing wake. The low roar of the great waterfall builds and echoes off the cliffs as the ship grows small.
+  - id: three-falls
+    still: stills/three-falls.jpg
+    title: Three Waterfalls
+    chapter: Milford Sound · Fiordland
+    caption: Look up. Keep looking up.
+    seen: "From a ferry deck: three tall waterfalls pour from a dark rainforest cliff into the fjord, thin falls threading down from a cap of cloud above; three passengers at a white railing in the foreground seen from behind — a white-haired man in a blue sweater and khaki trousers, a woman in a green jacket pointing up at the falls, a woman in a navy hooded jacket."
+    narration:
+      voice: mark
+      lines:
+        - After heavy rain, hundreds of waterfalls show up on these cliffs.
+        - They’re gone again soon after it stops, so look up while you can.
+    loop:
+      frames: 192
+      seed: 924240041
+      idea: Three waterfalls pour; the passengers point and look.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: three tall waterfalls pour from the rainforest cliff into the fjord, cloud drifting along the top of the cliff. The falls pour and billow spray at their feet and the thin falls above stream out of the cloud. At the railing the woman in the green jacket jabs her pointing finger toward the falls, the white-haired man in the blue sweater leans forward on the rail and the woman in the navy hood turns her head to follow. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Three waterfalls thunder into the fjord over the hum of the ship’s engine, and wind gusts across the deck.
+    objects:
+      - id: spray
+        label: Fly through the spray
+        hint: The biggest fall is around the corner
+        at:
+          - 0.43
+          - 0.58
+        select:
+          positive:
+            - - 0.427
+              - 0.56
+            - - 0.42
+              - 0.68
+            - - 0.437
+              - 0.45
+          negative:
+            - - 0.46
+              - 0.55
+            - - 0.39
+              - 0.55
+          box:
+            - 0.4
+            - 0.39
+            - 0.465
+            - 0.79
+        goes: stirling-falls
+        film:
+          frames: 294
+          seed: 925250202
+          idea: "The camera leaves the deck, flies into the spray at the foot of the middle fall, and drifts back out of it far across the fjord: the ferry it left is the tiny white boat under Stirling Falls."
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: three passengers at a white ferry railing look up at three tall waterfalls pouring from a dark rainforest cliff into the fjord, the woman in the green jacket pointing up at the falls, cloud capping the cliff above. The camera rises over the passengers’ heads and glides out low across the dark water toward the middle waterfall, the falls growing tall ahead. It flies into the white spray billowing at the foot of the middle fall until drifting mist fills the view. The mist thins as the camera drifts back out of it far across the water, and the view opens onto a vast wall of rainforest and grey rock rising from the dark fjord, a tall waterfall pouring down its left side and billowing spray at its foot, where a tiny white ferry rests on the water. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Three waterfalls thunder over the ship’s engine and passengers laugh under the spray. Inside the mist the roar becomes a rushing hiss of falling water; across the fjord the wind whistles and the distant waterfall rumbles.
+      - id: left-fall
+        label: Stand under the falls
+        hint: The coldest shower in Fiordland, then the warmest bath in Queenstown
+        at:
+          - 0.2
+          - 0.55
+        select:
+          positive:
+            - - 0.2
+              - 0.5
+            - - 0.19
+              - 0.62
+            - - 0.21
+              - 0.42
+          negative:
+            - - 0.25
+              - 0.55
+            - - 0.15
+              - 0.55
+          box:
+            - 0.15
+            - 0.33
+            - 0.26
+            - 0.8
+        goes: hot-pool
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924241013
+          idea: The ship noses under the middle waterfall and drenches the deck; the camera pushes into the white curtain of water and comes out of rising steam over a hot tub by Lake Wakatipu.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: three passengers at the white railing face three tall waterfalls pouring from the rainforest cliff, the air over the deck clear. The camera glides slowly and steadily forward with the ship as it turns toward the middle waterfall, the railing and the three passengers staying in the lower part of the frame. The middle fall grows until it thunders onto the bow just ahead; white spray drifts back over the deck and the three passengers lean back from the railing laughing and pull up their hoods. The camera keeps gliding forward into the white curtain of falling water until it fills the view, and the white spray becomes soft rising steam. As the steam thins the camera looks over the bare shoulders and wet black bob of a woman sitting in a round copper hot tub, her hands on the rim, facing a tall glass wall; beyond the glass a dark pine tree stands on a green lawn above a blue-grey lake, and a misty mountain slopes down to the water at right. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Three waterfalls thunder over the steady hum of the ship’s engine; the falling water crashes onto the bow and passengers laugh under the spray. The roar softens into the hiss of steam and warm water lapping gently against copper, with a light rain ticking on the glass.
+      - id: cloud
+        label: Look up into the cloud
+        hint: The falls start somewhere up there
+        at:
+          - 0.35
+          - 0.1
+        select:
+          positive:
+            - - 0.33
+              - 0.15
+            - - 0.47
+              - 0.06
+            - - 0.13
+              - 0.18
+          negative:
+            - - 0.45
+              - 0.3
+          box:
+            - 0
+            - 0
+            - 0.8
+            - 0.3
+        goes: cloud-wall
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924241021
+          idea: Following the passenger’s pointing hand, the camera tilts up the falls into the cloud and pulls back until the whole mountain wall of the Sound stands across the water.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: three passengers at the railing face three waterfalls pouring from the rainforest cliff, the woman in the green jacket pointing up. The camera follows her pointing hand and tilts up past the three waterfalls and the dark rainforest to the thin falls spilling out of the white cloud cap, then rises smoothly straight into the cloud: the view turns soft and white, fine droplets drifting past the lens. The white thins below and the camera sinks gently out of the underside of the cloud far out over the fjord, where a colossal cliff of wet rock and rainforest rises from dark rippled water with thick white cloud along its summit, a slender waterfall pouring down at its lower left and a tiny white ship on the water beside it. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The three waterfalls thunder into the fjord and wind gusts across the deck. Inside the cloud the sound hushes to a soft rushing of damp air, then a distant waterfall rumbles and small waves lap across the fjord.
+  - id: stirling-falls
+    still: stills/stirling-falls.jpg
+    title: Stirling Falls
+    chapter: Milford Sound · Fiordland
+    caption: Scale is the whole joke here.
+    seen: "Telephoto across the fjord: a vast wall of rainforest and grey rock rises from dark water; a tall waterfall pours down at left and billows spray at its foot, where a tiny white boat rests on the water."
+    narration:
+      voice: mark
+      lines:
+        - That’s Stirling Falls, about 150 metres tall.
+        - And that tiny white boat at the bottom? That’s a full-size ferry.
+    loop:
+      frames: 192
+      seed: 924240042
+      idea: The great waterfall pours and billows; the tiny boat bobs in its spray.
+      action: "Live-action, cinematic, a static telephoto wide shot holds the position and framing established by Picture 1: the tall waterfall pours down the rainforest cliff at left and billows white spray at its foot. The tiny white boat bobs gently in the spray; ripples cross the dark water and the trees on the cliff stir in the wind. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A deep continuous waterfall roar echoes off the cliff and wind moves across the water.
+    objects:
+      - id: falls
+        label: Follow the falls up
+        hint: Its top is lost in the cloud
+        at:
+          - 0.22
+          - 0.6
+        select:
+          positive:
+            - - 0.22
+              - 0.55
+            - - 0.24
+              - 0.72
+            - - 0.21
+              - 0.46
+          negative:
+            - - 0.3
+              - 0.6
+            - - 0.13
+              - 0.6
+            - - 0.372
+              - 0.94
+          box:
+            - 0.15
+            - 0.38
+            - 0.3
+            - 0.96
+        goes: cloud-wall
+        film:
+          frames: 192
+          seed: 925250203
+          idea: The camera tilts up the falling water and eases back across the fjord until the whole cliff stands in view, its head in the cloud and the falls a thread at its foot.
+          action: "Live-action, cinematic, a wide telephoto shot begins in the position and framing established by Picture 1: a vast wall of rainforest and grey rock rises from dark water, a tall waterfall pours down at left and billows spray at its foot, where a tiny white boat rests on the water. The camera tilts slowly up along the falling water, over wet rock and dripping rainforest, and eases back across the fjord as it rises. The whole cliff comes into view, taller and taller, its summit buried in thick white cloud that rolls slowly along the ridge, the waterfall now slender at its lower left and the tiny white boat resting beside it on dark rippled water. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The waterfall roars and spray patters on the water, softening as the view widens; wind moves over the fjord and small waves lap.
+      - id: boat
+        label: Catch the little boat
+        hint: It is closer than it looks
+        at:
+          - 0.37
+          - 0.94
+        select:
+          positive:
+            - - 0.372
+              - 0.94
+            - - 0.365
+              - 0.945
+          box:
+            - 0.35
+            - 0.915
+            - 0.395
+            - 0.96
+        goes: three-falls
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240012
+          idea: The camera skims across the fjord to the tiny boat under the waterfall, which grows until the camera swoops onto its deck behind three passengers watching three falls.
+          action: "Live-action, cinematic, a wide telephoto shot begins in the position and framing established by Picture 1: a wall of rainforest and grey rock rises from dark water, a tall waterfall pours down at left and a tiny white boat rests at its foot. The camera glides forward low over the water toward the tiny boat, which grows larger and larger until its white superstructure and railings fill the view, spray from the waterfall drifting across its decks. The camera swoops up over the stern onto the open upper deck and comes to rest, steady and still, behind three passengers at the white railing — a white-haired man in a blue sweater, a woman in a green jacket pointing up and a woman in a navy hooded jacket — all facing a cliff where three tall waterfalls pour into the fjord beneath a cap of cloud. The camera holds there while the three waterfalls pour and the passengers watch. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The waterfall’s roar grows from a distant hush to a thunder, spray patters on the water and a ship’s engine rumbles closer. Wind whistles through the railings and a passenger gasps at the view.
+  - id: cloud-wall
+    still: stills/cloud-wall.jpg
+    title: The Cloud Wall
+    chapter: Milford Sound · Fiordland
+    caption: There is blue sky somewhere above all that.
+    seen: A colossal rainforest cliff rising from dark rippled water, its summit buried in thick white cloud; a slender waterfall at lower left with a tiny white boat beside it.
+    narration:
+      voice: mark
+      lines:
+        - They call it a sound, but Milford is really a fiord, carved out by glaciers.
+        - There’s blue sky somewhere above all that.
+    loop:
+      frames: 192
+      seed: 924240043
+      idea: The cloud rolls slowly along the summit; the falls stream down.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: a colossal rainforest cliff rises from dark rippled water, its summit buried in thick white cloud. The cloud rolls and billows slowly along the summit, wisps curling down between the rock ribs and lifting again; the slender waterfall streams down at lower left beside the tiny white boat, and ripples move across the water. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A distant waterfall rumbles and damp wind hisses over the water, with small waves lapping.
+    objects:
+      - id: cliff
+        label: Step back from the view
+        hint: Somebody is looking at this one
+        at:
+          - 0.5
+          - 0.66
+        select:
+          positive:
+            - - 0.5
+              - 0.66
+            - - 0.3
+              - 0.72
+            - - 0.75
+              - 0.6
+            - - 0.62
+              - 0.78
+          negative:
+            - - 0.5
+              - 0.22
+            - - 0.5
+              - 0.95
+            - - 0.235
+              - 0.87
+          box:
+            - 0
+            - 0.38
+            - 1
+            - 0.88
+        goes: hot-pool
+        film:
+          frames: 243
+          seed: 925250604
+          idea: "The camera pulls back from the Milford cliff and it is the photograph on the rear screen of a camera in her hands: she is reviewing the trip in a hot tub in Queenstown, and sets the camera down."
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: a colossal rainforest cliff rises from dark rippled water, its summit buried in thick white cloud, a slender waterfall at lower left and a tiny white boat beside it, under steady cool grey light. The camera pulls straight back and the whole picture becomes the bright rear screen of a black camera, framed by its dark body and buttons, held level in two wet hands. The camera keeps pulling back over her right shoulder: a woman with a wet black bob sits in a round copper hot tub with her back to the camera, looking down at the screen, steam curling off the water around her. She lowers the camera, reaches out and sets it down on the wooden deck beside the tub, and rests both hands on the copper rim, facing a tall glass wall; beyond the glass stand a dark pine on a green lawn, a blue-grey lake and a misty mountain sloping to the water. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A soft electronic click as a photo is shown on the screen. Warm water laps against copper and her wet hands shift on the camera body; the camera clacks softly onto the wooden deck. A light rain ticks on the glass and a breeze moves over the lake.
+      - id: mist
+        label: Fly over the mountains
+        hint: Queenstown is on the other side
+        at:
+          - 0.5
+          - 0.2
+        select:
+          positive:
+            - - 0.47
+              - 0.18
+            - - 0.27
+              - 0.25
+            - - 0.8
+              - 0.3
+            - - 0.73
+              - 0.12
+          negative:
+            - - 0.5
+              - 0.55
+          box:
+            - 0
+            - 0
+            - 1
+            - 0.47
+        goes: hot-pool
+        film:
+          frames: 294
+          seed: 925250704
+          idea: The camera climbs the cliff face and flies on above the cloud over the peaks of Fiordland until it opens over Lake Wakatipu, then comes down behind her in the hot tub.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: a colossal rainforest cliff rises from dark rippled water, its summit buried in thick white cloud, a slender waterfall at lower left and a tiny white boat beside it, under steady cool grey light. The camera rises steadily in front of the cliff at a distance, the whole wall in view, and climbs over the top of the cloud into clear air above a sea of white cloud, dark snow-streaked peaks rising through it. It flies on over the peaks as the cloud thins and breaks apart below, opening onto a long blue-grey lake between mountains, a misty mountain sloping down to the water. The camera descends toward the near shore, over a green lawn and a tall dark pine, and comes down behind a wooden deck where a woman with a wet black bob sits in a round copper hot tub with her back to the camera, both hands on the rim, facing a tall glass wall; beyond the glass stand the dark pine, the lawn, the blue-grey lake and the misty mountain. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A distant waterfall rumbles and damp wind moves over the fjord; high wind rushes past as the camera climbs above the cloud. The wind eases over the lake; warm water laps gently against copper and a light rain ticks on the glass.
+      - id: summit
+        label: Rise above the weather
+        hint: There is blue sky on top of every cloud
+        at:
+          - 0.6
+          - 0.42
+        select:
+          positive:
+            - - 0.55
+              - 0.42
+            - - 0.75
+              - 0.45
+            - - 0.35
+              - 0.4
+            - - 0.88
+              - 0.5
+          negative:
+            - - 0.5
+              - 0.15
+            - - 0.5
+              - 0.75
+            - - 0.2
+              - 0.3
+          box:
+            - 0.18
+            - 0.28
+            - 1
+            - 0.58
+        goes: aoraki
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924241014
+          idea: The camera pedestals straight up the cliff into the cloud and breaks out on top into sunlight, where Aoraki rises out of the cloud sea.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: a colossal rainforest cliff rises from dark water, its summit buried in thick white cloud, a slender waterfall at lower left and a tiny white ship beside it. The camera rises slowly and steadily straight up at a distance from the cliff, the whole wall of rock and rainforest sliding down through the frame and the fjord falling away below, until it rises into the underside of the white cloud and the view turns soft and white. The camera breaks out of the top of the cloud into sunlight under a deep blue sky, above a rolling sea of white cloud, and ahead a jagged snow-covered peak with glaciers on its flanks rises out of the cloud. The camera glides toward the peak across the billowing cloud, dark lower slopes and a pale glacier valley appearing beneath the cloud band. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A distant waterfall rumbles and damp wind moves over the water; inside the cloud the sound softens to a hushed rushing of air. Above the cloud a clean high wind blows steadily across the peaks.
+  - id: hot-pool
+    still: stills/hot-pool.jpg
+    title: The Hot Pool
+    chapter: Queenstown · Lake Wakatipu
+    caption: Nobody is in a hurry to get out.
+    seen: "From behind: a woman with a wet black bob sits in a round copper hot tub, both hands on the rim, facing a tall glass wall with a vertical seam; beyond it a dark pine tree on a green lawn, dry tussock, a blue-grey lake and a misty mountain sloping to the water at right; wooden decking at left."
+    narration:
+      voice: mark
+      lines:
+        - A hot tub, a wall of glass, and the lake going grey in the mist.
+        - This is Queenstown, where our road trip north started.
+        - voice: jen
+          text: I’m never getting out of this tub.
+    loop:
+      frames: 192
+      seed: 924240004
+      idea: Steam and rain; she lowers her chin toward the water and lifts it again.
+      action: "Live-action, cinematic, a static medium shot holds the position and framing established by Picture 1: the woman with the wet black bob sits in the round copper hot tub, hands on the rim, facing the glass wall and the misty lake. Thin steam curls off the water, rain streaks run down the glass and mist drifts over the mountain across the lake. She lowers her chin toward the water, water droplets running from her hair down her shoulders, and lifts her head again to look out; small ripples lap around her shoulders and the pine tree sways beyond the glass. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Warm water laps softly against copper, rain patters on the glass wall and she lets out a slow, contented breath.
+    objects:
+      - id: lake
+        label: Hit the road
+        hint: The lake road runs all the way to the mountains
+        at:
+          - 0.6
+          - 0.52
+        select:
+          positive:
+            - - 0.33
+              - 0.52
+            - - 0.67
+              - 0.52
+            - - 0.1
+              - 0.5
+          negative:
+            - - 0.23
+              - 0.45
+          box:
+            - 0
+            - 0.44
+            - 1
+            - 0.6
+        goes: red-car
+        film:
+          frames: 362
+          seed: 927270112
+          idea: "A road-trip in one move: through the glass, over the lake, alongside a red car on the long drive to Aoraki, which pulls over so she can step out and photograph the mountain."
+          action: "Live-action, cinematic, a medium shot begins in the position and framing established by Picture 1: the woman with the wet black bob sits in the round copper hot tub facing the tall glass wall, the pine tree, the lawn and the misty lake beyond. The camera glides forward past her over the tub and through the glass wall, over the lawn and the tussock and out above the blue-grey lake, then banks down to a road running along the shore, where a small red car drives beside the water. The camera tracks alongside the red car, level with its left side, the whole car side-on to the camera, as the road leaves the lake and runs through a wide valley of golden tussock toward snowy mountains beneath broken cloud. The car slows and stops on the grassy verge, still side-on, its near doors shut. A woman in a black puffer jacket, a black beanie and a long green plaid skirt, who has stepped out on the far side, walks out from behind the front of the car and away from the camera into the tussock, her back to the camera, and raises a camera to her face toward the peaks, while the camera glides forward and settles close beside the car’s red front wing and wing mirror. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Water laps in the tub and rain ticks on the glass; wind rushes as the camera glides over the lake. A car engine hums along the road, tyres crunch onto a gravel verge, a door opens and thunks shut, and her boots swish through dry tussock in a steady mountain wind.
+      - id: water
+        label: Duck under
+        hint: From the hottest water to the coldest ice
+        at:
+          - 0.3
+          - 0.93
+        select:
+          positive:
+            - - 0.27
+              - 0.94
+            - - 0.83
+              - 0.9
+            - - 0.37
+              - 0.9
+          negative:
+            - - 0.6
+              - 0.9
+            - - 0.5
+              - 0.8
+          box:
+            - 0.15
+            - 0.83
+            - 0.98
+            - 1
+        goes: blue-ice
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240015
+          idea: She sinks under the hot water; the camera follows her down, the water turns turquoise and hardens into glacial ice, and she is standing in a blue crevasse on the Tasman Glacier.
+          action: "Live-action, cinematic, a medium shot begins in the position and framing established by Picture 1: the woman with the wet black bob sits in the round copper hot tub facing the glass wall and the misty lake, her hands on the rim. She takes a breath, lets go of the rim and sinks below the surface. The camera follows her under the water: bubbles stream up past the lens and the dark water brightens into glowing turquoise. The turquoise hardens into smooth walls of blue glacial ice streaked with white, and the camera rises through a narrow crevasse of ice toward a bright slit of daylight above. In the crevasse stands the woman, now in a navy jacket and an orange beanie, her gloved hand pressed against the ice wall as she looks up toward the light. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Warm water laps against copper and a deep breath is drawn; a splash, then the muffled gurgle of bubbles underwater. The rumble of water gives way to the creak and tick of ice, meltwater dripping and a hollow wind whistling through the crevasse.
+  - id: red-car
+    still: stills/red-car.jpg
+    title: The Road to Aoraki
+    chapter: On the road to Aoraki
+    caption: Somewhere in that cloud is a glacier with our name on it.
+    seen: A woman in a black puffer jacket, black beanie and green plaid skirt stands in golden tussock at left with both hands raised to her face holding a camera, looking up a wide valley to snowy mountains under a window of blue sky in the clouds; the front wing, door and wing mirror of a red car fill the right edge.
+    narration:
+      voice: mark
+      lines:
+        - The drive from Queenstown to Aoraki Mount Cook is dramatic.
+        - The whole valley gets swallowed up by mountains and cloud, and the Tasman Glacier is hiding right in the middle of it.
+        - voice: jen
+          text: I made him pull over for this one.
+    loop:
+      frames: 192
+      seed: 924240044
+      idea: Wind in the tussock; she takes the shot.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: the woman in the black puffer jacket and plaid skirt stands in golden tussock holding her camera to her eye, the red car’s wing and mirror at right. Wind sways the tussock and flaps the hem of her skirt; she presses the shutter, lowers the camera a little to look at the mountains and raises it again. Clouds drift slowly across the window of blue sky over the snowy peaks, and their reflection slides across the car’s wing mirror. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A steady mountain wind hisses through dry tussock and her skirt flaps; the camera shutter clicks twice.
+    objects:
+      - id: camera
+        label: Look through her lens
+        hint: She is framing the tallest mountain in the country
+        at:
+          - 0.17
+          - 0.7
+        select:
+          positive:
+            - - 0.167
+              - 0.7
+            - - 0.17
+              - 0.82
+            - - 0.167
+              - 0.61
+          box:
+            - 0.11
+            - 0.57
+            - 0.23
+            - 0.95
+        goes: aoraki
+        film:
+          frames: 209
+          seed: 924240028
+          idea: The camera lines up behind her shoulder and zooms along her sight line until the telephoto photograph she is taking fills the screen.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the woman in the black puffer jacket, black beanie and plaid skirt stands in golden tussock with her camera raised to her eye, the red car’s wing and mirror at right, a wide valley leading to snowy mountains under a window of blue sky in the clouds. The camera moves up behind her shoulder into her line of sight and zooms in fast and far along it: the tussock plain rushes away beneath, the valley walls slide out of the frame and the clouds swell, until the jagged snow-covered peak at the head of the valley fills the view above a thick band of billowing white cloud and a pale glacier valley. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A steady wind hisses through the tussock and her camera shutter clicks twice. A long whoosh of air rushes past, then the high clean wind of the peaks.
+      - id: car
+        label: Drive on to the heli base
+        hint: Somebody out there has an orange hat for you
+        at:
+          - 0.84
+          - 0.75
+        select:
+          positive:
+            - - 0.83
+              - 0.75
+            - - 0.73
+              - 0.9
+            - - 0.95
+              - 0.4
+          negative:
+            - - 0.785
+              - 0.46
+          box:
+            - 0.64
+            - 0.1
+            - 1
+            - 1
+        goes: helipad
+        shortcut: true
+        film:
+          frames: 362
+          seed: 924242008
+          idea: She drives on to the helicopter base, where the ground crew hands her the company jacket and the orange beanie — and the photograph is her pulling it on.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: a woman in a black puffer jacket, black beanie and green plaid skirt stands in golden tussock at left holding a camera up to her eye, looking up a wide valley to snowy mountains under a window of blue sky, the front wing and mirror of a parked red car at the right edge. Her shutter clicks as the camera glides forward past her shoulder and out over the golden tussock, rising up the long valley toward the snowy mountains. It flies on high over a braided glacial river and into a band of low white cloud that fills the view. The camera drops out beneath the cloud over a wide gravel landing field in the mountains, where a blue, white and red helicopter sits on its pad beside a small white fuel trailer and a ground crew member in an orange high-visibility vest stands by it. Far below, a small figure in a navy jacket stands in the middle of the gravel. The camera descends in one long glide and settles at eye level in front of her as she pulls an orange fleece beanie down over her ears with both hands. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Wind moves through the tussock and a camera shutter clicks; wind rushes past as the camera climbs, and a glacial river roars far below. Inside the cloud the air hushes, then a helicopter turbine idles below, gravel crunches underfoot and fleece rustles over her ears.
+      - id: mirror
+        label: Check the mirror
+        hint: Keep an eye on the car around here
+        at:
+          - 0.78
+          - 0.46
+        select:
+          positive:
+            - - 0.787
+              - 0.46
+            - - 0.767
+              - 0.47
+          box:
+            - 0.72
+            - 0.39
+            - 0.84
+            - 0.56
+        film:
+          frames: 192
+          seed: 924241033
+          idea: A kea — the mountain parrot famous for vandalising tourists’ cars — lands on the wing mirror, admires itself, yanks at the rubber seal and flies off while she keeps photographing.
+          action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1 for the whole clip: the woman in the black puffer jacket and plaid skirt photographs the mountains from the golden tussock at left, the red car’s front wing, door and wing mirror at the right edge of the frame, snowy peaks beyond. A small olive-green kea parrot glides in from the top of the frame and lands on the top of the red car’s wing mirror, small against the car at the right edge. It peers down into the mirror glass, tilts its head at its reflection, grips the black rubber edge of the mirror with its hooked beak and tugs it twice, the mirror wobbling, while the woman keeps photographing the peaks with her back turned. The kea lets go, flashes its orange underwings and flies up out of the top right of the frame, and the mirror settles back into place, the woman still at her camera and the tussock swaying in the wind. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Wind hisses through the tussock and her camera shutter clicks. Small claws scrape on plastic as the kea lands, it gives one shrill, ringing kee-aa call, rubber squeaks under its beak, and its wings flutter away into the wind.
+  - id: aoraki
+    still: stills/aoraki.jpg
+    title: Aoraki
+    chapter: Aoraki / Mount Cook
+    caption: The cloud piercer.
+    seen: "Telephoto: a jagged snow-and-glacier peak at upper right rises above a thick band of billowing white cloud under a deep blue sky; below the cloud, snowy slopes, a pale glacier valley and dark foothills."
+    narration:
+      voice: mark
+      lines:
+        - That’s Aoraki, Mount Cook, the tallest mountain in Aotearoa, at 3,724 metres.
+        - Its name is usually translated as cloud piercer.
+    loop:
+      frames: 192
+      seed: 924241045
+      idea: Cloud boils around the peak; spindrift streams off the summit.
+      action: "Live-action, cinematic, a static telephoto shot holds the position and framing established by Picture 1: the jagged snow-covered peak rises above a thick band of billowing white cloud under a deep blue sky. The whole cloud band rolls and boils along the valley, its crests surging up and folding over; a long plume of snow streams off the summit ridge in the high wind and curls away across the blue; cloud shadows sweep across the pale glacier and the dark foothills below. The surge eases and the cloud band settles back into its shape beneath the peak. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A high, strong wind roars across the peaks and hisses through the streaming snow, then eases to a steady rush.
+    objects:
+      - id: cloud
+        label: Drop through the cloud
+        hint: The heli base is down in the valley
+        at:
+          - 0.4
+          - 0.32
+        select:
+          positive:
+            - - 0.25
+              - 0.3
+            - - 0.5
+              - 0.4
+            - - 0.1
+              - 0.25
+            - - 0.8
+              - 0.45
+          negative:
+            - - 0.8
+              - 0.15
+            - - 0.2
+              - 0.75
+          box:
+            - 0
+            - 0.1
+            - 1
+            - 0.56
+        goes: helipad
+        film:
+          frames: 294
+          seed: 925250205
+          idea: The camera sinks through Aoraki’s own cloud band into the grey valley below and glides across the gravel flats to the heli base, where she is pulling on her orange beanie.
+          action: "Live-action, cinematic, a wide telephoto shot begins in the position and framing established by Picture 1: a jagged snow-covered peak rises above a thick band of billowing white cloud under a deep blue sky, dark lower slopes and a pale glacier valley below. The camera glides forward and down into the band of cloud until soft white fills the view. The white thins below into grey overcast light, and the camera sinks out of the underside of the cloud over a wide mountain valley of grey gravel and dry tussock beneath snow-dusted peaks. It glides low across the gravel toward a small heli base: a blue, white and red helicopter idles on its pad, a ground crew member in an orange high-visibility vest steps out beside it and a small white fuel trailer stands at left. In front of the helicopter a 35-year-old Korean woman with a round face, in a navy helicopter-company jacket and black trousers, pulls an orange fleece beanie down over her ears with both hands, her head tipped down, and lifts her face as the camera arrives. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: High wind whistles off the peak; inside the cloud the sound hushes to a soft rushing of damp air. Below the cloud a cold wind sweeps the valley, a helicopter turbine idles and gravel crunches as fleece rustles over her ears.
+      - id: peak
+        label: Drop onto the glacier
+        hint: Aoraki’s ice comes all the way down
+        at:
+          - 0.82
+          - 0.2
+        select:
+          positive:
+            - - 0.8
+              - 0.2
+            - - 0.9
+              - 0.15
+            - - 0.73
+              - 0.25
+            - - 0.93
+              - 0.25
+          negative:
+            - - 0.6
+              - 0.35
+            - - 0.6
+              - 0.08
+          box:
+            - 0.58
+            - 0.08
+            - 1
+            - 0.33
+        goes: glacier-poles
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240016
+          idea: The camera dives off the peak through the cloud and sweeps low over the Tasman Glacier to find her leaning on her pole.
+          action: "Live-action, cinematic, a wide telephoto shot begins in the position and framing established by Picture 1: a jagged snow-covered peak rising above a thick band of billowing cloud under a blue sky, dark lower slopes and a pale glacier valley below. The camera dives down across the snowfields beneath the peak, through a thin layer of cloud, and sweeps low over a vast grey-white glacier split by crevasses, snow-streaked mountains on either side under grey sky. It slows over a slope of snowy ice where three hikers walk in single file along a ridge at the upper left, and settles in front of a woman in a navy jacket, orange beanie, round sunglasses and black face covering who leans on a trekking pole with crampons on her boots, one gloved hand at her collar. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: High wind whistles off the peak and roars past as the camera dives. Near the ice the wind drops to a cold breeze, crampons crunch into frozen snow and a trekking pole taps the ice.
+  - id: helipad
+    still: stills/helipad.jpg
+    title: The Heli Base
+    chapter: Tasman Valley
+    caption: We made the cut. Hold on to your hat.
+    seen: "A gravel landing field in a wide mountain valley under grey cloud: a woman in a navy helicopter-company jacket and black trousers stands right of center pulling an orange fleece beanie down over her ears with both hands; behind her a blue, white and red helicopter on its pad with a ground crew member in an orange high-visibility vest stepping out; a small white fuel trailer at left; snow-dusted dark peaks."
+    narration:
+      voice: mark
+      lines:
+        - Heli-hikes up here get called off at the last minute all the time.
+        - You don’t know until a few hours before whether the weather lets you fly.
+        - We made the cut.
+        - voice: jen
+          text: It’s freezing. Is my hat on straight?
+    loop:
+      frames: 192
+      seed: 924240046
+      idea: She tugs the beanie down against the cold as the rotor idles behind her.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: the woman in the navy jacket pulls the orange beanie down over her ears on the gravel landing field, the helicopter and the crew member in the orange vest behind her. She tugs the beanie down firmly on both sides and blinks against the wind; the helicopter’s rotor turns slowly, the crew member shifts his weight at the door, and clouds drift over the snow-dusted peaks. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A helicopter turbine idles with a slow whup of rotor blades, wind gusts across the gravel and fleece rustles over her ears.
+    objects:
+      - id: helicopter
+        label: Take off
+        hint: The glacier landing is ten minutes up the valley
+        at:
+          - 0.41
+          - 0.36
+        select:
+          positive:
+            - - 0.413
+              - 0.37
+            - - 0.387
+              - 0.34
+            - - 0.467
+              - 0.39
+          negative:
+            - - 0.459
+              - 0.405
+            - - 0.62
+              - 0.35
+          box:
+            - 0.33
+            - 0.24
+            - 0.54
+            - 0.47
+        goes: glacier-poles
+        film:
+          frames: 362
+          seed: 924240003
+          idea: She runs for the helicopter, the camera rides along over the glacier, and on landing she pulls up her face covering and puts on her sunglasses for the close-up.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the woman in the navy jacket pulls her orange beanie down on the gravel landing field, the helicopter and the crew member in the orange vest behind her. She turns and hurries across the gravel toward the helicopter, ducking beneath the turning rotor beside the crew member. The camera follows her in through the open door and she settles into a seat by the window; the helicopter lifts, the gravel valley drops away and a vast white glacier between dark mountains spreads beneath the window. The helicopter settles onto the snow; she steps out onto the glacier, pulls a black face covering up over her nose and slides round dark sunglasses onto her face, and the camera moves in close in front of her as she tilts her head down, the orange beanie filling the upper frame and the helicopter resting blurred on the snow behind her beside a grey rock slope. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: The turbine spools up to a roaring whine and rotor blades beat the air; boots crunch across gravel and a door slides shut. Inside, the engine drones; then the rotors slow over the snow, boots crunch onto the glacier and fleece rustles as she pulls the face covering up.
+  - id: glacier-poles
+    still: stills/glacier-poles.jpg
+    title: On the Ice
+    chapter: Tasman Glacier
+    caption: Walk where the guide walks.
+    seen: "On a snowy glacier slope: the woman in the orange beanie, round sunglasses, black face covering and navy jacket leans on a trekking pole, crampons on her boots, left gloved hand at her collar; three hikers walk along a ridge at upper left; a crevasse opens at lower left; clouded snowy mountains behind."
+    narration:
+      voice: mark
+      lines:
+        - It was our first time on a glacier with crampons and hiking poles.
+        - The Tasman is the longest glacier in New Zealand.
+    loop:
+      frames: 192
+      seed: 924240048
+      idea: Leaning on her pole, she adjusts her collar; spindrift blows across the ice.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: the woman in the orange beanie, round sunglasses and navy jacket leans on her trekking pole on the snowy glacier slope, hikers on the ridge behind. She tugs at her collar with her gloved hand and shifts her weight on the pole; loose snow blows in thin streams across the slope, cloud drifts over the mountain and the hikers on the ridge sway as they stand. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Wind whistles over the ice and loose snow hisses across the surface; crampons creak as she shifts her weight.
+    objects:
+      - id: her
+        label: Ask her which way
+        hint: She has been listening to the guide
+        at:
+          - 0.66
+          - 0.5
+        select:
+          positive:
+            - - 0.653
+              - 0.45
+            - - 0.733
+              - 0.75
+            - - 0.61
+              - 0.215
+          negative:
+            - - 0.55
+              - 0.5
+          box:
+            - 0.54
+            - 0.17
+            - 0.84
+            - 0.98
+        goes: that-way
+        film:
+          frames: 192
+          seed: 924242057
+          idea: "A quick beat: she plants the pole, steps up close and points the way like she owns the glacier."
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the woman in the orange beanie, round sunglasses and navy jacket leans on her trekking pole on the snowy glacier slope, hikers on the ridge behind. The camera moves in toward her slowly and steadily from the start, the hikers on the ridge sliding out of the top of the frame. She straightens, stands the pole upright on its tip in the snow beside her, gives it a twist with her gloved hand and lets go; the pole spins, wobbles and topples to her right, sliding out of the right edge of the frame. She looks after it, nods firmly, flings out her left arm and points confidently off to the right of the frame with a grey gloved finger, her other hand low at her side, as the camera arrives at a medium close shot of her, the glacier and snowy mountains soft behind her. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Crampons crunch on the ice, the pole whirs as it spins, wobbles with a scrape and clatters onto the frozen snow out of sight. Her jacket swishes as she flings out an arm, with a steady wind across the glacier.
+      - id: crevasse
+        label: Follow her into the ice cave
+        hint: It glows blue inside
+        at:
+          - 0.18
+          - 0.8
+        select:
+          positive:
+            - - 0.2
+              - 0.8
+            - - 0.3
+              - 0.82
+            - - 0.1
+              - 0.76
+          negative:
+            - - 0.3
+              - 0.6
+          box:
+            - 0
+            - 0.66
+            - 0.45
+            - 0.95
+        goes: blue-ice
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924240022
+          idea: She plants her pole, lowers herself into the crevasse at her feet, and the camera follows her down as the white walls turn glowing blue.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the woman in the orange beanie and navy jacket leans on her trekking pole on the snowy slope, hikers on the ridge behind, a crevasse opening at the lower left. She turns from the camera, steps down to the crevasse, plants her pole upright in the snow at its lip and lowers herself carefully into it. The camera follows her down over the snowy lip: the white walls turn a glowing turquoise and close in around her, daylight filtering blue through the ice. She squeezes along the narrow passage and stops, pressing her gloved hand against the ice wall and looking up toward a bright slit of daylight high above, and the camera settles above and behind her shoulder. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Crampons crunch on hard snow and the pole thunks into the ice. Her jacket scrapes against the ice, meltwater drips and trickles, and the wind drops to a hollow hush inside the blue walls.
+  - id: that-way
+    still: stills/that-way.jpg
+    title: That Way
+    chapter: Tasman Glacier
+    caption: Trust her.
+    seen: "Medium close: the woman in the orange beanie, round sunglasses and black face covering, navy helicopter-company jacket, points off to the right of the frame with a grey gloved finger, other hand low at left; soft-focus snowy mountains and white glacier behind."
+    narration:
+      voice: mark
+      lines:
+        - voice: jen
+          text: It’s this way. Trust me!
+        - She knows exactly where she’s going.
+        - Trust her.
+    loop:
+      frames: 192
+      seed: 924240049
+      idea: "She insists: two emphatic jabs of the finger."
+      action: "Live-action, cinematic, a static medium close shot holds the position and framing established by Picture 1: the woman in the orange beanie, round sunglasses and black face covering points off to the right with a grey gloved finger. She gives two emphatic little jabs of her pointing finger and nods once; the loose ends of her black hair flutter beside the sunglasses and clouds drift over the soft snowy mountains behind her. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Her jacket swishes with each jab and a steady wind blows across the glacier.
+    objects:
+      - id: her
+        label: Follow her into the ice
+        hint: She has found a cave
+        at:
+          - 0.43
+          - 0.4
+        select:
+          positive:
+            - - 0.43
+              - 0.3
+            - - 0.4
+              - 0.62
+            - - 0.3
+              - 0.8
+            - - 0.55
+              - 0.75
+          negative:
+            - - 0.08
+              - 0.3
+            - - 0.93
+              - 0.4
+            - - 0.7
+              - 0.15
+          box:
+            - 0.06
+            - 0.06
+            - 0.94
+            - 1
+        goes: blue-ice
+        film:
+          frames: 243
+          seed: 925250206
+          idea: She lowers her arm and heads off the way she pointed; the camera follows her back across the glacier to a crack in the ice and down into the glowing blue crevasse after her.
+          action: "Live-action, cinematic, a medium close shot begins in the position and framing established by Picture 1: the woman in the orange beanie, round sunglasses and black face covering, in a navy helicopter-company jacket, points off to the right of the frame with a grey gloved finger, soft-focus snowy mountains and white glacier behind her. She lowers her arm, turns away and walks off to the right across the white glacier, crampons biting the ice, and the camera follows behind her. Ahead, a narrow crack opens in the glacier surface, glowing turquoise inside. She steps down into it with one gloved hand on the ice wall, and the camera follows her over the lip and down between walls of glowing blue ice, settling above and behind her as she presses her gloved hand to the ice and looks up toward a bright slit of daylight at the top of the passage. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Wind moves across the glacier and crampons crunch on frozen snow. Her boots scrape down into the crevasse; inside the ice the wind drops to a hush, meltwater drips and echoes, and the ice creaks softly.
+      - id: finger
+        label: Go where she points
+        hint: Down the valley, over the river
+        at:
+          - 0.85
+          - 0.89
+        select:
+          positive:
+            - - 0.833
+              - 0.9
+            - - 0.867
+              - 0.87
+          box:
+            - 0.75
+            - 0.83
+            - 0.91
+            - 0.97
+        goes: hooker-valley
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240017
+          idea: The camera takes her at her word and flies off the glacier in the direction of her finger, down the moraine and along the river to the Hooker Valley swing bridge.
+          action: "Live-action, cinematic, a medium close shot begins in the position and framing established by Picture 1: the woman in the orange beanie, round sunglasses and navy jacket points off to the right with a grey gloved finger, snowy mountains soft behind her. The camera swings right along her pointing arm and takes off in that direction, flying low and fast off the edge of the glacier, down over grey moraine and scree, and on along a valley of golden tussock and grey boulders where a milky blue river rushes between the rocks. Late sun breaks through the clouds and flares softly across the lens. The camera rises above the valley and settles over a winding path that leads down to a long silver suspension bridge strung across the river, green scrub on the steep mountainside at right and snowy peaks with a band of cloud at the head of the valley. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Her glove swishes through the air and the wind picks up as the camera flies. The rush of a glacial river swells over rolling boulders, and a breeze rustles the tussock.
+  - id: blue-ice
+    still: stills/blue-ice.jpg
+    title: Blue Ice
+    chapter: Tasman Glacier
+    caption: The blue is the ice itself, packed so hard the air is squeezed out.
+    seen: "Inside a narrow crevasse of glowing turquoise glacial ice, seen from above and behind: the woman in the orange beanie and navy jacket presses a gloved hand to the ice wall, looking up toward a bright slit of daylight at the top of the passage."
+    narration:
+      voice: mark
+      lines:
+        - The glacier has ice caves right on its surface.
+        - Inside, the ice glows turquoise, and that slit of daylight is the way out.
+        - voice: jen
+          text: Oh my gosh, look at this blue!
+    loop:
+      frames: 192
+      seed: 924240050
+      idea: Meltwater glints; her glove slides along the ice; light shimmers blue.
+      action: "Live-action, cinematic, a static high shot holds the position and framing established by Picture 1: the woman in the orange beanie presses her gloved hand to the glowing turquoise ice wall of the crevasse. She slides her glove slowly along the ice and turns her head toward the slit of daylight and back; drops of meltwater glint as they fall, and the blue light in the ice shimmers as a cloud passes over the opening. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Meltwater drips and trickles, the ice creaks and ticks, and a hollow wind breathes through the crevasse.
+    objects:
+      - id: light
+        label: The light above
+        hint: The others are waiting up top
+        at:
+          - 0.44
+          - 0.26
+        select:
+          positive:
+            - - 0.44
+              - 0.28
+            - - 0.453
+              - 0.2
+          negative:
+            - - 0.47
+              - 0.36
+            - - 0.4
+              - 0.25
+          box:
+            - 0.42
+            - 0.12
+            - 0.5
+            - 0.4
+        goes: glacier-walk
+        film:
+          frames: 243
+          seed: 924240023
+          idea: She climbs out of the crevasse toward the daylight, and on the surface she leads the group across the glacier toward the camera.
+          action: "Live-action, cinematic, a high shot begins in the position and framing established by Picture 1: the woman in the orange beanie and navy jacket stands in a narrow crevasse of glowing blue ice, her gloved hand on the wall, a bright slit of daylight above. She reaches up, grips the ice and climbs toward the light, and the camera rises behind her through the narrowing crevasse. She clambers out onto the white surface of the glacier; the camera emerges after her into daylight and swings around to face her as she walks toward it across the ice with a trekking pole and crampons, a hiker in a navy jacket and dark hat following behind her and a hiker in a pink beanie farther back, a dark snow-dusted mountain rising over the glacier beyond. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Gloves scrape on ice, meltwater drips and her breath puffs as she climbs. On top a cold wind sweeps the glacier, crampons crunch in rhythm and trekking poles tap the ice.
+      - id: ice
+        label: Warm your hands
+        hint: You know exactly where to go
+        at:
+          - 0.52
+          - 0.68
+        select:
+          positive:
+            - - 0.13
+              - 0.4
+            - - 0.8
+              - 0.5
+            - - 0.2
+              - 0.8
+            - - 0.67
+              - 0.2
+          negative:
+            - - 0.5
+              - 0.6
+            - - 0.49
+              - 0.44
+          box:
+            - 0
+            - 0
+            - 1
+            - 1
+        goes: hot-pool
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924240024
+          idea: She presses both hands to the ice until it melts and pours; the meltwater rises warm around the camera and surfaces in the Queenstown hot tub.
+          action: "Live-action, cinematic, a high shot begins in the position and framing established by Picture 1: the woman in the orange beanie presses a gloved hand to the glowing blue ice wall of the crevasse. She presses both hands flat against the ice, and around them the ice begins to glisten and run with water, streams pouring down the blue wall. The meltwater rises around the camera in a warm rush; the blue turns clear and dark, bubbles drift upward, and the camera surfaces through steaming water in a round copper hot tub, looking over the bare shoulders and wet black bob of a woman resting her hands on the rim, facing a tall glass wall with a pine tree, a green lawn and a blue-grey lake with a misty mountain beyond. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Ice creaks and ticks, then meltwater trickles and gushes down the wall. Bubbles gurgle underwater, the surface breaks with a warm splash, and water laps gently against copper as rain ticks on the glass.
+  - id: glacier-walk
+    still: stills/glacier-walk.jpg
+    title: Single File
+    chapter: Tasman Glacier
+    caption: Almost back to the helicopter.
+    seen: "On the white glacier: the woman in the orange beanie and navy jacket walks toward the camera holding a trekking pole, crampons on her boots, looking down; behind her a hiker in a navy jacket and dark hat with sunglasses and a pole, and farther back a hiker in a pink beanie; a dark snow-dusted mountain and grey rock wall beyond."
+    narration:
+      voice: mark
+      lines:
+        - Back across the ice in single file, poles tapping, all the way to the helicopter.
+    loop:
+      frames: 192
+      seed: 924240051
+      idea: She steadies herself on the ice, breathing; the others adjust their poles.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: the woman in the orange beanie walks toward the camera across the glacier with her trekking pole, two hikers behind her. She steadies her footing on the ice, breathing out, glancing down at her crampons; the hiker behind her adjusts her grip on her pole and the hiker in the pink beanie shifts from foot to foot. Wind sweeps loose snow across the glacier and cloud drifts over the dark mountain. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Crampons creak and crunch on hard ice, trekking poles tap and a cold wind sweeps across the glacier.
+    objects:
+      - id: ridge
+        label: Over the ridge
+        hint: The next valley is in late sun
+        at:
+          - 0.9
+          - 0.2
+        select:
+          positive:
+            - - 0.9
+              - 0.18
+            - - 0.85
+              - 0.3
+            - - 0.96
+              - 0.08
+          negative:
+            - - 0.71
+              - 0.16
+            - - 0.6
+              - 0.12
+          box:
+            - 0.76
+            - 0
+            - 1
+            - 0.45
+        goes: hooker-valley
+        film:
+          frames: 294
+          seed: 925250207
+          idea: The camera leaves the walkers on the ice and climbs the grey rock wall beside them, over the ridge into late sun above the Hooker Valley, its first swing bridge far below.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: on the white glacier the woman in the orange beanie and navy jacket walks toward the camera with a trekking pole, looking down, two hikers following behind her, a dark snow-dusted mountain beyond and a grey rock wall at right. The camera rises up and to the right as the walkers grow small on the white ice below, and climbs close along the grey rock wall until the rock fills the view. It crests the top of the ridge into warm late sunlight: a new valley opens below, golden tussock and green scrub on its slopes, a milky glacial river rushing among grey boulders and snowy peaks with a band of cloud at its head. The camera glides down the far side and settles high above the valley floor, where a path winds down to the river and a long silver swing bridge spans it far below. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Crampons crunch and poles tap on the ice; wind rushes past as the camera climbs the rock. Over the ridge the air falls calm, a glacial river roars far below and a kea calls once across the valley.
+      - id: beanie
+        label: Swap hats
+        hint: The orange one has done its job
+        at:
+          - 0.71
+          - 0.16
+        select:
+          positive:
+            - - 0.71
+              - 0.16
+            - - 0.69
+              - 0.14
+          negative:
+            - - 0.7
+              - 0.24
+          box:
+            - 0.67
+            - 0.11
+            - 0.75
+            - 0.21
+        goes: blue-beanie
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924241025
+          idea: On the glacier she pulls off the orange beanie, shakes out her hair and pulls on her own navy one, then steps up to the lens as the cloud breaks into blue sky.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: the woman in the orange beanie and navy jacket walks toward the camera across the glacier with her trekking pole, two hikers behind her. She stops, sticks the pole in the snow, pulls off the orange beanie and shakes out her black bob, then tugs a dark navy beanie from her jacket pocket and pulls it down over her fringe with both hands, her face tipped down. The camera pushes in slowly and steadily to a close-up of her while the glacier and the mountain behind her fall far out of focus into soft white and grey, and the grey cloud above opens into deep blue sky over the snowy mountain. She lifts her face into the lens with bright eyes and a small open-mouthed smile, freckles on her cheeks. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Crampons crunch to a stop and the pole thunks into the snow; fleece swishes as the orange beanie comes off and the navy one is tugged on. The wind drops to a calm mountain breeze and she lets out a small, pleased breath.
+  - id: hooker-valley
+    still: stills/hooker-valley.jpg
+    title: Hooker Valley
+    chapter: Hooker Valley Track
+    caption: One of the best short walks in the country.
+    seen: "High view of the Hooker Valley in late sun: a path winds down to a long silver suspension bridge over a rushing milky river among grey boulders; golden tussock at left, green scrub on a steep slope at right; snowy peaks with a band of cloud at the head of the valley; a green lens flare at upper right."
+    narration:
+      voice: mark
+      lines:
+        - Late sun on the Hooker Valley Track, and a glacial river the colour of milk.
+        - There are three swing bridges on the way to Hooker Lake.
+    loop:
+      frames: 192
+      seed: 924240052
+      idea: The river rushes, the flare shimmers, cloud slides along the peaks.
+      action: "Live-action, cinematic, a static high wide shot holds the position and framing established by Picture 1: the winding path, the silver suspension bridge over the rushing milky river, green scrub at right and snowy peaks with a band of cloud at the head of the valley. The river rushes and churns white around the boulders, the tussock ripples in the breeze, the band of cloud slides slowly along the peaks and the green lens flare shimmers as the late sun flickers. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A glacial river roars over boulders far below and a breeze rustles the tussock; a small bird chirps nearby.
+    objects:
+      - id: bridge
+        label: Cross the swing bridge
+        hint: There are three of them on the way to the lake
+        at:
+          - 0.56
+          - 0.62
+        select:
+          positive:
+            - - 0.52
+              - 0.62
+            - - 0.6
+              - 0.59
+            - - 0.467
+              - 0.66
+            - - 0.68
+              - 0.54
+          negative:
+            - - 0.6
+              - 0.7
+          box:
+            - 0.44
+            - 0.5
+            - 0.71
+            - 0.72
+        goes: hooker-bridge
+        film:
+          frames: 243
+          seed: 924240026
+          idea: A glide down the track and across the first swing bridge, up the valley to the second bridge beneath the snow face of Mount Sefton.
+          action: "Live-action, cinematic, a high wide shot begins in the position and framing established by Picture 1: a winding path descends to a long silver suspension bridge over a rushing milky river among boulders, green scrub on the steep slope at right, snowy peaks and a band of cloud at the head of the valley and a green lens flare at upper right. The camera cranes up and glides forward high above the valley, and the swing bridge slides far below the camera, a thin silver line over the milky river. The camera flies on up the valley high over golden tussock and green scrub, following the river upstream as a massive snow-covered mountain face grows ahead under a clear blue sky. It descends toward a rocky gorge on the right, sinking gently through the tops of the green scrub on the slope, leaves brushing softly past the lens, and comes to rest low among the scrub looking up at a second long suspension bridge on tall steel towers spanning the gorge, a small figure walking across it, the snow face rising beyond. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A glacial river roars over boulders far below and wind rushes past as the camera climbs; a kea calls once across the valley. Scrub leaves rustle close by, and small birds chirp in the scrub beside the second bridge.
+  - id: hooker-bridge
+    still: stills/hooker-bridge.jpg
+    title: The Second Bridge
+    chapter: Hooker Valley Track
+    caption: Somebody is crossing.
+    seen: "Low view from the scrub: a long suspension bridge on tall steel towers spans a rocky gorge; a small dark figure walks across it; a massive snow-covered mountain face rises beyond under a clear blue sky; green scrub in the foreground."
+    narration:
+      voice: mark
+      lines:
+        - Another long swing bridge across the gorge, with a snow face lit up behind it.
+        - Somebody is crossing.
+    loop:
+      frames: 192
+      seed: 924240053
+      idea: The bridge sways gently; the scrub stirs; the snow face glows.
+      action: "Live-action, cinematic, a static low wide shot holds the position and framing established by Picture 1: the long suspension bridge spans the rocky gorge below the snow-covered mountain face, a small figure on it, green scrub in the foreground. The bridge sways gently and the small figure on it pauses to look at the mountain; the scrub in the foreground stirs in the breeze and a wisp of cloud drifts across the snowfield at upper left. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: The river rushes through the gorge below, the bridge cables hum softly in the wind and small birds chirp in the scrub.
+    objects:
+      - id: walker
+        label: Meet her on the bridge
+        hint: She is waiting in the middle
+        at:
+          - 0.45
+          - 0.68
+        select:
+          positive:
+            - - 0.33
+              - 0.65
+            - - 0.53
+              - 0.72
+            - - 0.807
+              - 0.6
+          negative:
+            - - 0.5
+              - 0.85
+            - - 0.4
+              - 0.75
+          box:
+            - 0.18
+            - 0.41
+            - 0.9
+            - 0.81
+        goes: bridge-walk
+        film:
+          frames: 294
+          seed: 924241027
+          idea: The camera climbs onto the swaying bridge and walks out to meet the small figure crossing it, who turns out to be her.
+          action: "Live-action, cinematic, a low wide shot begins in the position and framing established by Picture 1: a long suspension bridge on tall steel towers spans a rocky gorge below a massive snow-covered mountain face, a small figure walking across it, green scrub in the foreground. The camera rises slowly out of the scrub and glides forward across the rocky bank toward the near tower of the bridge, the bridge and the figure on it growing steadily larger. It moves up onto the bridge deck beside the near tower and travels along the swaying deck between the mesh sides and the vertical steel cables, the river rushing through the boulders far below. The figure ahead grows larger: a woman in a long black coat, wide black trousers and a navy beanie walking toward the camera along the metal deck. She stops in the middle of the bridge in front of the camera with her hands at her sides, the steep scree slope and green scrub behind her. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Scrub rustles as the camera rises; the bridge deck clanks and rattles and its cables creak as it sways, the river roaring through the boulders below. Her sneakers tap steadily on the metal deck and the wind flaps her long coat.
+          allow:
+            lattice: The camera deliberately walks the bridge deck to meet her; this take (r2) held together and Mark approved it on 2026-09-25. Most bridge routes smear — treat this as the exception.
+  - id: bridge-walk
+    still: stills/bridge-walk.jpg
+    title: Halfway Across
+    chapter: Hooker Valley Track
+    caption: Do not look down. Actually, do.
+    seen: "On a suspension bridge: a woman in a long black coat, wide black trousers, white sneakers and a navy beanie stands mid-deck facing the camera; mesh sides, steel handrails and vertical cables converge behind her; a scree slope and green scrub on the mountainside, a boulder riverbed below at right; pale sky."
+    narration:
+      voice: mark
+      lines:
+        - The bridge sways a little underfoot. She doesn’t seem to mind.
+        - Don’t look down. Actually, do.
+        - voice: jen
+          text: It’s bouncing! Why is it bouncing?
+    loop:
+      frames: 192
+      seed: 924240054
+      idea: The bridge sways under her; her coat moves in the wind.
+      action: "Live-action, cinematic, a static wide shot at eye level holds the position and framing established by Picture 1: the woman in the long black coat and navy beanie stands in the middle of the suspension bridge facing the camera. The bridge sways gently under her and she shifts her feet to keep her balance, the hem of her long coat lifting in the wind; she tilts her head and looks along the bridge and back into the lens. The river rushes white over the boulders below at right. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: The bridge cables creak as it sways, the deck ticks under her sneakers, her coat flaps and the river rushes far below.
+    objects:
+      - id: her
+        label: Say hello
+        hint: She has something to tell you
+        at:
+          - 0.5
+          - 0.55
+        select:
+          positive:
+            - - 0.5
+              - 0.56
+            - - 0.5
+              - 0.39
+            - - 0.5
+              - 0.72
+          negative:
+            - - 0.4
+              - 0.6
+            - - 0.6
+              - 0.6
+          box:
+            - 0.43
+            - 0.34
+            - 0.57
+            - 0.79
+        goes: blue-beanie
+        film:
+          frames: 192
+          seed: 1668604060
+          idea: She walks straight up to the camera and leans in grinning until her face fills the frame.
+          action: "Live-action, cinematic, a wide shot at eye level begins in the position and framing established by Picture 1: the woman in the long black coat and navy beanie, a 35-year-old Korean woman with a round, cute face, freckles and a straight black fringe, stands in the middle of the suspension bridge facing the camera. She walks straight toward the camera along the metal deck, arms relaxed, her long coat swinging, looking into the lens with a small smile, while the camera holds still at eye level. The shot’s keyframe corresponds to <Picture 3>: she has come halfway along the deck and is much larger in the frame, mid-stride in her white sneakers, the bridge cables, the scree slope and the pale sky unchanged behind her. She keeps walking until the shot’s keyframe corresponds to <Picture 4>: right in front of the camera, seen from the waist up, lips parted in a small smile, leaning slightly toward the lens, the bridge behind her. Then the camera circles slowly around her to her right, keeping her face in view the whole time: the bridge cables and railings sweep past behind her and fall away, and a snow-covered mountain under deep blue sky, a golden slope and a milky lake swing in behind her, softly out of focus, as she leans in until her freckled face fills the right of the frame. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Her sneakers tap across the metal deck, the bridge creaks as it sways and the river rushes below. Her coat rustles as she leans in close, with a soft amused breath.
+          keyframes:
+            - image: keyframes/bridge-walk-her-2.00s.jpg
+              frame: 48
+            - image: keyframes/bridge-walk-her-3.75s.jpg
+              frame: 90
+  - id: blue-beanie
+    still: stills/blue-beanie.jpg
+    title: Hello
+    chapter: Hooker Valley Track
+    caption: She is very pleased with the view.
+    seen: "Close-up: a smiling woman with freckles, a black fringe and a navy beanie looks into the lens with a small open-mouthed smile; behind her, far out of focus, a snowy mountain under deep blue sky and a golden slope at left."
+    narration:
+      voice: mark
+      lines:
+        - Cold cheeks, a navy beanie, and a smile.
+        - She was very pleased with the view.
+        - voice: jen
+          text: Get the mountain in, not just my face!
+    loop:
+      frames: 192
+      seed: 924240055
+      idea: "Her close-up breathes: a blink, a widening smile, a tilt of the head."
+      action: "Live-action, cinematic, a static close-up holds the position and framing established by Picture 1: the woman in the navy beanie with freckles and a black fringe looks into the lens with a small open-mouthed smile. She blinks, her smile widens so her eyes crinkle, she tilts her head a little and straightens; strands of her fringe lift in the breeze and cloud drifts across the blurred snowy mountain behind her. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: A soft mountain breeze and a quiet amused breath through her smile.
+    objects:
+      - id: breath
+        label: Fog up the lens
+        hint: It is cold up here. Wipe it and see.
+        at:
+          - 0.72
+          - 0.64
+        select:
+          positive:
+            - - 0.72
+              - 0.64
+            - - 0.667
+              - 0.4
+            - - 0.767
+              - 0.8
+          negative:
+            - - 0.35
+              - 0.3
+          box:
+            - 0.44
+            - 0.24
+            - 1
+            - 1
+        goes: green-hills
+        film:
+          frames: 209
+          seed: 924240030
+          idea: She breathes on the lens until it fogs white; a sleeve wipes it clear and the wiped streak shows the green Waikato hills where the trip began.
+          action: "Live-action, cinematic, a close-up begins in the position and framing established by Picture 1: the woman in the navy beanie with freckles and a black fringe smiles into the lens, a blurred snowy mountain and blue sky behind her. She leans closer and breathes onto the lens; a white fog of condensation spreads across the view until her face disappears into it. A dark sleeve wipes across the lens from left to right, clearing a wide streak, and through it lies a valley of rolling green pasture under a grey sky, dotted with grazing white sheep, a lone round tree and a wire fence running up the slope, a wooden post fence in the foreground. The last of the fog evaporates from the edges of the lens. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A long warm breath huffs against the lens and fabric squeaks as a sleeve wipes the glass. Sheep bleat across the valley, a cow lows and wind moves softly through long grass.
+      - id: mountain
+        label: Look past her at the mountain
+        hint: It is hard to say which view is better
+        at:
+          - 0.38
+          - 0.26
+        select:
+          positive:
+            - - 0.4
+              - 0.3
+            - - 0.33
+              - 0.2
+            - - 0.6
+              - 0.25
+          negative:
+            - - 0.7
+              - 0.6
+            - - 0.5
+              - 0.05
+          box:
+            - 0
+            - 0.05
+            - 0.9
+            - 0.6
+        goes: aoraki
+        shortcut: true
+        film:
+          frames: 243
+          seed: 924241032
+          idea: She steps out of her own close-up, the focus racks to the mountain behind her, and the camera zooms to the summit above the cloud.
+          action: "Live-action, cinematic, a close-up begins in the position and framing established by Picture 1: the woman in the navy beanie smiles into the lens, a blurred snowy mountain and blue sky behind her. She grins, curls the fingers of both hands into two rings and holds them over her eyes like binoculars, then turns her head to look back over her shoulder at the mountain. The camera arcs around behind her shoulder so the mountain comes into view through the ring of her fingers, and zooms steadily along her line of sight, the ring of her fingers widening and passing out of the frame, until a jagged summit of snow and glacier ice fills the view above a thick band of billowing white cloud under a deep blue sky, dark lower slopes and a pale glacier valley beneath the cloud. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: A soft amused breath and the rustle of a sleeve as she raises her hands. A breeze rises into the high clean hiss of wind across the peaks.
+  - id: green-hills
+    still: stills/green-hills.jpg
+    title: Sheep Country
+    chapter: Waikato
+    caption: "Aotearoa: the land of the long white cloud."
+    seen: "Rolling green pasture under a grey sky: terraced hills dotted with grazing white sheep, a few cattle at right, two dark trees at left and a lone round tree at center with sheep in its shade, a wire fence running up the slope at right, a wooden post fence and long grass in the foreground."
+    narration:
+      voice: mark
+      lines:
+        - Out here it’s rolling green farmland in every direction.
+        - New Zealand has about five sheep for every person, and I think most of them live right here.
+    loop:
+      frames: 192
+      seed: 924242035
+      idea: Sheep graze, cloud shadows slide over the hills, the grass combs in the wind.
+      action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: rolling green pasture under a steady grey overcast sky with grazing white sheep, a lone round tree, dark trees at left, cattle at right and a wire fence up the slope. A white sheep grazing near the lone tree lifts its head, bounds away and chases a second sheep in a wide circle around the lone tree, the two of them running across the grass with bouncing strides, the sheep near them scattering a few steps and settling again. The two sheep slow to a trot, return to their places near the tree and dip their heads to graze. A cow at right flicks its tail, the long grass by the post fence sways and the round tree’s leaves shimmer in the wind. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+      sound: Wind combs the long grass; hooves thud softly on turf as two sheep run, and sheep bleat back and forth across the valley.
+    objects:
+      - id: sheep
+        label: Follow the sheep
+        hint: They know a shortcut into the Shire
+        at:
+          - 0.48
+          - 0.62
+        select:
+          text: sheep
+          instances: 16
+          box:
+            - 0.1
+            - 0.25
+            - 0.95
+            - 0.9
+          cleanup:
+            keepRatio: 0.02
+        goes: round-door
+        film:
+          frames: 243
+          seed: 927270105
+          idea: The flock trots off downhill and the camera tags along through a hedge gap into Hobbiton, where the sheep scatter and leave the couple smiling at their door.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: rolling green pasture with grazing white sheep, a lone round tree, dark trees at left and a wire fence along the slope, a wooden post fence in the foreground. The sheep near the lone tree lift their heads and trot off downhill to the left. The camera follows one sheep at its own height at an even pace as it trots down the slope along the fence line and pushes through a gap in a tall green hedge. On the other side the same sheep trots along a garden lane of yellow marigolds and flat stepping stones, the camera following steadily behind it, until it trots off the path to the right and out of the frame, revealing a round doorway set into a grassy hillside, its red door standing open, where a man in a grey t-shirt and dark jeans stands with a woman in a black pinafore dress and a pink patterned top whose arm is around his shoulders, both smiling at the camera, a lantern glowing beside the door. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Hooves thud softly on turf and wool brushes through the hedge; the sheep bleats once. A tūī whistles from the trees and hooves tap on stepping stones before trotting off into the grass.
+      - id: cloud
+        label: Ride the long white cloud
+        hint: It is going all the way to Fiordland
+        at:
+          - 0.55
+          - 0.04
+        select:
+          positive:
+            - - 0.55
+              - 0.03
+            - - 0.85
+              - 0.05
+            - - 0.25
+              - 0.02
+          negative:
+            - - 0.3
+              - 0.08
+            - - 0.62
+              - 0.12
+          box:
+            - 0
+            - 0
+            - 1
+            - 0.14
+        goes: cloud-wall
+        shortcut: true
+        film:
+          frames: 294
+          seed: 924240010
+          idea: The camera flies into a low white cloud over the Waikato hills and sinks out of its underside above Milford Sound — the world’s name, done literally.
+          action: "Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: rolling green pasture with grazing sheep under a grey sky. The camera rises smoothly over the post fence and the grazing sheep, climbing past the lone round tree and the ridge line toward a long low white cloud drifting across the hilltops. It glides straight into the cloud: the green hills vanish into soft white and fine droplets stream past the lens. The white thins below, and the camera sinks out of the underside of the cloud above dark rippled water, where a colossal cliff of wet rock and rainforest rises from a fjord, its summit wrapped in the same white cloud, a slender waterfall pouring down at its lower left and a tiny white ship resting on the water beside the falls. The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
+          sound: Wind rises over the pasture and sheep call below; inside the cloud the sound hushes to a soft rushing whisper of moving air. Out of the cloud the distant roar of a waterfall and the lap of water on the fjord swell up.

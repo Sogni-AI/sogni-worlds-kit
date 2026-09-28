@@ -1,0 +1,31 @@
+{
+  "name": "sogni-worlds-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build a cinematic, clickable Sogni World from your own photos with your own coding agent, the Sogni Creative Agent Skill and a Sogni API key.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.10"
+  },
+  "bin": {
+    "sogni-world": "./world.js"
+  },
+  "scripts": {
+    "dev": "vite --config player/vite.config.ts",
+    "build:player": "vite build --config player/vite.config.ts",
+    "typecheck": "tsc -p player/tsconfig.json --noEmit",
+    "test": "node --test \"test/*.test.js\"",
+    "check": "npm run typecheck && npm test && node world lint-examples"
+  },
+  "dependencies": {
+    "@sogni-ai/sogni-client": "^5.58.1",
+    "exif-reader": "^2.0.3",
+    "sharp": "^0.35.5",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}

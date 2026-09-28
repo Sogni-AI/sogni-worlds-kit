@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.tmp
+
+# Your worlds: the plan, verdicts and receipts are small and worth keeping;
+# photos, recordings and rendered media are large (and personal).
+worlds/*/photos/
+worlds/*/stills/
+worlds/*/keyframes/
+worlds/*/voices/
+worlds/*/music/
+worlds/*/renders/**/*.mp4
+worlds/*/renders/**/*.jpg
+worlds/*/renders/**/*.png
+worlds/*/selections/**/*.png
+worlds/*/audio/**/*.wav
+worlds/*/audio/**/*.mp3
+worlds/*/build/
+worlds/*/.cache/

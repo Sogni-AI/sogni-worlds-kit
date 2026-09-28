@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Sogni-AI/sogni-worlds-kit/schema/world.schema.json",
+  "title": "Sogni World (world.json)",
+  "description": "A finished, playable world. `node world build` writes it; the player reads it. Media paths are relative to this file, or absolute https URLs.",
+  "type": "object",
+  "required": ["format", "id", "title", "aspect", "start", "places"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "sogni-world@1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "credit": { "type": "string", "description": "Shown in the About panel, e.g. who made it and how." },
+    "aspect": {
+      "type": "object",
+      "description": "The shape every place is shown at (the stills' and films' width and height).",
+      "required": ["width", "height"],
+      "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } },
+      "additionalProperties": false
+    },
+    "start": { "type": "string", "description": "The id of the first place." },
+    "order": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "A story told in order: the place ids in sequence. The player offers each place's next stop first and marks the rest as shortcuts. null for a free-roaming world."
+    },
+    "music": {
+      "type": ["object", "null"],
+      "required": ["src"],
+      "additionalProperties": false,
+      "properties": {
+        "src": { "type": "string" },
+        "volume": { "type": "number", "minimum": 0, "maximum": 4, "description": "Relative level; 1 is as mastered." },
+        "underFilms": { "type": "number", "minimum": 0, "maximum": 1, "description": "Multiplier while a film or narration plays." },
+        "credit": { "type": "string" }
+      }
+    },
+    "speakers": {
+      "type": "object",
+      "description": "Optional avatars for narration speakers, keyed by the name used in narration lines.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": { "avatar": { "type": "string" } },
+        "additionalProperties": false
+      }
+    },
+    "places": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/place" } }
+  },
+  "$defs": {
+    "film": {
+      "type": "object",
+      "required": ["src"],
+      "additionalProperties": false,
+      "properties": {
+        "src": { "type": "string", "description": "The full-size film (2K class)." },
+        "src720": { "type": "string", "description": "An exact half-size copy for phones and slow connections." },
+        "seconds": { "type": "number" }
+      }
+    },
+    "place": {
+      "type": "object",
+      "required": ["id", "title", "still", "hotspots"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "chapter": { "type": "string" },
+        "caption": { "type": "string", "description": "One line shown on arrival." },
+        "still": { "type": "string", "description": "The canonical still. Every film that starts or ends here starts or ends on exactly this picture." },
+        "loop": { "oneOf": [{ "$ref": "#/$defs/film" }, { "type": "null" }], "description": "The living photograph: plays over the still, starting and ending on it." },
+        "narration": {
+          "type": ["object", "null"],
+          "required": ["lines"],
+          "additionalProperties": false,
+          "properties": {
+            "src": { "type": "string", "description": "Optional audio; without it the lines show at reading pace." },
+            "lines": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["text"],
+                "additionalProperties": false,
+                "properties": {
+                  "text": { "type": "string" },
+                  "speaker": { "type": "string" },
+                  "start": { "type": "number" },
+                  "end": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "hotspots": { "type": "array", "items": { "$ref": "#/$defs/hotspot" } }
+      }
+    },
+    "hotspot": {
+      "type": "object",
+      "required": ["id", "label", "at", "film"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string", "description": "What happens when you click, as an action: \"Duck through the round door\"." },
+        "hint": { "type": "string" },
+        "at": {
+          "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 }, "minItems": 2, "maxItems": 2,
+          "description": "Where the label sits, as fractions of the picture's width and height."
+        },
+        "outline": {
+          "type": ["object", "null"],
+          "required": ["width", "height", "path"],
+          "additionalProperties": false,
+          "description": "The object's traced SAM 3 outline: an SVG path in a width × height coordinate space that covers the whole picture.",
+          "properties": { "width": { "type": "number" }, "height": { "type": "number" }, "path": { "type": "string" } }
+        },
+        "to": { "type": ["string", "null"], "description": "The place this crossing lands on; null for a moment that returns here." },
+        "next": { "type": "boolean", "description": "In a story told in order, this is the way to the next stop." },
+        "shortcut": { "type": "boolean", "description": "A crossing that jumps out of the story's order, offered as an easter egg." },
+        "film": { "$ref": "#/$defs/film" },
+        "rewind": { "oneOf": [{ "$ref": "#/$defs/film" }, { "type": "null" }], "description": "The film reversed, played by Back." }
+      }
+    }
+  }
+}
