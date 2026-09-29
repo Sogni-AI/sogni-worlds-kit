@@ -39,6 +39,23 @@ export class Hotspots {
     overlay.addEventListener('click', event => {
       if (event.target === overlay || event.target === this.layer) this.showLabels();
     });
+    window.addEventListener('resize', () => this.keepClear());
+  }
+
+  /**
+   * An object near the top or bottom of the picture would put its label under
+   * the place's title or the bottom buttons; move such a label just clear of
+   * them, staying as close to its object as it can.
+   */
+  private keepClear() {
+    const top = document.querySelector('.bar.top')?.getBoundingClientRect().bottom ?? 0;
+    const bottom = document.querySelector('.bar.bottom')?.getBoundingClientRect().top ?? innerHeight;
+    for (const label of this.layer.querySelectorAll<HTMLElement>('.label')) {
+      label.style.marginTop = '';
+      const box = label.getBoundingClientRect();
+      if (box.top < top + 6) label.style.marginTop = `${top + 6 - box.top}px`;
+      else if (box.bottom > bottom - 6) label.style.marginTop = `${bottom - 6 - box.bottom}px`;
+    }
   }
 
   render(place: Place) {
@@ -90,6 +107,7 @@ export class Hotspots {
       this.layer.append(group);
     }
     this.layer.hidden = false;
+    requestAnimationFrame(() => this.keepClear());
     this.showLabels(LABELS_ON_ARRIVAL_MS);
   }
 
