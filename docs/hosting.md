@@ -38,8 +38,8 @@ What is inside, and how big it gets:
 | `films/<film>-rewind*.mp4` | Crossings played backwards, for Back |
 | `audio/` | Narration and music |
 
-A 2K film is roughly 0.5–1.5 MB per second. The Long White Cloud (23 places,
-33 crossings) comes to about 2.4 GB with its half-size copies and rewinds; a
+A 2K film is roughly 0.5–1.5 MB per second. The Long White Cloud (22 places,
+40 crossings) comes to about 2.4 GB with its half-size copies and rewinds; a
 five-place starter world is a few hundred MB. The export prints the total.
 
 ## 3. Put it online

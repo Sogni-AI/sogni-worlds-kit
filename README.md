@@ -90,9 +90,9 @@ A world is dozens of native 2K films, and that's where a plan pays off.
 | H3 films rendering at once | — | 2 | 4 |
 | H3 fair-use capacity | — | 1× | 2× |
 
-*The Long White Cloud* has 57 films. At pay-as-you-go rates the first takes of
-all 57 come to about $46, and every take including retakes to about $98 (quotes
-as of 2026-09). On an Unlimited plan those renders are covered within fair use.
+*The Long White Cloud* today has 63 films across 22 places: one take of each
+comes to about $50 at pay-as-you-go rates. Retakes add to that; its first
+version rendered 120 takes for 57 films, about $98 (quotes as of 2026-09). On an Unlimited plan those renders are covered within fair use.
 **We recommend Unlimited Pro for building a whole world:** four H3 films render
 at once, and it has twice the H3 fair-use capacity. The kit uses your plan
 automatically when your account has one. [Subscribe here](https://app.sogni.ai/wallet).

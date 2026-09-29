@@ -4,7 +4,7 @@
 [its plan](../examples/the-long-white-cloud/world.yaml) ·
 [its world.json](../examples/the-long-white-cloud/world.json)
 
-*The Long White Cloud* is a trip through Aotearoa New Zealand in 23 photographs
+*The Long White Cloud* is a trip through Aotearoa New Zealand in 22 photographs
 by Sogni's Mark Ledford, taken with his partner Jen in March and April
 2023. It is the world this kit was extracted from. Its plan in `examples/` holds
 the real direction behind every film that shipped. The kit's `render` assembles
@@ -21,17 +21,17 @@ those directions into exactly the prompts that rendered the live films.
 | When (PT) | What |
 | --- | --- |
 | Sept 24, ~9:50 PM | The brief |
-| overnight | Stills made from the best graded copy of each photo. Every still looked at, all 57 films directed, a canary rendered and checked |
+| overnight (first version) | Stills made from the best graded copy of each photo. Every still looked at, all 57 films directed, a canary rendered and checked |
 | by 1:10 AM | All 57 films rendered (33 crossings, 23 living photographs, 1 surprise) in 2.5 hours on two Unlimited accounts |
 | Sept 25, 5:08 AM | Live, after Mark reviewed overnight: 56 of 57 routes shipped with a take he approved |
 | Sept 25–27 | Linear story order, narration in Mark's and Jen's cloned voices, music, retakes, keyframed faces |
 
 ## What it's made of
 
-- **23 places**, one per photograph, each a canonical still at 2304×1536 (3:2).
-- **23 living photographs**: static camera, the whole frame gently alive, Foley on
+- **22 places**, one per photograph, each a canonical still at 2304×1536 (3:2).
+- **22 living photographs**: static camera, the whole frame gently alive, Foley on
   every one.
-- **33 crossings**, 6–15 seconds, each caused by something in the photograph: a
+- **40 crossings**, 6–15 seconds (the story's way on from each place, plus the shortcuts), each caused by something in the photograph: a
   round door, a guitar's sound hole, the painted H on a ferry deck, a helicopter,
   sunglasses, a breath on the lens.
 - **Moments**, including a surprise: a kea (the mountain parrot famous for

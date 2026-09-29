@@ -21,13 +21,14 @@ Object selection (SAM 3), narration and music cost cents each.
 
 **A world**: plan on one loop plus one or two crossings or moments per place, so
 about 2.5 films per place and around $2 of first takes per place. Retakes roughly
-double that: *The Long White Cloud* rendered 120 takes for its 57 films.
+double that: the first version of *The Long White Cloud* rendered 120 takes for
+its 57 films.
 
 | World | Films | First takes | With retakes |
 | --- | --- | --- | --- |
 | 5-place canary world | ~12 | ~$10 | ~$20 |
 | 10 places | ~25 | ~$21 | ~$40 |
-| *The Long White Cloud*, 23 places | 57 | ~$46 | ~$98 |
+| *The Long White Cloud* today, 22 places | 63 | ~$50 | ~$100 |
 
 ## Why the Unlimited plan
 
@@ -43,7 +44,7 @@ spend no Spark.
 | Queued videos | up to 8 | up to 24 |
 
 **We recommend Unlimited Pro for building a world.** Four H3 films render at
-once, which is how a 57-film world renders in an evening, and it has twice the
+once, which is how a 60-film world renders in an evening, and it has twice the
 H3 fair-use capacity, so a big world rarely has to wait for tomorrow. Unlimited
 works too, just more slowly. A new card subscription starts with a 3-day free
 trial, which covers a canary (up to 6 H3 videos a day, with trial length limits).
@@ -79,7 +80,7 @@ window starts) and a larger monthly one. When it's used up, the kit reports
 ## How long it takes
 
 A 2K film takes a few minutes to about fifteen once it starts. *The Long White
-Cloud*'s first 57 films took a median of 12 minutes per crossing and 5 per loop,
+Cloud*'s first version, 57 films, took a median of 12 minutes per crossing and 5 per loop,
 all 57 in 2.5 hours across two Unlimited accounts rendering in parallel. The whole
 first version, from "bring these photos alive" to live, took one night. A person
 reviewed it the next morning.
