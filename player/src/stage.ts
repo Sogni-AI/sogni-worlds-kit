@@ -55,6 +55,11 @@ export class Stage {
     setInterval(() => this.sync(), 500);
   }
 
+  /** Every media element the stage plays, for the Begin tap to unlock. */
+  get mediaElements(): HTMLMediaElement[] {
+    return [...this.deck.videos, this.film, this.backdropVideo];
+  }
+
   /** Show a place at once: its still, then its living loop from the first frame. */
   async show(place: Place) {
     this.setStill(place);

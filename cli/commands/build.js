@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { readPlan, filmsOf, nextPlaceId } from '../lib/plan.js';
-import { resolveWorldId, shown, filmId, loopId } from '../lib/paths.js';
+import { resolveWorldId, shown, filmId, loopId, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../lib/takes.js';
 import { canvasByName, delivered } from '../lib/h3.js';
@@ -83,7 +83,7 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
   let stillSize = null;
   for (const place of plan.places) {
     if (!place.still) throw new Error(`Place "${place.id}" has no still. Run: node world ingest`);
-    const source = join(paths.dir, place.still);
+    const source = worldFile(paths, place.still, `places.${place.id}.still`);
     if (!existsSync(source)) throw new Error(`Place "${place.id}": ${place.still} is missing. Run: node world ingest`);
     const target = join(out, 'stills', `${place.id}.jpg`);
     const sha = sha256File(source);
@@ -200,7 +200,8 @@ function report({ world, issues, missing, deadEnds, unreachable, films, out }, i
   }
   const hotspots = world.places.reduce((n, p) => n + p.hotspots.length, 0);
   const loops = world.places.filter(p => p.loop).length;
-  log.ok(`${shown(join(out, 'world.json'))}: ${world.places.length} places, ${hotspots} things to click, ${loops} living photographs (${films} films finished)`);
+  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  log.ok(`${shown(join(out, 'world.json'))}: ${count(world.places.length, 'place', 'places')}, ${count(hotspots, 'thing to click', 'things to click')}, ${count(loops, 'living photograph', 'living photographs')} (${count(films, 'film', 'films')} finished)`);
   if (missing.length) {
     log.warn(`Not in the world yet (${missing.length}):`);
     for (const m of missing) log.info(`${m.film} — ${m.state}`);

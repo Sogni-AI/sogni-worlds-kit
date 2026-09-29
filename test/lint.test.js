@@ -72,3 +72,32 @@ test('the example plan lints clean', () => {
   const errors = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).filter(f => f.level === 'error');
   assert.deepEqual(errors, []);
 });
+
+test('findings name the field and quote the words that set them off', () => {
+  const issues = lintDirection({ ...good, sound: 'Nothing but wind over the lake.' });
+  const negation = issues.find(i => i.rule === 'negation');
+  assert.equal(negation.field, 'sound');
+  assert.match(negation.message, /"Nothing"/);
+  const plan = { id: 'trip', title: 'T', canvas: '1152x768', order: 'free', voices: {},
+    places: [{ id: 'a', still: 'stills/a.jpg', title: 'A', seen: 'x', objects: [{ id: 'door', label: 'Go', at: [0.5, 0.5], film: { ...good, sound: 'Nothing but wind.' } }] }] };
+  const finding = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).find(f => f.level === 'error');
+  assert.equal(finding.where, 'films.a-door.sound');
+});
+
+test('a sound that fades is fine; a picture that fades or dissolves is not', () => {
+  assert.ok(!rules(lintDirection({ ...good, kind: 'moment', action: good.action.replace('begins in', 'static wide shot holds'), sound: 'The rumble fades into the wind.' })).includes('transition'));
+  const picture = lintDirection({ ...good, action: `${good.action} The clearing fades into the sea.` });
+  assert.ok(rules(picture).includes('transition'));
+  assert.match(picture.find(i => i.rule === 'transition').message, /"fades into"/);
+});
+
+test('plan paths must stay inside the world folder', () => {
+  const plan = {
+    id: 'trip', title: 'T', canvas: '1152x768', order: 'free',
+    voices: { me: { clone: '../../../.ssh/id_rsa', transcript: 'x' } },
+    music: { file: '/etc/passwd' },
+    places: [{ id: 'a', still: '../a.jpg', title: 'A', seen: 'x', objects: [{ id: 'door', label: 'Go', at: [0.5, 0.5], film: { ...good, keyframes: [{ image: '/tmp/k.jpg', frame: 10 }] } }] }],
+  };
+  const outside = lintPlan(plan, { dir: '/worlds/trip' }, { checkFiles: false }).filter(f => /outside the world's folder/.test(f.message)).map(f => f.where);
+  assert.deepEqual(outside.sort(), ['films.a-door.keyframes', 'music', 'places.a', 'voices.me'].sort());
+});

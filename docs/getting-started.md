@@ -7,9 +7,11 @@ waiting for the render.
 
 | | macOS | Windows | Linux (Debian/Ubuntu) |
 | --- | --- | --- | --- |
-| Node 20+ | `brew install node` | `winget install OpenJS.NodeJS.LTS` | [nodejs.org](https://nodejs.org) or `nvm install --lts` |
+| Node 22.12+ | `brew install node` | `winget install OpenJS.NodeJS.LTS` | [nodejs.org](https://nodejs.org) or `nvm install 22` |
 | ffmpeg | `brew install ffmpeg` | `winget install Gyan.FFmpeg` | `sudo apt install ffmpeg` |
 | git | included with Xcode tools | `winget install Git.Git` | `sudo apt install git` |
+
+Check with `node --version`: it must print v22.12 or newer.
 
 Plus a coding agent: [Claude Code](https://claude.com/claude-code),
 [Codex](https://github.com/openai/codex) or [Hermes Agent](https://hermes-agent.nousresearch.com/).
@@ -44,6 +46,10 @@ Agent Skill finds it too, then:
   your machine
 - finishes with `node world doctor`
 
+`setup` asks you to paste the key. It also accepts `--key <key>` for scripts, but
+a key typed on the command line stays in your shell history, so prefer pasting it
+or setting `SOGNI_API_KEY` in your environment.
+
 Run `node world doctor` any time something seems off.
 
 ## 4. Start a world
@@ -65,12 +71,14 @@ Open your agent in the kit folder and say:
 
 It follows [AGENTS.md](../AGENTS.md):
 
-1. ingests the photos
-2. asks you about the trip
-3. writes the plan and shows it to you
+1. asks you about the trip, including the order of the places
+2. names the photos in that order and ingests them
+3. writes the plan and shows it to you (`node world plan`)
 4. quotes the cost
 5. renders a canary: one journey and one living photograph
 6. screens both
+
+It can't render the rest of the world until you've approved the canary.
 
 Then it asks you to review:
 

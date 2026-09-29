@@ -190,7 +190,15 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
   let still = 0;
   for (let i = step.length - 1; i >= 0 && step[i] < 0.6; i--) still++;
   metrics.stillTailSeconds = time(still);
-  if (still >= Math.round(1.5 * FPS)) {
+  if (kind === 'loop') {
+    // A living photograph holds its camera still on purpose, so a still tail is
+    // not a stall. What matters is whether the picture moves at all: loops were
+    // rejected as "way too subtle" when only one small thing moved.
+    if (still >= step.length - 1) {
+      flags.push({ code: 'barely-moves', severity: 'warn', frame: 0, at: 0,
+        message: 'Almost nothing moves at screening size. Subtle motion (cloud, water, breath) can still be there: watch it at full size and check the whole picture feels alive.' });
+    }
+  } else if (still >= Math.round(1.5 * FPS)) {
     flags.push({ code: 'frozen-tail', severity: 'warn', frame: n - still, at: time(n - still),
       message: `The last ${time(still)} s barely move: the film stalls before it lands` });
   }
@@ -235,6 +243,9 @@ function mergeRanges(ranges) {
   }
   return out;
 }
+
+/** Below this a take's sound is nearly inaudible even after build levels it: worth a listen. */
+export const QUIET_LUFS = -40;
 
 /** Integrated loudness (LUFS) and true peak (dBFS) of a file's audio. */
 export async function loudness(path) {
@@ -314,6 +325,8 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
   const audio = info.audioChannels ? await loudness(video) : { lufs: null, truePeak: null };
   if (info.audioChannels && (audio.lufs === null || audio.lufs < -50)) {
     flags.push({ code: 'silent', severity: 'error', message: `The sound track is silent (${audio.lufs} LUFS)` });
+  } else if (audio.lufs !== null && audio.lufs < QUIET_LUFS) {
+    flags.push({ code: 'quiet', severity: 'warn', message: `Very quiet (${audio.lufs} LUFS; a world's films sit near −14 after build): listen for whether the sound is really there, or the direction's sound needs more to happen` });
   } else if (audio.lufs !== null && audio.lufs > -9) {
     flags.push({ code: 'loud', severity: 'warn', message: `Very loud (${audio.lufs} LUFS); build levels it, but listen for distortion` });
   }

@@ -26,6 +26,11 @@ export class Narration {
     this.audio.addEventListener('ended', () => this.stop());
   }
 
+  /** The narration's element, so the Begin tap can unlock it (see Player.unlockMedia). */
+  get element(): HTMLAudioElement {
+    return this.audio;
+  }
+
   start(place: Place, delayMs: number) {
     this.stop();
     const narration = place.narration;

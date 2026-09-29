@@ -39,14 +39,14 @@ spend no Spark.
 | --- | --- | --- |
 | Price | $20 / month ($199 / year) | $50 / month ($498 / year) |
 | H3 films rendering at once | 2 (FastH3 Turbo) | 4 |
-| Daily fair-use capacity on the Fast network | 1× | 4× |
+| H3 fair-use capacity | 1× | 2× |
 | Queued videos | up to 8 | up to 24 |
 
-**We recommend Unlimited Pro for building a world.** Four films render at once,
-which is how a 57-film world renders in an evening. Its larger daily capacity also
-means a big world rarely has to wait for tomorrow. Unlimited works too, just more
-slowly. A new card subscription starts with a 3-day free trial, which covers a
-canary (up to 6 H3 videos a day, with trial length limits).
+**We recommend Unlimited Pro for building a world.** Four H3 films render at
+once, which is how a 57-film world renders in an evening, and it has twice the
+H3 fair-use capacity, so a big world rarely has to wait for tomorrow. Unlimited
+works too, just more slowly. A new card subscription starts with a 3-day free
+trial, which covers a canary (up to 6 H3 videos a day, with trial length limits).
 
 [Subscribe in Wallet & Billing](https://app.sogni.ai/wallet). API keys created
 under a subscribed account use the plan automatically.

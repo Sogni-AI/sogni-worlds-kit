@@ -36,15 +36,24 @@ worlds/my-trip/
   keyframes/            optional stills pinned inside a film
   voices/               optional recordings for a cloned narrator
   music/                optional music you own
-  selections/          outlines of the clickable objects
+  selections/           outlines of the clickable objects
   renders/<film>/       every take of every film, each with its receipt
   audio/                narration and music takes
   review/               verdicts.json and notes.json
   build/                the finished world: world.json + stills/ + films/ + audio/
 ```
 
-The plan, verdicts and receipts are small, and git keeps them. Photos and media are
-large and personal, so `.gitignore` leaves them out.
+The plan, verdicts and receipts are small, and git keeps them. Photos, stills,
+keyframes, voice recordings, the outline previews (a copy of your photo) and all
+rendered media are large and personal, so `.gitignore` leaves them out. Two things
+to know before you push a world to a public repository:
+
+- **Receipts name your Sogni account.** Each take's receipt in `renders/` and
+  `audio/` records the Sogni username it was rendered under, next to the job id, so
+  a render can be traced. Leave `renders/` and `audio/` out too if that matters to you.
+- **Your review stays on your machine.** The review page is served on 127.0.0.1
+  only, and nothing on it is sent anywhere; only your verdicts are written, to
+  `review/verdicts.json`.
 
 ## Each step
 
@@ -105,7 +114,7 @@ quality before paying for the rest.
 - size, frame count and sound
 - whether the first and last frames match the stills
 - hard cuts, structure breaks and dissolves
-- frozen endings, seam flashes and loudness
+- frozen endings on crossings, loops where almost nothing moves, seam flashes and loudness
 
 It also draws a contact sheet. Your agent looks at the sheets, rejects what is
 clearly broken, and notes anything doubtful. Then `review` opens a page where you

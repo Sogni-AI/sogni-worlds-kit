@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { readPlan } from '../lib/plan.js';
-import { resolveWorldId, shown } from '../lib/paths.js';
+import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { connect, describeBilling } from '../lib/sogni.js';
 import { levelAudio } from '../lib/finish.js';
@@ -55,7 +55,7 @@ export async function run(argv) {
   }
 
   if (music.file) {
-    const source = join(paths.dir, music.file);
+    const source = worldFile(paths, music.file, 'music.file');
     if (!existsSync(source)) throw new Error(`${music.file} is missing`);
     const out = join(dir, 'music.mp3');
     await levelAudio(source, out, { lufs: MUSIC_LUFS, truePeak: -1.5, bitrate: '192k' });

@@ -24,6 +24,11 @@ export class Music {
     return Boolean(this.audio);
   }
 
+  /** The track's element, so the Begin tap can unlock it (see Player.unlockMedia). */
+  get element(): HTMLAudioElement | undefined {
+    return this.audio;
+  }
+
   get credit() {
     return this.spec?.credit;
   }
@@ -58,13 +63,18 @@ export class Music {
   private update() {
     const audio = this.audio;
     if (!audio) return;
+    // iOS ignores a media element's volume, so sound off must also mute it;
+    // the glide below still ducks and levels the music everywhere else.
+    audio.muted = this.muted;
     cancelAnimationFrame(this.glide);
     const from = audio.volume;
     const to = this.target();
     const began = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - began) / GLIDE_MS);
-      audio.volume = from + (to - from) * t;
+      // A frame's timestamp can be a little earlier than `began`, and a
+      // negative step would fade below zero, which the browser refuses.
+      const t = Math.min(1, Math.max(0, (now - began) / GLIDE_MS));
+      audio.volume = Math.min(1, Math.max(0, from + (to - from) * t));
       if (t < 1) this.glide = requestAnimationFrame(step);
     };
     this.glide = requestAnimationFrame(step);

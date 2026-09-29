@@ -10,7 +10,12 @@ import { log } from '../lib/log.js';
 import { run as doctor } from './doctor.js';
 
 export const summary = 'Connect your Sogni API key, check your plan, and install the Creative Agent Skill';
-export const usage = 'node world setup [--key <api key>]   (without --key it asks; the key is saved where the Creative Agent Skill finds it too)';
+export const usage = `node world setup [--key <api key>]
+
+  Without --key it asks you to paste the key, which keeps it out of your shell
+  history (a key typed after --key stays in it). Setting SOGNI_API_KEY in your
+  environment works too. The key is saved to ~/.config/sogni/credentials (only
+  you can read it), where the Sogni Creative Agent Skill finds it too.`;
 
 const onPath = command => spawnSync(platform() === 'win32' ? 'where' : 'which', [command], { stdio: 'ignore' }).status === 0;
 
@@ -68,7 +73,7 @@ export async function run(argv) {
 
   if (!session || session.error) {
     if (!process.stdin.isTTY) {
-      throw new Error(`No working API key. Get one at ${LINKS.apiKey}, then run in your own terminal: node world setup   (or: node world setup --key <key>)`);
+      throw new Error(`No working API key. Get one at ${LINKS.apiKey}, then run in your own terminal: node world setup   (or set SOGNI_API_KEY in your environment)`);
     }
     log.info(`Get an API key at ${LINKS.apiKey}`);
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -84,15 +89,15 @@ export async function run(argv) {
 
   log.title('Your plan');
   if (session.tier === 'unlimited_pro') {
-    log.ok('Unlimited Pro is active: every model a world uses is covered, four films render at once, and you get four times the daily fair-use capacity.');
+    log.ok('Unlimited Pro is active: every model a world uses is covered, four H3 films render at once, and you get twice the H3 fair-use capacity of Unlimited.');
   } else if (session.tier === 'unlimited') {
     log.ok('Unlimited is active: every model a world uses is covered.');
-    log.info(`A 20-place world is ~60 films. Unlimited Pro ($50/mo) renders four at once instead of two and has 4× the daily capacity: ${LINKS.plans}`);
+    log.info(`A 20-place world is ~60 films. Unlimited Pro ($50/mo) renders four H3 films at once instead of two and has twice the H3 fair-use capacity: ${LINKS.plans}`);
   } else {
     log.warn('No Unlimited plan on this account. Strongly recommended for building worlds:');
     log.info('A world is dozens of 2K films plus retakes. Unlimited ($20/mo) or Unlimited Pro ($50/mo) covers MiniMax H3,');
     log.info('SAM 3, voices, music and the LLM — no per-film charges. Without a plan, each 2K film costs roughly');
-    log.info('$0.60–$1.20 in Spark, and you always see the quote before anything renders.');
+    log.info('about $0.50–$1.20 in Spark, and you always see the quote before anything renders.');
     log.info(`Plans: ${LINKS.plans}   Subscribe: ${LINKS.subscribe}`);
   }
   log.info(`Billing for renders: ${describeBilling(session.billing)}`);

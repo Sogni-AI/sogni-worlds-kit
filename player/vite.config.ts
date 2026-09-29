@@ -17,15 +17,41 @@ const TYPES: Record<string, string> = {
   '.wav': 'audio/wav', '.ogg': 'audio/ogg',
 };
 
-/** Serve worlds/ and examples/ from the repo, with byte ranges so video can seek. */
+const EXAMPLES = join(REPO, 'examples');
+const WORLDS = join(REPO, 'worlds');
+
+/**
+ * The file a request may read, or null. Only two places are served: examples/**
+ * and a world's finished build, worlds/<id>/build/**. Photos, voices, renders,
+ * receipts and the repo's .env (which holds your API key) are never reachable,
+ * whatever the request's encoding: no segment may start with "." (which also
+ * rules out ".." and dotfiles), and the resolved path is checked again.
+ */
+export function servableFile(rawUrl: string): string | null {
+  let url: string;
+  try {
+    url = decodeURIComponent(rawUrl.split('?')[0]);
+  } catch {
+    return null;
+  }
+  const segments = url.split(/[\\/]+/).filter(Boolean);
+  if (segments.some(segment => segment.startsWith('.') || segment.includes('\0'))) return null;
+  const file = resolve(REPO, ...segments);
+  const inside = (root: string) => file.startsWith(root + sep);
+  if (segments[0] === 'examples' && inside(EXAMPLES)) return file;
+  if (segments[0] === 'worlds' && segments.length >= 4 && segments[2] === 'build' && inside(join(WORLDS, segments[1], 'build'))) return file;
+  return null;
+}
+
+/** Serve examples/ and worlds/<id>/build/ from the repo, with byte ranges so video can seek. */
 function repoFolders(): Plugin {
   const serve = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const url = decodeURIComponent((req.url ?? '').split('?')[0]);
-    if (!url.startsWith('/worlds/') && !url.startsWith('/examples/')) return next();
-    const file = resolve(REPO, `.${url}`);
-    if (!file.startsWith(REPO + sep) || !existsSync(file) || !statSync(file).isFile()) {
+    const path = (req.url ?? '').split('?')[0];
+    if (!/^\/(worlds|examples)(\/|%2f|%5c)/i.test(path)) return next();
+    const file = servableFile(path);
+    if (!file || !existsSync(file) || !statSync(file).isFile()) {
       res.statusCode = 404;
-      return res.end(`Not found: ${url}`);
+      return res.end('Not found');
     }
     const size = statSync(file).size;
     res.setHeader('Content-Type', TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream');
@@ -35,13 +61,23 @@ function repoFolders(): Plugin {
     if (range) {
       const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
       const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+      if (!(start >= 0 && start <= end && end < size)) {
+        res.statusCode = 416;
+        res.setHeader('Content-Range', `bytes */${size}`);
+        return res.end();
+      }
       res.statusCode = 206;
       res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
       res.setHeader('Content-Length', String(end - start + 1));
-      return createReadStream(file, { start, end }).pipe(res);
+      return stream(createReadStream(file, { start, end }), res);
     }
     res.setHeader('Content-Length', String(size));
-    createReadStream(file).pipe(res);
+    stream(createReadStream(file), res);
+  };
+  // A file removed or unreadable mid-stream ends that one response, never the dev server.
+  const stream = (source: ReturnType<typeof createReadStream>, res: ServerResponse) => {
+    source.on('error', () => res.destroy());
+    source.pipe(res);
   };
   return {
     name: 'sogni-world-folders',
@@ -61,7 +97,13 @@ export default defineConfig(({ command }) => {
     publicDir: join(PLAYER, 'public'),
     define: { 'import.meta.env.VITE_DEFAULT_WORLD': JSON.stringify(defaultWorld) },
     plugins: [repoFolders()],
-    server: { port: Number(process.env.PORT ?? 5173), host: process.env.HOST ?? 'localhost' },
+    server: {
+      port: Number(process.env.PORT ?? 5173),
+      host: process.env.HOST ?? 'localhost',
+      // Vite's own /@fs/ route may read only the player and its dependencies,
+      // never a world's photos, voices or renders elsewhere in the repo.
+      fs: { strict: true, allow: [PLAYER, join(REPO, 'node_modules')] },
+    },
     build: {
       outDir: resolve(REPO, process.env.PLAYER_OUT ?? 'dist/player'),
       emptyOutDir: true,

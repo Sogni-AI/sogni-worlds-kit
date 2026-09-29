@@ -51,6 +51,23 @@ class Player {
     this.setSound(this.soundOn);
   }
 
+  /**
+   * Called synchronously inside the Begin tap. iOS Safari lets a media element
+   * play with sound on its own later only if play() was first called on that
+   * element during a user gesture; the loop hand-offs, films, rewinds and
+   * narration all start later from timers and 'ended' events. So every element
+   * is played and paused once, here, whether or not it has a source yet.
+   */
+  unlockMedia() {
+    const elements: (HTMLMediaElement | undefined)[] = [...this.stage.mediaElements, this.narration.element, this.music.element];
+    for (const media of elements) {
+      if (!media) continue;
+      const attempt = media.play();
+      if (attempt) attempt.catch(() => undefined);
+      media.pause();
+    }
+  }
+
   async begin() {
     this.music.start();
     await this.arrive(placeOf(this.world, this.world.start), FIRST_NARRATION_MS, true);
@@ -164,7 +181,7 @@ async function boot() {
     return;
   }
   const player = new Player(root, world);
-  await beginScreen(root, world, placeOf(world, world.start).still);
+  await beginScreen(root, world, placeOf(world, world.start).still, () => player.unlockMedia());
   await player.begin();
 }
 

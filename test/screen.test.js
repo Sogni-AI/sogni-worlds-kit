@@ -41,3 +41,29 @@ test('a crossfade between two pictures is flagged as a dissolve', async () => {
   assert.ok(!codes(result).includes('size'), 'delivered at twice the canvas');
   assert.ok(result.flaggedFrames.length >= 1, 'flagged frames exported');
 });
+
+test('a still living photograph is "barely moves", never a frozen tail', async () => {
+  const video = join(dir, 'still-loop.mp4');
+  await syntheticVideo(video, { source: 'color=c=0x335577:size=192x128:rate=24,drawbox=x=40:y=30:w=60:h=40:color=white:t=fill', seconds: 4 });
+  const loop = analyseFrames(await greyFrames(video), { kind: 'loop' });
+  assert.ok(codes(loop).includes('barely-moves'), codes(loop).join(', '));
+  assert.ok(!codes(loop).includes('frozen-tail'));
+  const crossing = analyseFrames(await greyFrames(video), { kind: 'crossing' });
+  assert.ok(codes(crossing).includes('frozen-tail'), codes(crossing).join(', '));
+});
+
+test('a nearly inaudible take is flagged "quiet" (a silent one stays "silent")', async () => {
+  const still = join(dir, 'q.png');
+  await ffmpeg(['-f', 'lavfi', '-i', 'color=c=0x446688:size=192x128,drawbox=x=30:y=30:w=60:h=40:color=white:t=fill', '-frames:v', '1', still]);
+  const clip = async (name, gain) => {
+    const video = join(dir, `${name}.mp4`);
+    await ffmpeg(['-loop', '1', '-i', still, '-f', 'lavfi', '-i', 'sine=f=440:sample_rate=48000', '-filter_complex', `[1:a]volume=${gain}[a]`,
+      '-map', '0:v', '-map', '[a]', '-t', '3', '-r', '24', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-c:a', 'aac', video]);
+    return screenTake({ video, journal: { kind: 'loop', width: 96, height: 64, frames: 72 }, fromStill: still, toStill: still, sheetPath: join(dir, `${name}.sheet.jpg`), framesDir: join(dir, `${name}.frames`) });
+  };
+  // lavfi's sine starts at -18 dBFS: -25 dB more lands near -46 LUFS, -45 dB below the -50 silence line.
+  const quiet = await clip('quiet', '-25dB');
+  assert.ok(codes(quiet).includes('quiet'), `${codes(quiet)} at ${quiet.metrics.loudness?.lufs} LUFS`);
+  assert.ok(codes(await clip('silent', '-45dB')).includes('silent'));
+  assert.ok(!codes(await clip('normal', '0dB')).some(code => ['quiet', 'silent'].includes(code)));
+});

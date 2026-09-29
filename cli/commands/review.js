@@ -156,11 +156,18 @@ function serveFile(request, response, paths, relativePath) {
     start = Math.max(0, start); end = Math.min(size - 1, end);
     if (start > end) { response.writeHead(416, { 'content-range': `bytes */${size}` }); response.end(); return; }
     response.writeHead(206, { 'content-type': type, 'content-length': end - start + 1, 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes' });
-    createReadStream(target, { start, end }).pipe(response);
+    streamTo(createReadStream(target, { start, end }), response);
     return;
   }
   response.writeHead(200, { 'content-type': type, 'content-length': size, 'accept-ranges': 'bytes' });
-  createReadStream(target).pipe(response);
+  streamTo(createReadStream(target), response);
+}
+
+/** Pipe a file to the response; a file that vanishes or fails mid-stream ends the response, never the server. */
+function streamTo(stream, response) {
+  stream.on('error', () => response.destroy());
+  response.on('close', () => stream.destroy());
+  stream.pipe(response);
 }
 
 function readBody(request) {

@@ -21,9 +21,10 @@ export async function run(argv) {
 
   log.ok(`Created ${shown(paths.dir)}/`);
   log.info(`world.yaml   the plan (your agent fills it in)`);
-  log.info(`photos/      put your full-size photographs here, in story order by file name`);
+  log.info(`photos/      put your full-size photographs here, named in story order: 01-harbour.jpg, 02-ferry.jpg, …`);
+  log.info(`             (the number sets the order and is dropped from the place id, which can't change later)`);
   log.info(`voices/      optional: a recording of your own voice, to narrate in it`);
   log.info(`music/       optional: music you have the rights to`);
-  log.next(`copy your photos into ${shown(paths.photos)}/, then: node world ingest ${id}`);
+  log.next(`agents: interview the person first (AGENTS.md › 3) — above all the order of the places — then copy the photos into ${shown(paths.photos)}/ named in that order, then: node world ingest ${id}`);
   return 0;
 }

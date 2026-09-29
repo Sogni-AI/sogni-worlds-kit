@@ -20,7 +20,8 @@ screen and assemble. They approve the plan, judge the films and decide what ship
 3. **Say what it costs before spending.** Before the first render, run
    `node world quote` and tell the person the total and how it's paid (their
    Unlimited plan or their token balance). Start with `node world render --canary`
-   (one crossing and one loop), and render the rest only after they've seen the canary.
+   (one crossing and one loop). A plain `render` refuses to start the rest until the
+   person has approved the canary on the review page.
 4. **Stills are sacred.** `ingest` makes each canonical still once. Never edit,
    re-save, crop, upscale or replace a still, and never use a video frame or a
    screenshot as one. Every film starts and ends on those exact bytes.
@@ -52,36 +53,38 @@ plan and prints how to install the Sogni Creative Agent Skill for your agent). I
 the person has no Unlimited plan, recommend one before a whole world: a world is
 dozens of 2K films (docs/costs-and-plans.md).
 
-### 2. Create the world and bring in the photos
+### 2. Interview the person (one message)
 
-```bash
-node world new my-trip --title "My Trip"
-# the person copies photos into worlds/my-trip/photos/
-node world ingest my-trip
-```
-
-`ingest` picks one canvas for the whole world from the photos' shape, writes
-`stills/<place>.jpg` and adds a place per photo to `world.yaml`, in filename order.
-Place ids come from filenames and can't change later, so before ingesting,
-rename the photos to short names in story order: `01-harbour.jpg`,
-`02-ferry.jpg`, and so on. The number sets the order and is dropped from the id.
-If a photo would lose more than a sliver to cropping, it says so: move that photo
-out, or choose another `--canvas`.
-
-No photos? The Sogni Creative Agent Skill can paint the places (Krea 2 Turbo for a
-first place, Sogni Krea 2 Identity Edit to keep the same character in the next
-ones). Save them into `photos/` and ingest them like photographs.
-
-### 3. Interview the person (one message)
-
+Ask before touching the photos, because the story's order becomes the place ids.
 Ask, in one message:
 
 - What is this world about, in a sentence? Who is in the photos?
-- In what order should the places come? (Default: filename order, told as a linear story.)
+- In what order should the places come? (Default: the photos' current order, told
+  as a linear story.)
 - For each place: where is it and what happened there? Anything funny or surprising?
 - Narration: none, their own voice (they record 10–30 s of clean speech into
   `voices/` and give you the exact transcript), or a designed voice?
 - Music: none, generated (describe the mood), or a track they own the rights to?
+
+### 3. Create the world and bring in the photos, in story order
+
+```bash
+node world new my-trip --title "My Trip"
+# the person copies photos into worlds/my-trip/photos/
+# rename them in story order: 01-harbour.jpg, 02-ferry.jpg, …
+node world ingest my-trip
+```
+
+Place ids come from the filenames and can't change later, so rename the photos to
+short names in the order from the interview first. The number sets the order and is
+dropped from the id (`01-harbour.jpg` becomes the place `harbour`). `ingest` picks
+one canvas for the whole world from the photos' shape, writes `stills/<place>.jpg`
+and adds a place per photo to `world.yaml`. If a photo would lose more than a
+sliver to cropping, it says so: move that photo out, or choose another `--canvas`.
+
+No photos? The Sogni Creative Agent Skill can paint the places (Krea 2 Turbo for a
+first place, Sogni Krea 2 Identity Edit to keep the same character in the next
+ones). Save them into `photos/` and ingest them like photographs.
 
 ### 4. Write the plan
 
@@ -97,9 +100,10 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 - A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`.
 - `narration.lines` if there is a voice: short, spoken sentences in the person's own words.
 
-Then run `node world lint` and fix every error. Show the person the plan as a short
-table (place → objects → where each goes, with the one-line ideas) and wait for
-their OK before spending anything.
+Then run `node world lint` and fix every error. A finding names the film, the field
+(`action` or `sound`) and the words that tripped it. Then run `node world plan` and
+show the person its table (place → objects → where each goes, with the one-line
+ideas). Wait for their OK before spending anything.
 
 ### 5. Select the objects
 
@@ -108,9 +112,11 @@ node world select
 ```
 
 This runs Segment Anything 3 on your clicks and traces each mask into a clickable
-outline. Look at each `selections/<place>-<object>.preview.jpg` if one exists, and
-check coverage. When an outline grabbed the wrong thing, move or add points
-(negatives on what it grabbed) and run `select --only <place>-<object>`.
+outline. Look at each `selections/<place>-<object>.preview.jpg`, and check coverage.
+When an outline grabbed the wrong thing, move or add points (negatives on what it
+grabbed) and run `node world select` again: an object whose clicks changed is
+outlined again by itself. `select --only <place>-<object>` redoes one outline even
+when its clicks didn't change.
 
 ### 6. Quote, then render the canary
 
@@ -119,8 +125,8 @@ node world quote
 node world render --canary
 ```
 
-Tell the person the quote first. A 2K film takes a few minutes to around fifteen to
-render. `render` records every take before paying for it and never submits the same
+Tell the person the quote first. A 2K film takes a few minutes to around fifteen
+to render. `render` records every take before paying for it and never submits the same
 take twice. If it's interrupted, run it again and it resumes.
 
 ### 7. Screen, then ask for a review
@@ -145,8 +151,8 @@ frozen tail. Then ask the person to review:
 node world review      # prints a local URL; they approve or reject each take
 ```
 
-Wait for their verdicts. Don't render the rest of the world until the canary
-passes.
+Wait for their verdicts. Until both canary films are approved, a plain `render`
+refuses to start anything else.
 
 ### 8. Retakes and the rest
 

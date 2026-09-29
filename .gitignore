@@ -17,6 +17,11 @@ worlds/*/renders/**/*.mp4
 worlds/*/renders/**/*.jpg
 worlds/*/renders/**/*.png
 worlds/*/selections/**/*.png
+# Outline previews are copies of your photos with the outline drawn on
+worlds/*/selections/**/*.jpg
+worlds/*/selections/**/*.jpeg
+worlds/*/renders/**/*.jpeg
+worlds/*/renders/**/*.webp
 worlds/*/audio/**/*.wav
 worlds/*/audio/**/*.mp3
 worlds/*/build/

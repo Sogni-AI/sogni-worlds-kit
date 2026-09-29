@@ -39,7 +39,7 @@ account needed.
 
 ## Build your own
 
-You need Node 20+, [ffmpeg](https://ffmpeg.org/download.html), a
+You need Node 22.12+, [ffmpeg](https://ffmpeg.org/download.html), a
 [Sogni account and API key](https://dashboard.sogni.ai/api-key), and a coding agent.
 
 ```bash
@@ -83,14 +83,14 @@ A world is dozens of native 2K films, and that's where a plan pays off.
 | --- | --- | --- | --- |
 | Price | per render | $20 / month | $50 / month |
 | A 2K film (MiniMax H3) | about $0.50–$1.20 each | covered | covered |
-| Films rendering at once | — | 2 | 4 |
-| Daily fair-use capacity | — | 1× | 4× |
+| H3 films rendering at once | — | 2 | 4 |
+| H3 fair-use capacity | — | 1× | 2× |
 
 *The Long White Cloud* has 57 films. At pay-as-you-go rates the first takes of
 all 57 come to about $46, and every take including retakes to about $98 (quotes
 as of 2026-09). On an Unlimited plan those renders are covered within fair use.
-**We recommend Unlimited Pro for building a whole world:** four films render at
-once, and its daily capacity is four times larger. The kit uses your plan
+**We recommend Unlimited Pro for building a whole world:** four H3 films render
+at once, and it has twice the H3 fair-use capacity. The kit uses your plan
 automatically when your account has one. [Subscribe here](https://app.sogni.ai/wallet).
 Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
 

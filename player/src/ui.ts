@@ -197,7 +197,7 @@ function toggleFullscreen() {
 }
 
 /** The first screen: the world's name over its first picture, and Begin. */
-export function beginScreen(root: HTMLElement, world: World, still: string): Promise<void> {
+export function beginScreen(root: HTMLElement, world: World, still: string, onGesture?: () => void): Promise<void> {
   return new Promise(resolve => {
     const screen = el('section', 'begin');
     screen.style.backgroundImage = `url("${still}")`;
@@ -211,6 +211,7 @@ export function beginScreen(root: HTMLElement, world: World, still: string): Pro
     root.append(screen);
     button.focus();
     button.addEventListener('click', () => {
+      onGesture?.(); // synchronously, inside the tap: see Player.unlockMedia
       screen.remove();
       resolve();
     }, { once: true });

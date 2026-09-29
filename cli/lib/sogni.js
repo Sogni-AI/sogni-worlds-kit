@@ -63,11 +63,29 @@ export async function connect({ appId } = {}) {
       ...(credentials.apiKey ? { apiKey: credentials.apiKey, authType: 'apiKey' } : {}),
     });
     if (!credentials.apiKey) await client.account.login(credentials.username, credentials.password);
+    // Check the key over REST first: a rejected key answers at once here, instead
+    // of surfacing as a 15-second wait for models on a socket that never signs in.
+    try {
+      await client.account.me();
+    } catch (error) {
+      // A rejected key can surface from me() without a status ("The account
+      // changed…"); a second REST call answers 401 for it.
+      let status = error?.status;
+      if (!status) {
+        try { await client.account.refreshBalance(); } catch (second) { status = second?.status; }
+      }
+      if ([401, 403].includes(status)) {
+        throw new Error(credentials.apiKey
+          ? `Sogni rejected this API key (from ${credentials.source}). Check it at ${LINKS.apiKey}, then: node world setup`
+          : 'Sogni rejected this username and password');
+      }
+      throw error;
+    }
     // The first model list arrives over the signed-in socket; wait for it before submitting anything.
     await client.projects.waitForModels?.(15_000);
-    await client.account.me();
   } catch (error) {
     close(client);
+    if (/^Sogni rejected/.test(error?.message ?? '')) throw error;
     throw safeError(error, 'Could not sign in to Sogni');
   }
   let subscription = null;
@@ -135,6 +153,15 @@ export function refusalMessage(failure) {
   if (!failure) return 'the job failed';
   return REFUSALS[failure.code] ? `refused (${failure.code}): ${REFUSALS[failure.code]}` : `refused${failure.code ? ` (${failure.code})` : ''}${failure.message ? `: ${failure.message}` : ''}`;
 }
+
+/**
+ * Whether a failed create() is a known outcome: Sogni refused it (a refusal
+ * event, a server error code, or an HTTP 4xx answer). A dropped connection or a
+ * 5xx is not: the job may exist, so its receipt stays reserved and it is never sent twice.
+ */
+export const refusedForSure = (error, refusal) => Boolean(refusal)
+  || Number.isFinite(error?.code)
+  || (Number.isFinite(error?.status) && error.status >= 400 && error.status < 500);
 
 export class RefusedError extends Error {
   constructor(failure) {

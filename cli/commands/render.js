@@ -2,14 +2,15 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
-import { resolveWorldId, shown } from '../lib/paths.js';
+import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { filmsOf, placeById, readPlan } from '../lib/plan.js';
 import { assemblePrompt, canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, secondsOf, STEPS } from '../lib/h3.js';
 import { lintPlan } from '../lib/lint.js';
 import { filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
+import { canaryFilms, canaryGate, canaryStatus } from '../lib/canary.js';
 import { readJson, sha256, writeJson } from '../lib/files.js';
 import { probe } from '../lib/media.js';
-import { connect, describeBilling, downloadResult, quoteFilm, RefusedError, safeError, sdkVersion, waitForProject, watchRefusals } from '../lib/sogni.js';
+import { connect, describeBilling, downloadResult, quoteFilm, RefusedError, refusedForSure, safeError, sdkVersion, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log, usd } from '../lib/log.js';
 
 export const summary = 'Render films (first-and-last-frame MiniMax H3, 2K): a canary first, then the rest; resumable';
@@ -39,9 +40,8 @@ export function filmsToRender(plan, paths, { only = [], canary = false } = {}) {
     return all.filter(entry => only.includes(entry.film.id));
   }
   if (canary) {
-    const crossing = all.find(entry => entry.film.kind === 'crossing');
-    const loop = all.find(entry => entry.film.kind === 'loop');
-    return [crossing, loop].filter(Boolean);
+    const ids = canaryFilms(plan).map(film => film.id);
+    return all.filter(entry => ids.includes(entry.film.id));
   }
   return all.filter(entry => ['unrendered', 'failed', 'rejected', 'rendering'].includes(entry.state));
 }
@@ -51,14 +51,14 @@ export function takeSpec(plan, paths, film, take, { seed } = {}) {
   const canvas = canvasOf(plan);
   const from = placeById(plan, film.from);
   const to = placeById(plan, film.to);
-  const file = relative => join(paths.dir, relative);
   const refs = [
     { role: 'first', path: from.still },
     { role: 'last', path: to.still },
     ...(film.keyframes ?? []).map(keyframe => ({ role: 'keyframe', path: keyframe.image, frame: keyframe.frame })),
   ].map(ref => {
-    if (!ref.path || !existsSync(file(ref.path))) throw new Error(`${film.id}: ${ref.path ?? 'a still'} is missing`);
-    const bytes = readFileSync(file(ref.path));
+    const path = ref.path ? worldFile(paths, ref.path, `${film.id}: ${ref.role === 'keyframe' ? 'keyframe image' : 'still'}`) : null;
+    if (!path || !existsSync(path)) throw new Error(`${film.id}: ${ref.path ?? 'a still'} is missing`);
+    const bytes = readFileSync(path);
     return { ...ref, bytes, sha256: sha256(bytes) };
   });
   const prompt = assemblePrompt(film);
@@ -99,6 +99,33 @@ export const printable = request => JSON.parse(JSON.stringify(request, (key, val
   return value;
 }));
 
+/** A submit whose outcome is unknown: Sogni may have the job, so it must never be sent again. */
+export class UnknownOutcomeError extends Error {}
+
+/**
+ * Submit one reserved take. The journal is already on disk as `submitting`.
+ * Returns the journal with its project id, or throws RefusedError (the take is
+ * recorded as failed) or UnknownOutcomeError (the take stays `submitting`).
+ */
+export async function submitTake({ create, refusals, journal, journalPath }) {
+  let project;
+  try {
+    project = await create();
+  } catch (error) {
+    const refusal = refusals.unassigned();
+    if (refusedForSure(error, refusal)) {
+      const failed = { ...journal, status: 'failed', failedAt: new Date().toISOString(),
+        failure: refusal ?? { code: Number.isFinite(error?.code) ? error.code : null, message: safeError(error).message } };
+      writeJson(journalPath, failed);
+      throw new RefusedError(failed.failure);
+    }
+    throw new UnknownOutcomeError(`the submission did not get an answer (${safeError(error).message}), so whether Sogni received it is unknown; it is not sent again. The next run will say how to check`);
+  }
+  const submitted = { ...journal, projectId: project.id, status: 'submitted', submittedAt: new Date().toISOString() };
+  writeJson(journalPath, submitted);
+  return submitted;
+}
+
 async function pool(items, size, worker) {
   const queue = [...items];
   const runners = Array.from({ length: Math.min(size, queue.length) }, async () => {
@@ -128,9 +155,9 @@ export async function run(argv) {
   }
 
   // The canary comes first: one crossing and one loop, judged by a person, before anything else is spent.
-  const anyTake = filmsOf(plan).some(film => listTakes(paths, film.id).length);
-  if (!values.canary && !values.only && !anyTake && selected.length > 2 && !values['skip-canary']) {
-    throw new Error(`Render the canary first — one crossing and one loop — and have them reviewed before the other ${selected.length - 2} film${selected.length - 2 === 1 ? '' : 's'}:\n  node world render ${id} --canary`);
+  if (!values['skip-canary']) {
+    const refusal = canaryGate(canaryStatus(plan, paths), selected.map(entry => entry.film.id), id);
+    if (refusal) throw new Error(refusal);
   }
 
   const work = [];
@@ -200,7 +227,7 @@ export async function run(argv) {
 
     const concurrency = Number(values.concurrency ?? DEFAULT_CONCURRENCY[session.tier] ?? 3);
     let createLock = Promise.resolve();
-    const results = { completed: [], failed: [], unfinished: [] };
+    const results = { completed: [], failed: [], unfinished: [], unknown: [] };
 
     await pool(work, concurrency, async w => {
       const label = `${w.film.id} take ${w.resume?.take ?? w.take}`;
@@ -219,23 +246,22 @@ export async function run(argv) {
           writeJson(files.journal, journal, { exclusive: true });
           const request = createRequest(spec, billing);
           // Creates run one at a time so an early refusal is attributed to the right take.
-          const created = createLock.then(() => refusals.creating(() => client.projects.create(request)));
+          const created = createLock.then(() => submitTake({ create: () => refusals.creating(() => client.projects.create(request)), refusals, journal, journalPath: files.journal }));
           createLock = created.catch(() => {});
-          let project;
-          try {
-            project = await created;
-          } catch (error) {
-            const unassigned = refusals.unassigned();
-            journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: unassigned ?? { code: error?.code ?? null, message: safeError(error).message } };
-            writeJson(files.journal, journal);
-            throw new RefusedError(journal.failure);
-          }
-          journal = { ...journal, projectId: project.id, status: 'submitted', submittedAt: new Date().toISOString() };
-          writeJson(files.journal, journal);
-          log.step(`${label}: submitted ${project.id}`);
+          journal = await created;
+          log.step(`${label}: submitted ${journal.projectId}`);
         }
 
-        const result = await waitForProject(client, journal.projectId, { refusals, onStatus: status => log.dim(`${label}: ${status}`) });
+        // A take runs for minutes: say where it is when it changes, and once a minute otherwise.
+        const waitingSince = Date.now();
+        let lastStatus = 'waiting';
+        const heartbeat = setInterval(() => log.dim(`${label}: ${lastStatus}, ${Math.round((Date.now() - waitingSince) / 60000)} min`), 60_000);
+        let result;
+        try {
+          result = await waitForProject(client, journal.projectId, { refusals, onStatus: status => { lastStatus = status; log.dim(`${label}: ${status}`); } });
+        } finally {
+          clearInterval(heartbeat);
+        }
         const { bytes, job } = await downloadResult(client, result);
         if (job.result?.sha256 && sha256(bytes) !== job.result.sha256) throw new Error(`${label}: downloaded bytes do not match Sogni's own hash; run again to download again`);
         if (journal.contentFilter === 'on' && (job.triggeredNSFWFilter || job.nsfwDetected)) {
@@ -266,6 +292,9 @@ export async function run(argv) {
           }
           results.failed.push(`${label}: ${error.message}`);
           log.fail(`${label}: ${error.message}`);
+        } else if (error instanceof UnknownOutcomeError) {
+          results.unknown.push(`${label}: ${error.message}`);
+          log.warn(`${label}: ${error.message}`);
         } else {
           results.unfinished.push(`${label}: ${safeError(error).message}`);
           log.warn(`${label}: ${safeError(error).message}`);
@@ -274,13 +303,15 @@ export async function run(argv) {
     });
 
     log.title('Render summary');
-    log.info(`${results.completed.length} finished, ${results.failed.length} failed, ${results.unfinished.length} still to pick up`);
+    log.info(`${results.completed.length} finished, ${results.failed.length} failed, ${results.unfinished.length} still to pick up${results.unknown.length ? `, ${results.unknown.length} with an unknown outcome` : ''}`);
     for (const line of results.failed) log.dim(`failed: ${line}`);
     for (const line of results.unfinished) log.dim(`not finished: ${line}`);
-    if (results.unfinished.length) log.next(`node world render ${id}   (picks up the unfinished takes; nothing is submitted twice)`);
+    for (const line of results.unknown) log.dim(`unknown outcome: ${line}`);
+    if (results.unknown.length) log.next(`check your recent jobs at https://app.sogni.ai for the take(s) above before rendering again; node world render ${id} will explain what to do with each`);
+    else if (results.unfinished.length) log.next(`node world render ${id}   (picks up the unfinished takes; nothing is submitted twice)`);
     else if (values.canary) log.next(`node world screen ${id}   — then look at both films and have them reviewed (node world review ${id}) before rendering the rest`);
     else log.next(`node world screen ${id}`);
-    return results.failed.length || results.unfinished.length ? 1 : 0;
+    return results.failed.length || results.unfinished.length || results.unknown.length ? 1 : 0;
   } finally {
     refusals.stop();
     session.close();

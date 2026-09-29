@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { readPlan } from '../lib/plan.js';
-import { resolveWorldId, shown } from '../lib/paths.js';
+import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256, sha256File } from '../lib/files.js';
 import { probe } from '../lib/media.js';
 import { connect, describeBilling } from '../lib/sogni.js';
@@ -101,7 +101,7 @@ export function voiceRequest(plan, paths, place) {
     return { mode: 'design', lines, request: { ...base, modelId: SPEECH_MODELS.design, instruct: String(voice.design) } };
   }
   if (voice.clone) {
-    const file = join(paths.dir, voice.clone);
+    const file = worldFile(paths, voice.clone, `voices.${name}.clone`);
     if (!existsSync(file)) throw new Error(`${place.id}: the recording ${voice.clone} is missing (put it in ${shown(paths.voices)}/)`);
     if (!voice.transcript) throw new Error(`${place.id}: voice "${name}" needs the transcript of its recording (what it says, word for word)`);
     if (String(voice.transcript).length > SPEECH_LIMITS.transcript) throw new Error(`${place.id}: the transcript is limited to ${SPEECH_LIMITS.transcript} characters`);

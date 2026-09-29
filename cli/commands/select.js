@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { parse } from '../index.js';
-import { filmId, resolveWorldId, shown } from '../lib/paths.js';
+import { filmId, resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readPlan } from '../lib/plan.js';
 import { readJson, sha256, writeJson } from '../lib/files.js';
 import { maskOutline, readMask } from '../lib/outline.js';
@@ -11,7 +11,12 @@ import { connect, describeBilling, downloadResult, RefusedError, safeError, wait
 import { log } from '../lib/log.js';
 
 export const summary = 'Outline every clickable object with SAM 3 from its select clicks (and draw a preview to check it)';
-export const usage = 'node world select [world] [--only <place>-<object> ...] [--redo]';
+export const usage = `node world select [world] [--only <place>-<object> ...] [--redo]
+
+  Outlines every object that has select clicks and no outline yet. An object
+  whose clicks (or still) changed since its outline was made is selected again
+  automatically. --only <place>-<object> selects that object again even when
+  nothing changed; --redo selects every object again.`;
 
 export const SAM_MODEL = 'sam3_image_segment_bf16';
 export const SAM_LONG_EDGE = 1536;
@@ -25,6 +30,28 @@ export function samPrompt(select) {
   const boxes = select.box ? [{ x0: select.box[0], y0: select.box[1], x1: select.box[2], y1: select.box[3] }] : undefined;
   if (select.text) return { text: select.text, ...(boxes ? { boxes } : {}), threshold: select.threshold ?? 0.5, maxInstances: select.instances ?? 16 };
   return { points, ...(boxes ? { boxes } : {}), threshold: select.threshold ?? 0.5, multimask: true, maxInstances: 1 };
+}
+
+/** What an outline was made from: the clicks and the still. A change means it must be made again. */
+export function selectionInputsHash(select, stillSha256) {
+  return sha256(JSON.stringify({ prompt: samPrompt(select), cleanup: select.cleanup ?? null, still: stillSha256 }));
+}
+
+/**
+ * Should this object be selected (again)? `previous` is its selections/<key>.json;
+ * `current` is { inputsHash, prompt, stillSha256 } for the clicks and still now.
+ * Returns 'resume' | 'select' | 'skip' | 'unknown' (a submit whose outcome is unknown).
+ */
+export function selectionAction(previous, current, { named = false, redo = false } = {}) {
+  if (previous?.status === 'submitted' && previous.projectId) return 'resume';
+  if (previous?.status === 'submitting' && !previous.projectId && !redo && !named) return 'unknown';
+  if (!previous || redo || named) return 'select';
+  const changed = previous.inputsHash
+    ? previous.inputsHash !== current.inputsHash
+    // Outlines made before hashes were recorded: compare the prompt and still they were made from.
+    : JSON.stringify(previous.prompt) !== JSON.stringify(current.prompt) || previous.stillSha256 !== current.stillSha256;
+  if (changed) return 'select';
+  return previous.status === 'completed' || previous.status === 'failed' ? 'skip' : 'select';
 }
 
 /** The still, resampled once (Lanczos) so its long edge is 1536 px — SAM reads at most 2048. */
@@ -63,6 +90,10 @@ export async function run(argv) {
   const { plan, paths } = readPlan(id);
   const only = new Set(values.only ?? []);
 
+  const known = plan.places.flatMap(place => place.objects.filter(o => o.select).map(o => filmId(place.id, o.id)));
+  const unknownNames = [...only].filter(key => !known.includes(key));
+  if (unknownNames.length) throw new Error(`No object with select clicks named ${unknownNames.join(', ')}. Use <place>-<object>: ${known.join(', ')}`);
+
   const todo = [];
   for (const place of plan.places) {
     for (const object of place.objects) {
@@ -70,13 +101,17 @@ export async function run(argv) {
       if (!object.select || (only.size && !only.has(key))) continue;
       const file = join(paths.selections, `${key}.json`);
       const previous = existsSync(file) ? readJson(file) : null;
-      if (previous?.status === 'completed' && !values.redo) continue;
-      if (previous?.status === 'failed' && !values.redo && !only.has(key)) continue;
-      if (previous?.status === 'submitted' && previous.projectId) { todo.push({ place, object, key, file, resume: previous }); continue; }
-      if (previous?.status === 'submitting' && !values.redo) {
-        throw new Error(`${key}: the last run stopped while submitting, so whether Sogni received it is unknown. Run with --only ${key} --redo to select it again`);
+      const stillPath = worldFile(paths, place.still, `places.${place.id}.still`);
+      const stillSha256 = existsSync(stillPath) ? sha256(readFileSync(stillPath)) : null;
+      const inputsHash = stillSha256 ? selectionInputsHash(object.select, stillSha256) : null;
+      const action = selectionAction(previous, { inputsHash, prompt: samPrompt(object.select), stillSha256 }, { named: only.has(key), redo: values.redo });
+      if (action === 'unknown') {
+        throw new Error(`${key}: the last run stopped while submitting, so whether Sogni received it is unknown. Check your recent jobs at https://app.sogni.ai, then select it again: node world select ${id} --only ${key}`);
       }
-      todo.push({ place, object, key, file });
+      if (action === 'skip') continue;
+      if (action === 'resume') { todo.push({ place, object, key, file, inputsHash, resume: previous }); continue; }
+      if (previous && ['completed', 'failed'].includes(previous.status) && !only.has(key) && !values.redo) log.step(`${key}: its clicks or still changed since the outline was made — selecting it again`);
+      todo.push({ place, object, key, file, inputsHash });
     }
   }
   if (!todo.length) {
@@ -92,11 +127,11 @@ export async function run(argv) {
   const failed = [];
   try {
     log.step(`Signed in as ${session.username}. Billing: ${describeBilling(session.billing)}`);
-    for (const { place, object, key, file, resume } of todo) {
+    for (const { place, object, key, file, inputsHash, resume } of todo) {
       const source = await samSource(paths, place);
       const prompt = samPrompt(object.select);
       let journal = resume ?? {
-        key, place: place.id, object: object.id, model: SAM_MODEL, prompt, stillSha256: source.stillSha256,
+        key, place: place.id, object: object.id, model: SAM_MODEL, prompt, inputsHash, stillSha256: source.stillSha256,
         width: source.width, height: source.height, status: 'submitting', startedAt: new Date().toISOString(),
       };
       try {
@@ -157,7 +192,7 @@ export async function run(argv) {
   }
   log.info(`${done} outlined, ${failed.length} failed`);
   log.next(failed.length
-    ? `open each ${shown(paths.selections)}/<object>.preview.jpg, fix the clicks for ${failed.join(', ')} in world.yaml, then: node world select ${id} --only ${failed.join(' --only ')} --redo`
-    : `open each ${shown(paths.selections)}/<object>.preview.jpg and check the outline hugs the right thing; fix clicks and re-run with --only <object> --redo if not. Then: node world next ${id}`);
+    ? `open each ${shown(paths.selections)}/<place>-<object>.preview.jpg, fix the clicks for ${failed.join(', ')} in world.yaml, then: node world select ${id}   (changed clicks are selected again)`
+    : `open each ${shown(paths.selections)}/<place>-<object>.preview.jpg and check the outline hugs the right thing. If not, move or add clicks in world.yaml and run node world select ${id} again (changed clicks are selected again). Then: node world next ${id}`);
   return failed.length ? 1 : 0;
 }

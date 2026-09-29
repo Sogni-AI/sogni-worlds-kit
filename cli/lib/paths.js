@@ -1,6 +1,6 @@
 // Where everything lives. One world = one folder under worlds/<id>/.
 import { existsSync, readdirSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -53,8 +53,31 @@ export function resolveWorldId(given) {
   throw new Error(`Say which world: ${worlds.join(', ')}`);
 }
 
-/** A path shown to people and agents: relative to the repo root. */
-export const shown = path => relative(ROOT, path) || '.';
+/** A path shown to people and agents: relative to the repo root when inside it, absolute otherwise. */
+export const shown = path => {
+  const rel = relative(ROOT, path);
+  if (!rel) return '.';
+  return rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) ? resolve(path) : rel;
+};
+
+/**
+ * Is a path from world.yaml a file inside the world's folder? A plan can come
+ * from someone else, so a path must never reach outside it (an absolute path,
+ * or one that climbs out with ..): the kit would read that file and upload it.
+ */
+export function isInsideWorld(worldDir, relativePath) {
+  if (typeof relativePath !== 'string' || !relativePath || isAbsolute(relativePath)) return false;
+  const rel = relative(worldDir, resolve(worldDir, relativePath));
+  return Boolean(rel) && rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
+}
+
+/** The absolute path of a file named in world.yaml; throws when it points outside the world. */
+export function worldFile(paths, relativePath, what = 'a file') {
+  if (!isInsideWorld(paths.dir, relativePath)) {
+    throw new Error(`${what} "${relativePath}" is outside worlds/${paths.id}/: paths in world.yaml are relative to the world's folder (e.g. stills/harbour.jpg)`);
+  }
+  return resolve(paths.dir, relativePath);
+}
 
 /** The id of a film, derived from where it starts and what causes it. */
 export const filmId = (placeId, objectId) => `${placeId}-${objectId}`;

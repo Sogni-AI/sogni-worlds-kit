@@ -5,7 +5,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { readJson, writeJson, sha256 } from './files.js';
 import { FFMPEG, run } from './media.js';
-import { watchRefusals, RefusedError, safeError } from './sogni.js';
+import { watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
 
 /** Qwen3-TTS on Sogni: three checkpoints, and what each accepts. */
 export const SPEECH_MODELS = {
@@ -49,7 +49,11 @@ export async function renderAudio({ session, journalPath, request, record, conte
         }));
       } catch (error) {
         const refused = refusals.unassigned();
-        journal = { ...journal, status: 'failed', failure: refused ?? { message: safeError(error).message } };
+        if (!refusedForSure(error, refused)) {
+          // No answer: Sogni may have the job. The receipt stays `submitting`, so no run sends it again.
+          throw safeError(error, `The submission got no answer, so whether Sogni received it is unknown (${journalPath} keeps it reserved; the next run says how to check)`);
+        }
+        journal = { ...journal, status: 'failed', failure: refused ?? { code: Number.isFinite(error?.code) ? error.code : null, message: safeError(error).message } };
         writeJson(journalPath, journal);
         throw refused ? new RefusedError(refused) : safeError(error, 'Sogni refused the job');
       }
@@ -145,8 +149,9 @@ export function pauses(pcm, rate = 24000) {
 /**
  * Whether a take ends cleanly. Qwen3-TTS sometimes stops partway through the
  * last word: a real ending fades into silence, a clipped one drops from speech
- * to nothing. Clean = the last 20 ms are quiet and at least 150 ms of silence
- * follow the last sound.
+ * to nothing in a step or two. Clean = the level falls from speech to near
+ * silence over at least 40 ms and the last 20 ms are quiet. (Qwen3-TTS often
+ * ends a clip ~120 ms after a natural fade, so silence length is no signal.)
  */
 export function ending(pcm, rate = 24000) {
   let last = -1;
@@ -154,7 +159,25 @@ export function ending(pcm, rate = 24000) {
   let finalPeak = 0;
   for (let i = Math.max(0, pcm.length - rate / 50); i < pcm.length; i++) finalPeak = Math.max(finalPeak, Math.abs(pcm[i]) / 32768);
   const tailMs = last < 0 ? 0 : Math.round((pcm.length - 1 - last) / (rate / 1000));
-  return { tailMs, finalPeak: +finalPeak.toFixed(4), clean: finalPeak < 0.005 && tailMs >= 150 };
+  // Level in 10 ms steps. From the last step that still sounds like speech
+  // (>= -35 dB), count the steps it takes to fall to near silence (<= -55 dB).
+  // A voice that fades takes several; a cut word falls in one or two, and a
+  // take that ends while still sounding never gets there.
+  const frame = rate / 100, levels = [];
+  for (let i = 0; i + frame <= pcm.length; i += frame) {
+    let energy = 0;
+    for (let j = i; j < i + frame; j++) energy += pcm[j] * pcm[j];
+    levels.push(20 * Math.log10(Math.sqrt(energy / frame) / 32768 + 1e-9));
+  }
+  let lastSpeech = -1;
+  for (let i = levels.length - 1; i >= 0; i--) if (levels[i] >= -35) { lastSpeech = i; break; }
+  let fadeSteps = null;
+  if (lastSpeech >= 0) {
+    const quiet = levels.findIndex((db, i) => i > lastSpeech && db <= -55);
+    fadeSteps = quiet < 0 ? null : quiet - lastSpeech;
+  }
+  const clean = lastSpeech >= 0 && fadeSteps !== null && fadeSteps >= 4 && finalPeak < 0.005;
+  return { tailMs, finalPeak: +finalPeak.toFixed(4), fadeMs: fadeSteps === null ? null : fadeSteps * 10, clean };
 }
 
 /**

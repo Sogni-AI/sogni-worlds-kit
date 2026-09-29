@@ -66,16 +66,16 @@ export async function run(argv) {
 
   if (!screened) {
     log.ok('Every finished take is already screened.');
-    log.next('node world next');
+    log.next(`node world next ${id}`);
     return 0;
   }
   log.title(`${screened} take(s) screened, ${flagged} with something to look at`);
   log.info('Now look at every contact sheet, and every flagged frame at full size. Numbers only say where to look.');
   log.info('Reject on sight: a dissolve or crossfade, a morph, a hard cut, invented text or signs, a face that');
   log.info('changes, a camera that leaves the picture it should land on. Everything else goes to the review page.');
-  log.info('  node world note <film> <take> "what you saw"      (shown to the reviewer)');
-  log.info('  node world reject <film> <take> "why"             (the reviewer never sees it)');
-  log.next('node world review');
+  log.info(`  node world note ${id} <film> <take> "what you saw"      (shown to the reviewer)`);
+  log.info(`  node world reject ${id} <film> <take> "why"             (the reviewer never sees it)`);
+  log.next(`node world review ${id}`);
   return 0;
 }
 

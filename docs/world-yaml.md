@@ -111,7 +111,7 @@ places:
 | `order` | `linear`: a story told in order. The player offers each place's way to the next place first; any other crossing is labelled a shortcut. `free`: every way is equal. |
 | `start` | The first place. `ingest` sets it to the first photo if empty. |
 | `canvas` | The render canvas every place shares, e.g. `1152x768`. Set by `ingest` from your photos. |
-| `contentFilter` | `on` or `off`: Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
+| `contentFilter` | `on` or `off` (default `off`: new worlds start with it off): Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
 
 ## voices and music
 

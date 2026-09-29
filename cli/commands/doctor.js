@@ -23,7 +23,8 @@ export async function checks({ offline = false } = {}) {
   const add = (name, ok, detail, fix, optional = false) => results.push({ name, ok, detail, ...(fix ? { fix } : {}), ...(optional ? { optional } : {}) });
 
   const [major, minor] = process.versions.node.split('.').map(Number);
-  add('node', major > 20 || (major === 20 && minor >= 10), `Node ${process.versions.node}`, 'Install Node 20.10 or newer from https://nodejs.org');
+  // The Sogni SDK needs Node 22, and Vite 8 (the player) needs 22.12.
+  add('node', major > 22 || (major === 22 && minor >= 12), `Node ${process.versions.node}`, 'Install Node 22.12 or newer: https://nodejs.org (LTS), `brew install node`, `winget install OpenJS.NodeJS.LTS` or `nvm install 22`');
   const ffmpegOk = hasTool(FFMPEG) && hasTool(FFPROBE);
   add('ffmpeg', ffmpegOk, ffmpegOk ? 'ffmpeg and ffprobe found' : 'ffmpeg or ffprobe is missing', FFMPEG_INSTALL[platform()] ?? FFMPEG_INSTALL.linux);
   add('sdk', true, `@sogni-ai/sogni-client ${sdkVersion()}`);

@@ -58,6 +58,7 @@ export async function run(argv) {
   const placesNode = doc.get('places', true);
   let added = 0;
   let written = 0;
+  const smaller = [];
 
   for (const entry of entries) {
     const photoRelative = relative(paths.dir, entry.path);
@@ -96,6 +97,7 @@ export async function run(argv) {
       };
       written += 1;
       log.ok(`${placeId.padEnd(24)} ${entry.name} → ${stillRelative} (${layout.size.width}×${layout.size.height})`);
+      if (!layout.small && (layout.size.width < target.width || layout.size.height < target.height)) smaller.push(`${entry.name} is ${layout.size.width}×${layout.size.height}`);
     }
 
     if (!existing) {
@@ -119,6 +121,9 @@ export async function run(argv) {
   writePlan(id, doc);
 
   log.ok(`${written} still${written === 1 ? '' : 's'} written, ${added} place${added === 1 ? '' : 's'} added to ${shown(paths.plan)}`);
+  if (smaller.length) {
+    log.info(`Smaller than the films (${target.width}×${target.height}): ${smaller.join('; ')}. That works — stills are never enlarged — but a larger original of the same photo looks sharper.`);
+  }
   log.info(`Full-size stills: ${shown(paths.stills)}/   1024-px copies for vision models that cap image size: ${shown(join(paths.cache, 'preview'))}/`);
   log.next(`look at every still at full size, then write the plan in ${shown(paths.plan)} (AGENTS.md › 4. Write the plan) and check it: node world lint ${id}`);
   return 0;

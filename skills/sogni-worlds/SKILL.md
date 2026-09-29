@@ -31,5 +31,5 @@ Rules that matter even before you open AGENTS.md:
 - Look at every picture at full size before writing about it.
 - A retake rewrites the direction that caused the defect.
 
-Needs Node 20+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
+Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
 is strongly recommended for a whole world.
