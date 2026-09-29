@@ -1,3 +1,7 @@
+<a href="https://worlds.sogni.ai/demo/the-long-white-cloud"><img src="docs/media/hero.webp" width="960" alt="The Long White Cloud playing in the kit's player: the Begin screen, then a living photograph of Mark and Jen at a round hobbit door in Hobbiton with clickable labels. The door's traced outline lights up, a click, and a film ducks through the door and a root-lined passage, landing at Te Pā Tū in Rotorua, where Mark's narration appears as a subtitle."></a>
+
+<sub>A real recording of the player: one click on the round door, one film, the next place. Click it to play the whole world, or [watch it as MP4](docs/media/hero.mp4).</sub>
+
 # Sogni Worlds Kit
 
 **Turn your photos into a cinematic world you can click through, with your coding
@@ -14,7 +18,7 @@ through the door, over the ridge or down through the cloud. A voice tells the
 story and music sits underneath.
 
 This repo holds everything we used to build *The Long White Cloud*, a trip
-through New Zealand in 23 photographs on [worlds.sogni.ai](https://worlds.sogni.ai):
+through New Zealand in 22 photographs on [worlds.sogni.ai](https://worlds.sogni.ai):
 
 - the pipeline that renders and judges every film
 - the rules for directing those films
@@ -95,6 +99,17 @@ automatically when your account has one. [Subscribe here](https://app.sogni.ai/w
 Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
 
 ## How it works
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/plan.png" alt="A terminal showing node world plan for The Long White Cloud: the story, then each place with what you click, where it goes, the film's length and a one-line idea."><br><b>Your agent writes the plan</b></td>
+    <td width="50%"><img src="docs/media/outline.jpg" alt="A cliff in Milford Sound with green click points on a waterfall, red points beside it and on a boat, and the waterfall traced in a magenta outline by Segment Anything 3."><br><b>One click becomes an outline</b></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/review.jpg" alt="The kit's local review page: a new take of The Cloud Wall playing with its seed, render time and cost, a screening note, the agent's note, and Approve, Reject and Seen buttons."><br><b>You approve every film</b></td>
+    <td width="50%"><img src="docs/media/player.jpg" alt="The player at The Road to Aoraki: a woman photographing the mountains beside a red car, with labels for the next stop, a moment and a shortcut, and Mark's narration as a subtitle."><br><b>Play it anywhere</b></td>
+  </tr>
+</table>
 
 ```
  your photos ─► ingest ─► plan ─────► select ─────► render ───────────► screen ─► review ─► build ─► play / export
