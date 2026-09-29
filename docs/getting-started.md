@@ -71,7 +71,8 @@ Open your agent in the kit folder and say:
 
 It follows [AGENTS.md](../AGENTS.md):
 
-1. asks you about the trip, including the order of the places
+1. asks you about the trip: its title, who is in the photos (and how to treat
+   anyone else in them: strangers, performers, crew), and the order of the places
 2. names the photos in that order and ingests them
 3. writes the plan and shows it to you (`node world plan`)
 4. quotes the cost

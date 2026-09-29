@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { gather, nextStep } from './status.js';
 import { listWorlds, resolveWorldId, worldPaths, shown } from '../lib/paths.js';
 import { runVite } from '../lib/player.js';
 
@@ -23,7 +24,7 @@ export async function run(argv) {
     const built = join(worldPaths(id).build, 'world.json');
     if (!existsSync(built)) {
       log.fail(`${shown(built)} does not exist yet.`);
-      log.next(`node world build ${id}`);
+      log.next(gather(id).byState.approved.length ? `node world build ${id}` : nextStep(id));
       return 1;
     }
     env.WORLD = id;

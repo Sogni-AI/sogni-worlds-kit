@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSy
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { gather, nextStep } from './status.js';
 import { ROOT, resolveWorldId, worldPaths, shown } from '../lib/paths.js';
 import { readJson } from '../lib/files.js';
 import { validateWorld, mediaRefs, isRemote } from '../lib/worldjson.js';
@@ -25,7 +26,7 @@ export async function run(argv) {
   const worldFile = join(paths.build, 'world.json');
   if (!existsSync(worldFile)) {
     log.fail(`${shown(worldFile)} does not exist yet.`);
-    log.next(`node world build ${id}`);
+    log.next(gather(id).byState.approved.length ? `node world build ${id}` : nextStep(id));
     return 1;
   }
   const out = resolve(ROOT, values.out ?? join('dist', id));

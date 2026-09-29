@@ -169,8 +169,15 @@ picture. Keep them rare enough to stay surprising.
 The model can't guarantee a real person's face stays theirs in the middle of a
 film. So in films:
 
-- keep a real person's face turned away, small in the frame, behind hands or a hat,
-  or out of focus until the landing frames, where the pinned photograph takes over;
+- in a crossing, keep a real person's face turned away, small in the frame, behind
+  hands or a hat, or out of focus until the landing frames, where the pinned
+  photograph takes over;
+- in a loop or a moment, the film starts **and** ends on the photograph, so a face
+  that is front-on in the photo is front-on at both ends. Direct only small motion
+  (breathing, a blink, hair in the wind, a slight smile) and keep the head where it
+  is. Never turn the head away and back: the return is where a real face drifts.
+  Or give that place a loop in which the person doesn't move and the world around
+  them does. `lint` warns when a loop's or moment's action turns a head away;
 - or pin their face with **keyframes**: extra stills placed inside the film at a
   frame you choose (`film.keyframes: [{ image: keyframes/x.jpg, frame: 48 }]`), made
   with an identity-preserving edit of their own neighbouring photographs. The Sogni
@@ -192,7 +199,9 @@ film. So in films:
 - Choose objects someone would want to click: a door, a boat, a person, an animal,
   a light. Scenery the size of half the frame makes a poor button.
 - Check the traced outline: `select` reports coverage. Above 60% of the frame the
-  outline is too greedy; below 0.2% it's too small to find.
+  outline is too greedy. A small object is fine: its label is always clickable,
+  and the player gives an outline under 0.4% of the frame a finger-sized margin.
+  Below 0.2%, check the preview shows the whole object, not a speck of it.
 
 ## Lengths
 
@@ -211,8 +220,10 @@ it adds business you didn't ask for.
 ## Judging a take
 
 `node world screen` flags likely problems automatically. Your agent should then
-look at the contact sheet and at each flagged moment at full size. **Reject on
-sight** (`node world reject <film> <take> "reason"`):
+look at the contact sheet and at each flagged moment at full size. A fast camera
+move is only a "check" note: look at it for smearing or a hidden cut. Screening
+can't read lettering, so read every sign, patch, logo and number plate on the
+sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "reason"`):
 
 - a dissolve or crossfade between the two pictures, or a fade through black;
 - a morph (a wall that becomes a sky, a person who becomes another person);
@@ -248,5 +259,8 @@ the take failed, change the words that caused it, then render again.
 - a route through a bridge or tower;
 - a loop or moment that isn't a static shot;
 - frames off the 124 + 17n grid, or a prompt over 7,000 characters.
+
+It warns (and still lets the plan through) when a loop or moment turns a head away
+("turns her head", "looks away", "glances over his shoulder").
 
 The linter catches words. It can't see the film, so the review still decides.

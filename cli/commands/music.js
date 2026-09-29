@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 import { readPlan } from '../lib/plan.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256File } from '../lib/files.js';
@@ -28,6 +29,23 @@ export const usage = `node world music [world] [--retake]
   levelled to about ${MUSIC_LUFS} LUFS so it sits under the films' sound, and saved
   as audio/music/music.mp3 with its receipt. --retake makes a new one.`;
 
+/** The model and length a generated score uses. Throws if the plan's music is not usable. */
+export function musicJob(music) {
+  if (!music.prompt) throw new Error('music: needs prompt (to generate) or file (music you own)');
+  const model = musicModel(music.model);
+  if (!model) throw new Error(`Unknown music model "${music.model}"; use ace_step_1.5_xl_turbo or ace_step_1.5_xl_sft`);
+  const seconds = Math.min(600, Math.max(10, Math.round(Number(music.seconds ?? 120))));
+  return { model, seconds };
+}
+
+/** What generating the score would cost, from Sogni's own estimate: { usd, token, seconds, model }. */
+export async function musicEstimate(session, music) {
+  const { model, seconds } = musicJob(music);
+  const quote = await session.client.projects.estimateAudioCost({ tokenType: session.billing.tokenType, model: model.id, duration: seconds, steps: model.steps,
+    numberOfMedia: 1, network: 'fast', ...(session.billing.mode !== 'auto' ? { billingMode: session.billing.mode } : {}) });
+  return { usd: Number(quote.usd), token: Number(quote[session.billing.tokenType]), seconds, model: model.id };
+}
+
 export async function run(argv) {
   const { values, world } = parse(argv, { retake: { type: 'boolean', default: false } });
   const id = resolveWorldId(world);
@@ -35,7 +53,7 @@ export async function run(argv) {
   const music = plan.music;
   if (!music) {
     log.ok('This world has no music (music: in world.yaml).');
-    log.next('node world build');
+    log.next(nextStep(id));
     return 0;
   }
   const dir = join(paths.audio, 'music');
@@ -50,7 +68,7 @@ export async function run(argv) {
   const existing = existsSync(journalPath) ? readJson(journalPath) : null;
   if (existing?.status === 'completed' && existing.mp3 && existsSync(join(dir, existing.mp3))) {
     log.ok(`The music is made: ${shown(join(dir, existing.mp3))}`);
-    log.next('node world build');
+    log.next(nextStep(id));
     return 0;
   }
 
@@ -64,14 +82,11 @@ export async function run(argv) {
       mp3: 'music.mp3', sha256: sha256File(out), seconds: +(await probe(out)).seconds.toFixed(2), loudness: heard, completedAt: new Date().toISOString() });
     log.ok(`Levelled ${music.file} to ${heard.lufs} LUFS → ${shown(out)}`);
     if (!music.credit) log.warn('Add credit: to music: in world.yaml so the player can name the track.');
-    log.next('node world build');
+    log.next(nextStep(id));
     return 0;
   }
 
-  if (!music.prompt) throw new Error('music: needs prompt (to generate) or file (music you own)');
-  const model = musicModel(music.model);
-  if (!model) throw new Error(`Unknown music model "${music.model}"; use ace_step_1.5_xl_turbo or ace_step_1.5_xl_sft`);
-  const seconds = Math.min(600, Math.max(10, Math.round(Number(music.seconds ?? 120))));
+  const { model, seconds } = musicJob(music);
   const request = {
     modelId: model.id, positivePrompt: String(music.prompt), duration: seconds, steps: model.steps, shift: model.shift,
     ...(model.guidance ? { guidance: model.guidance } : {}),
@@ -84,8 +99,7 @@ export async function run(argv) {
   const session = await connect();
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);
-    const quote = await session.client.projects.estimateAudioCost({ tokenType: session.billing.tokenType, model: model.id, duration: seconds, steps: model.steps,
-      numberOfMedia: 1, network: 'fast', ...(session.billing.mode !== 'auto' ? { billingMode: session.billing.mode } : {}) }).catch(() => null);
+    const quote = await musicEstimate(session, music).catch(() => null);
     log.step(`Composing ${seconds} s with ${model.id}${quote ? ` · about $${Number(quote.usd).toFixed(3)}${session.billing.mode === 'subscription' ? ' of plan value' : ''}` : ''}`);
     const { journal, bytes } = await renderAudio({ session, journalPath, request, contentType: 'audio/mpeg',
       record: { prompt: music.prompt, seconds, credit: music.credit ?? 'Music made with Sogni', account: session.username }, say: text => log.dim(text) });
@@ -101,6 +115,6 @@ export async function run(argv) {
   } finally {
     session.close();
   }
-  log.next('node world build');
+  log.next(nextStep(id));
   return 0;
 }

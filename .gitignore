@@ -26,3 +26,4 @@ worlds/*/audio/**/*.wav
 worlds/*/audio/**/*.mp3
 worlds/*/build/
 worlds/*/.cache/
+worlds/*/renders/.render.lock

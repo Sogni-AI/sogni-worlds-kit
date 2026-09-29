@@ -6,6 +6,7 @@ import { filmsOf, readPlan } from '../lib/plan.js';
 import { lintPlan } from '../lib/lint.js';
 import { filmState, listTakes, readNotes, readVerdicts } from '../lib/takes.js';
 import { canaryNext, canaryStatus } from '../lib/canary.js';
+import { readRenderLock } from '../lib/renderlock.js';
 import { readJson } from '../lib/files.js';
 import { PHOTO_EXTENSIONS } from '../lib/stills.js';
 import { log } from '../lib/log.js';
@@ -74,6 +75,7 @@ export function gather(id) {
     errors: findings.filter(f => f.level === 'error'), warnings: findings.filter(f => f.level === 'warn'),
     selections, films: films.length, takes, finishedTakes, byState, unscreened, unlooked, unjudged,
     canary: canaryStatus(plan, paths, verdicts, notes),
+    renderLock: readRenderLock(paths),
     narrationNeeded, narratedPlaces: narrated.length, hasMusic: Boolean(plan.music), musicNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
   };
 }
@@ -82,10 +84,18 @@ export function gather(id) {
 export function nextAction(s) {
   const id = s.id;
   if (!s.exists) return { why: 'there is no world yet', command: `node world new ${id}` };
-  if (!s.places && !s.photos) return { why: 'no photos yet', command: `interview the person first (AGENTS.md › 3): what the world is about, who is in the photos, and the ORDER of the places. Then copy their full-size photos into worlds/${id}/photos/ named in that order (01-harbour.jpg, 02-ferry.jpg, …; the number sets the order and is dropped from the place id, which can't change later), then: node world ingest ${id}` };
+  if (!s.places && !s.photos) return { why: 'no photos yet', command: `interview the person first (AGENTS.md › 2. Interview the person): what the world is about and its title, who is in the photos, and the ORDER of the places. Then copy their full-size photos into worlds/${id}/photos/ named in that order (01-harbour.jpg, 02-ferry.jpg, …; the number sets the order and is dropped from the place id, which can't change later), then: node world ingest ${id}` };
   if (s.photosNotIngested || s.stillsMissing.length) return { why: 'photos are waiting to become stills', command: `node world ingest ${id}` };
   if (!s.planWritten) return { why: 'the plan is not written yet', command: `look at every still in worlds/${id}/stills/ at full size, then write the plan in worlds/${id}/world.yaml — seen, title, loop and objects with films for each place (AGENTS.md › 4. Write the plan). Check it with: node world lint ${id}` };
   if (s.errors.length) return { why: `world.yaml has ${s.errors.length} error${s.errors.length === 1 ? '' : 's'}`, command: `node world lint ${id}   — fix each ✗, then run it again` };
+  if (s.renderLock) {
+    const canaryOpen = s.canary && !['approved', 'none'].includes(s.canary.state);
+    const meanwhile = s.unscreened.length ? `; meanwhile, screen the takes that have finished: node world screen ${id}` : '';
+    return {
+      why: `a render is running (pid ${s.renderLock.pid}, started ${s.renderLock.startedAt})`,
+      command: `wait for it to finish${meanwhile}. If it was interrupted, node world render ${id}${canaryOpen ? ' --canary' : ''} picks up where it stopped (nothing is submitted twice)`,
+    };
+  }
   if (!s.takes && !s.selections.done) {
     const then = s.selections.needed.length ? `node world select ${id}` : `node world quote ${id}   — then: node world render ${id} --canary`;
     return { why: 'the plan is ready and nothing has been spent', command: `show the person the plan (node world plan ${id}) and get their OK before anything is spent, then: ${then}` };
@@ -110,6 +120,16 @@ export function nextAction(s) {
   if (s.musicNeeded) return { why: 'the music is not made yet', command: `node world music ${id}` };
   if (!s.built || s.buildStale) return { why: s.built ? 'the build is older than your latest decisions' : 'every film is approved', command: `node world build ${id}` };
   return { why: 'the world is built', command: `node world play ${id}   — then: node world export ${id}` };
+}
+
+/**
+ * The same next step `node world next` prints, for any command's closing
+ * hint, so no command suggests building or rendering the rest of the world
+ * while the canary still waits.
+ */
+export function nextStep(id) {
+  const next = nextAction(gather(id));
+  return `${next.command}\n      (${next.why})`;
 }
 
 export async function run(argv) {
@@ -140,6 +160,7 @@ export async function run(argv) {
   log.info(`films       ${s.films} planned${states ? `: ${states}` : ''}`);
   log.info(`takes       ${s.finishedTakes} finished${s.takes > s.finishedTakes ? `, ${s.takes - s.finishedTakes} in progress or failed` : ''}`);
   if (s.canary.state !== 'none') log.info(`canary      ${s.canary.ids.join(' + ')}: ${s.canary.state === 'approved' ? 'approved — the rest of the world can render' : s.canary.state}`);
+  if (s.renderLock) log.info(`rendering   a render is running (pid ${s.renderLock.pid}, started ${s.renderLock.startedAt})`);
   if (s.unjudged.length) log.info(`to judge    ${s.unjudged.length} take${s.unjudged.length === 1 ? '' : 's'}`);
   const narrationState = !s.narratedPlaces ? 'none planned'
     : `${s.narratedPlaces - s.narrationNeeded.length} of ${s.narratedPlaces} place${s.narratedPlaces === 1 ? '' : 's'} recorded`;

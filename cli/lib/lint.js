@@ -34,12 +34,9 @@ export const throughLattice = action => String(action).split(/(?<=[.!?])\s+/).fi
 const spoken = text => text.replace(/<d>[\s\S]*?<\/d>/g, '');
 const unquoted = text => text.replace(/"[^"]*"|“[^”]*”/g, '');
 
-/**
- * Findings for one film's direction: `action` is the [Shot 1] body (what the
- * camera and the picture do, in one continuous shot), `sound` is the
- * soundscape. `concept` is the label, hint and idea, used to allow music in a
- * film that is about music.
- */
+/** A person's head or face turning away (and so, in a loop, back again). */
+const FACE_TURN = /\b(?:turns?|turning|looks?|looking|glances?|glancing)\s+(?:\w+\s+){0,3}?(?:away|around|over (?:her|his|their) shoulder)\b|\bturns? (?:her|his|their) (?:head|face)\b|\bfaces? away\b/i;
+
 /** Birdsong is ambience, not music: "a tūī sings", "skylarks singing". */
 const BIRDSONG = /(?<!\p{L})(?:birds?|songbirds?|tūī|tui|skylarks?|larks?|bellbirds?|blackbirds?|thrush(?:es)?|robins?|magpies?|finch(?:es)?|wrens?|warblers?|nightingales?|cicadas?|frogs?|whales?)(?:[\s,]+[\p{L}’'-]+){0,4}?[\s,]+(?:sings?|singing)(?!\p{L})/giu;
 
@@ -65,6 +62,7 @@ export const RULES = {
   lattice: 'no routes through bridges or towers',
   'dark-screen': 'no dark-screen crossings',
   static: 'static camera for loops and moments',
+  'face-turn': 'faces stay put in loops and moments',
   keyframes: 'valid keyframes',
   'prompt-length': 'prompt within 7000 characters',
 };
@@ -119,6 +117,8 @@ export function lintDirection(film, concept = '') {
   if (dark) warn('dark-screen', 'action', `${quote(dark[0])} — a dark screen is not a physical crossing: keep the occluding surface and its moving edge visible`);
   if (film.kind === 'loop' && !/\bstatic\b/i.test(action)) error('static', 'action', 'a living photograph keeps the camera still: "a static wide shot holds the position and framing established by Picture 1: …"');
   if (film.kind === 'moment' && !/\bstatic\b/i.test(action)) warn('static', 'action', 'a moment ends on the same picture it starts from; a static camera is the safe way to get there');
+  const faceTurn = film.kind !== 'crossing' ? FACE_TURN.exec(spoken(action)) : null;
+  if (faceTurn) warn('face-turn', 'action', `${quote(faceTurn[0])} — a ${film.kind} starts and ends on the photograph, so a face seen there is seen at both ends; turning a head away and back is where a real face drifts. Keep the head where it is and animate small things (breathing, a blink, hair in the wind, a slight smile), or keep the person still`);
   const keyframes = film.keyframes ?? [];
   if (keyframes.length > 8) error('keyframes', 'keyframes', 'at most 8 keyframes');
   for (const keyframe of keyframes) {

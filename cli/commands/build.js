@@ -4,6 +4,7 @@ import { extname, join, relative } from 'node:path';
 import sharp from 'sharp';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 import { readPlan, filmsOf, nextPlaceId } from '../lib/plan.js';
 import { resolveWorldId, shown, filmId, loopId, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256File } from '../lib/files.js';
@@ -26,6 +27,13 @@ export async function run(argv) {
   const { values, world } = parse(argv, { force: { type: 'boolean', default: false } });
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
+  const verdicts = readVerdicts(paths);
+  const notes = readNotes(paths);
+  if (!filmsOf(plan).some(film => approvedTake(listTakes(paths, film.id, verdicts, notes)))) {
+    log.warn('Nothing is playable yet: no film has an approved take, so there is nothing to build.');
+    log.next(nextStep(id));
+    return 0;
+  }
   log.title(`Building ${plan.title || id}`);
   const result = await buildWorld({ paths, plan, force: values.force });
   report(result, id);
@@ -208,7 +216,7 @@ function report({ world, issues, missing, deadEnds, unreachable, films, out }, i
   }
   if (deadEnds.length) log.warn(`No way on from: ${deadEnds.join(', ')}`);
   if (unreachable.length) log.warn(`Nothing leads to: ${unreachable.join(', ')}`);
-  log.next(`node world play ${id}`);
+  log.next(nextStep(id));
 }
 
 const rel = (from, path) => relative(from, path).split('\\').join('/');

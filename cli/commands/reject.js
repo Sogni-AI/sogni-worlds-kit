@@ -3,6 +3,7 @@
 // on the review page.
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 import { readPlan } from '../lib/plan.js';
 import { resolveWorldId } from '../lib/paths.js';
 import { listTakes, recordVerdict } from '../lib/takes.js';
@@ -28,7 +29,7 @@ export async function run(argv) {
   recordVerdict(paths, found.sha, { film, take, verdict: 'rejected', note: text, by: 'agent' });
   log.ok(`Rejected ${film} take ${take}: ${text}`);
   log.info('Fix the direction in world.yaml for the defect you saw, then render it again.');
-  log.next(`node world render ${id} --only ${film}`);
+  log.next(nextStep(id));
   return 0;
 }
 

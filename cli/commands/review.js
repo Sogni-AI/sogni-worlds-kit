@@ -9,6 +9,7 @@ import { readPlan, filmsOf, placeById } from '../lib/plan.js';
 import { resolveWorldId } from '../lib/paths.js';
 import { listTakes, recordVerdict, readVerdicts, readNotes, VERDICTS } from '../lib/takes.js';
 import { reviewPage } from '../lib/review-page.js';
+import { nextStep } from './status.js';
 
 export const summary = 'Open your review page: approve, reject or pass each new take';
 export const usage = `node world review [world] [--port 4700]
@@ -29,7 +30,7 @@ export async function run(argv) {
   const first = awaitingFilms(plan, paths);
   if (!first.length) {
     log.ok('Nothing is waiting for your verdict.');
-    log.next('node world next');
+    log.next(nextStep(id));
     return 0;
   }
   const port = Number(values.port);
@@ -39,7 +40,7 @@ export async function run(argv) {
   log.info(`Open http://127.0.0.1:${port}/`);
   log.dim('Verdicts save as you click. Ctrl-C when you are done.');
   await new Promise(done => process.on('SIGINT', () => { server.close(); done(); }));
-  log.next('node world next');
+  log.next(nextStep(id));
   return 0;
 }
 

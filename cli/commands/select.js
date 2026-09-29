@@ -9,6 +9,7 @@ import { readJson, sha256, writeJson } from '../lib/files.js';
 import { maskOutline, readMask } from '../lib/outline.js';
 import { connect, describeBilling, downloadResult, RefusedError, safeError, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 
 export const summary = 'Outline every clickable object with SAM 3 from its select clicks (and draw a preview to check it)';
 export const usage = `node world select [world] [--only <place>-<object> ...] [--redo]
@@ -116,7 +117,7 @@ export async function run(argv) {
   }
   if (!todo.length) {
     log.ok('Every object with select clicks already has an outline');
-    log.next(`node world next ${id}`);
+    log.next(nextStep(id));
     return 0;
   }
 
@@ -176,7 +177,7 @@ export async function run(argv) {
         done += 1;
         log.ok(`${key.padEnd(30)} ${(outline.coverage * 100).toFixed(2)}% of the picture, ${outline.cleanup.keptVertices} points → ${shown(preview)}`);
         if (outline.coverage > 0.6) log.warn(`${key}: the outline covers ${(outline.coverage * 100).toFixed(0)}% of the picture — SAM probably took the background. Move or add negative clicks`);
-        if (outline.coverage < 0.002) log.warn(`${key}: the outline covers under 0.2% of the picture — too small to click comfortably`);
+        if (outline.coverage < 0.002) log.warn(`${key}: the outline covers under 0.2% of the picture. A small object is fine to click (its label stays clickable, and the player adds a finger-sized margin round small outlines), but check the preview shows the whole object, not a speck of it`);
       } catch (error) {
         const message = error instanceof RefusedError ? error.message : safeError(error).message;
         journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: error instanceof RefusedError ? error.failure : { message } };
@@ -193,6 +194,6 @@ export async function run(argv) {
   log.info(`${done} outlined, ${failed.length} failed`);
   log.next(failed.length
     ? `open each ${shown(paths.selections)}/<place>-<object>.preview.jpg, fix the clicks for ${failed.join(', ')} in world.yaml, then: node world select ${id}   (changed clicks are selected again)`
-    : `open each ${shown(paths.selections)}/<place>-<object>.preview.jpg and check the outline hugs the right thing. If not, move or add clicks in world.yaml and run node world select ${id} again (changed clicks are selected again). Then: node world next ${id}`);
+    : `open each ${shown(paths.selections)}/<place>-<object>.preview.jpg and check the outline hugs the right thing. If not, move or add clicks in world.yaml and run node world select ${id} again (changed clicks are selected again). Then: ${nextStep(id)}`);
   return failed.length ? 1 : 0;
 }

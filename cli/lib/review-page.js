@@ -72,7 +72,7 @@ details pre { white-space: pre-wrap; background: var(--bg); border: 1px solid va
 .flags { list-style: none; margin: 6px 0; padding: 0; }
 .flags li { padding: 2px 0 2px 18px; position: relative; }
 .flags li::before { content: '●'; position: absolute; left: 2px; font-size: 10px; top: 5px; }
-.flags li.warn::before { color: var(--warn); } .flags li.error::before { color: var(--bad); } .flags li.clear::before { color: var(--good); }
+.flags li.warn::before { color: var(--warn); } .flags li.error::before { color: var(--bad); } .flags li.clear::before { color: var(--good); } .flags li.note::before { color: var(--dim); }
 .notes { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--text); }
 .notes p { margin: 2px 0; } .notes .by { color: var(--dim); }
 .judge { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }

@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 import { readPlan, filmsOf, placeById } from '../lib/plan.js';
 import { resolveWorldId, shown } from '../lib/paths.js';
 import { writeJson, sha256File } from '../lib/files.js';
@@ -16,8 +17,10 @@ export const usage = `node world screen [world] [--only <film> ...] [--force]
   and sound, whether it starts on its first still and lands on its last, and
   looks for the defects that get a film rejected on sight (a dissolve or
   crossfade, a hard cut, a structure break, a frozen tail, a flash at a loop's
-  seam). Writes take-<n>.screen.json, a contact sheet take-<n>.sheet.jpg and a
-  full-size frame for every flagged moment. Then LOOK at them.`;
+  seam). A fast camera move is a "check" note, not a flag. Writes
+  take-<n>.screen.json, a contact sheet take-<n>.sheet.jpg and a full-size
+  frame for every flagged or noted moment. Then LOOK at them: screening cannot
+  read lettering.`;
 
 export async function run(argv) {
   const { values, world } = parse(argv, { only: { type: 'string', multiple: true }, force: { type: 'boolean', default: false } });
@@ -53,12 +56,13 @@ export async function run(argv) {
       screened++;
       const errors = result.flags.filter(f => f.severity === 'error');
       const warns = result.flags.filter(f => f.severity === 'warn');
-      if (!result.flags.length) log.ok(`${film.id} take ${take.take}: nothing flagged (it still needs eyes)`);
+      const notes = result.flags.filter(f => f.severity === 'note');
+      if (!errors.length && !warns.length) log.ok(`${film.id} take ${take.take}: nothing flagged${notes.length ? `, ${notes.length} note(s)` : ''} (it still needs eyes)`);
       else {
         flagged++;
-        (errors.length ? log.fail : log.warn)(`${film.id} take ${take.take}: ${result.flags.length} flag(s)`);
-        for (const flag of [...errors, ...warns]) log.info(`${flag.severity === 'error' ? 'ERROR' : 'look '} ${flag.message}`);
+        (errors.length ? log.fail : log.warn)(`${film.id} take ${take.take}: ${errors.length + warns.length} flag(s)`);
       }
+      for (const flag of [...errors, ...warns, ...notes]) log.info(`${{ error: 'ERROR', warn: 'look ', note: 'check' }[flag.severity]} ${flag.message}`);
       log.dim(`sheet ${shown(take.files.sheet)}${result.flaggedFrames.length ? ` · frames ${shown(join(paths.renders, film.id, `take-${take.take}.frames`))}/` : ''}`);
       toLook.push(`${film.id} ${take.take}`);
     }
@@ -66,16 +70,17 @@ export async function run(argv) {
 
   if (!screened) {
     log.ok('Every finished take is already screened.');
-    log.next(`node world next ${id}`);
+    log.next(nextStep(id));
     return 0;
   }
   log.title(`${screened} take(s) screened, ${flagged} with something to look at`);
   log.info('Now look at every contact sheet, and every flagged frame at full size. Numbers only say where to look.');
   log.info('Reject on sight: a dissolve or crossfade, a morph, a hard cut, invented text or signs, a face that');
   log.info('changes, a camera that leaves the picture it should land on. Everything else goes to the review page.');
+  log.info('Screening cannot read lettering: check every sign, patch, logo and number plate on the sheets yourself.');
   log.info(`  node world note ${id} <film> <take> "what you saw"      (shown to the reviewer)`);
   log.info(`  node world reject ${id} <film> <take> "why"             (the reviewer never sees it)`);
-  log.next(`node world review ${id}`);
+  log.next(nextStep(id));
   return 0;
 }
 

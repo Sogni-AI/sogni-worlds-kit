@@ -3,6 +3,7 @@ import { resolveWorldId, shown } from '../lib/paths.js';
 import { readPlan } from '../lib/plan.js';
 import { lintPlan } from '../lib/lint.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 
 export const summary = 'Check world.yaml: structure, story links and every film direction against the H3 rules';
 export const usage = 'node world lint [world] [--json]';
@@ -33,6 +34,6 @@ export async function run(argv) {
     log.next(`fix the ✗ items in ${shown(paths.plan)}, then: node world lint ${id}`);
     return 1;
   }
-  log.next(`node world next ${id}`);
+  log.next(nextStep(id));
   return 0;
 }

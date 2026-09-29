@@ -113,10 +113,12 @@ quality before paying for the rest.
 
 - size, frame count and sound
 - whether the first and last frames match the stills
-- hard cuts, structure breaks and dissolves
+- hard cuts, structure breaks and dissolves (a fast camera move is only a "check"
+  note)
 - frozen endings on crossings, loops where almost nothing moves, seam flashes and loudness
 
-It also draws a contact sheet. Your agent looks at the sheets, rejects what is
+It also draws a contact sheet. Screening can't read lettering, so your agent looks
+at the sheets (every sign, patch, logo and plate included), rejects what is
 clearly broken, and notes anything doubtful. Then `review` opens a page where you
 watch the remaining takes side by side, with sound, and approve or reject each.
 Verdicts are pinned to the file's SHA-256, so a new file never inherits an old

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 import { readPlan } from '../lib/plan.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256, sha256File } from '../lib/files.js';
@@ -55,7 +56,7 @@ export async function run(argv) {
   }
   if (!todo.length) {
     log.ok('Every place with narration is already spoken.');
-    log.next('node world build');
+    log.next(nextStep(id));
     return 0;
   }
   for (const place of todo) voiceRequest(plan, paths, place); // check every voice before paying for any
@@ -77,7 +78,7 @@ export async function run(argv) {
   }
   if (failures) return 1;
   log.info('Listen to each one before you build: the voice, the words, the ending.');
-  log.next('node world build');
+  log.next(nextStep(id));
   return 0;
 }
 
@@ -154,12 +155,19 @@ export async function narratePlace({ session, plan, paths, place, dir }) {
   if (timing.split === 'length') log.warn(`${place.id}: the pauses do not fall between the lines, so the subtitles are timed by length. Listen, or re-take.`);
 }
 
-/** Speech bills by characters; the SDK's estimate does not take them yet, so ask the endpoint directly. */
-async function speechQuote(session, request) {
+/**
+ * What one place's narration take costs: { usd, token }. Speech bills by
+ * characters; the SDK's estimate does not take them yet, so ask the endpoint directly.
+ */
+export async function speechEstimate(session, request) {
   const { client, billing } = session;
   const segments = [billing.tokenType, request.modelId, 30, 1, 1].map(encodeURIComponent).join('/');
   const response = await client.apiClient.socket.get(`/api/v1/job-audio/estimate/${segments}`, { characters: Math.max(1, request.positivePrompt.length) });
   const quote = response.quote.project;
-  const usd = Number(quote.costInUSD);
-  return billing.mode === 'subscription' ? `$${usd.toFixed(3)} of plan value` : `$${usd.toFixed(3)} (${Number(quote.costInToken).toFixed(2)} ${billing.tokenType})`;
+  return { usd: Number(quote.costInUSD), token: Number(quote.costInToken) };
+}
+
+async function speechQuote(session, request) {
+  const { usd, token } = await speechEstimate(session, request);
+  return session.billing.mode === 'subscription' ? `$${usd.toFixed(3)} of plan value` : `$${usd.toFixed(3)} (${token.toFixed(2)} ${session.billing.tokenType})`;
 }

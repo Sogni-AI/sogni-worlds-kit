@@ -47,6 +47,19 @@ test('a loop must keep a static camera; frames must be on the grid', () => {
   assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
 });
 
+test('a loop or moment that turns a face away is a warning, never an error; a crossing is not checked', () => {
+  const still = 'Live-action, cinematic, the camera holds still in the position and framing established by Picture 1: a woman stands by the lake.';
+  const warned = action => lintDirection({ ...good, kind: 'loop', action }).filter(i => i.rule === 'face-turn');
+  for (const turn of ['She turns her head away to the lake, then back.', 'She looks away across the water.', 'She glances over her shoulder.']) {
+    const found = warned(`${still} ${turn}`);
+    assert.equal(found.length, 1, turn);
+    assert.equal(found[0].level, 'warn');
+    assert.match(found[0].message, /breathing, a blink, hair in the wind, a slight smile/);
+  }
+  assert.deepEqual(warned(`${still} She breathes slowly and blinks; her hair lifts in the wind.`), []);
+  assert.deepEqual(lintDirection({ ...good, action: `${good.action} A walker looks away.` }).filter(i => i.rule === 'face-turn'), []);
+});
+
 test('plan structure: unknown destinations, duplicate ids and points outside the picture', () => {
   const plan = {
     id: 'trip', title: 'Trip', canvas: '1152x768', order: 'free', voices: {},

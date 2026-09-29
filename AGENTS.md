@@ -34,8 +34,12 @@ screen and assemble. They approve the plan, judge the films and decide what ship
    words that caused it, then render again. Another seed on the same words repeats
    the same failure.
 8. **Real people.** Don't give a real person invented dialogue, and never clone a
-   voice without its owner's permission. In films, keep real faces turned away,
-   small or out of focus mid-film, unless they are pinned with keyframes
+   voice without its owner's permission. In crossings, keep real faces turned away,
+   small or out of focus mid-film, unless they are pinned with keyframes. A loop or
+   moment starts *and* ends on the photograph, so a face that is front-on there is
+   front-on at both ends: direct only small motion (breathing, a blink, hair in the
+   wind, a slight smile) and keep the head where it is. Never turn it away and
+   back, or give that place a loop in which the person doesn't move
    (docs/directing-films.md#real-people-and-faces).
 9. **Keep the person informed, briefly.** After each stage, say what you did, what it
    cost and what you need from them, in two or three sentences, then continue.
@@ -58,7 +62,11 @@ dozens of 2K films (docs/costs-and-plans.md).
 Ask before touching the photos, because the story's order becomes the place ids.
 Ask, in one message:
 
-- What is this world about, in a sentence? Who is in the photos?
+- What is this world about, in a sentence? What is its title? (The id is the
+  title in short lowercase words, `my-trip`; offer one and let them change it.)
+- Who is in the photos? And who else appears (strangers, performers, crew, other
+  passengers): should they stay in the films as they are, stay small and in the
+  background, or be kept out of the objects and the action?
 - In what order should the places come? (Default: the photos' current order, told
   as a linear story.)
 - For each place: where is it and what happened there? Anything funny or surprising?
@@ -127,7 +135,8 @@ node world render --canary
 
 Tell the person the quote first. A 2K film takes a few minutes to around fifteen
 to render. `render` records every take before paying for it and never submits the same
-take twice. If it's interrupted, run it again and it resumes.
+take twice. If it's interrupted, run it again and it resumes. While a render runs,
+`node world next` says so (with its pid): wait for it rather than starting another.
 
 ### 7. Screen, then ask for a review
 
@@ -136,12 +145,20 @@ node world screen
 ```
 
 For every new take, open its contact sheet (`renders/<film>/take-<n>.sheet.jpg`)
-and every flagged moment. Reject what is clearly broken, with the reason:
+and every flagged moment. A "check" note (a fast camera move) is not a defect: look
+at it at full size for smearing or a hidden cut. **Screening can't read lettering.**
+Look at every sign, patch, logo and number plate on the contact sheet and the
+flagged frames yourself: invented or garbled letters are a rejection the numbers
+never raise. Reject what is clearly broken, with the reason:
 
 ```bash
-node world reject <film> <take> "dissolves between the two pictures at 4 s"
-node world note <film> <take> "hands merge briefly at 6.2 s; otherwise clean"
+node world reject my-trip harbour-ferry 1 "dissolves between the two pictures at 4 s"
+node world note my-trip harbour-ferry 2 "hands merge briefly at 6.2 s; otherwise clean"
 ```
+
+The form is `<verb> [world] <film> <take> "text"`: the film id, the take number,
+then the words in quotes. The world id can be left out only when `worlds/` holds a
+single world (`node world reject harbour-ferry 1 "…"`).
 
 Reject on sight: dissolves or fades, morphs, hard cuts, invented lettering, a real
 person's face changing, smeared bridge or tower struts, music nobody asked for, a

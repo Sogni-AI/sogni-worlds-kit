@@ -327,6 +327,8 @@ places:
       idea: Wind on the stern deck, the wake churning, mist drifting along the cliffs.
       action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: two people stand apart at the white stern railing looking out at the misty fjord, the yellow H on the pale blue deck in front. The wake churns and spreads across the dark water and mist drifts slowly past the headlands. Her long black coat flutters in the wind; the man in the white cap turns his head toward the cliff and back, and she shifts her hands on the rail. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
       sound: The ship’s engine thrums under a steady cold wind, the wake hisses and churns, and a coat flaps against the railing.
+      allow:
+        face-turn: "The approved live take (2026-09-25): the turn is small and away from the camera, and the face is only small or seen from behind in this photograph."
     objects:
       - id: her
         label: Go and stand with him
@@ -489,6 +491,8 @@ places:
       idea: Three waterfalls pour; the passengers point and look.
       action: "Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: three tall waterfalls pour from the rainforest cliff into the fjord, cloud drifting along the top of the cliff. The falls pour and billow spray at their feet and the thin falls above stream out of the cloud. At the railing the woman in the green jacket jabs her pointing finger toward the falls, the white-haired man in the blue sweater leans forward on the rail and the woman in the navy hood turns her head to follow. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
       sound: Three waterfalls thunder into the fjord over the hum of the ship’s engine, and wind gusts across the deck.
+      allow:
+        face-turn: "The approved live take (2026-09-25): the turn is small and away from the camera, and the face is only small or seen from behind in this photograph."
     objects:
       - id: spray
         label: Fly through the spray
@@ -1272,6 +1276,8 @@ places:
       idea: Meltwater glints; her glove slides along the ice; light shimmers blue.
       action: "Live-action, cinematic, a static high shot holds the position and framing established by Picture 1: the woman in the orange beanie presses her gloved hand to the glowing turquoise ice wall of the crevasse. She slides her glove slowly along the ice and turns her head toward the slit of daylight and back; drops of meltwater glint as they fall, and the blue light in the ice shimmers as a cloud passes over the opening. The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot."
       sound: Meltwater drips and trickles, the ice creaks and ticks, and a hollow wind breathes through the crevasse.
+      allow:
+        face-turn: "The approved live take (2026-09-25): the turn is small and away from the camera, and the face is only small or seen from behind in this photograph."
     objects:
       - id: light
         label: The light above

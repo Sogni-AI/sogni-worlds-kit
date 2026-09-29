@@ -12,9 +12,33 @@ import { readJson, sha256, writeJson } from '../lib/files.js';
 import { probe } from '../lib/media.js';
 import { connect, describeBilling, downloadResult, quoteFilm, RefusedError, refusedForSure, safeError, sdkVersion, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log, usd } from '../lib/log.js';
+import { acquireRenderLock, readRenderLock } from '../lib/renderlock.js';
+import { nextStep } from './status.js';
 
 export const summary = 'Render films (first-and-last-frame MiniMax H3, 2K): a canary first, then the rest; resumable';
-export const usage = 'node world render [world] [--canary] [--only <film> ...] [--concurrency n] [--seed n] [--yes] [--dry-run] [--same-direction] [--skip-canary]';
+export const usage = `node world render [world] [options]
+
+  Renders the films that need a take (never one that is approved, waiting for
+  a verdict or already rendering), records each take before paying for it, and
+  picks up where an interrupted run stopped. Nothing is ever submitted twice.
+
+  --canary            render only the canary: the first crossing and the first
+                      loop in story order. The rest of the world waits until a
+                      person approves both on the review page.
+  --only <film>       render just this film (repeat for more); also retakes an
+                      approved or unjudged film.
+  --dry-run           quote and print the exact requests; nothing is sent.
+  --yes               go ahead when paying with tokens and the quote is above
+                      SOGNI_MAX_SPARK (show the quote to whoever pays first).
+  --same-direction    retake a rejected film with its unchanged direction. A new
+                      seed rarely fixes a defect; rewrite the direction instead.
+  --seed <n>          use this seed for the new takes (default: the plan's seed
+                      for a first take, otherwise random).
+  --concurrency <n>   films rendering at once (default: 2 on Unlimited, 4 on
+                      Unlimited Pro, 3 on tokens).
+  --skip-canary       render the rest of the world before the canary is
+                      approved. Only when the person has explicitly agreed to
+                      render everything without seeing the canary first.`;
 
 const DEFAULT_CONCURRENCY = { unlimited: 2, unlimited_pro: 4 };
 
@@ -147,10 +171,15 @@ export async function run(argv) {
     throw new Error(`world.yaml has ${errors.length} error${errors.length === 1 ? '' : 's'}; nothing was rendered. Fix them (node world lint ${id}) and run again`);
   }
 
+  const running = values['dry-run'] ? null : readRenderLock(paths);
+  if (running && running.pid !== process.pid) {
+    throw new Error(`A render of this world is already running (pid ${running.pid}, started ${running.startedAt}). Wait for it to finish; it picks up everything it started. Run this again afterwards if anything is left`);
+  }
+
   const selected = filmsToRender(plan, paths, { only: values.only ?? [], canary: values.canary });
   if (!selected.length) {
     log.ok('Nothing to render: every film is approved, awaiting a verdict or rendering');
-    log.next(`node world next ${id}`);
+    log.next(nextStep(id));
     return 0;
   }
 
@@ -228,79 +257,85 @@ export async function run(argv) {
     const concurrency = Number(values.concurrency ?? DEFAULT_CONCURRENCY[session.tier] ?? 3);
     let createLock = Promise.resolve();
     const results = { completed: [], failed: [], unfinished: [], unknown: [] };
+    // While this runs, `next` and `status` say to wait instead of suggesting another render.
+    const releaseRenderLock = acquireRenderLock(paths, work.map(w => w.film.id));
 
-    await pool(work, concurrency, async w => {
-      const label = `${w.film.id} take ${w.resume?.take ?? w.take}`;
-      let journal;
-      let files;
-      try {
-        if (w.resume) {
-          files = w.resume.files;
-          journal = readJson(files.journal);
-        } else {
-          files = takeFiles(paths, w.film.id, w.take);
-          const spec = specs.get(w.film.id);
-          journal = { ...spec.journal, billing: { mode: billing.mode, tokenType: billing.tokenType, tier: session.tier }, username: session.username,
-            appId: `sogni-worlds-kit-${randomUUID()}`, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
-          // Reserve the take before paying: a second run can never submit it twice.
-          writeJson(files.journal, journal, { exclusive: true });
-          const request = createRequest(spec, billing);
-          // Creates run one at a time so an early refusal is attributed to the right take.
-          const created = createLock.then(() => submitTake({ create: () => refusals.creating(() => client.projects.create(request)), refusals, journal, journalPath: files.journal }));
-          createLock = created.catch(() => {});
-          journal = await created;
-          log.step(`${label}: submitted ${journal.projectId}`);
-        }
-
-        // A take runs for minutes: say where it is when it changes, and once a minute otherwise.
-        const waitingSince = Date.now();
-        let lastStatus = 'waiting';
-        const heartbeat = setInterval(() => log.dim(`${label}: ${lastStatus}, ${Math.round((Date.now() - waitingSince) / 60000)} min`), 60_000);
-        let result;
+    try {
+      await pool(work, concurrency, async w => {
+        const label = `${w.film.id} take ${w.resume?.take ?? w.take}`;
+        let journal;
+        let files;
         try {
-          result = await waitForProject(client, journal.projectId, { refusals, onStatus: status => { lastStatus = status; log.dim(`${label}: ${status}`); } });
-        } finally {
-          clearInterval(heartbeat);
-        }
-        const { bytes, job } = await downloadResult(client, result);
-        if (job.result?.sha256 && sha256(bytes) !== job.result.sha256) throw new Error(`${label}: downloaded bytes do not match Sogni's own hash; run again to download again`);
-        if (journal.contentFilter === 'on' && (job.triggeredNSFWFilter || job.nsfwDetected)) {
-          journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: { code: null, message: 'the safe-content filter withheld the result' } };
-          writeJson(files.journal, journal);
-          throw new RefusedError(journal.failure);
-        }
-        writeFileSync(files.video, bytes);
-        let probed = null;
-        try { probed = await probe(files.video); } catch { /* screen reports it */ }
-        const completedAt = new Date();
-        journal = {
-          ...journal, status: 'completed', completedAt: completedAt.toISOString(),
-          elapsedSeconds: Number(((completedAt - new Date(journal.startedAt)) / 1000).toFixed(1)),
-          jobId: job.id ?? null, seed: job.seedUsed ?? journal.seed,
-          workerStartTime: job.startTime ?? null, workerEndTime: job.endTime ?? null,
-          paymentModel: job.paymentModel ?? result.paymentModel ?? null,
-          sha256: sha256(bytes), bytes: bytes.length, probe: probed,
-        };
-        writeJson(files.journal, journal);
-        results.completed.push(label);
-        log.ok(`${label}: ${shown(files.video)} (${(bytes.length / 1e6).toFixed(1)} MB, ${journal.elapsedSeconds}s${probed ? `, ${probed.width}×${probed.height}, ${probed.frames} frames` : ''})`);
-      } catch (error) {
-        if (error instanceof RefusedError) {
-          if (journal?.status !== 'failed' && files) {
-            journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: error.failure };
-            writeJson(files.journal, journal);
+          if (w.resume) {
+            files = w.resume.files;
+            journal = readJson(files.journal);
+          } else {
+            files = takeFiles(paths, w.film.id, w.take);
+            const spec = specs.get(w.film.id);
+            journal = { ...spec.journal, billing: { mode: billing.mode, tokenType: billing.tokenType, tier: session.tier }, username: session.username,
+              appId: `sogni-worlds-kit-${randomUUID()}`, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
+            // Reserve the take before paying: a second run can never submit it twice.
+            writeJson(files.journal, journal, { exclusive: true });
+            const request = createRequest(spec, billing);
+            // Creates run one at a time so an early refusal is attributed to the right take.
+            const created = createLock.then(() => submitTake({ create: () => refusals.creating(() => client.projects.create(request)), refusals, journal, journalPath: files.journal }));
+            createLock = created.catch(() => {});
+            journal = await created;
+            log.step(`${label}: submitted ${journal.projectId}`);
           }
-          results.failed.push(`${label}: ${error.message}`);
-          log.fail(`${label}: ${error.message}`);
-        } else if (error instanceof UnknownOutcomeError) {
-          results.unknown.push(`${label}: ${error.message}`);
-          log.warn(`${label}: ${error.message}`);
-        } else {
-          results.unfinished.push(`${label}: ${safeError(error).message}`);
-          log.warn(`${label}: ${safeError(error).message}`);
+
+          // A take runs for minutes: say where it is when it changes, and once a minute otherwise.
+          const waitingSince = Date.now();
+          let lastStatus = 'waiting';
+          const heartbeat = setInterval(() => log.dim(`${label}: ${lastStatus}, ${Math.round((Date.now() - waitingSince) / 60000)} min`), 60_000);
+          let result;
+          try {
+            result = await waitForProject(client, journal.projectId, { refusals, onStatus: status => { lastStatus = status; log.dim(`${label}: ${status}`); } });
+          } finally {
+            clearInterval(heartbeat);
+          }
+          const { bytes, job } = await downloadResult(client, result);
+          if (job.result?.sha256 && sha256(bytes) !== job.result.sha256) throw new Error(`${label}: downloaded bytes do not match Sogni's own hash; run again to download again`);
+          if (journal.contentFilter === 'on' && (job.triggeredNSFWFilter || job.nsfwDetected)) {
+            journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: { code: null, message: 'the safe-content filter withheld the result' } };
+            writeJson(files.journal, journal);
+            throw new RefusedError(journal.failure);
+          }
+          writeFileSync(files.video, bytes);
+          let probed = null;
+          try { probed = await probe(files.video); } catch { /* screen reports it */ }
+          const completedAt = new Date();
+          journal = {
+            ...journal, status: 'completed', completedAt: completedAt.toISOString(),
+            elapsedSeconds: Number(((completedAt - new Date(journal.startedAt)) / 1000).toFixed(1)),
+            jobId: job.id ?? null, seed: job.seedUsed ?? journal.seed,
+            workerStartTime: job.startTime ?? null, workerEndTime: job.endTime ?? null,
+            paymentModel: job.paymentModel ?? result.paymentModel ?? null,
+            sha256: sha256(bytes), bytes: bytes.length, probe: probed,
+          };
+          writeJson(files.journal, journal);
+          results.completed.push(label);
+          log.ok(`${label}: ${shown(files.video)} (${(bytes.length / 1e6).toFixed(1)} MB, ${journal.elapsedSeconds}s${probed ? `, ${probed.width}×${probed.height}, ${probed.frames} frames` : ''})`);
+        } catch (error) {
+          if (error instanceof RefusedError) {
+            if (journal?.status !== 'failed' && files) {
+              journal = { ...journal, status: 'failed', failedAt: new Date().toISOString(), failure: error.failure };
+              writeJson(files.journal, journal);
+            }
+            results.failed.push(`${label}: ${error.message}`);
+            log.fail(`${label}: ${error.message}`);
+          } else if (error instanceof UnknownOutcomeError) {
+            results.unknown.push(`${label}: ${error.message}`);
+            log.warn(`${label}: ${error.message}`);
+          } else {
+            results.unfinished.push(`${label}: ${safeError(error).message}`);
+            log.warn(`${label}: ${safeError(error).message}`);
+          }
         }
-      }
-    });
+      });
+    } finally {
+      releaseRenderLock();
+    }
 
     log.title('Render summary');
     log.info(`${results.completed.length} finished, ${results.failed.length} failed, ${results.unfinished.length} still to pick up${results.unknown.length ? `, ${results.unknown.length} with an unknown outcome` : ''}`);
@@ -309,8 +344,7 @@ export async function run(argv) {
     for (const line of results.unknown) log.dim(`unknown outcome: ${line}`);
     if (results.unknown.length) log.next(`check your recent jobs at https://app.sogni.ai for the take(s) above before rendering again; node world render ${id} will explain what to do with each`);
     else if (results.unfinished.length) log.next(`node world render ${id}   (picks up the unfinished takes; nothing is submitted twice)`);
-    else if (values.canary) log.next(`node world screen ${id}   — then look at both films and have them reviewed (node world review ${id}) before rendering the rest`);
-    else log.next(`node world screen ${id}`);
+    else log.next(nextStep(id));
     return results.failed.length || results.unfinished.length || results.unknown.length ? 1 : 0;
   } finally {
     refusals.stop();

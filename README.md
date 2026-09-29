@@ -125,7 +125,8 @@ Full walk-through: [docs/how-it-works.md](docs/how-it-works.md).
 2. **The thing you click causes the film.** "Duck through the round door" starts
    with that door.
 3. **Loops keep the camera still** and bring the whole picture to life, with Foley.
-4. **Real faces stay turned away mid-film**, unless keyframes pin them.
+4. **Real faces stay turned away mid-film**, unless keyframes pin them. In loops
+   and moments, a face seen in the photo only breathes, blinks and smiles.
 5. **A retake rewrites the direction.** A new seed on the same words fails the same
    way.
 

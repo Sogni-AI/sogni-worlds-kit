@@ -60,3 +60,21 @@ test('the canary: never a plain render until it is approved', () => {
   // Approved: the rest of the world renders.
   assert.match(next({ byState: { ...done.byState, unrendered: ['c'] } }), /node world render trip$/);
 });
+
+test('while a render runs, the next step is to wait for it, never another render or a review', () => {
+  const renderLock = { pid: 4242, startedAt: '2026-09-29T08:00:00.000Z', films: ['a'] };
+  const canary = { ids: ['a', 'b'], films: [], state: 'rendering', waiting: ['a'] };
+  const running = nextAction({ ...done, renderLock, canary, unscreened: ['b take 1'], unjudged: ['b take 1'], byState: { ...done.byState, rendering: ['a'] } });
+  assert.match(running.why, /a render is running \(pid 4242, started 2026-09-29T08:00:00.000Z\)/);
+  assert.match(running.command, /^wait for it to finish; meanwhile, screen the takes that have finished: node world screen trip/);
+  assert.match(running.command, /node world render trip --canary picks up where it stopped/);
+  assert.doesNotMatch(running.command, /review/);
+  // Canary approved: the pick-up command is a plain render.
+  assert.match(next({ renderLock, byState: { ...done.byState, rendering: ['c'] } }), /node world render trip picks up/);
+});
+
+test('one canary film finished while the other still renders: pick it up, not review', () => {
+  const canary = { ids: ['a', 'b'], films: [], state: 'rendering', waiting: ['a'] };
+  const command = next({ canary, unjudged: ['b take 1'], byState: { ...done.byState, rendering: ['a'], unjudged: ['b'] } });
+  assert.match(command, /^node world render trip --canary/);
+});

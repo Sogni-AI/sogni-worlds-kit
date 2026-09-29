@@ -27,6 +27,34 @@ test('a hard cut is found at the cut', async () => {
   assert.ok(Math.abs(cut.frame - 72) <= 1, `at frame ${cut.frame}`);
 });
 
+// A textured strip panned fast: 300 px a second across a 192 px frame, the
+// correlation between neighbouring thumbnails stays low for the whole film.
+const strip = (pattern, speed) => `nullsrc=size=2100x160:rate=24,geq=lum='${pattern}':cb=128:cr=128,crop=192:128:x=t*${speed}:y=16`;
+const TEXTURE_A = '128+50*sin(X/9)*cos(Y/7)+40*sin(X/31+Y/13)+25*cos(X/67)';
+const TEXTURE_B = '128+60*cos(X/5+Y/3)*sin(Y/11)+30*sin(X/17)';
+
+test('a fast pan is a "check" note, never a structure break or a cut', async () => {
+  const video = join(dir, 'fast-pan.mp4');
+  await syntheticVideo(video, { source: strip(TEXTURE_A, 300), seconds: 6 });
+  const result = analyseFrames(await greyFrames(video), { kind: 'crossing' });
+  assert.deepEqual(codes(result).filter(code => ['hard-cut', 'structure-break'].includes(code)), []);
+  const notes = result.flags.filter(flag => flag.code === 'fast-motion');
+  assert.equal(notes.length, 1, codes(result).join(', '));
+  assert.equal(notes[0].severity, 'note');
+});
+
+test('a cut hidden in a fast pan is still found', async () => {
+  const video = join(dir, 'fast-cut.mp4');
+  await ffmpeg(['-f', 'lavfi', '-i', strip(TEXTURE_A, 300), '-f', 'lavfi', '-i', strip(TEXTURE_B, 300),
+    '-f', 'lavfi', '-i', 'sine=f=440:sample_rate=48000', '-filter_complex',
+    '[0:v]trim=0:3,setpts=PTS-STARTPTS[a];[1:v]trim=3:6,setpts=PTS-STARTPTS[b];[a][b]concat=n=2:v=1[v]',
+    '-map', '[v]', '-map', '2:a', '-t', '6', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-c:a', 'aac', video]);
+  const result = analyseFrames(await greyFrames(video), { kind: 'crossing' });
+  const cut = result.flags.find(flag => ['hard-cut', 'structure-break'].includes(flag.code) && Math.abs(flag.frame - 72) <= 1);
+  assert.ok(cut, codes(result).join(', '));
+  assert.equal(cut.severity, 'warn');
+});
+
 test('a crossfade between two pictures is flagged as a dissolve', async () => {
   const a = join(dir, 'a.png'), b = join(dir, 'b.png'), video = join(dir, 'fade.mp4');
   await ffmpeg(['-f', 'lavfi', '-i', 'color=c=0x224466:size=192x128,drawbox=x=20:y=20:w=80:h=60:color=yellow:t=fill', '-frames:v', '1', a]);

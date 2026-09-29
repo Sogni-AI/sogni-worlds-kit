@@ -1,9 +1,10 @@
 // Automatic checks on a finished take, for the defects that get a film rejected
 // on sight: a dissolve or crossfade between two pictures, a hard cut, a
-// structure break, a film that does not start or land on its stills, a frozen
-// tail, a flash at a loop's seam, silence. The numbers are a screen, not a
-// verdict — they say where to look. The detectors are the ones that screened
-// The Long White Cloud's 57 films; each flag names the frame to inspect.
+// structure break (a fast camera move is only a note), a film that does not
+// start or land on its stills, a frozen tail, a flash at a loop's seam,
+// silence. The numbers are a screen, not a verdict — they say where to look.
+// The detectors are the ones that screened The Long White Cloud's 57 films;
+// each flag names the frame to inspect.
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -50,6 +51,7 @@ export function correlation(a, b) {
 }
 
 const mean = a => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]; return s / a.length; };
+const spread = a => { const m = mean(a); let s = 0; for (let i = 0; i < a.length; i++) s += (a[i] - m) ** 2; return Math.sqrt(s / a.length); };
 const sortedAt = (values, q) => { const s = [...values].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(s.length * q))] ?? 0; };
 const time = frame => +(frame / FPS).toFixed(2);
 
@@ -101,19 +103,39 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
     }
   }
 
-  // Structure break: consecutive thumbnails stop correlating (a cut hidden under
-  // fast motion). Dark or textureless frames trip it too — look.
+  // Structure break: a frame's thumbnail stops correlating with the one before
+  // while the frames around it flow (a cut hidden under motion), or drops far
+  // below its neighbours. A fast pan or fly-through keeps the correlation low for
+  // many frames in a row and changes smoothly: that is movement, so it is only
+  // a note. Textureless thumbnails (sky, fog, black) have no structure to
+  // compare; a sudden blank frame is a jump the hard-cut check sees.
   const thumbs = frames.map(thumb);
-  const breaks = [];
+  const flow = [null];
+  for (let i = 1; i < n; i++) flow.push(spread(thumbs[i - 1]) >= 4 && spread(thumbs[i]) >= 4 ? correlation(thumbs[i - 1], thumbs[i]) : null);
+  const side = (a, b) => {
+    const near = flow.slice(Math.max(1, a), Math.max(1, b)).filter(c => c !== null);
+    return near.length ? [sortedAt(near, 0.5)] : [];
+  };
+  const breaks = [], fast = [];
   for (let i = 1; i < n; i++) {
-    const c = correlation(thumbs[i - 1], thumbs[i]);
-    if (c < 0.6) breaks.push({ frame: i, c });
+    const c = flow[i];
+    if (c === null || c >= 0.6) continue;
+    const around = [...side(i - 3, i), ...side(i + 1, i + 4)];
+    if (!around.length) continue;
+    if (Math.min(...around) >= 0.75 || (c < 0.2 && c < Math.max(...around) - 0.4)) breaks.push({ frame: i, c });
+    else fast.push(i);
   }
   for (const b of breaks.slice(0, 6)) {
     flags.push({ code: 'structure-break', severity: 'warn', frame: b.frame, at: time(b.frame),
-      message: `The picture changes structure at frame ${b.frame} (correlation ${b.c.toFixed(2)}): a cut, a punch-in, or dark frames` });
+      message: `The picture changes structure at frame ${b.frame} (correlation ${b.c.toFixed(2)}) while the frames around it flow: a cut or a punch-in` });
   }
   if (breaks.length > 6) flags.push({ code: 'structure-break', severity: 'warn', message: `${breaks.length - 6} more structure breaks` });
+  // One note per stretch: moments of fast movement less than a second apart are one move.
+  for (const [a, b] of mergeRanges(fast.map(i => [i, i + FPS]))) {
+    const end = b - FPS;
+    flags.push({ code: 'fast-motion', severity: 'note', frame: Math.round((a + end) / 2), at: time(Math.round((a + end) / 2)),
+      message: `Fast movement from ${time(a)} s to ${time(end)} s: the picture changes a lot from frame to frame, but smoothly — a fast camera move, not a cut. Watch it at full size for smearing or a hidden cut.` });
+  }
 
   // Dissolve, whole frame: over 24 frames the picture tracks the straight line
   // between the window's ends — a blend, not a move.

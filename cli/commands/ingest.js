@@ -7,6 +7,7 @@ import { canvasByName, canvasFor, CANVASES, delivered } from '../lib/h3.js';
 import { exposureOf, PHOTO_EXTENSIONS, planStill, readablePhoto, slug, uprightSize, writePreview, writeStill } from '../lib/stills.js';
 import { readJson, sha256, sha256File, writeJson } from '../lib/files.js';
 import { log } from '../lib/log.js';
+import { nextStep } from './status.js';
 
 export const summary = 'Turn photos/ into canonical stills (one shared canvas) and add each as a place in world.yaml';
 export const usage = 'node world ingest [world] [--canvas 3:2|16:9|4:3|1:1|2:3|9:16|3:4] [--force <place> ...]';
@@ -125,6 +126,6 @@ export async function run(argv) {
     log.info(`Smaller than the films (${target.width}×${target.height}): ${smaller.join('; ')}. That works — stills are never enlarged — but a larger original of the same photo looks sharper.`);
   }
   log.info(`Full-size stills: ${shown(paths.stills)}/   1024-px copies for vision models that cap image size: ${shown(join(paths.cache, 'preview'))}/`);
-  log.next(`look at every still at full size, then write the plan in ${shown(paths.plan)} (AGENTS.md › 4. Write the plan) and check it: node world lint ${id}`);
+  log.next(nextStep(id));
   return 0;
 }
