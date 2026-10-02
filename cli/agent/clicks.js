@@ -1,0 +1,88 @@
+// Does each film answer its click? The visitor taps a thing whose label makes
+// a promise ("Follow the lanterns to the city"); the film has to start with
+// that thing doing what the label says. A film that starts somewhere else
+// feels broken however good it looks, and it is the fault people find most
+// often by hand. A vision model looks at the still with the tapped thing
+// marked and at frames from the film's opening, and says whether they agree.
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import sharp from 'sharp';
+import { frameImage } from '../lib/screen.js';
+import { probe } from '../lib/media.js';
+import { imagePart } from '../lib/llm.js';
+
+const AUDIT_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['clicked', 'firstMotion', 'clickedThingLeads', 'doesWhatLabelSays', 'verdict', 'why', 'fix'],
+  properties: {
+    clicked: { type: 'string' },
+    firstMotion: { type: 'string' },
+    clickedThingLeads: { type: 'boolean' },
+    doesWhatLabelSays: { type: 'boolean' },
+    verdict: { type: 'string', enum: ['aligned', 'weak', 'misaligned'] },
+    why: { type: 'string' },
+    fix: { type: 'string' },
+  },
+};
+
+/** The still with the tapped thing ringed (or its traced outline, when there is one). */
+async function markedStill(stillPath, at, out) {
+  const image = sharp(stillPath, { failOn: 'none' }).rotate();
+  const { width, height } = await image.metadata();
+  const scale = Math.min(1, 1024 / Math.max(width, height));
+  const [w, h] = [Math.round(width * scale), Math.round(height * scale)];
+  const r = Math.round(Math.max(w, h) * 0.045);
+  const [x, y] = [Math.round(at[0] * w), Math.round(at[1] * h)];
+  const ring = Buffer.from(`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#ff00ff" stroke-width="${Math.max(3, Math.round(r / 6))}"/><circle cx="${x}" cy="${y}" r="${Math.max(3, Math.round(r / 6))}" fill="#ff00ff"/></svg>`);
+  await image.resize(w, h).composite([{ input: ring }]).jpeg({ quality: 88 }).toFile(out);
+  return out;
+}
+
+/** Frames from the opening of a film (where the click has to show) and its last frame. */
+async function openingFrames(video, cacheDir, name) {
+  const info = await probe(video);
+  const total = Math.max(1, info.frames);
+  const fps = info.fps || 24;
+  const picks = [...new Set([0.06, 0.15, 0.25, 0.36, 0.5, 1].map(t => Math.min(total - 1, Math.round(t * (total - 1)))))];
+  const parts = [];
+  for (const frame of picks) {
+    const path = join(cacheDir, `${name}-f${frame}.jpg`);
+    if (!existsSync(path)) writeFileSync(path, await sharp(await frameImage(video, frame)).resize(768, 768, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer());
+    parts.push({ type: 'text', text: `Frame ${frame} of ${total} (${(frame / fps).toFixed(1)} s${frame === total - 1 ? ', the last frame' : ''}):` }, await imagePart(path, { longEdge: 768 }));
+  }
+  return parts;
+}
+
+/**
+ * Audit one click. `still` is the picture the visitor tapped, `at` where (0–1
+ * fractions), `video` the rendered film (or null: then the direction alone is
+ * judged). Returns the model's answer plus `basis` ("film" or "direction").
+ */
+export async function auditClick(llm, { name, label, hint = '', target = '', still, at, video = null, direction = '', destination = '', outline = null, cacheDir, mature = false }) {
+  mkdirSync(cacheDir, { recursive: true });
+  const marked = outline && existsSync(outline) ? outline : await markedStill(still, at, join(cacheDir, `${name}-marked.jpg`));
+  const text = [
+    `A visitor to an interactive film world taps a thing in the picture below (ringed in magenta${outline ? ', or tinted magenta' : ''}). Its label says "${label}"${hint ? ` and its hint says "${hint}"` : ''}.${target ? ` The thing is: ${target}.` : ''}`,
+    destination ? `The film then takes the visitor to: ${destination}.` : 'The film then plays and returns to the same picture.',
+    'The label is a promise. The film\'s first action has to be aimed at the tapped thing: the thing itself moves, opens, lights or speaks; or a character goes straight to it and does what the label says to it (picks it, tips it, climbs into it); or the camera goes straight to it, along it or through it. Then the film keeps its promise. A film whose first action heads somewhere else (another person, another object, a doorway that is not the tapped one, a camera move elsewhere) is misaligned, however good it looks, even when it reaches the right destination. A film that starts at the thing but then does something else than the label says (the label says go inside, the film never goes in) is weak.',
+    video ? 'Judge the frames of the rendered film below, which show what actually happened. The written direction is only context.' : 'There is no rendered film yet: judge the written direction.',
+    direction ? `The written direction: ${direction}` : null,
+    'Reply with JSON {"clicked": "what the marked thing is, in a few words", "firstMotion": "what happens first in the film, in a sentence", "clickedThingLeads": true if the film’s first action is aimed at the tapped thing, "doesWhatLabelSays": true if the film does what the label promises, "verdict": "aligned" | "weak" (it starts with the thing, but the label promises something it barely does) | "misaligned", "why": "one or two sentences", "fix": "one sentence: how the film should begin instead so the click and the film agree, keeping the same destination (empty when aligned)"}.',
+  ].filter(Boolean).join('\n');
+  const user = [
+    { type: 'text', text },
+    { type: 'text', text: 'The picture, with the tapped thing marked:' }, await imagePart(marked),
+    ...(video ? await openingFrames(video, cacheDir, name) : []),
+  ];
+  const answer = await llm.json({
+    system: `You check interactive films against what the visitor clicked. You are literal: you report what the pictures show, not what the words hoped for.${mature ? ' The world is an 18+ horror world; gore and frightening imagery are intended.' : ''}`,
+    user,
+    schema: AUDIT_SCHEMA,
+    purpose: `audit-click-${name}`,
+    maxTokens: 2000,
+    temperature: 0.1,
+  });
+  // Both booleans false is misaligned whatever the verdict says; a model that says "aligned" while answering false to either is not believed.
+  const verdict = !answer.clickedThingLeads ? 'misaligned' : !answer.doesWhatLabelSays && answer.verdict === 'aligned' ? 'weak' : answer.verdict;
+  return { ...answer, verdict, basis: video ? 'film' : 'direction' };
+}

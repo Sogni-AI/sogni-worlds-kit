@@ -112,6 +112,8 @@ places:
 | `start` | The first place. `ingest` sets it to the first photo if empty. |
 | `canvas` | The render canvas every place shares, e.g. `1152x768`. Set by `ingest` from your photos. |
 | `contentFilter` | `on` or `off` (default `off`: new worlds start with it off): Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
+| `intro` | Optional words for the Begin card: `{ eyebrow, tagline, warning, begin }`. |
+| `map` | `false` hides the Places panel (no spoilers, no teleporting). |
 
 ## voices and music
 
@@ -123,8 +125,8 @@ voices:
   guide:
     design: "A warm, unhurried woman in her forties, close to the microphone."
 music:
-  prompt: "…"                           # generated on Sogni
-  seconds: 120
+  prompt: "…"                           # generated on Sogni with MiniMax Music 3: put tempo, key and mood here
+  seconds: 120                          # 10–300; a ceiling, it may end on a resolution a little sooner
 # or
 music:
   file: music/my-song.mp3               # only music you have the rights to
@@ -133,6 +135,18 @@ music:
 
 Clone only a voice that is yours or that you have permission to use. A cloned
 voice needs the exact transcript of its recording.
+
+A designed voice is made once and then kept: `narrate` designs it on a fixed
+15-second passage (`voices/<name>.designed.wav`) and clones that recording for
+every place, so the narrator is the same person everywhere. Designing it afresh
+for each place would cast a different person each time. Change the `design`
+words and the voice is designed again.
+
+Generated music is instrumental and uses MiniMax Music 3, the best music model
+on Sogni. It takes tempo, key and metre from the prompt ("84 BPM, D major");
+`bpm`, `keyscale` and `timesignature` are folded into the prompt for it. For
+exact BPM and key control, or a track longer than 300 s, set
+`model: ace_step_1.5_xl_turbo` (or `ace_step_1.5_xl_sft`), the older model.
 
 ## places
 
@@ -148,6 +162,7 @@ One entry per photograph, in story order. `ingest` adds `id`, `photo` and
 | `seen` | What is really in the picture, written after viewing it at full size: who, wearing what, where things are. Every direction that starts or ends here is written from it. |
 | `narration` | `{ voice, lines }`. Each line is `"text"` (in `voice`) or `{ voice: other, text }` for a second speaker. |
 | `loop` | The living photograph (below). |
+| `ending` | Optional: `{ kind: death \| end, title, text }`. Arriving here ends the story; a death offers Rewind to choose again. An ending needs no objects and no loop. |
 | `objects` | What you can click (below). |
 
 ## loop
@@ -177,10 +192,18 @@ loop:
 | `select` | SAM 3 clicks that outline the object: `positive` points on it, `negative` points on what it touches, an optional `box` `[x0, y0, x1, y1]`, or `text` (e.g. `sheep`) with `instances` for a group. Optional `cleanup: { keepRatio, holeRatio }`. `node world select` draws `selections/<place>-<object>.preview.jpg` so you can check it. |
 | `goes` | The place this crossing lands on. **Omit it** for a moment: a film that happens here and returns to this still. |
 | `shortcut` | `true` for a crossing that jumps out of the story's order. |
+| `collect` | `true` for a collectible: a moment (no `goes`) that adds this object to the visitor's collection. `node world figures` stands it up in 3D (Pixal3D) so the visitor can turn it over when they find it. |
+| `figure` | `false` keeps a collectible flat (no 3D figure); `true` gives any object a figure. |
+| `figureName` | What the figure is called in the collection. Default: the label without its verb ("Touch the neon lotus" → "The neon lotus"). |
+| `figureNoun` | The plain noun Pixal3D is told the object is ("telescope"). Default: the head noun of `target` or `label`. |
 | `film` | The direction (below). |
 
 The object you click must be the thing that carries the film: the door you
 duck through, the cloud you fly into, the guitar whose sound hole you enter.
+The label is a promise: the film's first motion is that thing doing what the
+label says. `lint` warns (`cause`) when the first sentences of the motion never
+name it, and `node world audit-clicks` has a vision model compare each rendered
+film's opening with its click.
 
 ## film
 
@@ -241,4 +264,4 @@ An allowed finding still prints, as a warning marked "allowed". Rule ids:
 `frames`, `length`, `opening`, `one-shot`, `negation`, `capitals`,
 `timestamps`, `sound`, `dialogue`, `sentences`, `music`, `transition`,
 `materialize`, `lattice`, `dark-screen`, `static`, `keyframes`,
-`prompt-length`.
+`prompt-length`, `cause`, `unfinished`.

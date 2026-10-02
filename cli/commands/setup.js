@@ -113,6 +113,10 @@ export async function run(argv) {
   log.step('Every agent: the command-line tool the skill runs');
   for (const step of SKILL_CLI) log.info(step);
   if (onPath('sogni-agent')) log.ok('sogni-agent is already installed');
+  if (!agents.length) {
+    log.step('No coding agent? Sogni\'s own LLMs can do its job');
+    log.info('node world agent my-trip   — interviews you, plans, renders and screens; you approve (docs/agent.md)');
+  }
 
   log.title('Checking everything');
   const code = await doctor([]);

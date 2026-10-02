@@ -126,8 +126,8 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
   generated sound. A *crossing* goes from one still to the next, a *loop* makes a
   still breathe, and a *moment* is something that happens and returns.
 - **Voice and music.** Narration in a cloned voice (your own, with your recording)
-  or a designed one, via Qwen3-TTS. Music generated with ACE-Step, or a track you
-  own.
+  or a designed one, via Qwen3-TTS. Music generated with MiniMax Music 3, or a
+  track you own.
 - **Judging.** Automatic checks flag dissolves, hard cuts and frozen endings. Your
   agent looks at every take, and you approve what ships.
 
@@ -158,14 +158,20 @@ All of it, with real prompts: [docs/directing-films.md](docs/directing-films.md)
 Any agent that can run shell commands and read `AGENTS.md` works. Setup details,
 including running Hermes on Sogni's own LLMs: [docs/agents.md](docs/agents.md).
 
+**No coding agent?** `node world agent my-trip` does the agent's work with Sogni's
+own LLMs and nothing but your Sogni API key: it interviews you, plans, outlines,
+renders, screens and retakes, and leaves every approval to you. It can also paint
+a world from a concept when you have no photos, with fatal choices, endings and
+collectible figures: [docs/agent.md](docs/agent.md).
+
 ## Commands
 
 | Step | Command | What it does |
 | --- | --- | --- |
 | Set up | `node world setup` · `doctor` | API key, plan, skill install, health check |
 | Plan | `new` · `ingest` · `lint` · `quote` | Create a world, make stills, check the plan, price it |
-| Make | `select` · `render` · `narrate` · `music` | Outlines, films, voice, score |
-| Judge | `screen` · `note` · `reject` · `review` | Automatic checks, agent notes, your verdicts |
+| Make | `select` · `render` · `figures` · `narrate` · `music` | Outlines, films, 3D collectibles, voice, score |
+| Judge | `screen` · `audit-clicks` · `note` · `reject` · `review` | Automatic checks, does each film answer its click, agent notes, your verdicts |
 | Finish | `build` · `play` · `export` | Assemble, play locally, publish a static site |
 | Where am I? | `status` · `next` | The whole picture, or just the next step |
 

@@ -23,7 +23,7 @@ agent) what comes next.
 | 6 | `render` | MiniMax H3 FastH3 FLF two-stage (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`) | `renders/<film>/take-<n>.{json,mp4}` |
 | 7 | `screen` · `note` · `reject` | ffmpeg | `take-<n>.screen.json`, `take-<n>.sheet.jpg`, notes |
 | 8 | `review` | a local page | `review/verdicts.json` (your decisions) |
-| 9 | `narrate` · `music` | Qwen3-TTS · ACE-Step | `audio/narration/<place>.*`, `audio/music/*` |
+| 9 | `narrate` · `music` | Qwen3-TTS · MiniMax Music 3 | `audio/narration/<place>.*`, `audio/music/*` |
 | 10 | `build` · `play` · `export` | ffmpeg · Vite | `build/world.json` + finished media · a static site |
 
 ## A world's folder
@@ -133,7 +133,7 @@ approval.
 - a **designed** voice.
 
 It then checks the ending wasn't clipped, times every line for subtitles, and
-normalises the loudness. `music` generates a score with ACE-Step, or measures and
+normalises the loudness. `music` generates a score with MiniMax Music 3, or measures and
 normalises a file you own.
 
 ### 10. Build and share

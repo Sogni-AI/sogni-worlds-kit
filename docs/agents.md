@@ -1,5 +1,8 @@
 # Your agent
 
+No coding agent? `node world agent` does the agent's job with Sogni's own LLMs,
+on your Sogni API key alone: [agent.md](agent.md).
+
 The kit is built for coding agents that can run shell commands and read files.
 They all find the same instructions, [AGENTS.md](../AGENTS.md), and the same
 commands (`node world …`). Pick the one you already use.

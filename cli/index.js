@@ -13,10 +13,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const COMMANDS = [
   ['Set up', ['setup', 'doctor']],
   ['Plan', ['new', 'ingest', 'lint', 'plan', 'quote']],
-  ['Make', ['select', 'render', 'narrate', 'music']],
-  ['Judge', ['screen', 'note', 'reject', 'review']],
+  ['Make', ['select', 'render', 'figures', 'narrate', 'music']],
+  ['Judge', ['screen', 'audit-clicks', 'note', 'reject', 'review']],
   ['Finish', ['build', 'play', 'export']],
   ['Where am I?', ['status', 'next']],
+  ['No coding agent?', ['agent']],
 ];
 
 export async function main(argv) {
@@ -44,7 +45,7 @@ async function help(name) {
     for (const commandName of names) {
       const file = join(HERE, 'commands', `${commandName}.js`);
       const summary = existsSync(file) ? (await import(file)).summary : '(not available)';
-      console.log(`  ${commandName.padEnd(9)} ${summary}`);
+      console.log(`  ${commandName.padEnd(12)} ${summary}`);
     }
   }
   console.log('\nLost? `node world next` prints the one thing to do now. Details: node world help <command>');

@@ -162,7 +162,15 @@ single world (`node world reject harbour-ferry 1 "…"`).
 
 Reject on sight: dissolves or fades, morphs, hard cuts, invented lettering, a real
 person's face changing, smeared bridge or tower struts, music nobody asked for, a
-frozen tail. Then ask the person to review:
+frozen tail, and a film that ignores what was clicked (the clicked thing must lead
+the film and do what its label says; a retake changes the route, never the cause).
+The last one is the fault people find most often by hand, so check it with a
+vision model too, and look at every film it calls misaligned or weak:
+
+```bash
+node world audit-clicks          # aligned / weak / misaligned, with a one-line fix
+```
+Then ask the person to review:
 
 ```bash
 node world review      # prints a local URL; they approve or reject each take

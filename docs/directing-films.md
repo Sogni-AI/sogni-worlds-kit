@@ -131,8 +131,14 @@ another.
 - **Never a fade, a dissolve or a morph.** A dark screen isn't a boundary either:
   "darkness fills the view" becomes a fade to black. Keep the occluding surface and
   its moving edge visible.
-- **The clicked object causes it.** "Duck through the round door" must start with
-  the door. If the label and the film disagree, fix one of them.
+- **The clicked object causes it.** The label is a promise. "Duck through the
+  round door" must start with the door, and "Follow the lanterns" must have the
+  lanterns lead. The first thing that moves after the opening picture is the
+  clicked thing doing what its label says. A film that starts with something else
+  feels broken however good it looks; it is the most common fault in agent-built
+  worlds, including ours. If the label and the film disagree, fix one of them, and
+  `lint` warns when the clicked thing is missing from the film's first sentences
+  (rule `cause`).
 - **Stay clear of lattices.** Routes onto, along or through bridges, towers, pylons
   or anything made of struts smear into grey bands. Pass them far below, far off to
   one side, or go around them.
@@ -232,7 +238,9 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
 - a real person's face drifting into someone else's;
 - smeared struts from a bridge or tower route;
 - music in the soundtrack when none was asked for;
-- a frozen tail (the last seconds don't move) or a flash at a loop's seam.
+- a frozen tail (the last seconds don't move) or a flash at a loop's seam;
+- a film that ignores what was clicked: the clicked thing plays no part, or the
+  film does something other than its label promises.
 
 Everything else goes to the person on `node world review`. Only a person approves
 a take.
@@ -244,6 +252,14 @@ another seed. For example: the dissolve came from a camera tilt that asked to se
 two different cliffs, so the route now drives fully into the cloud first; the car
 showed an invented number plate, so the camera now stays side-on. Write down why
 the take failed, change the words that caused it, then render again.
+
+**A retake keeps the clicked object.** Change *how* the clicked thing carries the
+film (a different route through the door, a slower push past the lanterns), never
+*what* carries it. When the lanterns' glow kept dissolving, the fix is a route in
+which a lantern swings across the lens or the sloth climbs the lantern-lit steps,
+not a new route through the stone hand. If no route through that object works,
+change the object's label and hint to something it can do, and say so to the
+person.
 
 ## What the linter checks
 
@@ -261,6 +277,8 @@ the take failed, change the words that caused it, then render again.
 - frames off the 124 + 17n grid, or a prompt over 7,000 characters.
 
 It warns (and still lets the plan through) when a loop or moment turns a head away
-("turns her head", "looks away", "glances over his shoulder").
+("turns her head", "looks away", "glances over his shoulder"), and when a film's
+first sentences after the opening picture never name the clicked thing (rule
+`cause`: the label and the object id are the words it looks for).
 
 The linter catches words. It can't see the film, so the review still decides.
