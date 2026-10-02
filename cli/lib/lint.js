@@ -145,7 +145,10 @@ export function lintDirection(film, concept = '') {
   if (action.length < 120) error('length', 'action', 'describe the motion in more detail (under 120 characters)');
   // A direction cut off mid-sentence (a writer's inner quote closed the string early) renders as half a film.
   for (const [field, text] of [['action', action], ['sound', sound]]) {
-    if (text && !/[.!?…][”"’')\]]*$/.test(text)) error('unfinished', field, `${quote(text.slice(-60))} — the text stops mid-sentence; finish it`);
+    if (!text || /[.!?…][”"’')\]]*$/.test(text)) continue;
+    // An open quote, a comma or a word that cannot end a sentence means the text was cut off: half a film.
+    const cut = /(["“(,:;]|\b(the|a|an|of|to|in|on|at|by|with|and|or|but|from|into|reading|says|said|as|that|its|his|her|their))$/i.test(text);
+    (cut ? error : warn)('unfinished', field, `${quote(text.slice(-60))} — ${cut ? 'the text stops mid-sentence; finish it' : 'end the last sentence with a full stop'}`);
   }
   if (!/established by Picture 1/.test(action)) error('opening', 'action', 'open on the first frame: "…, a wide shot begins in (or: holds) the position and framing established by Picture 1: …"');
   const shot = /\[Shot [2-9]\]/.exec(action);

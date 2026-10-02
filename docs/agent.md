@@ -29,8 +29,8 @@ one bounded task:
 | Plan | writes each place's title, narration, loop and objects with their films, lints every film, then reviews its own work against the rules a linter can't check | approve the plan |
 | Point | finds each object, traces it with Segment Anything 3, looks at the traced outline and tries again until it is right | — |
 | Render | quotes first, renders, screens every take, rejects clearly broken takes and rewrites their direction | approve the quote |
-| Judge | leaves a note on every take it keeps | **approve or reject every take** on `node world review` |
-| Finish | narration, music, build | play it, export it |
+| Judge | leaves a note on every take it keeps, then opens your review page | **approve or reject every take** there |
+| Finish | narration, music, 3D figures, the credit, a build | play it, export it |
 
 The agent never approves a film. It can only reject a take that is clearly broken
 (a dissolve, a morph, a hard cut, invented lettering, a face that changes), and it
@@ -46,7 +46,13 @@ node world agent my-trip         # asks its questions, then works
 It asks for anything it needs in the terminal, shows you the plan and the quote,
 and waits for your OK before spending. Stop it any time (Ctrl-C); run the same
 command again and it picks up where it stopped. `--until plan` stops after the
-plan, `--until select` after the outlines.
+plan, `--until select` after the outlines, `--until build` before the review page.
+
+It ends by opening your review page (`--review-port`, default 4700; `--no-open`
+prints the address instead). Approve the take you want for each film; reject one
+with a note saying what is wrong. Press Ctrl-C when you are done, then run the
+agent again: it rewrites every film you rejected from your note, renders it, and
+builds with what you approved.
 
 ## The brief (answers in a file)
 

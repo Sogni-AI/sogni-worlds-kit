@@ -4,6 +4,7 @@
 // what only the person can tell it, then plans, points, renders, screens and
 // retakes, and stops where the person's judgement is needed.
 import { existsSync, readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { shown, worldPaths, filmId, loopId } from '../lib/paths.js';
@@ -36,17 +37,21 @@ export const usage = `node world agent <world> [--brief <file>] [--until <stage>
   --brief <file>   your answers in a file, for an unattended run (see
                    docs/agent.md). Standing approvals in it ("approvals:")
                    let it go on without asking.
-  --until <stage>  stop after: plan, select, render, build (default: build)
+  --until <stage>  stop after: plan, select, render, build, review (default:
+                   review — it ends by opening your review page)
+  --review-port <n>  where the review page is served (default 4700)
+  --no-open        print the review page's address instead of opening it
   --retakes <n>    how many times it may rewrite and re-render a film it
                    rejected itself (default 2)
 
   Models: SOGNI_AGENT_MODEL (default ${MODELS.writer}),
           SOGNI_AGENT_POINTER_MODEL (default ${MODELS.pointer}).`;
 
-const STAGES = ['plan', 'select', 'render', 'build'];
+const STAGES = ['plan', 'select', 'render', 'build', 'review'];
 
 export async function run(argv) {
-  const { values, world } = parse(argv, { brief: { type: 'string' }, until: { type: 'string', default: 'build' }, retakes: { type: 'string', default: '2' } });
+  const { values, world } = parse(argv, { brief: { type: 'string' }, until: { type: 'string', default: 'review' }, retakes: { type: 'string', default: '2' },
+    'review-port': { type: 'string', default: '4700' }, 'no-open': { type: 'boolean', default: false } });
   if (!STAGES.includes(values.until)) throw new Error(`--until is one of ${STAGES.join(', ')}`);
   let brief = values.brief ? loadBriefFile(values.brief) : null;
   const id = world ?? brief?.id;
@@ -73,6 +78,7 @@ export async function run(argv) {
   const session = await connect({ appId: `sogni-worlds-agent-${id}` });
   const llm = new Llm({ client: session.client, billing: session.billing, logFile: join(paths.dir, 'agent', 'llm.jsonl'), concurrency: Number(process.env.SOGNI_AGENT_CONCURRENCY || (session.tier === 'unlimited_pro' ? 4 : 2)) });
   const mature = Boolean(brief.paint?.mature || brief.mature);
+  let closed = false;
   try {
     log.title(`Building "${id}" with Sogni's LLMs`);
     log.step(`Signed in as ${session.username}. Billing: ${describeBilling(session.billing)}`);
@@ -253,8 +259,11 @@ export async function run(argv) {
       const rejectedAt = takes.map(t => t.verdict).filter(v => v?.verdict === 'rejected').map(v => v.at).sort().at(-1);
       const rewrittenAt = state.rewrites?.[film.id]?.at(-1)?.at;
       if (rewrittenAt && rewrittenAt > rejectedAt) continue;
+      if ((state.retakes[film.id] ?? 0) >= Number(values.retakes)) {
+        log.warn(`${film.id}: ${state.stuck?.[film.id] ? 'could not be rewritten within the rules' : `out of retakes (${values.retakes})`}; left for you`);
+        continue;
+      }
       state.retakes[film.id] = (state.retakes[film.id] ?? 0) + 1;
-      if (state.retakes[film.id] > Number(values.retakes)) { log.warn(`${film.id}: rejected ${state.retakes[film.id]} times; leaving it for you`); continue; }
       await retakeOrLeave({ llm, id, paths, film, state, mature });
       save();
     }
@@ -273,8 +282,8 @@ export async function run(argv) {
       const rejectedNow = await judgeNewTakes({ llm, plan, paths, state, mature });
       save();
       for (const film of rejectedNow) {
+        if ((state.retakes[film.id] ?? 0) >= Number(values.retakes)) { log.warn(`${film.id}: out of retakes (${values.retakes}); left for you`); continue; }
         state.retakes[film.id] = (state.retakes[film.id] ?? 0) + 1;
-        if (state.retakes[film.id] > Number(values.retakes)) { log.warn(`${film.id}: rejected ${state.retakes[film.id]} times; leaving it for you`); continue; }
         await retakeOrLeave({ llm, id, paths, film, state, mature });
       }
       save();
@@ -308,11 +317,18 @@ export async function run(argv) {
     status = gather(id);
     log.title('Where it stands');
     log.info(`LLM: ${llm.totals.calls} calls, ${llm.totals.promptTokens.toLocaleString()} tokens in, ${llm.totals.completionTokens.toLocaleString()} out, about ${usd(llm.totals.usd)} at pay-as-you-go prices${session.billing.mode === 'subscription' ? ' (covered by your plan)' : ''}`);
-    if (status.unjudged.length) log.next(`your verdicts: node world review ${id}   (${status.unjudged.length} take${status.unjudged.length === 1 ? '' : 's'} wait for you)${drafts ? `. Meanwhile the draft plays: node world play ${id}` : ''}`);
-    else log.next(`node world play ${id}`);
+    if (!status.unjudged.length) { log.next(`node world play ${id}`); return 0; }
+    if (values.until === 'build') {
+      log.next(`your verdicts: node world review ${id}   (${status.unjudged.length} take${status.unjudged.length === 1 ? '' : 's'} wait for you)${drafts ? `. Meanwhile the draft plays: node world play ${id}` : ''}`);
+      return 0;
+    }
+    // 10. The person's turn: the agent opens the review page, where only they approve.
+    session.close();
+    closed = true;
+    await openReview({ id, port: Number(values['review-port']), open: !values['no-open'], drafts, waiting: status.unjudged.length });
     return 0;
   } finally {
-    session.close();
+    if (!closed) session.close();
     log.dim(`LLM so far: ${llm.totals.calls} calls, ${usd(llm.totals.usd)} at pay-as-you-go prices, ${Math.round(llm.totals.seconds)} s`);
   }
 }
@@ -430,4 +446,40 @@ export function worldCredit({ logFile, plan, paths, painted }) {
   if (plan.places.some(p => p.objects.some(o => wantsFigure(o) && existsSync(figureFiles(paths, `${p.id}-${o.id}`).glb)))) media.push('figures by Pixal3D');
   const agent = parts.length ? `Planned by Sogni's own LLMs with the Sogni Worlds Kit agent: ${parts.join('; ')}.` : 'Made with the Sogni Worlds Kit.';
   return `${agent} ${media.join(', ').replace(/^./, c => c.toUpperCase())}, all on Sogni.`;
+}
+
+/**
+ * Serve the review page, open it in the browser, and wait until the person is
+ * done (Ctrl-C). Their verdicts land in review/verdicts.json as theirs; a film
+ * they reject is rewritten from their note the next time the agent runs.
+ */
+async function openReview({ id, port, open, drafts, waiting }) {
+  const { startReviewServer } = await import('./review.js');
+  const { plan, paths } = readPlan(id);
+  let server;
+  for (let tries = 0; !server; tries++) {
+    try {
+      server = await startReviewServer({ plan, paths, port: port + tries, title: plan.title || id });
+      port += tries;
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE' || tries >= 20) throw error;
+    }
+  }
+  const url = `http://127.0.0.1:${port}/`;
+  log.title('Your turn: the review page');
+  log.ok(`${waiting} take${waiting === 1 ? '' : 's'} wait for your verdict at ${url}`);
+  log.info('Approve the take you want for each film. Reject one with a note saying what is wrong: the next');
+  log.info(`run of node world agent ${id} rewrites that film from your note and renders it again.`);
+  if (drafts) log.info(`Meanwhile the whole world plays as a draft: node world play ${id}`);
+  if (open) openInBrowser(url);
+  log.dim('Your verdicts save as you click. Press Ctrl-C here when you are done.');
+  await new Promise(done => process.once('SIGINT', () => { server.close(); done(); }));
+  log.next(`node world agent ${id}   — rewrites what you rejected, then builds with what you approved`);
+}
+
+function openInBrowser(url) {
+  const [command, args] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
+  try {
+    spawn(command, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref();
+  } catch { /* no browser here: the address is printed above */ }
 }

@@ -10,6 +10,8 @@ import { readRenderLock } from '../lib/renderlock.js';
 import { readJson } from '../lib/files.js';
 import { PHOTO_EXTENSIONS } from '../lib/stills.js';
 import { log } from '../lib/log.js';
+import { wantsFigure } from './figures.js';
+import { figureFiles } from '../lib/figures.js';
 
 export const summary = 'Where this world stands: places, outlines, films by state, audio, build — and what to do next';
 export const usage = 'node world status [world] [--json]';
@@ -68,6 +70,9 @@ export function gather(id) {
   const narrated = plan.places.filter(p => p.narration?.lines?.length);
   const narrationNeeded = narrated.filter(p => !existsSync(join(paths.audio, 'narration', `${p.id}.json`))).map(p => p.id);
   const musicNeeded = Boolean(plan.music) && !existsSync(join(paths.audio, 'music', 'music.json'));
+  // A collectible with an outline and no 3D figure yet (node world figures).
+  const figuresNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(wantsFigure).map(o => `${p.id}-${o.id}`))
+    .filter(key => existsSync(join(paths.selections, `${key}.png`)) && readJson(figureFiles(paths, key).receipt, null)?.status !== 'completed');
   const builtAt = mtime(join(paths.build, 'world.json'));
   const inputsAt = Math.max(mtime(paths.plan), mtime(join(paths.review, 'verdicts.json')));
   return {
@@ -76,7 +81,7 @@ export function gather(id) {
     selections, films: films.length, takes, finishedTakes, byState, unscreened, unlooked, unjudged,
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
-    narrationNeeded, narratedPlaces: narrated.length, hasMusic: Boolean(plan.music), musicNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
+    narrationNeeded, narratedPlaces: narrated.length, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
   };
 }
 
@@ -118,6 +123,7 @@ export function nextAction(s) {
   if (s.byState.unrendered.length) return { why: `${s.byState.unrendered.length} film${s.byState.unrendered.length === 1 ? '' : 's'} not rendered yet`, command: `node world quote ${id}   — then: node world render ${id}` };
   if (s.narrationNeeded.length) return { why: `narration for ${s.narrationNeeded.length} place${s.narrationNeeded.length === 1 ? '' : 's'} not recorded`, command: `node world narrate ${id}` };
   if (s.musicNeeded) return { why: 'the music is not made yet', command: `node world music ${id}` };
+  if (s.figuresNeeded?.length) return { why: `${s.figuresNeeded.length} collectible${s.figuresNeeded.length === 1 ? ' has' : 's have'} no 3D figure yet`, command: `node world figures ${id} --cutouts   — look at the cut-outs, then: node world figures ${id}` };
   if (!s.built || s.buildStale) return { why: s.built ? 'the build is older than your latest decisions' : 'every film is approved', command: `node world build ${id}` };
   return { why: 'the world is built', command: `node world play ${id}   — then: node world export ${id}` };
 }

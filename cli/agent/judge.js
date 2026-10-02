@@ -32,12 +32,14 @@ const JUDGE_SCHEMA = {
   },
 };
 
-/** Six frames spread through the take (or the flagged ones first), small enough for the model. */
+/** Up to eight frames of the take: flagged ones, the opening at fixed times, then the rest spread out. */
 async function takeFrames(take, cacheDir) {
   const total = take.screen?.probe?.frames ?? take.journal.frames;
   const flagged = (take.screen?.flags ?? []).filter(f => Number.isInteger(f.frame)).map(f => f.frame);
-  const spread = [0, 0.2, 0.4, 0.6, 0.8, 1].map(t => Math.min(total - 1, Math.round(t * (total - 1))));
-  const wanted = [...new Set([...flagged.slice(0, 2), ...spread])].sort((a, b) => a - b).slice(0, 6);
+  // The opening at fixed times (whether the clicked thing leads shows in the first seconds), then the rest spread out.
+  const early = [12, 36].map(f => Math.min(total - 1, f));
+  const spread = [0, 0.35, 0.7, 1].map(t => Math.min(total - 1, Math.round(t * (total - 1))));
+  const wanted = [...new Set([...flagged.slice(0, 2), ...early, ...spread])].sort((a, b) => a - b).slice(0, 8);
   mkdirSync(cacheDir, { recursive: true });
   const parts = [];
   for (const frame of wanted) {

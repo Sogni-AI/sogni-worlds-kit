@@ -21,8 +21,9 @@ node world audit-clicks --manifest <clicks.json> --out <report.json>
   city" has to start with the lanterns. A film that starts somewhere else
   feels broken however good it looks. For every object's film, a Sogni vision
   LLM (${MODELS.writer}) looks at the still with the clicked thing marked and
-  at frames from the film's opening, and says aligned, weak or misaligned,
-  with a one-sentence fix. It judges the approved take (else the newest
+  at frames from the film's first seconds, and says aligned, weak or
+  misaligned, with a one-sentence fix. A flag is asked twice more and the
+  majority stands. It is a screener: look at every film it flags. It judges the approved take (else the newest
   finished one); a film with no take, or every film with --text, is judged
   from its written direction. Writes review/click-audit.json.
 

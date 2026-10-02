@@ -187,12 +187,18 @@ Then `node world render` for everything not yet rendered, then screen and review
 again. Repeat until every film on the story's path is approved. Shortcuts and
 moments can wait.
 
-### 9. Narration and music (optional)
+### 9. Narration, music and figures (optional)
 
 ```bash
 node world narrate     # a take per place, in the planned voice; the person listens on review
-node world music
+node world music       # MiniMax Music 3
+node world figures --cutouts   # collectibles only: look at each cut-out, then
+node world figures             # build the 3D figures the visitor turns over
 ```
+
+A designed voice is designed once and cloned for every place, so the narrator
+stays one person. Turn every figure over in `node world play` before sharing:
+the back and any face are where a figure goes wrong.
 
 ### 10. Build, play, share
 
