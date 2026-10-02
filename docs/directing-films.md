@@ -93,7 +93,8 @@ Rules that keep the model on your side:
   don't call it "a medium shot": the model will jump to your words in two frames.
 - **Only what can be seen or heard.** No notes to the model ("preserve anatomy",
   "no morphing", "keep it realistic"), no genre or mood labels ("a horror shot"),
-  no capitals, no clock times inside the shot.
+  no words in ALL CAPITALS (proper nouns such as Māori or Te Pā Tū are fine), no
+  clock times inside the shot.
 - **Positive facts only.** Write "her face stays turned toward the ice", not "we
   never see her face". Naming a thing, even to forbid it, puts it in the film.
 - **Don't add what the pictures lack.** An object that must be used in the film has

@@ -38,9 +38,9 @@ screen and assemble. They approve the plan, judge the films and decide what ship
    small or out of focus mid-film, unless they are pinned with keyframes. A loop or
    moment starts *and* ends on the photograph, so a face that is front-on there is
    front-on at both ends: direct only small motion (breathing, a blink, hair in the
-   wind, a slight smile) and keep the head where it is. Never turn it away and
-   back, or give that place a loop in which the person doesn't move
-   (docs/directing-films.md#real-people-and-faces).
+   wind, a slight smile) and keep the head where it is; never turn it away and
+   back. Or give that place a loop in which the person stays still and the world
+   around them moves (docs/directing-films.md#real-people-and-faces).
 9. **Keep the person informed, briefly.** After each stage, say what you did, what it
    cost and what you need from them, in two or three sentences, then continue.
 
@@ -145,7 +145,9 @@ node world screen
 ```
 
 For every new take, open its contact sheet (`renders/<film>/take-<n>.sheet.jpg`)
-and every flagged moment. A "check" note (a fast camera move) is not a defect: look
+and every flagged moment. For a crossing or moment, also open its opening strip
+(`take-<n>.opening.jpg`, the first 2.7 s): the clicked thing has to move, or be
+moved, first. A "check" note (a fast camera move) is not a defect: look
 at it at full size for smearing or a hidden cut. **Screening can't read lettering.**
 Look at every sign, patch, logo and number plate on the contact sheet and the
 flagged frames yourself: invented or garbled letters are a rejection the numbers

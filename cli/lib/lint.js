@@ -119,9 +119,11 @@ export function clickCauses(object, film, { sentences = 2 } = {}) {
   const anywhere = motion.join(' ').split(/[^A-Za-z]+/).map(stem);
   const late = words.some(w => says(anywhere, w));
   const named = words.filter(w => !PERSON_WORDS.map(stem).includes(w)).slice(0, 5).join(', ') || 'the person';
+  // The opening description is one sentence; a longer one pushes the motion later than it is.
+  const tip = ' (if the opening description runs over several sentences, make it one, so the motion starts right after it)';
   return late
-    ? `the clicked thing (${named}) only comes in late; "${object.label}" should start the film`
-    : `the film never brings in the clicked thing (${named}); "${object.label}" should start it`;
+    ? `the clicked thing (${named}) only comes in late; "${object.label}" should start the film${tip}`
+    : `the film never brings in the clicked thing (${named}); "${object.label}" should start it${tip}`;
 }
 
 /**

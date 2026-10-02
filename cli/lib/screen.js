@@ -290,11 +290,11 @@ export function stderrOf(command, args) {
   });
 }
 
-/** A 4×2 contact sheet of 8 frames with their times, for looking at a take quickly. */
-export async function contactSheet(video, out, { frames, tileWidth = 480 } = {}) {
+/** A 4×2 contact sheet of 8 frames with their times (spread over the take, or the frames given), for looking at a take quickly. */
+export async function contactSheet(video, out, { frames, tileWidth = 480, at = null } = {}) {
   const info = await probe(video);
   const count = frames ?? info.frames;
-  const picks = Array.from({ length: 8 }, (_, i) => Math.min(count - 1, Math.round(i * (count - 1) / 7)));
+  const picks = (at ?? Array.from({ length: 8 }, (_, i) => Math.round(i * (count - 1) / 7))).slice(0, 8).map(frame => Math.min(count - 1, Math.max(0, frame)));
   const tileHeight = Math.round(tileWidth * info.height / Math.max(1, info.width) / 2) * 2;
   const images = await Promise.all(picks.map(frame => frameImage(video, frame, tileWidth, tileHeight)));
   const label = (text) => Buffer.from(`<svg width="${tileWidth}" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="black" fill-opacity="0.6"/><text x="8" y="20" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="white">${text}</text></svg>`);

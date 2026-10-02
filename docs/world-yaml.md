@@ -108,7 +108,7 @@ places:
 | `id` | Lower-case letters, digits and dashes. Matches the folder name. |
 | `title`, `subtitle` | Shown on the title card. |
 | `story` | One paragraph: what the world is, its tone, who is in it. Your agent uses it to keep every place and film consistent. |
-| `order` | `linear`: a story told in order. The player offers each place's way to the next place first; any other crossing is labelled a shortcut. `free`: every way is equal. |
+| `order` | `linear`: a story told in order. The player offers each place's way to the next place first; any other crossing is labelled a shortcut. The last place needs no onward crossing (its loop and moments are enough; give it an `ending` only if arriving there ends the story). `free`: every way is equal. |
 | `start` | The first place. `ingest` sets it to the first photo if empty. |
 | `canvas` | The render canvas every place shares, e.g. `1152x768`. Set by `ingest` from your photos. |
 | `contentFilter` | `on` or `off` (default `off`: new worlds start with it off): Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
@@ -233,7 +233,7 @@ explains each one. In short:
 - Open on Picture 1 ("…begins in / holds the position and framing established by Picture 1: …").
 - One continuous shot. Order events with words, never timestamps.
 - Only what is seen and heard, as positive facts: no "no", "not", "without".
-- No capitals; put visible lettering in "double quotes".
+- No words in ALL CAPITALS (proper nouns are fine); put visible lettering in "double quotes".
 - A crossing passes through something physical — a doorway, a cloud, water, a
   reflection, a fogged lens — never a fade, dissolve or morph.
 - Pass bridges and towers far below or far to one side; never fly along them.

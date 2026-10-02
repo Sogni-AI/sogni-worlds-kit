@@ -9,7 +9,8 @@ import { canaryStatus } from '../lib/canary.js';
 import { gather, nextAction, nextStep } from './status.js';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { speechEstimate, voiceRequest } from './narrate.js';
+import { ANCHOR_SCRIPT, speechEstimate, voiceRequest } from './narrate.js';
+import { SPEECH_MODELS } from '../lib/audio.js';
 import { musicEstimate } from './music.js';
 import { wantsFigure } from './figures.js';
 import { figureEstimate, figureFiles } from '../lib/figures.js';
@@ -52,8 +53,12 @@ export async function run(argv) {
     const audio = [];
     for (const place of narrate) {
       try {
-        const { request } = voiceRequest(plan, paths, place);
+        const { request, needsSample } = voiceRequest(plan, paths, place, { quote: true });
         audio.push({ item: `narration: ${place.id}`, ...(await speechEstimate(session, request)) });
+        // A designed voice is designed once on a fixed passage, then cloned for every place.
+        if (needsSample && !audio.some(row => row.item === `voice design: ${needsSample} (once)`)) {
+          audio.push({ item: `voice design: ${needsSample} (once)`, ...(await speechEstimate(session, { modelId: SPEECH_MODELS.design, positivePrompt: ANCHOR_SCRIPT })) });
+        }
       } catch (error) {
         audio.push({ item: `narration: ${place.id}`, error: error.message });
       }

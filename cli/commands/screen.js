@@ -8,7 +8,10 @@ import { readPlan, filmsOf, placeById } from '../lib/plan.js';
 import { resolveWorldId, shown } from '../lib/paths.js';
 import { writeJson, sha256File } from '../lib/files.js';
 import { listTakes } from '../lib/takes.js';
-import { screenTake } from '../lib/screen.js';
+import { contactSheet, screenTake } from '../lib/screen.js';
+
+/** The opening strip: where the clicked thing has to move first. */
+const OPENING_SECONDS = [0, 0.3, 0.6, 0.9, 1.3, 1.7, 2.2, 2.7];
 
 export const summary = 'Check new takes for dissolves, cuts, bad endpoints, frozen tails and silence';
 export const usage = `node world screen [world] [--only <film> ...] [--force]
@@ -47,6 +50,9 @@ export async function run(argv) {
         sheetPath: take.files.sheet,
         framesDir: join(paths.renders, film.id, `take-${take.take}.frames`),
       });
+      // A crossing or moment has to start with what was clicked: its first seconds, densely, for looking at that.
+      const opening = film.object ? join(paths.renders, film.id, `take-${take.take}.opening.jpg`) : null;
+      if (opening) await contactSheet(take.files.video, opening, { frames: result.probe?.frames, at: OPENING_SECONDS.map(s => Math.round(s * (result.probe?.fps || 24))) });
       const sha = sha256File(take.files.video);
       if (take.journal.sha256 && sha !== take.journal.sha256) {
         result.flags.unshift({ code: 'changed', severity: 'error', message: 'The file no longer matches its render receipt (SHA-256)' });
@@ -63,7 +69,7 @@ export async function run(argv) {
         (errors.length ? log.fail : log.warn)(`${film.id} take ${take.take}: ${errors.length + warns.length} flag(s)`);
       }
       for (const flag of [...errors, ...warns, ...notes]) log.info(`${{ error: 'ERROR', warn: 'look ', note: 'check' }[flag.severity]} ${flag.message}`);
-      log.dim(`sheet ${shown(take.files.sheet)}${result.flaggedFrames.length ? ` · frames ${shown(join(paths.renders, film.id, `take-${take.take}.frames`))}/` : ''}`);
+      log.dim(`sheet ${shown(take.files.sheet)}${opening ? ` · opening ${shown(opening)}` : ''}${result.flaggedFrames.length ? ` · frames ${shown(join(paths.renders, film.id, `take-${take.take}.frames`))}/` : ''}`);
       toLook.push(`${film.id} ${take.take}`);
     }
   }
@@ -75,6 +81,7 @@ export async function run(argv) {
   }
   log.title(`${screened} take(s) screened, ${flagged} with something to look at`);
   log.info('Now look at every contact sheet, and every flagged frame at full size. Numbers only say where to look.');
+  log.info('For a crossing or moment, the opening strip (take-<n>.opening.jpg, its first 2.7 s) shows whether the clicked thing moves first.');
   log.info('Reject on sight: a dissolve or crossfade, a morph, a hard cut, invented text or signs, a face that');
   log.info('changes, a camera that leaves the picture it should land on. Everything else goes to the review page.');
   log.info('Screening cannot read lettering: check every sign, patch, logo and number plate on the sheets yourself.');

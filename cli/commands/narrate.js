@@ -129,7 +129,8 @@ export async function run(argv) {
 }
 
 /** What to send for this place's voice. Throws if the voice is not usable. */
-export function voiceRequest(plan, paths, place) {
+/** `quote: true` prices a designed voice that has no sample yet (the sample itself is priced separately, once). */
+export function voiceRequest(plan, paths, place, { quote = false } = {}) {
   const name = place.narration.voice;
   const voice = name ? plan.voices?.[name] : null;
   if (name && !voice) throw new Error(`${place.id}: voice "${name}" is not in voices:`);
@@ -146,6 +147,7 @@ export function voiceRequest(plan, paths, place) {
   if (voice.design) {
     if (String(voice.design).length > SPEECH_LIMITS.instruct) throw new Error(`${place.id}: the voice description is limited to ${SPEECH_LIMITS.instruct} characters`);
     const anchor = designedAnchor(paths, name, voice);
+    if (!anchor && quote) return { mode: 'designed', lines, needsSample: name, request: { ...base, modelId: SPEECH_MODELS.clone } };
     if (!anchor) throw new Error(`${place.id}: the voice "${name}" has no designed sample yet (narrate makes it first)`);
     return { mode: 'designed', lines, reference: anchor.file, request: { ...base, modelId: SPEECH_MODELS.clone, referenceText: anchor.transcript } };
   }
