@@ -171,13 +171,29 @@ export class RefusedError extends Error {
 }
 
 /**
+ * Status polls count against the per-IP request budget on api.sogni.ai, which the
+ * artist's own browser shares, and several renders wait at once. So poll gently,
+ * and after a 429 wait 30 s, doubling to 5 min, instead of polling through it:
+ * polling through kept the IP blocked and locked the artist out of their own
+ * account (2026-10-01).
+ */
+const POLL_MS = 10_000;
+const RATE_LIMIT_BACKOFF_MS = 30_000;
+const MAX_RATE_LIMIT_BACKOFF_MS = 5 * 60_000;
+export const pollDelay = (rateLimitedPolls, baseMs = POLL_MS) => (rateLimitedPolls > 0
+  ? Math.min(MAX_RATE_LIMIT_BACKOFF_MS, RATE_LIMIT_BACKOFF_MS * 2 ** (rateLimitedPolls - 1))
+  : baseMs);
+const sleepFor = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
  * Poll a submitted project until it completes. Returns the raw project.
  * Throws RefusedError for a recorded refusal or failure (a known outcome), or
  * a plain Error on timeout (unknown outcome: resume later, never resubmit).
  */
-export async function waitForProject(client, projectId, { refusals, timeoutMs = 120 * 60_000, onStatus, kind = 'video' } = {}) {
+export async function waitForProject(client, projectId, { refusals, timeoutMs = 120 * 60_000, onStatus, kind = 'video', sleep = sleepFor } = {}) {
   const started = Date.now();
   let last;
+  let rateLimitedPolls = 0;
   while (Date.now() - started < timeoutMs) {
     const refused = refusals?.get(projectId);
     if (refused) throw new RefusedError(refused);
@@ -187,10 +203,12 @@ export async function waitForProject(client, projectId, { refusals, timeoutMs = 
     // it would hang on a failure. Use the live lookup for the state and the
     // stored record for the finished project's receipt.
     let live = null;
+    let rateLimited = false;
     try {
       live = await client.projects.getResult(projectId, { kind });
     } catch (error) {
-      if (error?.status && error.status < 500 && ![404, 429].includes(error.status)) throw safeError(error, 'Could not read the project');
+      if (error?.status === 429) rateLimited = true;
+      else if (error?.status && error.status < 500 && error.status !== 404) throw safeError(error, 'Could not read the project');
     }
     const status = live ? `${live.status}${live.waitingReason?.message ? ` (${live.waitingReason.message})` : ''}` : null;
     if (status && status !== last) {
@@ -204,18 +222,24 @@ export async function waitForProject(client, projectId, { refusals, timeoutMs = 
     if (live?.status === 'completed' && live.jobs?.some(j => j.urlUnavailable === 'sensitiveContent')) {
       throw new RefusedError({ code: null, message: 'the safe-content filter withheld the result (set contentFilter: off in world.yaml if this is a false positive)' });
     }
+    // The stored record only exists once the project completes, so read it only
+    // when the live lookup says completed or no longer answers for the project.
     let result;
-    try {
-      result = await client.projects.get(projectId);
-    } catch (error) {
-      if (error?.status && error.status < 500 && ![404, 429].includes(error.status)) throw safeError(error, 'Could not read the project');
+    if (!rateLimited && (!live || live.status === 'completed')) {
+      try {
+        result = await client.projects.get(projectId);
+      } catch (error) {
+        if (error?.status === 429) rateLimited = true;
+        else if (error?.status && error.status < 500 && error.status !== 404) throw safeError(error, 'Could not read the project');
+      }
     }
     if (result?.status === 'completed') return result;
     if (['errored', 'failed', 'cancelled', 'canceled'].includes(result?.status)) {
       const job = result.workerJobs?.find?.(j => j.error) ?? result.completedWorkerJobs?.[0];
       throw new RefusedError({ code: Number.isFinite(result.error?.code) ? result.error.code : Number.isFinite(job?.error?.code) ? job.error.code : null, message: `project ${result.status}` });
     }
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    rateLimitedPolls = rateLimited ? rateLimitedPolls + 1 : 0;
+    await sleep(pollDelay(rateLimitedPolls));
   }
   throw new Error(`Still not finished after ${Math.round(timeoutMs / 60000)} minutes. It keeps rendering on Sogni; run the same command again to pick it up.`);
 }

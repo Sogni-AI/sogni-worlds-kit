@@ -5,7 +5,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { readJson, writeJson, sha256 } from './files.js';
 import { FFMPEG, run } from './media.js';
-import { watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
+import { pollDelay, watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
 
 /** Qwen3-TTS on Sogni: three checkpoints, and what each accepts. */
 export const SPEECH_MODELS = {
@@ -91,17 +91,20 @@ export async function renderAudio({ session, journalPath, request, record, conte
  * project while it is queued or rendering and when it fails — the finished-only
  * lookup answers 404 for a failed project forever, so a wait built on it hangs.
  */
-export async function waitForAudio(client, projectId, { refusals, say, timeoutMs = 20 * 60_000 } = {}) {
+export async function waitForAudio(client, projectId, { refusals, say, timeoutMs = 20 * 60_000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   const started = Date.now();
   let last = null;
+  let rateLimitedPolls = 0;
   while (Date.now() - started < timeoutMs) {
     const refused = refusals?.get(projectId);
     if (refused) throw new RefusedError(refused);
     let result = null;
+    let rateLimited = false;
     try {
       result = await client.projects.getResult(projectId, { kind: 'audio' });
     } catch (error) {
-      if (!(error?.status === 404 || error?.status === 503 || error?.status === 429 || !error?.status || error.status >= 500)) throw safeError(error, 'Could not read the job');
+      if (error?.status === 429) rateLimited = true;
+      else if (!(error?.status === 404 || error?.status === 503 || !error?.status || error.status >= 500)) throw safeError(error, 'Could not read the job');
     }
     if (result) {
       const status = `${result.status}${result.waitingReason?.message ? ` (${result.waitingReason.message})` : ''}`;
@@ -113,7 +116,9 @@ export async function waitForAudio(client, projectId, { refusals, say, timeoutMs
         throw new RefusedError({ code: null, message: `the job ${result.status}${reason ? `: ${reason}` : ''} (project ${projectId})` });
       }
     }
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Back off after a 429 instead of polling through it (see pollDelay in sogni.js).
+    rateLimitedPolls = rateLimited ? rateLimitedPolls + 1 : 0;
+    await sleep(pollDelay(rateLimitedPolls, 3000));
   }
   throw new Error(`Still not finished after ${Math.round(timeoutMs / 60000)} minutes. It keeps going on Sogni; run the same command again to pick it up.`);
 }
