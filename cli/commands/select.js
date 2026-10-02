@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -139,7 +138,7 @@ export async function run(argv) {
         let mask;
         if (resume) {
           // A run stopped while SAM was working: collect the same project, never submit it again.
-          const result = await waitForProject(session.client, journal.projectId, { refusals, timeoutMs: 10 * 60_000, kind: 'image' });
+          const result = await waitForProject(session.client, { projectId: journal.projectId, ownerPid: journal.pid }, { refusals, timeoutMs: 10 * 60_000 });
           ({ bytes: mask } = await downloadResult(session.client, result, { contentType: 'image/png' }));
         } else {
           writeJson(file, journal);
@@ -148,7 +147,7 @@ export async function run(argv) {
             steps: 1, guidance: 1, numberOfMedia: 1, width: source.width, height: source.height, startingImage: source.bytes,
             sam3Prompt: prompt, network: 'fast', tokenType: session.billing.tokenType, billingMode: session.billing.mode,
           }));
-          journal = { ...journal, projectId: project.id, status: 'submitted', appId: `sogni-worlds-kit-${randomUUID()}` };
+          journal = { ...journal, projectId: project.id, status: 'submitted', appId: session.appId, pid: process.pid };
           writeJson(file, journal);
           const urls = await Promise.race([
             project.waitForCompletion(),

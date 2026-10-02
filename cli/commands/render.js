@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
@@ -265,6 +265,8 @@ export async function run(argv) {
         const label = `${w.film.id} take ${w.resume?.take ?? w.take}`;
         let journal;
         let files;
+        // The tracked project this run submitted; a resumed take is taken back by id instead.
+        let project = null;
         try {
           if (w.resume) {
             files = w.resume.files;
@@ -273,12 +275,12 @@ export async function run(argv) {
             files = takeFiles(paths, w.film.id, w.take);
             const spec = specs.get(w.film.id);
             journal = { ...spec.journal, billing: { mode: billing.mode, tokenType: billing.tokenType, tier: session.tier }, username: session.username,
-              appId: `sogni-worlds-kit-${randomUUID()}`, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
+              appId: session.appId, pid: process.pid, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
             // Reserve the take before paying: a second run can never submit it twice.
             writeJson(files.journal, journal, { exclusive: true });
             const request = createRequest(spec, billing);
             // Creates run one at a time so an early refusal is attributed to the right take.
-            const created = createLock.then(() => submitTake({ create: () => refusals.creating(() => client.projects.create(request)), refusals, journal, journalPath: files.journal }));
+            const created = createLock.then(() => submitTake({ create: async () => (project = await refusals.creating(() => client.projects.create(request))), refusals, journal, journalPath: files.journal }));
             createLock = created.catch(() => {});
             journal = await created;
             log.step(`${label}: submitted ${journal.projectId}`);
@@ -290,7 +292,8 @@ export async function run(argv) {
           const heartbeat = setInterval(() => log.dim(`${label}: ${lastStatus}, ${Math.round((Date.now() - waitingSince) / 60000)} min`), 60_000);
           let result;
           try {
-            result = await waitForProject(client, journal.projectId, { refusals, onStatus: status => { lastStatus = status; log.dim(`${label}: ${status}`); } });
+            result = await waitForProject(client, project ? { project } : { projectId: journal.projectId, ownerPid: journal.pid },
+              { refusals, onStatus: status => { lastStatus = status; log.dim(`${label}: ${status}`); } });
           } finally {
             clearInterval(heartbeat);
           }

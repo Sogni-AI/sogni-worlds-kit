@@ -2,10 +2,9 @@
 // written before anything is paid for, an uncertain job is never submitted
 // twice, and what comes back is measured before anyone listens to it.
 import { existsSync, writeFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
 import { readJson, writeJson, sha256 } from './files.js';
 import { FFMPEG, run } from './media.js';
-import { pollDelay, watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
+import { readFinished, recoverProject, settleProject, watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
 
 /** Qwen3-TTS on Sogni: three checkpoints, and what each accepts. */
 export const SPEECH_MODELS = {
@@ -35,12 +34,12 @@ export async function renderAudio({ session, journalPath, request, record, conte
   if (journal?.status === 'failed') throw new Error(`This job failed before (${journal.failure?.message ?? 'unknown'}). Re-take it with --retake.`);
   const { client, billing } = session;
   const refusals = watchRefusals(client);
+  let project = null;
   try {
     if (!journal) {
-      journal = { ...record, model: request.modelId, appId: `sogni-worlds-kit-${randomUUID()}`, billing,
+      journal = { ...record, model: request.modelId, appId: session.appId, pid: process.pid, billing,
         status: 'submitting', startedAt: new Date().toISOString() };
       writeJson(journalPath, journal, { exclusive: true });
-      let project;
       try {
         project = await refusals.creating(() => client.projects.create({
           type: 'audio', network: 'fast', numberOfMedia: 1, tokenType: billing.tokenType,
@@ -65,7 +64,7 @@ export async function renderAudio({ session, journalPath, request, record, conte
     }
     let finished;
     try {
-      finished = await waitForAudio(client, journal.projectId, { refusals, say });
+      finished = await waitForAudio(client, project ? { project } : { projectId: journal.projectId, ownerPid: journal.pid }, { refusals, say });
     } catch (error) {
       if (error instanceof RefusedError) {
         journal = { ...journal, status: 'failed', failure: error.failure };
@@ -87,40 +86,38 @@ export async function renderAudio({ session, journalPath, request, record, conte
 }
 
 /**
- * Wait for an audio project through the owner's live lookup, which reports a
- * project while it is queued or rendering and when it fails — the finished-only
- * lookup answers 404 for a failed project forever, so a wait built on it hangs.
+ * Wait for an audio project over the socket (see waitForProject in sogni.js):
+ * `project` for one this client created, `projectId` (and the journal's
+ * `ownerPid`) for one an earlier run submitted. Returns { url, jobId }.
  */
-export async function waitForAudio(client, projectId, { refusals, say, timeoutMs = 20 * 60_000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
-  const started = Date.now();
-  let last = null;
-  let rateLimitedPolls = 0;
-  while (Date.now() - started < timeoutMs) {
-    const refused = refusals?.get(projectId);
-    if (refused) throw new RefusedError(refused);
-    let result = null;
-    let rateLimited = false;
-    try {
-      result = await client.projects.getResult(projectId, { kind: 'audio' });
-    } catch (error) {
-      if (error?.status === 429) rateLimited = true;
-      else if (!(error?.status === 404 || error?.status === 503 || !error?.status || error.status >= 500)) throw safeError(error, 'Could not read the job');
+export async function waitForAudio(client, { project, projectId, ownerPid }, { refusals, say, timeoutMs = 20 * 60_000, sleep, connectAs } = {}) {
+  const id = project?.id ?? projectId;
+  let session = null;
+  try {
+    let tracked = project;
+    if (!tracked) {
+      const recovered = await recoverProject(client, id, { ownerPid, connectAs });
+      tracked = recovered.project ?? null;
+      session = recovered.session ?? null;
     }
-    if (result) {
-      const status = `${result.status}${result.waitingReason?.message ? ` (${result.waitingReason.message})` : ''}`;
-      if (status !== last) { last = status; say?.(status); }
-      if (result.finished) {
-        const job = result.jobs?.find(j => j.status === 'completed');
-        if (result.status === 'completed' && job?.url) return { url: job.url, jobId: job.id };
-        const reason = result.jobs?.find(j => j.reason)?.reason ?? job?.urlUnavailable;
-        throw new RefusedError({ code: null, message: `the job ${result.status}${reason ? `: ${reason}` : ''} (project ${projectId})` });
-      }
+    if (tracked) {
+      const urls = await settleProject(tracked, { refusals, timeoutMs, onStatus: say });
+      const job = tracked.jobs?.find(j => j.status === 'completed') ?? tracked.jobs?.[0];
+      if (urls?.[0]) return { url: urls[0], jobId: job?.id ?? null };
     }
-    // Back off after a 429 instead of polling through it (see pollDelay in sogni.js).
-    rateLimitedPolls = rateLimited ? rateLimitedPolls + 1 : 0;
-    await sleep(pollDelay(rateLimitedPolls, 3000));
+    // Finished while nobody listened: one look at its result, which mints the download URL.
+    const result = await readFinished(() => client.projects.getResult(id, { kind: 'audio' }), { sleep });
+    if (!result) throw new Error(`Project ${id} is no longer running and Sogni has no result for it. Check your recent jobs at https://app.sogni.ai`);
+    const job = result.jobs?.find(j => j.status === 'completed');
+    if (result.status === 'completed' && job?.url) return { url: job.url, jobId: job.id };
+    if (result.finished) {
+      const reason = result.jobs?.find(j => j.reason)?.reason ?? job?.urlUnavailable;
+      throw new RefusedError({ code: null, message: `the job ${result.status}${reason ? `: ${reason}` : ''} (project ${id})` });
+    }
+    throw new Error(`Project ${id} is ${result.status}; run the command again to pick it up`);
+  } finally {
+    session?.close();
   }
-  throw new Error(`Still not finished after ${Math.round(timeoutMs / 60000)} minutes. It keeps going on Sogni; run the same command again to pick it up.`);
 }
 
 /** Mono 24 kHz samples of an audio file. */

@@ -53,10 +53,12 @@ export function safeError(error, prefix) {
 export async function connect({ appId } = {}) {
   const credentials = sogniCredentials();
   if (!credentials) throw new Error(`No Sogni API key found. Run: node world setup   (get a key at ${LINKS.apiKey})`);
+  // Recorded in each journal, so a later run can tell which app instance holds its projects.
+  const clientAppId = appId ?? `sogni-worlds-kit-${randomUUID()}`;
   let client;
   try {
     client = await SogniClient.createInstance({
-      appId: appId ?? `sogni-worlds-kit-${randomUUID()}`,
+      appId: clientAppId,
       appSource: 'sogni-worlds-kit',
       network: 'fast',
       logLevel: 'error',
@@ -99,6 +101,7 @@ export async function connect({ appId } = {}) {
   }
   return {
     client,
+    appId: clientAppId,
     username: client.account.currentAccount.username ?? null,
     credentialSource: credentials.source,
     subscription,
@@ -171,77 +174,155 @@ export class RefusedError extends Error {
 }
 
 /**
- * Status polls count against the per-IP request budget on api.sogni.ai, which the
- * artist's own browser shares, and several renders wait at once. So poll gently,
- * and after a 429 wait 30 s, doubling to 5 min, instead of polling through it:
- * polling through kept the IP blocked and locked the artist out of their own
- * account (2026-10-01).
+ * Requests to api.sogni.ai count against a per-IP budget that the artist's own
+ * browser shares, so nothing here polls: projects are followed over the SDK's
+ * socket. The few one-off REST reads that remain wait 30 s after a 429,
+ * doubling to 5 min, instead of retrying through it (2026-10-01: status polling
+ * that retried through 429s got the owner's IP blocked out of his account).
  */
-const POLL_MS = 10_000;
 const RATE_LIMIT_BACKOFF_MS = 30_000;
 const MAX_RATE_LIMIT_BACKOFF_MS = 5 * 60_000;
-export const pollDelay = (rateLimitedPolls, baseMs = POLL_MS) => (rateLimitedPolls > 0
-  ? Math.min(MAX_RATE_LIMIT_BACKOFF_MS, RATE_LIMIT_BACKOFF_MS * 2 ** (rateLimitedPolls - 1))
-  : baseMs);
+export const rateLimitDelay = rateLimited => Math.min(MAX_RATE_LIMIT_BACKOFF_MS, RATE_LIMIT_BACKOFF_MS * 2 ** (Math.max(1, rateLimited) - 1));
 const sleepFor = ms => new Promise(resolve => setTimeout(resolve, ms));
+const SAFE_CONTENT_WITHHELD = 'the safe-content filter withheld the result (set contentFilter: off in world.yaml if this is a false positive)';
 
 /**
- * Poll a submitted project until it completes. Returns the raw project.
- * Throws RefusedError for a recorded refusal or failure (a known outcome), or
- * a plain Error on timeout (unknown outcome: resume later, never resubmit).
+ * Follow a tracked project to its end over the socket: no requests while it
+ * waits. Resolves with its result URLs; throws RefusedError when it fails and a
+ * plain Error on timeout (unknown outcome: it keeps rendering, never resubmit).
  */
-export async function waitForProject(client, projectId, { refusals, timeoutMs = 120 * 60_000, onStatus, kind = 'video', sleep = sleepFor } = {}) {
-  const started = Date.now();
+export async function settleProject(project, { refusals, timeoutMs = 120 * 60_000, onStatus } = {}) {
   let last;
-  let rateLimitedPolls = 0;
-  while (Date.now() - started < timeoutMs) {
-    const refused = refusals?.get(projectId);
-    if (refused) throw new RefusedError(refused);
-    // The live lookup reports a project while it is queued or rendering and
-    // when it fails. The stored record (projects.get) answers 404 until the
-    // project completes, and forever for a failed one, so a wait built only on
-    // it would hang on a failure. Use the live lookup for the state and the
-    // stored record for the finished project's receipt.
-    let live = null;
-    let rateLimited = false;
-    try {
-      live = await client.projects.getResult(projectId, { kind });
-    } catch (error) {
-      if (error?.status === 429) rateLimited = true;
-      else if (error?.status && error.status < 500 && error.status !== 404) throw safeError(error, 'Could not read the project');
-    }
-    const status = live ? `${live.status}${live.waitingReason?.message ? ` (${live.waitingReason.message})` : ''}` : null;
-    if (status && status !== last) {
+  const say = () => {
+    const status = `${project.status}${project.waitingReason?.message ? ` (${project.waitingReason.message})` : ''}`;
+    if (status !== last) {
       last = status;
       onStatus?.(status);
     }
-    if (live?.finished && live.status !== 'completed') {
-      const reason = live.jobs?.find(j => j.reason)?.reason;
-      throw new RefusedError({ code: null, message: `project ${live.status}${reason ? `: ${reason}` : ''}` });
-    }
-    if (live?.status === 'completed' && live.jobs?.some(j => j.urlUnavailable === 'sensitiveContent')) {
-      throw new RefusedError({ code: null, message: 'the safe-content filter withheld the result (set contentFilter: off in world.yaml if this is a false positive)' });
-    }
-    // The stored record only exists once the project completes, so read it only
-    // when the live lookup says completed or no longer answers for the project.
-    let result;
-    if (!rateLimited && (!live || live.status === 'completed')) {
-      try {
-        result = await client.projects.get(projectId);
-      } catch (error) {
-        if (error?.status === 429) rateLimited = true;
-        else if (error?.status && error.status < 500 && error.status !== 404) throw safeError(error, 'Could not read the project');
-      }
-    }
-    if (result?.status === 'completed') return result;
-    if (['errored', 'failed', 'cancelled', 'canceled'].includes(result?.status)) {
-      const job = result.workerJobs?.find?.(j => j.error) ?? result.completedWorkerJobs?.[0];
-      throw new RefusedError({ code: Number.isFinite(result.error?.code) ? result.error.code : Number.isFinite(job?.error?.code) ? job.error.code : null, message: `project ${result.status}` });
-    }
-    rateLimitedPolls = rateLimited ? rateLimitedPolls + 1 : 0;
-    await sleep(pollDelay(rateLimitedPolls));
+  };
+  let timer;
+  project.on?.('updated', say);
+  say();
+  try {
+    return await Promise.race([
+      project.waitForCompletion().catch(error => {
+        const refused = refusals?.get(project.id);
+        throw new RefusedError(refused ?? { code: Number.isFinite(error?.code) ? error.code : null, message: `project failed${error?.message ? `: ${String(error.message).slice(0, 200)}` : ''}` });
+      }),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Still not finished after ${Math.round(timeoutMs / 60000)} minutes. It keeps rendering on Sogni; run the same command again to pick it up.`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    project.off?.('updated', say);
   }
-  throw new Error(`Still not finished after ${Math.round(timeoutMs / 60000)} minutes. It keeps rendering on Sogni; run the same command again to pick it up.`);
+}
+
+/**
+ * One REST read of a finished project, retried only where that is the right
+ * answer: a 404 a few times (the socket stores a project a moment after it
+ * finishes; a failed one is never stored), a 429 after a growing wait. Resolves
+ * null when there is still nothing after `attempts` misses.
+ */
+export async function readFinished(read, { attempts = 6, delayMs = 5000, sleep = sleepFor } = {}) {
+  let misses = 0;
+  let rateLimited = 0;
+  for (;;) {
+    try {
+      return await read();
+    } catch (error) {
+      if (error?.status === 429) {
+        rateLimited += 1;
+        if (rateLimited > 5) throw safeError(error, 'Sogni kept answering "too many requests"; run the same command again later');
+        await sleep(rateLimitDelay(rateLimited));
+        continue;
+      }
+      if (error?.status && error.status < 500 && error.status !== 404) throw safeError(error, 'Could not read the project');
+      misses += 1;
+      if (misses >= attempts) return null;
+      await sleep(delayMs);
+    }
+  }
+}
+
+/** The stored record of a finished project: the result's hash and filter flags. */
+export const fetchStoredRecord = (client, projectId, options) => readFinished(() => client.projects.get(projectId), options);
+
+/**
+ * Take back a project an earlier run submitted. A project still rendering is
+ * held by the app instance that submitted it; signing in as that app hands it to
+ * this process, live, through the SDK's recovery (projects.sync). The earlier
+ * run must be gone: two connections with one app id displace each other.
+ * Returns { project, session } for a live one, or { finished: true } when the
+ * socket no longer holds it (it finished or failed while nobody listened).
+ */
+export async function recoverProject(client, projectId, { ownerPid, connectAs = appId => connect({ appId }) } = {}) {
+  const elsewhere = await client.projects.listProjectsElsewhere();
+  const live = elsewhere.find(project => project.id === projectId);
+  if (!live) return { finished: true };
+  if (Number.isInteger(ownerPid) && ownerPid !== process.pid && isProcessAlive(ownerPid)) {
+    throw new Error(`Project ${projectId} is still being followed by another run (pid ${ownerPid}); let that run finish`);
+  }
+  const session = await connectAs(live.appId);
+  try {
+    await session.client.projects.sync('resume');
+    const project = session.client.projects.trackedProjects.find(p => p.id === projectId);
+    if (project) return { project, session };
+  } catch (error) {
+    session.close();
+    throw safeError(error, 'Could not take the project back from Sogni');
+  }
+  session.close();
+  return { finished: true };
+}
+
+function isProcessAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === 'EPERM';
+  }
+}
+
+/**
+ * Wait for a project and return its stored record (what downloadResult reads).
+ * Pass `project` for one this client created, or `projectId` (and the `ownerPid`
+ * its journal recorded) for one an earlier run submitted. Throws RefusedError
+ * for a failure (a known outcome) and a plain Error when the outcome is unknown.
+ */
+export async function waitForProject(client, { project, projectId, ownerPid }, { refusals, timeoutMs, onStatus, sleep = sleepFor, connectAs } = {}) {
+  const id = project?.id ?? projectId;
+  let session = null;
+  try {
+    let tracked = project;
+    if (!tracked) {
+      const recovered = await recoverProject(client, id, { ownerPid, connectAs });
+      tracked = recovered.project ?? null;
+      session = recovered.session ?? null;
+    }
+    if (tracked) await settleProject(tracked, { refusals, timeoutMs, onStatus });
+    const record = await fetchStoredRecord(client, id, { sleep });
+    if (!record) {
+      throw new Error(tracked
+        ? `Project ${id} finished but Sogni has no stored result for it yet; run the same command again in a minute`
+        : `Project ${id} is no longer rendering and Sogni stored no result for it, so it most likely failed. Check https://app.sogni.ai (project history)`);
+    }
+    if (['errored', 'failed', 'cancelled', 'canceled'].includes(record.status)) {
+      const job = record.workerJobs?.find?.(j => j.error) ?? record.completedWorkerJobs?.[0];
+      throw new RefusedError({ code: Number.isFinite(record.error?.code) ? record.error.code : Number.isFinite(job?.error?.code) ? job.error.code : null, message: `project ${record.status}` });
+    }
+    if (record.status !== 'completed') throw new Error(`Project ${id} is ${record.status}; run the same command again to pick it up`);
+    // Same rule as the SDK's own results: withheld only when the filter fired and
+    // no advisory label says the media was delivered anyway.
+    if (record.completedWorkerJobs?.some(j => j.triggeredNSFWFilter === true && j.nsfwDetected !== true)) {
+      throw new RefusedError({ code: null, message: SAFE_CONTENT_WITHHELD });
+    }
+    return record;
+  } finally {
+    session?.close();
+  }
 }
 
 /** Download a finished video (or other media) and check it against the server's own hash. */
