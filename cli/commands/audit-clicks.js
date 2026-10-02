@@ -22,8 +22,9 @@ node world audit-clicks --manifest <clicks.json> --out <report.json>
   feels broken however good it looks. For every object's film, a Sogni vision
   LLM (${MODELS.writer}) looks at the still with the clicked thing marked and
   at frames from the film's first seconds, and says aligned, weak or
-  misaligned, with a one-sentence fix. A flag is asked twice more and the
-  majority stands. It is a screener: look at every film it flags. It judges the approved take (else the newest
+  misaligned, with a one-sentence fix. It is a screener, not a verdict: on
+  197 hand-checked clicks it caught 35 of 44 real problems with 59 false
+  alarms. Look at every film it flags, and at each opening strip yourself. It judges the approved take (else the newest
   finished one); a film with no take, or every film with --text, is judged
   from its written direction. Writes review/click-audit.json.
 

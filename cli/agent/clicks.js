@@ -80,20 +80,17 @@ export async function auditClick(llm, { name, label, hint = '', target = '', sti
     { type: 'text', text: 'The picture, with the tapped thing marked:' }, await imagePart(marked),
     ...(video ? await openingFrames(video, cacheDir, name) : []),
   ];
-  const ask = round => llm.json({
+  // A screener, not a verdict: on 197 official-world clicks checked by eye it flagged 35 of 44 real
+  // problems with 59 false alarms. Asking flags twice more and taking the majority cut 6 false alarms
+  // but lost 2 real problems, so one answer stands and a person looks at every flag.
+  const answer = await llm.json({
     system: `You check interactive films against what the visitor clicked. You are literal: you report what the pictures show, not what the words hoped for. Left and right are as seen in the picture.${mature ? ' The world is an 18+ horror world; gore and frightening imagery are intended.' : ''}`,
     user,
     schema: AUDIT_SCHEMA,
-    purpose: `audit-click-${name}${round ? `-${round}` : ''}`,
+    purpose: `audit-click-${name}`,
     maxTokens: 2000,
-    temperature: round ? 0.4 : 0.1,
+    temperature: 0.1,
   });
-  // One answer is not stable enough to fail a film on: a flag is asked twice more and the majority stands.
-  const answers = [await ask(0)];
-  if (answers[0].verdict !== 'aligned') answers.push(await ask(1), await ask(2));
-  const votes = answers.map(a => a.verdict);
-  const count = v => votes.filter(x => x === v).length;
-  const verdict = votes.length === 1 ? votes[0] : count('aligned') >= 2 ? 'aligned' : count('misaligned') >= 2 ? 'misaligned' : 'weak';
-  const chosen = answers.find(a => a.verdict === verdict) ?? answers[0];
-  return { ...chosen, verdict, votes, basis: video ? 'film' : 'direction' };
+  const verdict = !answer.clickedThingLeads && answer.verdict === 'aligned' ? 'weak' : !answer.doesWhatLabelSays && answer.verdict === 'aligned' ? 'weak' : answer.verdict;
+  return { ...answer, verdict, basis: video ? 'film' : 'direction' };
 }
