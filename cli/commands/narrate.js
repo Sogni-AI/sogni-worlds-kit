@@ -28,7 +28,48 @@ export const usage = `node world narrate [world] [--only <place> ...] [--retake 
     narrator: { clone: voices/me.m4a, transcript: "exactly what the recording says" }
     guide:    { design: "a warm, unhurried woman in her forties, close to the microphone" }
     host:     { studio: serena, style: "cheerful, a little breathless" }
-  Clone only a voice you own or have permission to use.`;
+  Clone only a voice you own or have permission to use.
+
+  A designed voice is designed ONCE: the first run speaks a short fixed passage
+  from the description and keeps it as voices/<name>.designed.wav, and every
+  place is then cloned from that sample, so the voice is the same person in
+  every place. (Designing per place invents a new voice each time.) Listen to
+  the sample first; change the description to design a new one.`;
+
+/**
+ * What a designed voice speaks once, to become the sample every line is
+ * cloned from: about 15 seconds of plain, varied narration.
+ */
+export const ANCHOR_SCRIPT = 'Hello, and welcome. I will be your guide today. We will take our time, stop wherever something catches the eye, and I will tell you what happened there. Some of it is funny, some of it is quiet, and all of it is true.';
+
+/** voices/<name>.designed.{wav,json}: the one sample a designed voice is cloned from. */
+export const anchorFiles = (paths, name) => ({ wav: join(paths.voices, `${name}.designed.wav`), json: join(paths.voices, `${name}.designed.json`) });
+
+/** The anchor sample for a designed voice, if it exists and matches the description. */
+export function designedAnchor(paths, name, voice) {
+  const files = anchorFiles(paths, name);
+  if (!existsSync(files.wav) || !existsSync(files.json)) return null;
+  const meta = readJson(files.json);
+  if (meta.design !== String(voice.design) || meta.script !== ANCHOR_SCRIPT) return null;
+  return { file: files.wav, transcript: meta.script };
+}
+
+/** Speak the anchor sample for a designed voice once. Every place is cloned from it. */
+export async function makeAnchor({ session, paths, name, voice, language }) {
+  const files = anchorFiles(paths, name);
+  mkdirSync(paths.voices, { recursive: true });
+  const journalPath = join(paths.voices, `${name}.designed.receipt.json`);
+  if (existsSync(journalPath) && readJson(journalPath).design !== String(voice.design)) renameSync(journalPath, `${journalPath}.${Date.now()}.old`);
+  log.step(`Designing the voice "${name}" once: ${String(voice.design).slice(0, 80)}${String(voice.design).length > 80 ? '…' : ''}`);
+  const request = { positivePrompt: ANCHOR_SCRIPT, language, outputFormat: 'wav', modelId: SPEECH_MODELS.design, instruct: String(voice.design) };
+  const { bytes } = await renderAudio({ session, journalPath, request, record: { voice: name, design: String(voice.design), anchor: true }, contentType: 'audio/wav', say: text => log.dim(text) });
+  writeBytes(files.wav, bytes);
+  const seconds = (await probe(files.wav)).seconds;
+  const [min, max] = SPEECH_LIMITS.referenceSeconds;
+  if (!(seconds >= min && seconds <= max)) throw new Error(`the designed sample is ${seconds.toFixed(1)} s; cloning needs ${min}–${max} s. Run narrate again to design it again`);
+  writeJson(files.json, { design: String(voice.design), script: ANCHOR_SCRIPT, sha256: sha256File(files.wav), seconds: +seconds.toFixed(2), madeAt: new Date().toISOString() });
+  log.ok(`The voice "${name}" → ${shown(files.wav)} (${seconds.toFixed(1)} s). Every place is cloned from it; listen to it first.`);
+}
 
 export async function run(argv) {
   const { values, world } = parse(argv, { only: { type: 'string', multiple: true }, retake: { type: 'string', multiple: true } });
@@ -59,12 +100,17 @@ export async function run(argv) {
     log.next(nextStep(id));
     return 0;
   }
-  for (const place of todo) voiceRequest(plan, paths, place); // check every voice before paying for any
-
   const session = await connect();
   let failures = 0;
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);
+    // A designed voice is designed once, then cloned in every place: the same narrator throughout.
+    const designed = [...new Set(todo.map(p => p.narration.voice).filter(name => plan.voices?.[name]?.design))];
+    for (const name of designed) {
+      const voice = plan.voices[name];
+      if (!designedAnchor(paths, name, voice)) await makeAnchor({ session, paths, name, voice, language: voice.language ?? plan.language ?? 'auto' });
+    }
+    for (const place of todo) voiceRequest(plan, paths, place); // check every voice before paying for any
     for (const place of todo) {
       try {
         await narratePlace({ session, plan, paths, place, dir });
@@ -99,7 +145,9 @@ export function voiceRequest(plan, paths, place) {
   }
   if (voice.design) {
     if (String(voice.design).length > SPEECH_LIMITS.instruct) throw new Error(`${place.id}: the voice description is limited to ${SPEECH_LIMITS.instruct} characters`);
-    return { mode: 'design', lines, request: { ...base, modelId: SPEECH_MODELS.design, instruct: String(voice.design) } };
+    const anchor = designedAnchor(paths, name, voice);
+    if (!anchor) throw new Error(`${place.id}: the voice "${name}" has no designed sample yet (narrate makes it first)`);
+    return { mode: 'designed', lines, reference: anchor.file, request: { ...base, modelId: SPEECH_MODELS.clone, referenceText: anchor.transcript } };
   }
   if (voice.clone) {
     const file = worldFile(paths, voice.clone, `voices.${name}.clone`);
