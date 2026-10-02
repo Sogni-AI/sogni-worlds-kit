@@ -24,6 +24,8 @@ export type Actions = {
   toggleSound: () => void;
   setMusicLevel: (level: number) => void;
   setQuality: (quality: Quality) => void;
+  restart: () => void;
+  collection: () => void;
 };
 
 export class Ui {
@@ -37,6 +39,11 @@ export class Ui {
   private readonly aboutPanel = el('section', 'panel');
   private readonly caption = el('p', 'caption');
   private captionTimer?: ReturnType<typeof setTimeout>;
+  private readonly ending = el('section', 'ending');
+  private readonly collection = el('button', 'collection-pill');
+  private readonly collectionPanel = el('section', 'panel');
+  private readonly toastBox = el('p', 'toast');
+  private toastTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private readonly root: HTMLElement, private readonly world: World, private readonly actions: Actions, musicPresent: boolean, musicCredit?: string) {
     const top = el('header', 'bar top');
@@ -46,8 +53,15 @@ export class Ui {
     this.qualityButton.title = 'Picture quality';
     buttons.append(this.soundButton);
     if (musicPresent) buttons.append(this.musicControl());
-    buttons.append(this.qualityButton, this.iconButton('map', 'Places', () => this.toggle(this.mapPanel)),
-      this.iconButton('about', 'About this world', () => this.toggle(this.aboutPanel)),
+    if (world.draft) buttons.prepend(el('span', 'draft-chip', 'Draft · not yet approved'));
+    this.collection.hidden = true;
+    this.collection.type = 'button';
+    this.collection.title = 'Your collection';
+    this.collection.addEventListener('click', actions.collection);
+    buttons.prepend(this.collection);
+    buttons.append(this.qualityButton);
+    if (world.map !== false) buttons.append(this.iconButton('map', 'Places', () => this.toggle(this.mapPanel)));
+    buttons.append(this.iconButton('about', 'About this world', () => this.toggle(this.aboutPanel)),
       this.iconButton('full', 'Full screen', () => toggleFullscreen()));
     top.append(this.where, buttons);
 
@@ -59,12 +73,65 @@ export class Ui {
     bottom.append(this.backButton, this.skipButton, this.nextButton);
 
     this.buildAbout(musicCredit);
-    for (const panel of [this.mapPanel, this.aboutPanel]) {
+    for (const panel of [this.mapPanel, this.aboutPanel, this.collectionPanel]) {
       panel.hidden = true;
       panel.addEventListener('click', event => { if (event.target === panel) panel.hidden = true; });
     }
-    root.append(top, bottom, this.mapPanel, this.aboutPanel);
+    this.ending.hidden = true;
+    this.toastBox.hidden = true;
+    root.append(top, bottom, this.ending, this.toastBox, this.mapPanel, this.aboutPanel, this.collectionPanel);
     this.keyboard();
+  }
+
+  /** The visitor's collection: found / total, shown once the world has collectibles. */
+  setCollection(found: number, total: number) {
+    this.collection.hidden = total === 0;
+    this.collection.textContent = `Figures ${found}/${total}`;
+  }
+
+  /** Open the collection panel with this card in it. */
+  showCollection(card: HTMLElement) {
+    this.closePanels();
+    this.collectionPanel.replaceChildren(card);
+    this.collectionPanel.hidden = false;
+  }
+
+  /** A short message over the picture. */
+  toast(text: string, ms = 3200) {
+    clearTimeout(this.toastTimer);
+    this.toastBox.textContent = text;
+    this.toastBox.hidden = false;
+    this.toastTimer = setTimeout(() => { this.toastBox.hidden = true; }, ms);
+  }
+
+  /** The story stopped here: a death (Rewind chooses again) or an ending. */
+  showEnding(ending: NonNullable<Place['ending']>, canRewind: boolean, rewindTitle?: string) {
+    const card = el('div', 'ending-card');
+    card.append(el('p', 'eyebrow', ending.kind === 'death' ? 'You died' : 'The end'), el('h2', '', ending.title));
+    if (ending.text) card.append(el('p', 'lede', ending.text));
+    const choices = el('div', 'choices');
+    if (canRewind) {
+      const rewind = el('button', 'pill primary big', ending.kind === 'death' ? 'Rewind · choose again' : 'Go back');
+      rewind.type = 'button';
+      if (rewindTitle) rewind.title = `Back to ${rewindTitle}`;
+      rewind.addEventListener('click', () => { this.hideEnding(); this.actions.back(); });
+      choices.append(rewind);
+    }
+    const restart = el('button', 'pill', 'Start over');
+    restart.type = 'button';
+    restart.addEventListener('click', () => { this.hideEnding(); this.actions.restart(); });
+    choices.append(restart);
+    card.append(choices);
+    this.ending.replaceChildren(card);
+    this.ending.dataset.kind = ending.kind;
+    this.ending.hidden = false;
+    this.nextButton.hidden = true;
+    this.backButton.hidden = true;
+    (choices.firstElementChild as HTMLElement | null)?.focus();
+  }
+
+  hideEnding() {
+    this.ending.hidden = true;
   }
 
   /** Arrived somewhere: say where, offer the next stop and Back. */
@@ -108,6 +175,7 @@ export class Ui {
   closePanels() {
     this.mapPanel.hidden = true;
     this.aboutPanel.hidden = true;
+    this.collectionPanel.hidden = true;
   }
 
   private iconButton(name: keyof typeof ICONS, title: string, onClick: () => void) {
@@ -202,9 +270,11 @@ export function beginScreen(root: HTMLElement, world: World, still: string, onGe
     const screen = el('section', 'begin');
     screen.style.backgroundImage = `url("${still}")`;
     const card = el('div', 'begin-card');
-    card.append(el('p', 'eyebrow', 'A Sogni World'), el('h1', '', world.title));
-    if (world.subtitle) card.append(el('p', 'lede', world.subtitle));
-    const button = el('button', 'pill primary big', 'Begin');
+    const intro = world.intro ?? {};
+    card.append(el('p', 'eyebrow', intro.eyebrow ?? 'A Sogni World'), el('h1', '', world.title));
+    if (intro.tagline ?? world.subtitle) card.append(el('p', 'lede', intro.tagline ?? world.subtitle ?? ''));
+    if (intro.warning) card.append(el('p', 'warning', intro.warning));
+    const button = el('button', 'pill primary big', intro.begin ?? 'Begin');
     button.type = 'button';
     card.append(button, el('p', 'small', 'Best with sound on. Click the things in each picture.'));
     screen.append(card);

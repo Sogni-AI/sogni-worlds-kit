@@ -14,7 +14,7 @@ const REPO = resolve(PLAYER, '..');
 const TYPES: Record<string, string> = {
   '.json': 'application/json', '.mp4': 'video/mp4', '.webm': 'video/webm', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
-  '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.glb': 'model/gltf-binary',
 };
 
 const EXAMPLES = join(REPO, 'examples');
@@ -108,6 +108,8 @@ export default defineConfig(({ command }) => {
       outDir: resolve(REPO, process.env.PLAYER_OUT ?? 'dist/player'),
       emptyOutDir: true,
       assetsDir: 'player-assets',
+      // model-viewer (the 3D figure viewer) is one 1 MB chunk, loaded only when a figure is opened.
+      chunkSizeWarningLimit: 1100,
     },
   };
 });

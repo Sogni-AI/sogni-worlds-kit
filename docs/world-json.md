@@ -30,6 +30,9 @@ can be copied to any static host as it is.
 | `order` | | Place ids in story order. When present the world is a story told in order: each place offers its next stop first, and the Places panel lists places in this order. `null` or absent for a free-roaming world. |
 | `music` | | One track under the whole world, or `null`. See below. |
 | `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles. |
+| `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "A Sogni World", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
+| `map` | | `false` hides the Places panel, for a world with secrets or fatal choices. Default `true`. |
+| `draft` | | `true` when the build used takes nobody has approved yet (`node world build --drafts`); the player shows "Draft". |
 | `places` | yes | The places. See below. |
 
 ### `music`
@@ -52,6 +55,7 @@ can be copied to any static host as it is.
 | `still` | yes | The canonical still. Every film that starts or ends here starts or ends on exactly this picture. |
 | `loop` | | The living photograph: a film whose first and last frames are the still. It plays over the still with its sound, lap after lap. |
 | `narration` | | `{ src?, lines: [{ text, speaker?, start?, end? }] }`. With `src`, each line shows while the audio is between its `start` and `end` (seconds). Without audio, or with sound off, the lines show at reading pace. |
+| `ending` | | `{ kind: "death" \| "end", title, text? }`: arriving here ends the story. The player shows a card ("You died" or "The end", the title and text) with **Rewind** (the crossing that led here, played backwards) and **Start over**. |
 | `hotspots` | yes | The things to click (may be empty). |
 
 The player shows a place with its loop's video frames rather than the JPEG
@@ -70,6 +74,8 @@ and the films start and end on video frames.
 | `to` | | The place this crossing lands on. `null` or absent makes it a *moment*: the film plays and you stay here. |
 | `next` | | In a story told in order, this is the way to the next stop (the Next stop button takes it). |
 | `shortcut` | | A crossing that jumps out of the story's order, labelled as a shortcut. |
+| `collect` | | A collectible (never with `to`): its moment plays, then it joins the visitor's collection, counted in the top bar ("Figures 2/5") and kept in their browser. |
+| `figure` | | A collectible's 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the moment the visitor turns the figure over (`@google/model-viewer`, loaded only then); the collection panel shows found figures and silhouettes of hidden ones. |
 | `film` | yes | The film. See below. |
 | `rewind` | | The same film reversed, played by Back after you took this crossing. Without it, Back jumps straight to the previous place. |
 

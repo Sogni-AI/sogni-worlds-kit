@@ -27,3 +27,6 @@ worlds/*/audio/**/*.mp3
 worlds/*/build/
 worlds/*/.cache/
 worlds/*/renders/.render.lock
+# Figures are cut out of your pictures; keep only their receipts
+worlds/*/figures/**/*.png
+worlds/*/figures/**/*.glb

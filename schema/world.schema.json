@@ -45,6 +45,19 @@
         "additionalProperties": false
       }
     },
+    "intro": {
+      "type": "object",
+      "description": "The Begin card's words. Every field is optional; the defaults suit a photo world.",
+      "additionalProperties": false,
+      "properties": {
+        "eyebrow": { "type": "string", "description": "Small line above the title (default \"A Sogni World\")." },
+        "tagline": { "type": "string", "description": "A line or two under the title." },
+        "warning": { "type": "string", "description": "A content note on the card, e.g. for an 18+ world." },
+        "begin": { "type": "string", "description": "The Begin button's words." }
+      }
+    },
+    "map": { "type": "boolean", "description": "false hides the Places panel (a world with secrets or fatal choices). Default true." },
+    "draft": { "type": "boolean", "description": "true when the build used takes nobody has approved yet (`node world build --drafts`); the player says so." },
     "places": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/place" } }
   },
   "$defs": {
@@ -91,6 +104,17 @@
             }
           }
         },
+        "ending": {
+          "type": ["object", "null"],
+          "description": "This place ends the story: a death (Rewind chooses again) or an ending. The player shows its card on arrival.",
+          "required": ["kind", "title"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["death", "end"] },
+            "title": { "type": "string" },
+            "text": { "type": "string" }
+          }
+        },
         "hotspots": { "type": "array", "items": { "$ref": "#/$defs/hotspot" } }
       }
     },
@@ -116,6 +140,18 @@
         "to": { "type": ["string", "null"], "description": "The place this crossing lands on; null for a moment that returns here." },
         "next": { "type": "boolean", "description": "In a story told in order, this is the way to the next stop." },
         "shortcut": { "type": "boolean", "description": "A crossing that jumps out of the story's order, offered as an easter egg." },
+        "collect": { "type": "boolean", "description": "A collectible: its moment plays, then it joins the visitor's collection (kept in their browser). Never has \"to\"." },
+        "figure": {
+          "type": ["object", "null"],
+          "description": "A collectible's 3D figure (Pixal3D GLB): after its moment the visitor turns it over, and it appears in their collection.",
+          "required": ["model"],
+          "additionalProperties": false,
+          "properties": {
+            "model": { "type": "string", "description": "The GLB, relative to world.json." },
+            "icon": { "type": "string", "description": "The object cut out on transparency (PNG): its picture in the collection." },
+            "name": { "type": "string", "description": "What it is called in the collection." }
+          }
+        },
         "film": { "$ref": "#/$defs/film" },
         "rewind": { "oneOf": [{ "$ref": "#/$defs/film" }, { "type": "null" }], "description": "The film reversed, played by Back." }
       }

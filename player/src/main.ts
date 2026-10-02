@@ -1,6 +1,7 @@
 // The Sogni World player: load a world.json, show its first place, and let the
 // visitor travel by clicking things in the pictures.
 import './styles.css';
+import { collectionCard, figuresOf, foundCard, inspect, type Figure } from './figures';
 import { Hotspots } from './hotspots';
 import { Music } from './music';
 import { Narration } from './narration';
@@ -22,6 +23,10 @@ class Player {
   /** How the visitor got here: each crossing taken, so Back can play it in reverse. */
   private readonly history: { from: string; spot: Hotspot }[] = [];
   private readonly visited = new Set<string>();
+  /** Collectibles found, as "<place>/<object>", kept per world in the visitor's browser. */
+  private readonly collection: Set<string>;
+  private readonly collectibles: number;
+  private readonly figures: Figure[];
   private busy = false;
   private soundOn = store.get('sound') !== 'off';
   private readonly stage: Stage;
@@ -30,11 +35,14 @@ class Player {
   private readonly music: Music;
   private readonly ui: Ui;
 
-  constructor(root: HTMLElement, private readonly world: World) {
+  constructor(private readonly root: HTMLElement, private readonly world: World) {
     document.title = world.title;
     this.stage = new Stage(root, world);
     this.stage.quality = (store.get('quality') as Quality | null) ?? defaultQuality();
-    this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot));
+    this.collection = new Set(readList(store.get(`collection:${world.id}`)));
+    this.collectibles = world.places.reduce((n, place) => n + place.hotspots.filter(spot => spot.collect).length, 0);
+    this.figures = figuresOf(world);
+    this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot), spot => this.collection.has(`${this.place?.id}/${spot.id}`));
     this.narration = new Narration(root, world);
     this.music = new Music(world.music);
     this.narration.onSpeaking = speaking => this.music.duck(speaking || this.stage.playingFilm);
@@ -46,8 +54,11 @@ class Player {
       toggleSound: () => this.setSound(!this.soundOn),
       setMusicLevel: level => this.music.setLevel(level),
       setQuality: quality => this.setQuality(quality),
+      restart: () => void this.restart(),
+      collection: () => this.showCollection(),
     }, this.music.present, this.music.credit);
     this.ui.setQuality(this.stage.quality);
+    this.ui.setCollection(this.collection.size, this.collectibles);
     this.setSound(this.soundOn);
   }
 
@@ -84,9 +95,13 @@ class Player {
     this.hotspots.render(place);
     const next = nextStop(place);
     const nextTitle = next?.to ? placeOf(this.world, next.to).title : undefined;
-    this.ui.setPlace(place, nextTitle, this.history.length > 0, this.visited);
+    this.ui.setPlace(place, nextTitle, this.history.length > 0 && !place.ending, this.visited);
     if (narrationDelay !== null) this.narration.start(place, narrationDelay);
     this.stage.preload(next?.film);
+    if (place.ending) {
+      const from = this.history.at(-1)?.from;
+      this.ui.showEnding(place.ending, this.history.length > 0, from ? placeOf(this.world, from).title : undefined);
+    } else this.ui.hideEnding();
   }
 
   /** Play the film an object causes, then land where it leads (or back here, for a moment). */
@@ -96,9 +111,11 @@ class Player {
     const from = this.place;
     const landing = spot.to ? placeOf(this.world, spot.to) : from;
     this.beforeFilm();
+    let found = false;
     try {
       await this.stage.play(spot.film, landing);
       if (spot.to) this.history.push({ from: from.id, spot });
+      if (spot.collect) found = this.collect(from, spot);
     } catch (error) {
       console.error('The film could not play', error);
       await this.stage.show(landing);
@@ -106,6 +123,16 @@ class Player {
       this.afterFilm();
     }
     await this.arrive(landing, spot.to ? NARRATION_MS : null, false);
+    // A figure is picked up and turned over first; the collection card waits until it is put down.
+    const figure = spot.collect ? this.figures.find(f => f.key === `${from.id}/${spot.id}`) : undefined;
+    if (figure) {
+      await inspect(this.root, figure);
+      if (found) foundCard(this.root, figure, this.collection.size, this.collectibles, () => this.showCollection());
+    }
+  }
+
+  private showCollection() {
+    this.ui.showCollection(collectionCard(this.figures, this.collection, figure => void inspect(this.root, figure)));
   }
 
   /** Back the way you came: the crossing played in reverse when there is one. */
@@ -123,6 +150,26 @@ class Player {
       this.afterFilm();
     }
     await this.arrive(previous, NARRATION_MS, false);
+  }
+
+  /** A collectible's moment has played: it joins the collection. True the first time. */
+  private collect(place: Place, spot: Hotspot): boolean {
+    const key = `${place.id}/${spot.id}`;
+    if (this.collection.has(key)) return false;
+    this.collection.add(key);
+    store.set(`collection:${this.world.id}`, JSON.stringify([...this.collection]));
+    this.ui.setCollection(this.collection.size, this.collectibles);
+    // A figure gets its own card once it is put down; a collectible without one is announced here.
+    if (!spot.figure) this.ui.toast(`Collected: ${spot.label} · ${this.collection.size} of ${this.collectibles}`);
+    return true;
+  }
+
+  /** Start over from the first place (an ending's second choice). */
+  private async restart() {
+    if (this.busy) return;
+    this.narration.stop();
+    this.history.length = 0;
+    await this.arrive(placeOf(this.world, this.world.start), NARRATION_MS, true);
   }
 
   /** From the Places panel: go straight there. */
@@ -164,6 +211,10 @@ class Player {
     if (!this.busy) void this.stage.show(this.place);
   }
 }
+
+const readList = (text: string | null): string[] => {
+  try { const value = JSON.parse(text ?? '[]'); return Array.isArray(value) ? value.filter(v => typeof v === 'string') : []; } catch { return []; }
+};
 
 /** 720p on phones and small windows, 2K elsewhere. */
 function defaultQuality(): Quality {

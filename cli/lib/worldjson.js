@@ -25,7 +25,7 @@ function film(value, where, issues, { nullable = false } = {}) {
 export function validateWorld(world) {
   const issues = [];
   if (!isObject(world)) return ['world.json must be an object'];
-  extra(world, ['$schema', 'format', 'id', 'title', 'subtitle', 'credit', 'aspect', 'start', 'order', 'music', 'speakers', 'places'], 'world', issues);
+  extra(world, ['$schema', 'format', 'id', 'title', 'subtitle', 'credit', 'aspect', 'start', 'order', 'music', 'speakers', 'intro', 'map', 'draft', 'places'], 'world', issues);
   if (world.format !== FORMAT) issues.push(`format must be "${FORMAT}"`);
   if (!/^[a-z0-9][a-z0-9-]*$/.test(world.id ?? '')) issues.push('id: lower-case letters, digits and dashes');
   if (!isString(world.title)) issues.push('title: required');
@@ -34,6 +34,14 @@ export function validateWorld(world) {
     issues.push('aspect: { width, height } in whole pixels');
   } else extra(world.aspect, ['width', 'height'], 'aspect', issues);
 
+  if (world.intro !== undefined) {
+    if (!isObject(world.intro)) issues.push('intro: an object');
+    else {
+      extra(world.intro, ['eyebrow', 'tagline', 'warning', 'begin'], 'intro', issues);
+      for (const [key, value] of Object.entries(world.intro)) if (typeof value !== 'string') issues.push(`intro.${key}: must be text`);
+    }
+  }
+  for (const key of ['map', 'draft']) if (world[key] !== undefined && typeof world[key] !== 'boolean') issues.push(`${key}: true or false`);
   const places = Array.isArray(world.places) ? world.places : [];
   if (!places.length) issues.push('places: at least one place');
   const ids = new Set();
@@ -68,7 +76,14 @@ export function validateWorld(world) {
   for (const [index, place] of places.entries()) {
     const where = `places[${isObject(place) && place.id ? place.id : index}]`;
     if (!isObject(place)) { issues.push(`${where}: must be an object`); continue; }
-    extra(place, ['id', 'title', 'chapter', 'caption', 'still', 'loop', 'narration', 'hotspots'], where, issues);
+    extra(place, ['id', 'title', 'chapter', 'caption', 'still', 'loop', 'narration', 'ending', 'hotspots'], where, issues);
+    if (place.ending !== undefined && place.ending !== null) {
+      if (!isObject(place.ending) || !['death', 'end'].includes(place.ending.kind) || !isString(place.ending.title)) issues.push(`${where}.ending: { kind: "death" | "end", title, text? }`);
+      else {
+        extra(place.ending, ['kind', 'title', 'text'], `${where}.ending`, issues);
+        if (place.ending.text !== undefined && typeof place.ending.text !== 'string') issues.push(`${where}.ending.text: must be text`);
+      }
+    }
     if (!isString(place.id)) issues.push(`${where}.id: required`);
     if (!isString(place.title)) issues.push(`${where}.title: required`);
     if (!isString(place.still)) issues.push(`${where}.still: required`);
@@ -95,7 +110,7 @@ export function validateWorld(world) {
     for (const [i, hotspot] of place.hotspots.entries()) {
       const at = `${where}.hotspots[${isObject(hotspot) && hotspot.id ? hotspot.id : i}]`;
       if (!isObject(hotspot)) { issues.push(`${at}: must be an object`); continue; }
-      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'film', 'rewind'], at, issues);
+      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'film', 'rewind'], at, issues);
       if (!isString(hotspot.id)) issues.push(`${at}.id: required`);
       else if (hotspotIds.has(hotspot.id)) issues.push(`${at}: id appears twice in this place`);
       hotspotIds.add(hotspot.id);
@@ -110,7 +125,13 @@ export function validateWorld(world) {
         else extra(outline, ['width', 'height', 'path'], `${at}.outline`, issues);
       }
       if (hotspot.to !== undefined && hotspot.to !== null && !ids.has(hotspot.to)) issues.push(`${at}.to: "${hotspot.to}" is not a place`);
-      for (const key of ['next', 'shortcut']) if (hotspot[key] !== undefined && typeof hotspot[key] !== 'boolean') issues.push(`${at}.${key}: true or false`);
+      for (const key of ['next', 'shortcut', 'collect']) if (hotspot[key] !== undefined && typeof hotspot[key] !== 'boolean') issues.push(`${at}.${key}: true or false`);
+      if (hotspot.collect && hotspot.to) issues.push(`${at}: a collectible stays in its place (no "to")`);
+      if (hotspot.figure !== undefined && hotspot.figure !== null) {
+        const f = hotspot.figure;
+        if (typeof f !== 'object' || typeof f.model !== 'string' || !f.model) issues.push(`${at}.figure: { model: "<file>.glb", icon?, name? }`);
+        else for (const key of ['icon', 'name']) if (f[key] !== undefined && typeof f[key] !== 'string') issues.push(`${at}.figure.${key}: a string`);
+      }
       if (hotspot.next && hotspot.shortcut) issues.push(`${at}: cannot be both the next stop and a shortcut`);
       film(hotspot.film, `${at}.film`, issues);
       if (hotspot.rewind !== undefined) film(hotspot.rewind, `${at}.rewind`, issues, { nullable: true });
@@ -130,7 +151,7 @@ export function mediaRefs(world) {
     add(place.still);
     addFilm(place.loop);
     add(place.narration?.src);
-    for (const hotspot of place.hotspots ?? []) { addFilm(hotspot.film); addFilm(hotspot.rewind); }
+    for (const hotspot of place.hotspots ?? []) { addFilm(hotspot.film); addFilm(hotspot.rewind); add(hotspot.figure?.model); add(hotspot.figure?.icon); }
   }
   return [...refs];
 }

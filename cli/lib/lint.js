@@ -63,9 +63,66 @@ export const RULES = {
   'dark-screen': 'no dark-screen crossings',
   static: 'static camera for loops and moments',
   'face-turn': 'faces stay put in loops and moments',
+  cause: 'the clicked object starts the film',
+  unfinished: 'the text ends a sentence',
   keyframes: 'valid keyframes',
   'prompt-length': 'prompt within 7000 characters',
 };
+
+/** Words too common to tell one clicked thing from another. */
+const GENERIC = new Set(('the a an and or of to in on at by for from with into onto over under through past across along ' +
+  'your his her their its this that these those there here it them him she he they we you me my our ' +
+  'look see watch meet check peek take follow go goes walk step climb enter ride touch lift open pick wake find ' +
+  'listen hear feel turn pull push lean read answer sit stand let get give make move come back way little small big ' +
+  'out off up down inside outside around away again more something someone what when where who ' +
+  'left right side behind front top bottom middle low high near far against beside').split(' '));
+const stem = word => {
+  const plain = word.toLowerCase().replace(/[^a-z]/g, '');
+  return (plain.length > 5 ? plain.replace(/ing$/, '') : plain).replace(/(ies)$/, 'y').replace(/(es|s)$/, '');
+};
+// A clicked word counts when the direction says it, or a word built on it ("falls" in "waterfall").
+const says = (text, word) => text.some(w => w === word || (word.length >= 4 && w.length > word.length && w.includes(word)));
+
+const PERSON = /\b(her|him|she|he|them|they|person|woman|man|girl|boy|guide|leader|warrior|singer|dancer|performer)\b/i;
+const PERSON_WORDS = ['her', 'him', 'she', 'he', 'his', 'woman', 'man', 'girl', 'boy', 'person', 'figure', 'they', 'them'];
+
+/** The words that name what was clicked: its target (when written), its label and its id; a person counts as any word for a person. */
+export function clickedWords({ label = '', target = '', id = '' } = {}) {
+  const source = `${target} ${label} ${String(id).replace(/-/g, ' ')}`;
+  const words = source.split(/[^A-Za-z]+/).map(stem).filter(w => w.length >= 3 && !GENERIC.has(w));
+  if (PERSON.test(source)) words.push(...PERSON_WORDS.map(stem));
+  return [...new Set(words)];
+}
+
+/** The direction after its opening description: what actually happens. */
+export function motionOf(action) {
+  const sentences = String(action ?? '').replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/);
+  const opening = sentences.findIndex(sentence => /established by Picture 1/.test(sentence));
+  return sentences.slice(opening + 1);
+}
+
+/**
+ * Does the film start with what was clicked? The visitor clicked a thing with
+ * a label that promises something: the film's first motion has to be that
+ * thing doing it. A film that starts somewhere else feels broken however good
+ * it looks. Words only: a warning to read, not a proof.
+ */
+export function clickCauses(object, film, { sentences = 2 } = {}) {
+  const words = clickedWords(object);
+  if (!words.length) return null;
+  // An object that is most of the picture (the cliff, the sky) is what any camera move acts on.
+  const box = object.select?.box;
+  if (Array.isArray(box) && box.length === 4 && Math.abs((box[2] - box[0]) * (box[3] - box[1])) >= 0.4) return null;
+  const motion = motionOf(film.action);
+  const early = motion.slice(0, sentences).join(' ').split(/[^A-Za-z]+/).map(stem);
+  if (words.some(w => says(early, w))) return null;
+  const anywhere = motion.join(' ').split(/[^A-Za-z]+/).map(stem);
+  const late = words.some(w => says(anywhere, w));
+  const named = words.filter(w => !PERSON_WORDS.map(stem).includes(w)).slice(0, 5).join(', ') || 'the person';
+  return late
+    ? `the clicked thing (${named}) only comes in late; "${object.label}" should start the film`
+    : `the film never brings in the clicked thing (${named}); "${object.label}" should start it`;
+}
 
 /**
  * Findings for one film's direction: `action` is the [Shot 1] body (what the
@@ -86,6 +143,10 @@ export function lintDirection(film, concept = '') {
 
   if (!isValidFrames(film.frames)) error('frames', 'frames', `frames must be one of ${VALID_FRAMES.join(', ')} (got ${film.frames})`);
   if (action.length < 120) error('length', 'action', 'describe the motion in more detail (under 120 characters)');
+  // A direction cut off mid-sentence (a writer's inner quote closed the string early) renders as half a film.
+  for (const [field, text] of [['action', action], ['sound', sound]]) {
+    if (text && !/[.!?…][”"’')\]]*$/.test(text)) error('unfinished', field, `${quote(text.slice(-60))} — the text stops mid-sentence; finish it`);
+  }
   if (!/established by Picture 1/.test(action)) error('opening', 'action', 'open on the first frame: "…, a wide shot begins in (or: holds) the position and framing established by Picture 1: …"');
   const shot = /\[Shot [2-9]\]/.exec(action);
   if (shot) error('one-shot', 'action', `${quote(shot[0])} — keep one continuous shot`);
@@ -157,6 +218,14 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
   if (!plan.canvas) add('warn', 'canvas', 'not set yet: `node world ingest` picks it from your photos');
   else if (!CANVASES.some(c => `${c.width}x${c.height}` === plan.canvas || c.name === plan.canvas)) add('error', 'canvas', `use one of ${CANVASES.map(c => `${c.width}x${c.height}`).join(', ')}`);
   if (!['linear', 'free'].includes(plan.order)) add('error', 'order', 'use linear or free');
+  if (plan.intro !== undefined && plan.intro !== null) {
+    if (typeof plan.intro !== 'object' || Array.isArray(plan.intro)) add('error', 'intro', 'intro is { eyebrow, tagline, warning, begin }');
+    else for (const [key, value] of Object.entries(plan.intro)) {
+      if (!['eyebrow', 'tagline', 'warning', 'begin'].includes(key)) add('error', 'intro', `unknown field "${key}" (eyebrow, tagline, warning, begin)`);
+      else if (typeof value !== 'string') add('error', `intro.${key}`, 'must be text');
+    }
+  }
+  if (plan.map !== undefined && typeof plan.map !== 'boolean') add('error', 'map', 'map is true or false');
   if (!plan.places.length) add('warn', 'places', 'no places yet: put photos in photos/ and run `node world ingest`');
 
   const ids = new Set();
@@ -169,6 +238,11 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
     else if (contained(where, 'still', place.still) && checkFiles && !existsSync(file(place.still))) add('error', where, `${place.still} is missing`);
     contained(where, 'photo', place.photo);
     if (!place.title) add('warn', where, 'give the place a title');
+    if (place.ending !== undefined && place.ending !== null) {
+      if (!['death', 'end'].includes(place.ending?.kind)) add('error', `${where}.ending`, 'kind is death (the visitor can rewind and choose again) or end');
+      if (!place.ending?.title) add('error', `${where}.ending`, 'give the ending a title ("You leaned in")');
+      if (place.objects.length) add('warn', `${where}.ending`, 'an ending stops the story, so its objects are never offered');
+    }
     if (!place.seen) add('warn', where, 'write `seen`: what is really in the picture, after looking at it at full size');
     if (place.narration) {
       // lines: "text" in the narration's voice, or { voice, text } for another speaker.
@@ -202,6 +276,10 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
           add('error', `${at}.select`, 'box is [x0, y0, x1, y1] with x0 < x1 and y0 < y1, all within 0..1');
         }
       } else if (object.film) add('warn', at, 'no `select` clicks: it will have a label but no outline');
+      if (object.collect !== undefined && typeof object.collect !== 'boolean') add('error', at, '`collect` is true or false');
+      if (object.collect && object.goes) add('error', at, 'a collectible stays in its place: remove `goes` (its film is a moment)');
+      if (object.figure !== undefined && typeof object.figure !== 'boolean') add('error', at, '`figure` is true or false');
+      for (const key of ['figureName', 'figureNoun']) if (object[key] !== undefined && typeof object[key] !== 'string') add('error', at, `\`${key}\` is text`);
       if (object.goes !== undefined && object.goes !== null) {
         if (object.goes === place.id) add('error', at, 'a film that returns here is a moment: remove `goes`');
         else if (!plan.places.some(p => p.id === object.goes)) add('error', at, `goes to "${object.goes}", which is not a place`);
@@ -216,6 +294,11 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
     const object = film.object ? place.objects.find(o => o.id === film.object) : null;
     const concept = [object?.label, object?.hint, film.idea].filter(Boolean).join(' ');
     for (const issue of lintDirection(film, concept)) add(issue.level, `films.${film.id}${issue.field ? `.${issue.field}` : ''}`, issue.message);
+    if (object) {
+      const cause = clickCauses(object, film);
+      const allowed = Array.isArray(film.allow) ? film.allow.includes('cause') : Boolean(film.allow?.cause);
+      if (cause) add('warn', `films.${film.id}.action`, `${allowed ? 'allowed: ' : ''}${cause}`);
+    }
     for (const keyframe of film.keyframes ?? []) {
       if (keyframe?.image && contained(`films.${film.id}.keyframes`, 'keyframe image', keyframe.image) && checkFiles && !existsSync(file(keyframe.image))) add('error', `films.${film.id}.keyframes`, `keyframe ${keyframe.image} is missing`);
     }
@@ -248,7 +331,7 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
     if (plan.order === 'linear') {
       plan.places.forEach((place, index) => {
         const next = plan.places[index + 1];
-        if (next && !place.objects.some(o => o.goes === next.id)) add('warn', `places.${place.id}`, `a story told in order needs a way on to the next place, "${next.id}"`);
+        if (next && !place.ending && !next.ending && !place.objects.some(o => o.goes === next.id)) add('warn', `places.${place.id}`, `a story told in order needs a way on to the next place, "${next.id}"`);
       });
     }
   }

@@ -12,30 +12,39 @@ import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../
 import { canvasByName, delivered } from '../lib/h3.js';
 import { finishFilm, rewindFilm, levelAudio, cleanPartials } from '../lib/finish.js';
 import { validateWorld, FORMAT } from '../lib/worldjson.js';
+import { figureFiles } from '../lib/figures.js';
+import { wantsFigure } from './figures.js';
 
 export const summary = 'Assemble the playable world (build/world.json) from your approved takes';
-export const usage = `node world build [world] [--force]
+export const usage = `node world build [world] [--force] [--drafts]
 
   Finishes every approved take for the web (full size and half size, levelled
   sound), renders a rewind for every crossing, copies stills, outlines,
   narration and music, and writes build/world.json. Films without an approved
-  take are left out and listed. --force re-encodes everything.`;
+  take are left out and listed. --force re-encodes everything.
+
+  --drafts  also use the newest take nobody has rejected for a film with no
+            approved take yet, so the whole world can be played before every
+            film is judged. The player marks such a world "Draft". Approving
+            is still done on the review page; build again without --drafts
+            for the finished world.`;
 
 const RECIPE = 'film-v1';
 
 export async function run(argv) {
-  const { values, world } = parse(argv, { force: { type: 'boolean', default: false } });
+  const { values, world } = parse(argv, { force: { type: 'boolean', default: false }, drafts: { type: 'boolean', default: false } });
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
   const verdicts = readVerdicts(paths);
   const notes = readNotes(paths);
-  if (!filmsOf(plan).some(film => approvedTake(listTakes(paths, film.id, verdicts, notes)))) {
+  const usable = takes => approvedTake(takes) ?? (values.drafts ? draftTake(takes) : null);
+  if (!filmsOf(plan).some(film => usable(listTakes(paths, film.id, verdicts, notes)))) {
     log.warn('Nothing is playable yet: no film has an approved take, so there is nothing to build.');
     log.next(nextStep(id));
     return 0;
   }
   log.title(`Building ${plan.title || id}`);
-  const result = await buildWorld({ paths, plan, force: values.force });
+  const result = await buildWorld({ paths, plan, force: values.force, drafts: values.drafts });
   report(result, id);
   return result.issues.length ? 1 : 0;
 }
@@ -44,7 +53,7 @@ export async function run(argv) {
  * Build a world into paths.build. Pure over its inputs (paths + plan), so it
  * can be run on any world folder, including the synthetic ones in the tests.
  */
-export async function buildWorld({ paths, plan, force = false, say = log }) {
+export async function buildWorld({ paths, plan, force = false, drafts = false, say = log }) {
   const out = paths.build;
   mkdirSync(join(out, 'films'), { recursive: true });
   mkdirSync(join(out, 'stills'), { recursive: true });
@@ -57,12 +66,17 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
 
   const films = new Map();
   const missing = [];
+  const unapproved = [];
   for (const film of filmsOf(plan)) {
     const takes = listTakes(paths, film.id, verdicts, notes);
-    const take = approvedTake(takes);
+    let take = approvedTake(takes);
+    if (!take && drafts) {
+      take = draftTake(takes);
+      if (take) unapproved.push(`${film.id} take ${take.take}`);
+    }
     if (!take) { missing.push({ film: film.id, kind: film.kind, state: filmState(takes) }); continue; }
-    if (!existsSync(take.files.video)) throw new Error(`${film.id} take ${take.take} is approved but its file is gone: ${shown(take.files.video)}`);
-    if (sha256File(take.files.video) !== take.sha) throw new Error(`${film.id} take ${take.take} no longer matches the file that was approved (SHA-256 changed)`);
+    if (!existsSync(take.files.video)) throw new Error(`${film.id} take ${take.take} is ${take.verdict?.verdict === 'approved' ? 'approved' : 'the draft'} but its file is gone: ${shown(take.files.video)}`);
+    if (sha256File(take.files.video) !== take.sha) throw new Error(`${film.id} take ${take.take} no longer matches the file that was rendered (SHA-256 changed)`);
     const base = join(out, 'films', film.id);
     const main = `${base}.mp4`, half = `${base}-720.mp4`;
     let info = manifest[`films/${film.id}.mp4`]?.info;
@@ -142,6 +156,19 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
   const canvas = plan.canvas ? delivered(canvasByName(String(plan.canvas))) : null;
   const firstFilm = [...films.values()][0]?.info;
   const aspect = canvas ?? (firstFilm ? { width: firstFilm.width, height: firstFilm.height } : { width: stillSize.width, height: stillSize.height });
+  // Figures: the mesh and a small icon of each collectible that has one (node world figures).
+  const figures = {};
+  for (const place of plan.places) for (const object of place.objects) {
+    const key = filmId(place.id, object.id);
+    const files = figureFiles(paths, key);
+    if (!wantsFigure(object) || readJson(files.receipt, null)?.status !== 'completed' || !existsSync(files.glb)) continue;
+    mkdirSync(join(out, 'figures'), { recursive: true });
+    const model = join(out, 'figures', `${key}.glb`);
+    const icon = join(out, 'figures', `${key}.png`);
+    copyFileSync(files.glb, model);
+    await sharp(files.cutout).resize(320, 320, { fit: 'inside', withoutEnlargement: true }).png().toFile(icon);
+    figures[key] = { model: rel(out, model), icon: rel(out, icon), name: object.figureName ?? figureName(object.label ?? object.id) };
+  }
   const places = plan.places.map(place => {
     const loop = films.get(loopId(place.id));
     const hotspots = [];
@@ -161,6 +188,8 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
         to: object.goes ?? null,
         next: object.goes ? isNext : undefined,
         shortcut: object.goes ? Boolean(object.shortcut ?? (linear && !isNext)) && !isNext : undefined,
+        collect: object.collect && !object.goes ? true : undefined,
+        figure: figures[filmId(place.id, object.id)],
         film: { src: entry.src, src720: entry.src720, seconds: entry.info.seconds },
         rewind: object.goes ? entry.rewind : undefined,
       }));
@@ -173,6 +202,7 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
       still: stills[place.id],
       loop: loop ? { src: loop.src, src720: loop.src720, seconds: loop.info.seconds } : null,
       narration: narration[place.id] ?? null,
+      ending: place.ending ? clean({ kind: place.ending.kind, title: place.ending.title, text: place.ending.text || undefined }) : undefined,
       hotspots,
     });
   });
@@ -186,6 +216,9 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
     start: plan.start || plan.places[0]?.id,
     order: linear ? plan.places.map(place => place.id) : null,
     music,
+    intro: plan.intro ? clean({ ...plan.intro }) : undefined,
+    map: plan.map === false ? false : undefined,
+    draft: unapproved.length ? true : undefined,
     places,
   });
   const issues = validateWorld(world);
@@ -197,10 +230,10 @@ export async function buildWorld({ paths, plan, force = false, say = log }) {
   for (const place of places) for (const h of place.hotspots) if (h.to) reachable.add(h.to);
   const deadEnds = places.filter(p => !p.hotspots.some(h => h.to)).map(p => p.id);
   const unreachable = places.filter(p => !reachable.has(p.id)).map(p => p.id);
-  return { world, issues, missing, deadEnds, unreachable, films: films.size, out };
+  return { world, issues, missing, deadEnds, unreachable, films: films.size, out, unapproved };
 }
 
-function report({ world, issues, missing, deadEnds, unreachable, films, out }, id) {
+function report({ world, issues, missing, deadEnds, unreachable, films, out, unapproved = [] }, id) {
   if (issues.length) {
     log.fail('world.json would not be valid:');
     for (const issue of issues) log.info(issue);
@@ -214,12 +247,17 @@ function report({ world, issues, missing, deadEnds, unreachable, films, out }, i
     log.warn(`Not in the world yet (${missing.length}):`);
     for (const m of missing) log.info(`${m.film} — ${m.state}`);
   }
+  if (unapproved.length) log.warn(`A draft: ${unapproved.length} film${unapproved.length === 1 ? ' has' : 's have'} no approved take yet and use${unapproved.length === 1 ? 's' : ''} the newest unrejected one (${unapproved.join(', ')}). Approve on node world review ${id}, then build again without --drafts`);
+  const endings = new Set(world.places.filter(p => p.ending).map(p => p.id));
+  deadEnds = deadEnds.filter(id => !endings.has(id));
   if (deadEnds.length) log.warn(`No way on from: ${deadEnds.join(', ')}`);
   if (unreachable.length) log.warn(`Nothing leads to: ${unreachable.join(', ')}`);
   log.next(nextStep(id));
 }
 
 const rel = (from, path) => relative(from, path).split('\\').join('/');
+/** For a draft build: the newest finished take that nobody rejected. */
+const draftTake = takes => takes.filter(t => t.journal.status === 'completed' && t.sha && t.verdict?.verdict !== 'rejected').at(-1) ?? null;
 const clamp01 = value => Math.min(1, Math.max(0, Number(value)));
 /** Drop undefined fields so the JSON stays tidy (and valid: no stray keys). */
 function clean(object) {
@@ -227,3 +265,9 @@ function clean(object) {
   return object;
 }
 
+/** What a figure is called in the collection: its label without the verb ("Touch the neon lotus" → "The neon lotus"). */
+export function figureName(label) {
+  const match = /^[A-Za-z']+\s+((?:the|a|an|his|her|their|its|your)\s+.+)$/i.exec(String(label).trim());
+  const name = match ? match[1] : String(label).trim();
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}

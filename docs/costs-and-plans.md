@@ -17,7 +17,8 @@ Spark is half a US cent:
 | Crossing | 12.3 s (294 frames) | 196 | $0.98 |
 | Longest crossing | 15.1 s (362 frames) | 241 | $1.21 |
 
-Object selection (SAM 3), narration and music cost cents each.
+Object selection (SAM 3), narration and music cost cents each. A 3D figure for a
+collectible is about 61 Spark ($0.30): Pixal3D 60, the BiRefNet cut-out 1 (as of 2026-10).
 
 **A world**: plan on one loop plus one or two crossings or moments per place, so
 about 2.5 films per place and around $2 of first takes per place. Retakes roughly
@@ -33,7 +34,7 @@ its 57 films.
 ## Why the Unlimited plan
 
 On a [Sogni Unlimited plan](https://docs.sogni.ai/pricing/unlimited-plan-details/),
-MiniMax H3, the LLMs and ACE-Step music are covered within fair use: covered renders
+MiniMax H3, the LLMs and MiniMax Music 3 are covered within fair use: covered renders
 spend no Spark.
 
 | | Unlimited | Unlimited Pro |

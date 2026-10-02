@@ -11,6 +11,10 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { speechEstimate, voiceRequest } from './narrate.js';
 import { musicEstimate } from './music.js';
+import { wantsFigure } from './figures.js';
+import { figureEstimate, figureFiles } from '../lib/figures.js';
+import { readJson } from '../lib/files.js';
+import { filmId } from '../lib/paths.js';
 
 export const summary = 'Price the films, narration and music still to make (free: nothing is submitted)';
 export const usage = 'node world quote [world] [--all] [--json]';
@@ -25,7 +29,9 @@ export async function run(argv) {
     : filmsToRender(plan, paths).filter(entry => entry.state !== 'rendering');
   const narrate = plan.places.filter(p => p.narration?.lines?.length && (values.all || !existsSync(join(paths.audio, 'narration', `${p.id}.json`))));
   const music = plan.music?.prompt && (values.all || !existsSync(join(paths.audio, 'music', 'music.json'))) ? plan.music : null;
-  if (!entries.length && !narrate.length && !music) {
+  const figures = plan.places.flatMap(place => place.objects.filter(wantsFigure).map(object => filmId(place.id, object.id)))
+    .filter(key => values.all || readJson(figureFiles(paths, key).receipt, null)?.status !== 'completed');
+  if (!entries.length && !narrate.length && !music && !figures.length) {
     log.ok('Nothing left to make');
     log.next(nextStep(id));
     return 0;
@@ -60,6 +66,14 @@ export async function run(argv) {
         audio.push({ item: 'music', error: error.message });
       }
     }
+    if (figures.length) {
+      try {
+        const each = await figureEstimate(session);
+        audio.push({ item: `figures: ${figures.length} (Pixal3D + BiRefNet)`, usd: each.usd * figures.length, token: each.token * figures.length });
+      } catch (error) {
+        audio.push({ item: 'figures', error: error.message });
+      }
+    }
     const audioUsd = audio.reduce((sum, row) => sum + (row.usd || 0), 0);
 
     if (values.json) {
@@ -73,7 +87,7 @@ export async function run(argv) {
     for (const row of rows) log.info(`${row.film.padEnd(34)} ${row.kind.padEnd(8)} ${row.seconds.toFixed(2).padStart(6)} s  ${row.spark.toFixed(0).padStart(5)} Spark  ${usd(row.usd).padStart(7)}`);
     if (rows.length) log.step(`${rows.length} film${rows.length === 1 ? '' : 's'}, ${(total.seconds / 60).toFixed(1)} minutes of 2K film: ${total.spark.toFixed(0)} Spark (${usd(total.usd)}) at pay-as-you-go prices`);
     for (const row of audio) log.info(`${row.item.padEnd(34)} ${row.error ? `could not quote: ${row.error}` : `$${row.usd.toFixed(3)}`}`);
-    if (audio.length) log.step(`Narration and music: about $${audioUsd.toFixed(2)} at pay-as-you-go prices${rows.length ? `; everything together about ${usd(total.usd + audioUsd)}` : ''}`);
+    if (audio.length) log.step(`Narration, music and figures: about $${audioUsd.toFixed(2)} at pay-as-you-go prices${rows.length ? `; everything together about ${usd(total.usd + audioUsd)}` : ''}`);
     const canary = canaryStatus(plan, paths);
     const canaryRows = rows.filter(row => canary.ids.includes(row.film));
     if (!['approved', 'none'].includes(canary.state) && canaryRows.length) {

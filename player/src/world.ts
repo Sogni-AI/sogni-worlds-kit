@@ -13,6 +13,10 @@ export type Hotspot = {
   to?: string | null;
   next?: boolean;
   shortcut?: boolean;
+  /** A collectible: its moment plays, then it joins the visitor's collection. */
+  collect?: boolean;
+  /** A collectible's 3D figure (Pixal3D GLB) to turn over once found, and its picture in the collection. */
+  figure?: { model: string; icon?: string; name?: string } | null;
   film: Film;
   rewind?: Film | null;
 };
@@ -25,6 +29,8 @@ export type Place = {
   still: string;
   loop?: Film | null;
   narration?: { src?: string; lines: Line[] } | null;
+  /** Arriving here ends the story: a death (rewind to choose again) or an ending. */
+  ending?: { kind: 'death' | 'end'; title: string; text?: string } | null;
   hotspots: Hotspot[];
 };
 export type Music = { src: string; volume?: number; underFilms?: number; credit?: string };
@@ -39,6 +45,12 @@ export type World = {
   order?: string[] | null;
   music?: Music | null;
   speakers?: Record<string, { avatar?: string }>;
+  /** The Begin card's words. */
+  intro?: { eyebrow?: string; tagline?: string; warning?: string; begin?: string };
+  /** false hides the Places panel. */
+  map?: boolean;
+  /** Built from takes nobody has approved yet. */
+  draft?: boolean;
   places: Place[];
 };
 
@@ -67,6 +79,7 @@ export async function loadWorld(url: string): Promise<World> {
       if (spot.to && !ids.has(spot.to)) throw new Error(`${place.id}/${spot.id} leads to "${spot.to}", which is not a place.`);
       spot.film = film(spot.film);
       if (spot.rewind) spot.rewind = film(spot.rewind);
+      if (spot.figure) spot.figure = { ...spot.figure, model: at(spot.figure.model), ...(spot.figure.icon ? { icon: at(spot.figure.icon) } : {}) };
     }
   }
   if (world.music) world.music.src = at(world.music.src);

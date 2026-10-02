@@ -29,7 +29,7 @@ export function gather(id) {
     ? readdirSync(paths.photos).filter(n => PHOTO_EXTENSIONS.includes(extname(n).toLowerCase())).filter(n => !indexed.includes(`photos/${n}`)).length
     : 0;
   const films = filmsOf(plan);
-  const planWritten = plan.places.length > 0 && plan.places.every(p => p.title && (p.loop || p.objects.length)) && films.length > 0;
+  const planWritten = plan.places.length > 0 && plan.places.every(p => p.title && (p.loop || p.objects.length || p.ending)) && films.length > 0;
 
   const selections = { needed: [], done: 0, failed: [] };
   for (const place of plan.places) {

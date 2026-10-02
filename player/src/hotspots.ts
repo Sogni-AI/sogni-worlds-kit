@@ -32,7 +32,7 @@ export class Hotspots {
   private readonly layer: HTMLElement;
   private labelTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(overlay: HTMLElement, private readonly world: World, private readonly onGo: (spot: Hotspot) => void) {
+  constructor(overlay: HTMLElement, private readonly world: World, private readonly onGo: (spot: Hotspot) => void, private readonly collected: (spot: Hotspot) => boolean = () => false) {
     this.layer = el('div', 'hotspots');
     overlay.append(this.layer);
     // Tapping the picture itself (not an object) brings the labels back.
@@ -102,6 +102,7 @@ export class Hotspots {
       label.addEventListener('focus', () => light(true));
       label.addEventListener('blur', () => light(false));
       if (spot.next) group.classList.add('next');
+      if (spot.collect) group.classList.add('collectible');
       if (spot.shortcut) group.classList.add('shortcut');
       group.append(label);
       this.layer.append(group);
@@ -124,8 +125,12 @@ export class Hotspots {
   }
 
   private eyebrow(spot: Hotspot) {
+    if (spot.collect) return this.collected(spot) ? (spot.figure ? 'Collected · turn it over' : 'Collected') : 'Collect this figure';
     if (!spot.to) return 'Moment';
-    const title = this.world.places.find(place => place.id === spot.to)?.title ?? spot.to;
+    const destination = this.world.places.find(place => place.id === spot.to);
+    // Never give away where a choice leads when it ends the story.
+    if (destination?.ending) return 'A choice';
+    const title = destination?.title ?? spot.to;
     if (spot.next) return `Next stop · ${title}`;
     if (spot.shortcut) return `Shortcut to ${title}`;
     return `To ${title}`;
