@@ -82,7 +82,8 @@ function fromWorld(world, values) {
     const place = placeById(plan, film.from);
     const object = place.objects.find(o => o.id === film.object);
     const takes = listTakes(paths, film.id);
-    const take = values.text ? null : approvedTake(takes) ?? takes.filter(t => t.journal.status === 'completed' && existsSync(t.files.video)).at(-1) ?? null;
+    // The take a build plays: the approved one, else (in a draft) the newest one nobody rejected.
+    const take = values.text ? null : approvedTake(takes) ?? takes.filter(t => t.journal.status === 'completed' && existsSync(t.files.video) && t.verdict?.verdict !== 'rejected').at(-1) ?? null;
     const to = film.kind === 'crossing' ? placeById(plan, film.to) : null;
     const selection = selectionResult(paths, filmId(place.id, object.id));
     items.push({
