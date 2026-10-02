@@ -15,12 +15,23 @@ export const SPEECH_MODELS = {
 export const STUDIO_VOICES = ['serena', 'vivian', 'uncle_fu', 'ryan', 'aiden', 'ono_anna', 'sohee', 'eric', 'dylan'];
 export const SPEECH_LIMITS = { script: 4096, instruct: 512, transcript: 1024, referenceSeconds: [3, 30] };
 
-/** ACE-Step 1.5 XL: instrumental when no lyrics are sent. Covered by Unlimited plans. */
+/**
+ * Music on Sogni, covered by Unlimited plans. MiniMax Music 3 is the default:
+ * the best music model on the network. It reads tempo and key from the prompt
+ * (it has no BPM or key controls), plays 10–300 s with the length as a ceiling
+ * (it can end early on a musical resolution), and an instrumental needs a
+ * skeleton of section tags where lyrics would go. ACE-Step 1.5 XL stays
+ * available by name, for exact BPM and key control or up to 600 s.
+ */
+export const DEFAULT_MUSIC_MODEL = 'minimax_music3';
 export const MUSIC_MODELS = {
-  ace_step_1_5_xl_turbo: { id: 'ace_step_1.5_xl_turbo', steps: 8, shift: 3 },
-  ace_step_1_5_xl_sft: { id: 'ace_step_1.5_xl_sft', steps: 50, shift: 3, guidance: 7 },
+  minimax_music3: { id: 'minimax_music3', steps: 30, guidance: 1.7, sampler: 'euler', scheduler: 'simple', seconds: [10, 300], tempoInPrompt: true },
+  ace_step_1_5_xl_turbo: { id: 'ace_step_1.5_xl_turbo', steps: 8, shift: 3, seconds: [10, 600] },
+  ace_step_1_5_xl_sft: { id: 'ace_step_1.5_xl_sft', steps: 50, shift: 3, guidance: 7, seconds: [10, 600] },
 };
-export const musicModel = id => Object.values(MUSIC_MODELS).find(m => m.id === (id ?? 'ace_step_1.5_xl_turbo'));
+/** What Music 3 is given in place of lyrics for an instrumental. */
+export const INSTRUMENTAL_SECTIONS = '[Intro]\n[Verse]\n[Chorus]\n[Verse]\n[Chorus]\n[Bridge]\n[Outro]';
+export const musicModel = id => Object.values(MUSIC_MODELS).find(m => m.id === (id ?? DEFAULT_MUSIC_MODEL));
 
 /**
  * Render one audio job under a receipt at `journalPath`, or resume the one

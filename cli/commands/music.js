@@ -11,17 +11,17 @@ import { connect, describeBilling } from '../lib/sogni.js';
 import { levelAudio } from '../lib/finish.js';
 import { loudness } from '../lib/screen.js';
 import { probe } from '../lib/media.js';
-import { musicModel, renderAudio, writeBytes } from '../lib/audio.js';
+import { INSTRUMENTAL_SECTIONS, MUSIC_MODELS, musicModel, renderAudio, writeBytes } from '../lib/audio.js';
 
 export const MUSIC_LUFS = -18;
 
-export const summary = 'Make the world\'s music (ACE-Step on Sogni) or level a track you own';
+export const summary = 'Make the world\'s music (MiniMax Music 3 on Sogni) or level a track you own';
 export const usage = `node world music [world] [--retake]
 
   world.yaml music: either
-    prompt: "gentle fingerpicked acoustic guitar and soft strings, warm, unhurried, loops cleanly"
-    seconds: 120            # 10–600
-    bpm: 84                 # optional; also keyscale: "D major", timesignature: 4
+    prompt: "gentle fingerpicked acoustic guitar and soft strings, 84 BPM, D major, warm, unhurried"
+    seconds: 120            # 10–300 (a ceiling: Music 3 may end on a resolution a little sooner)
+    model: minimax_music3   # the default; ace_step_1.5_xl_turbo or _sft for exact bpm/keyscale and up to 600 s
   or, only for music you have the rights to:
     file: music/my-song.mp3
     credit: "Song — Artist"
@@ -33,9 +33,30 @@ export const usage = `node world music [world] [--retake]
 export function musicJob(music) {
   if (!music.prompt) throw new Error('music: needs prompt (to generate) or file (music you own)');
   const model = musicModel(music.model);
-  if (!model) throw new Error(`Unknown music model "${music.model}"; use ace_step_1.5_xl_turbo or ace_step_1.5_xl_sft`);
-  const seconds = Math.min(600, Math.max(10, Math.round(Number(music.seconds ?? 120))));
+  if (!model) throw new Error(`Unknown music model "${music.model}"; use ${Object.values(MUSIC_MODELS).map(m => m.id).join(', ')}`);
+  const [min, max] = model.seconds;
+  const seconds = Math.min(max, Math.max(min, Math.round(Number(music.seconds ?? 120))));
   return { model, seconds };
+}
+
+/**
+ * The request for a generated score. Music 3 takes tempo, key and metre in
+ * the prompt and a section skeleton for an instrumental; ACE-Step takes them
+ * as controls and plays instrumental when no lyrics are sent.
+ */
+export function musicRequest(music) {
+  const { model, seconds } = musicJob(music);
+  const common = { modelId: model.id, duration: seconds, steps: model.steps, outputFormat: 'mp3', ...(Number.isInteger(music.seed) ? { seed: music.seed } : {}) };
+  if (model.tempoInPrompt) {
+    const extra = [music.bpm ? `${Number(music.bpm)} BPM` : null, music.keyscale ? String(music.keyscale) : null, music.timesignature ? `${music.timesignature}/4 time` : null].filter(Boolean);
+    return { ...common, positivePrompt: [String(music.prompt).trim(), ...extra].join(', '), lyrics: INSTRUMENTAL_SECTIONS,
+      guidance: model.guidance, sampler: model.sampler, scheduler: model.scheduler };
+  }
+  return { ...common, positivePrompt: String(music.prompt), shift: model.shift,
+    ...(model.guidance ? { guidance: model.guidance } : {}),
+    ...(music.bpm ? { bpm: Number(music.bpm) } : {}),
+    ...(music.keyscale ? { keyscale: String(music.keyscale) } : {}),
+    ...(music.timesignature ? { timesignature: String(music.timesignature) } : {}) };
 }
 
 /** What generating the score would cost, from Sogni's own estimate: { usd, token, seconds, model }. */
@@ -87,15 +108,7 @@ export async function run(argv) {
   }
 
   const { model, seconds } = musicJob(music);
-  const request = {
-    modelId: model.id, positivePrompt: String(music.prompt), duration: seconds, steps: model.steps, shift: model.shift,
-    ...(model.guidance ? { guidance: model.guidance } : {}),
-    ...(music.bpm ? { bpm: Number(music.bpm) } : {}),
-    ...(music.keyscale ? { keyscale: String(music.keyscale) } : {}),
-    ...(music.timesignature ? { timesignature: String(music.timesignature) } : {}),
-    ...(Number.isInteger(music.seed) ? { seed: music.seed } : {}),
-    outputFormat: 'mp3',
-  };
+  const request = musicRequest(music);
   const session = await connect();
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);
