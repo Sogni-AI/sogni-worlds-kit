@@ -19,7 +19,7 @@
     "check": "npm run typecheck && npm test && node world lint-examples"
   },
   "dependencies": {
-    "@sogni-ai/sogni-client": "^5.58.1",
+    "@sogni-ai/sogni-client": "^5.60.7",
     "exif-reader": "^2.0.3",
     "sharp": "^0.35.5",
     "yaml": "^2.9.1"
