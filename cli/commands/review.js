@@ -1,5 +1,5 @@
 // review: your page for judging takes. Only a person approves.
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { extname, join, relative, resolve, sep } from 'node:path';
@@ -7,7 +7,9 @@ import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { readPlan, filmsOf, placeById } from '../lib/plan.js';
 import { resolveWorldId } from '../lib/paths.js';
-import { listTakes, recordVerdict, readVerdicts, readNotes, VERDICTS } from '../lib/takes.js';
+import { addNote, addStillNote, listTakes, marksDir, normalBox, recordVerdict, readVerdicts, readNotes, readStillNotes, VERDICTS } from '../lib/takes.js';
+import { ffmpeg } from '../lib/media.js';
+import { shown } from '../lib/paths.js';
 import { reviewPage } from '../lib/review-page.js';
 import { nextStep } from './status.js';
 
@@ -18,7 +20,13 @@ export const usage = `node world review [world] [--port 4700]
   verdict: each film's takes side by side, playing together, the one you tap
   is the one you hear. Approve the one you want; reject with a note saying what
   to change; "Seen" for a take that is fine but not the one. Verdicts are saved
-  to review/verdicts.json, pinned to each file's SHA-256. Ctrl-C to stop.`;
+  to review/verdicts.json, pinned to each file's SHA-256.
+
+  "Mark an area" on a take (or on a film's start or end picture) pauses it, lets
+  you drag a box over what you mean and type a note: "smoke from this house".
+  Area notes are saved to review/notes.json (takes) and review/still-notes.json
+  (pictures), each with a picture of the box drawn on its frame in review/marks/
+  for the agent to open. Ctrl-C to stop.`;
 
 const TYPES = { '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.wav': 'audio/wav' };
 const SERVABLE = ['renders', 'stills', 'keyframes'];
@@ -71,6 +79,15 @@ async function handle(request, response, context) {
     response.end(message ?? 'ok');
     return;
   }
+  if (request.method === 'POST' && url.pathname === '/mark') {
+    if (request.headers['x-review-token'] !== context.token) { response.writeHead(403); response.end('This page is out of date; reload it.'); return; }
+    const body = JSON.parse(await readBody(request));
+    const result = await applyMark(context.plan, context.paths, body);
+    if (typeof result === 'string') { response.writeHead(400, { 'content-type': 'text/plain' }); response.end(result); return; }
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify(result));
+    return;
+  }
   response.writeHead(404); response.end('Not found');
 }
 
@@ -92,10 +109,50 @@ export function applyVerdict(plan, paths, { sha, verdict, note }) {
   return null;
 }
 
+/**
+ * Record an area note: a box drawn on a take at a moment, or on a place's still.
+ * Body: { sha, time, box: [x, y, w, h], text } or { still: <place id>, box, text }.
+ * Draws the box on that frame into review/marks/ for agents. Returns the note, or an error message.
+ */
+export async function applyMark(plan, paths, { sha, still, time, box, text }) {
+  const area = normalBox(box);
+  if (!area) return 'Drag a box over the area first';
+  const words = String(text ?? '').trim().slice(0, 2000);
+  if (!words) return 'Say what you see in the area';
+  mkdirSync(marksDir(paths), { recursive: true });
+  if (still) {
+    const place = placeById(plan, still);
+    if (!place?.still || !existsSync(join(paths.dir, place.still))) return 'That picture is not in this world';
+    const n = (readStillNotes(paths)[place.id] ?? []).filter(note => note.box).length + 1;
+    const image = await drawMark(join(paths.dir, place.still), null, area, join(marksDir(paths), `${place.id}-still-${n}.jpg`));
+    return addStillNote(paths, place.id, 'you', words, { box: area, ...(image ? { image } : {}) });
+  }
+  const film = filmsOf(plan).find(f => listTakes(paths, f.id).some(t => t.sha === sha));
+  if (!film) return 'That take is not in this world';
+  const take = listTakes(paths, film.id).find(t => t.sha === sha);
+  const seconds = Number.isFinite(Number(time)) ? Math.max(0, Math.round(Number(time) * 100) / 100) : null;
+  const n = take.notes.filter(note => note.box).length + 1;
+  const image = await drawMark(take.files.video, seconds, area, join(marksDir(paths), `${film.id}-take-${take.take}-${n}.jpg`));
+  return addNote(paths, sha, 'you', words, { ...(seconds !== null ? { time: seconds } : {}), box: area, ...(image ? { image } : {}) });
+}
+
+/** The frame (or picture) with the box drawn on it, for an agent to open. Returns its shown path, or null. */
+async function drawMark(input, seconds, [x, y, w, h], output) {
+  const box = `drawbox=x=iw*${x}:y=ih*${y}:w=iw*${w}:h=ih*${h}:color=red@0.95:t=6`;
+  try {
+    await ffmpeg([...(seconds !== null ? ['-ss', String(seconds)] : []), '-i', input, '-frames:v', '1', '-vf', `${box},scale='min(1600,iw)':-2`, '-q:v', '3', output]);
+    return shown(output);
+  } catch (error) {
+    log.warn(`Could not draw the area note's picture: ${error.message}`);
+    return null;
+  }
+}
+
 /** Films with at least one finished take and no verdict on it, as the page needs them. */
 export function awaitingFilms(plan, paths) {
   const verdicts = readVerdicts(paths);
   const notes = readNotes(paths);
+  const stillNotes = readStillNotes(paths);
   const media = path => `/media/${relative(paths.dir, path).split(sep).map(encodeURIComponent).join('/')}`;
   const still = placeId => { const place = placeById(plan, placeId); return place?.still && existsSync(join(paths.dir, place.still)) ? media(join(paths.dir, place.still)) : null; };
   const out = [];
@@ -117,6 +174,9 @@ export function awaitingFilms(plan, paths) {
       prompt: waiting.at(-1).journal.prompt ?? '',
       fromStill: still(film.from),
       toStill: still(film.to),
+      fromPlace: film.from,
+      toPlace: film.to,
+      stillNotes: { [film.from]: stillNotes[film.from] ?? [], ...(film.to ? { [film.to]: stillNotes[film.to] ?? [] } : {}) },
       ref: approved && existsSync(approved.files.video) ? { take: approved.take, url: media(approved.files.video) } : null,
       takes: waiting.map(t => ({
         take: t.take,

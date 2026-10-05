@@ -4,7 +4,7 @@ import { parse } from '../index.js';
 import { filmId, listWorlds, shown, worldPaths } from '../lib/paths.js';
 import { filmsOf, readPlan } from '../lib/plan.js';
 import { lintPlan } from '../lib/lint.js';
-import { filmState, listTakes, readNotes, readVerdicts } from '../lib/takes.js';
+import { describeNote, filmState, listTakes, readNotes, readStillNotes, readVerdicts } from '../lib/takes.js';
 import { canaryNext, canaryStatus } from '../lib/canary.js';
 import { readRenderLock } from '../lib/renderlock.js';
 import { readJson } from '../lib/files.js';
@@ -54,10 +54,15 @@ export function gather(id) {
   const unscreened = [];
   const unlooked = [];
   const unjudged = [];
+  const feedback = [];
   for (const film of films) {
     const list = listTakes(paths, film.id, verdicts, notes);
     takes += list.length;
-    byState[filmState(list)].push(film.id);
+    const state = filmState(list);
+    byState[state].push(film.id);
+    // What the person said about the latest rejected take: read it before rewriting the direction.
+    const rejected = state === 'rejected' ? list.filter(t => t.verdict?.verdict === 'rejected').at(-1) : null;
+    if (rejected) feedback.push({ film: film.id, take: rejected.take, verdict: rejected.verdict.note ?? '', notes: rejected.notes.filter(n => n.by !== 'agent') });
     for (const take of list) {
       if (take.journal.status === 'completed') finishedTakes += 1;
       if (take.journal.status !== 'completed' || take.verdict) continue;
@@ -78,7 +83,8 @@ export function gather(id) {
   return {
     id, exists: true, title: plan.title, photos, photosNotIngested, places: plan.places.length, stillsMissing, planWritten,
     errors: findings.filter(f => f.level === 'error'), warnings: findings.filter(f => f.level === 'warn'),
-    selections, films: films.length, takes, finishedTakes, byState, unscreened, unlooked, unjudged,
+    selections, films: films.length, takes, finishedTakes, byState, unscreened, unlooked, unjudged, feedback,
+    stillNotes: Object.entries(readStillNotes(paths)).flatMap(([place, list]) => list.map(note => ({ place, ...note }))),
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
     narrationNeeded, narratedPlaces: narrated.length, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
@@ -117,7 +123,7 @@ export function nextAction(s) {
     return { why: `${s.unlooked.length} take${s.unlooked.length === 1 ? '' : 's'} not looked at yet`, command: `look at each new take's contact sheet and frames (worlds/${id}/renders/<film>/take-<n>.sheet.jpg and screen.json); reject a broken take: node world reject ${id} ${first.film} ${first.take} "<what is wrong>", or note what you saw: node world note ${id} ${first.film} ${first.take} "<what you saw>"` };
   }
   if (s.unjudged.length) return { why: `${s.unjudged.length} take${s.unjudged.length === 1 ? ' awaits' : 's await'} your verdict`, command: `node world review ${id}   — the person who owns the world approves or rejects each take` };
-  if (s.byState.rejected.length) return { why: `${s.byState.rejected.join(', ')} ${s.byState.rejected.length === 1 ? 'was' : 'were'} rejected`, command: `rewrite the direction in world.yaml for what the verdict says went wrong, then: node world render ${id} --only ${s.byState.rejected.join(' --only ')}` };
+  if (s.byState.rejected.length) return { why: `${s.byState.rejected.join(', ')} ${s.byState.rejected.length === 1 ? 'was' : 'were'} rejected`, command: `read what the person said first (node world status ${id} lists their verdict and area notes; open each area note's picture), then rewrite the direction in world.yaml for what went wrong, then: node world render ${id} --only ${s.byState.rejected.join(' --only ')}` };
   if (s.byState.failed.length) return { why: `${s.byState.failed.join(', ')} failed to render`, command: `node world render ${id} --only ${s.byState.failed.join(' --only ')}` };
   if (canary) return canary;
   if (s.byState.unrendered.length) return { why: `${s.byState.unrendered.length} film${s.byState.unrendered.length === 1 ? '' : 's'} not rendered yet`, command: `node world quote ${id}   — then: node world render ${id}` };
@@ -168,6 +174,14 @@ export async function run(argv) {
   if (s.canary.state !== 'none') log.info(`canary      ${s.canary.ids.join(' + ')}: ${s.canary.state === 'approved' ? 'approved — the rest of the world can render' : s.canary.state}`);
   if (s.renderLock) log.info(`rendering   a render is running (pid ${s.renderLock.pid}, started ${s.renderLock.startedAt})`);
   if (s.unjudged.length) log.info(`to judge    ${s.unjudged.length} take${s.unjudged.length === 1 ? '' : 's'}`);
+  for (const f of s.feedback) {
+    log.info(`rejected    ${f.film} take ${f.take}${f.verdict ? `: "${f.verdict}"` : ''}`);
+    for (const note of f.notes) log.dim(`              ${describeNote(note)}`);
+  }
+  if (s.stillNotes.length) {
+    log.info(`pictures    ${s.stillNotes.length} area note${s.stillNotes.length === 1 ? '' : 's'} on stills`);
+    for (const note of s.stillNotes) log.dim(`              ${note.place}: ${describeNote(note)}`);
+  }
   const narrationState = !s.narratedPlaces ? 'none planned'
     : `${s.narratedPlaces - s.narrationNeeded.length} of ${s.narratedPlaces} place${s.narratedPlaces === 1 ? '' : 's'} recorded`;
   const musicState = !s.hasMusic ? 'none planned' : s.musicNeeded ? 'to make' : 'made';

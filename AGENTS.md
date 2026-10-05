@@ -178,13 +178,20 @@ Then ask the person to review:
 node world review      # prints a local URL; they approve or reject each take
 ```
 
+On the review page the person can also **mark an area**: pause a take (or tap a
+start or end picture), drag a box over what they mean and type a note. Area notes
+are saved with the take's time and box, and each gets a picture of the box drawn
+on its frame in `review/marks/`.
+
 Wait for their verdicts. Until both canary films are approved, a plain `render`
 refuses to start anything else.
 
 ### 8. Retakes and the rest
 
-For each film the person rejected, read their note, rewrite that film's `action`
-or `sound` to fix the cause, lint, and render it again (`render --only <film>`).
+For each film the person rejected, read their note and their area notes
+(`node world status` lists both; open each area note's picture in `review/marks/`
+before rewriting a direction: the box shows exactly what they mean), rewrite that
+film's `action` or `sound` to fix the cause, lint, and render it again (`render --only <film>`).
 Then `node world render` for everything not yet rendered, then screen and review
 again. Repeat until every film on the story's path is approved. Shortcuts and
 moments can wait.
