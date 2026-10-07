@@ -63,11 +63,19 @@ screenshots or messaging-app copies: every film starts and ends on these exact
 pictures, so softness shows. Photos of one shape (all landscape 3:2, say) work
 best, because a world has a single canvas.
 
+No photos? Skip this: give your agent a concept instead and it paints the places
+(AGENTS.md › 3).
+
 ## 5. Hand it to your agent
 
 Open your agent in the kit folder and say:
 
 > Build a Sogni World from the photos in worlds/my-trip.
+
+or, with no photos:
+
+> Build a Sogni World from this concept: a lighthouse keeper's last night on a rock
+> in the Atlantic, in seven places. Two choices are fatal. Paint the places.
 
 It follows [AGENTS.md](../AGENTS.md):
 
@@ -88,8 +96,9 @@ node world review
 ```
 
 A page opens with the takes side by side. Click a clip to hear it, then approve or
-reject each one (with a note saying why). Your agent rewrites what you rejected,
-renders the rest, and asks you again.
+reject each one (with a note saying why; pause a take and drag a box over the spot
+to show exactly where). Your agent rewrites what you rejected from your note and
+your box, renders the rest, and asks you again.
 
 ## 6. Play and share
 

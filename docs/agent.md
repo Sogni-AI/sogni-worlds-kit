@@ -50,9 +50,10 @@ plan, `--until select` after the outlines, `--until build` before the review pag
 
 It ends by opening your review page (`--review-port`, default 4700; `--no-open`
 prints the address instead). Approve the take you want for each film; reject one
-with a note saying what is wrong. Press Ctrl-C when you are done, then run the
-agent again: it rewrites every film you rejected from your note, renders it, and
-builds with what you approved.
+with a note saying what is wrong, or pause it, drag a box over the spot and say
+what you see there. Press Ctrl-C when you are done, then run the agent again: it
+rewrites every film you rejected from your note and the frames you marked,
+renders it, and builds with what you approved.
 
 ## The brief (answers in a file)
 

@@ -105,7 +105,7 @@ Sogni's docs for this setup:
 
 ## The Sogni Creative Agent Skill
 
-The kit's commands call the Sogni SDK directly for everything a photo world needs.
+The kit's commands call the Sogni SDK directly for everything a world needs.
 The [Creative Agent Skill](https://github.com/Sogni-AI/sogni-creative-agent-skill)
 gives your agent the rest of Sogni's models as one command, `sogni-agent`, using the
 same API key and plan:
@@ -145,6 +145,8 @@ Install it once:
 
 Other good openers:
 
+- "Build a Sogni World from this concept, with no photos: … Paint the places, make
+  two of the choices fatal, and hide a collectible in every place."
 - "Plan a world from these photos, but don't render anything until I've seen the plan."
 - "Make a three-place canary world from my best three photos so I can see the quality."
 - "Add narration in my voice. The recording is voices/me.m4a and I say: '…'"

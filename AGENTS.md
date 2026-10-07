@@ -1,9 +1,10 @@
 # Building a Sogni World — instructions for coding agents
 
-You are helping a person turn their photographs into a **Sogni World**: an
-interactive, cinematic place where each photo quietly comes alive, clicking
-something in it plays a film that carries you to the next place, and a voice
-and music tell the story. Play the finished example first to see the target:
+You are helping a person build a **Sogni World** from their photographs, or from
+nothing but a concept: an interactive, cinematic place where each picture quietly
+comes alive, clicking something in it plays a film that carries you to the next
+place, a voice and music tell the story, and a choice can end it (the visitor
+rewinds and chooses again). Play the finished example first to see the target:
 <https://worlds.sogni.ai/demo/the-long-white-cloud>.
 
 **Your job is the labour. The person is the director.** You plan, write, render,
@@ -62,6 +63,11 @@ dozens of 2K films (docs/costs-and-plans.md).
 Ask before touching the photos, because the story's order becomes the place ids.
 Ask, in one message:
 
+- Photos or a concept? With photos, the rest of this list. With a concept: what the
+  world is and how it looks, who is in it (reference pictures of a character, if
+  any), how many places, whether some choices are fatal, and whether there are
+  collectibles; then the narration and music questions below, and step 3's
+  "No photos?".
 - What is this world about, in a sentence? What is its title? (The id is the
   title in short lowercase words, `my-trip`; offer one and let them change it.)
 - Who is in the photos? And who else appears (strangers, performers, crew, other
@@ -74,7 +80,7 @@ Ask, in one message:
   `voices/` and give you the exact transcript), or a designed voice?
 - Music: none, generated (describe the mood), or a track they own the rights to?
 
-### 3. Create the world and bring in the photos, in story order
+### 3. Create the world and bring in the pictures, in story order
 
 ```bash
 node world new my-trip --title "My Trip"
@@ -90,9 +96,22 @@ one canvas for the whole world from the photos' shape, writes `stills/<place>.jp
 and adds a place per photo to `world.yaml`. If a photo would lose more than a
 sliver to cropping, it says so: move that photo out, or choose another `--canvas`.
 
-No photos? The Sogni Creative Agent Skill can paint the places (Krea 2 Turbo for a
-first place, Sogni Krea 2 Identity Edit to keep the same character in the next
-ones). Save them into `photos/` and ingest them like photographs.
+No photos? Paint the places from the concept, then ingest them like photographs:
+
+- The quickest way is the kit's built-in agent: it writes a short bible (places,
+  characters, look, what leads where), paints three candidates per place with
+  Krea 2 (Identity Edit keeps a character from a reference picture; the Dark Beast
+  models for an 18+ world), keeps the best, ingests them and writes a first plan
+  for you to take over. Put the concept in a brief (docs/agent.md › The brief, with
+  `paint:`) and run `node world agent <id> --brief <file> --until plan`.
+- Or paint them yourself with the Sogni Creative Agent Skill: Krea 2 Turbo
+  (`sogni-agent -m krea2_turbo_fp8_scaled "…"`) for a first place, Sogni Krea 2
+  Identity Edit to keep the same character in the next ones, all at one canvas
+  size (1344×768 for 16:9, 1152×768 for 3:2). Save them into `photos/` in story
+  order.
+
+Fatal choices and collectibles are plain `world.yaml` fields (`ending`, `collect`,
+`intro`; docs/world-yaml.md), whichever way the pictures were made.
 
 ### 4. Write the plan
 
@@ -231,7 +250,7 @@ Tell the person how to host it (docs/hosting.md).
 
 ## Tools beyond the pipeline: the Sogni Creative Agent Skill
 
-The kit's commands cover a photo world end to end. For anything else, use the
+The kit's commands cover a world end to end. For anything else, use the
 Sogni Creative Agent Skill (`sogni-agent`, installed by `node world setup`). It
 uses the same API key and plan. Useful here:
 

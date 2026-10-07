@@ -22,7 +22,7 @@ agent) what comes next.
 | 5 | `select` | Segment Anything 3 (`sam3_image_segment_bf16`) | `selections/<place>-<object>.{json,png,preview.jpg}` |
 | 6 | `render` | MiniMax H3 FastH3 FLF two-stage (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`) | `renders/<film>/take-<n>.{json,mp4}` |
 | 7 | `screen` · `note` · `reject` | ffmpeg | `take-<n>.screen.json`, `take-<n>.sheet.jpg`, notes |
-| 8 | `review` | a local page | `review/verdicts.json` (your decisions) |
+| 8 | `review` | a local page | `review/verdicts.json` (your decisions), `notes.json` and `still-notes.json` (your area notes), `marks/` (the frames you drew on) |
 | 9 | `narrate` · `music` | Qwen3-TTS · MiniMax Music 3 | `audio/narration/<place>.*`, `audio/music/*` |
 | 10 | `build` · `play` · `export` | ffmpeg · Vite | `build/world.json` + finished media · a static site |
 
@@ -39,21 +39,22 @@ worlds/my-trip/
   selections/           outlines of the clickable objects
   renders/<film>/       every take of every film, each with its receipt
   audio/                narration and music takes
-  review/               verdicts.json and notes.json
+  review/               verdicts.json, notes.json, still-notes.json and marks/
   build/                the finished world: world.json + stills/ + films/ + audio/
 ```
 
 The plan, verdicts and receipts are small, and git keeps them. Photos, stills,
-keyframes, voice recordings, the outline previews (a copy of your photo) and all
-rendered media are large and personal, so `.gitignore` leaves them out. Two things
+keyframes, voice recordings, the outline previews (a copy of your photo), the
+area-note pictures (frames of your takes) and all rendered media are large and
+personal, so `.gitignore` leaves them out. Two things
 to know before you push a world to a public repository:
 
 - **Receipts name your Sogni account.** Each take's receipt in `renders/` and
   `audio/` records the Sogni username it was rendered under, next to the job id, so
   a render can be traced. Leave `renders/` and `audio/` out too if that matters to you.
 - **Your review stays on your machine.** The review page is served on 127.0.0.1
-  only, and nothing on it is sent anywhere; only your verdicts are written, to
-  `review/verdicts.json`.
+  only, and nothing on it is sent anywhere; only your verdicts and area notes are
+  written, under `review/`.
 
 ## Each step
 
@@ -121,6 +122,9 @@ It also draws a contact sheet. Screening can't read lettering, so your agent loo
 at the sheets (every sign, patch, logo and plate included), rejects what is
 clearly broken, and notes anything doubtful. Then `review` opens a page where you
 watch the remaining takes side by side, with sound, and approve or reject each.
+Pause a take, drag a box and type a note to say exactly where something is wrong:
+the note is saved with its time and box, and the frame with the box drawn on it
+goes to `review/marks/` for your agent to open before it rewrites the direction.
 Verdicts are pinned to the file's SHA-256, so a new file never inherits an old
 approval.
 
