@@ -33,7 +33,7 @@ export function canaryNext(status, id) {
     case 'rendering': return { why: 'the canary is still rendering', command: `node world render ${id} --canary   (picks it up; nothing is submitted twice)` };
     case 'unrendered': return { why: 'the canary is not rendered yet', command: `node world quote ${id}   — then: node world render ${id} --canary` };
     case 'failed': return { why: `the canary (${status.waiting.join(', ')}) failed to render`, command: `node world render ${id} ${only}` };
-    case 'rejected': return { why: `the canary (${status.waiting.join(', ')}) was rejected`, command: `rewrite that film's direction in world.yaml for what the verdict says went wrong, then: node world render ${id} ${only}` };
+    case 'rejected': return { why: `the canary (${status.waiting.join(', ')}) was rejected`, command: `read what the person said first (node world status ${id} lists their verdict and area notes; open each area note's picture), then rewrite that film's direction in world.yaml for what went wrong, then: node world render ${id} ${only}` };
     default: return { why: 'the canary awaits a verdict', command: `node world screen ${id}   — look at both takes, then the person reviews them: node world review ${id}` };
   }
 }

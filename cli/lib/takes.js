@@ -5,7 +5,12 @@
 //   renders/<film>/take-<n>.screen.json  automatic checks (`screen`)
 //   renders/<film>/take-<n>.sheet.jpg    contact sheet for looking at it quickly
 //   review/verdicts.json                 { <sha256>: { film, take, verdict, note, by, at } }
-//   review/notes.json                    { <sha256>: [{ by, text, at }] }
+//   review/notes.json                    { <sha256>: [{ by, text, at, time?, box?, image? }] }
+//   review/still-notes.json              { <place>: [{ by, text, at, box, image }] }
+//   review/marks/<film|place>-…-<n>.jpg  an area note drawn on its frame, for agents to open
+//
+// An area note ("mark") is a note with a `box` [x, y, w, h] in 0–1 fractions of
+// the picture and, on a take, the `time` in seconds it was drawn at.
 //
 // Verdicts are pinned to the exact file (its SHA-256), never to a name, so a
 // re-rendered file can never inherit an approval it did not earn.
@@ -32,10 +37,45 @@ export function recordVerdict(paths, sha, entry) {
   writeJson(verdictsFile(paths), verdicts);
 }
 
-export function addNote(paths, sha, by, text) {
+export const stillNotesFile = paths => join(paths.review, 'still-notes.json');
+export const readStillNotes = paths => readJson(stillNotesFile(paths), {});
+export const marksDir = paths => join(paths.review, 'marks');
+
+/** Add a note to a take. `extra` carries an area note's { time, box, image }. Returns the note. */
+export function addNote(paths, sha, by, text, extra = {}) {
   const notes = readNotes(paths);
-  (notes[sha] ??= []).push({ by, text, at: new Date().toISOString() });
+  const note = { by, text, at: new Date().toISOString(), ...extra };
+  (notes[sha] ??= []).push(note);
   writeJson(notesFile(paths), notes);
+  return note;
+}
+
+/** Add an area note to a place's still. Returns the note. */
+export function addStillNote(paths, place, by, text, extra = {}) {
+  const notes = readStillNotes(paths);
+  const note = { by, text, at: new Date().toISOString(), ...extra };
+  (notes[place] ??= []).push(note);
+  writeJson(stillNotesFile(paths), notes);
+  return note;
+}
+
+/** A valid area box: [x, y, w, h], each a 0–1 fraction, with some size. Returns it rounded, or null. */
+export function normalBox(box) {
+  if (!Array.isArray(box) || box.length !== 4 || !box.every(n => typeof n === 'number' && Number.isFinite(n))) return null;
+  let [x, y, w, h] = box;
+  x = Math.min(1, Math.max(0, x)); y = Math.min(1, Math.max(0, y));
+  w = Math.min(1 - x, Math.max(0, w)); h = Math.min(1 - y, Math.max(0, h));
+  if (w < 0.005 || h < 0.005) return null;
+  return [x, y, w, h].map(n => Math.round(n * 10000) / 10000);
+}
+
+/** One note as a line for the terminal: who, when and where, then the words. */
+export function describeNote(note) {
+  const where = [
+    note.time !== undefined && note.time !== null ? `at ${Number(note.time).toFixed(1)} s` : null,
+    note.box ? `area x ${note.box[0]}, y ${note.box[1]}, w ${note.box[2]}, h ${note.box[3]}` : null,
+  ].filter(Boolean).join(', ');
+  return `${note.by}${where ? ` (${where})` : ''}: ${note.text}${note.image ? `  → ${note.image}` : ''}`;
 }
 
 /** Every take of one film, oldest first, with its receipt, checks and verdict. */
