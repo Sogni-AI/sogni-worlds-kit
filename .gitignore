@@ -30,3 +30,5 @@ worlds/*/renders/.render.lock
 # Figures are cut out of your pictures; keep only their receipts
 worlds/*/figures/**/*.png
 worlds/*/figures/**/*.glb
+# Area-note pictures are frames of your takes with the box drawn on; the note itself (words, time, box) stays in review/
+worlds/*/review/marks/

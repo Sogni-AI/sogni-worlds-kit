@@ -15,8 +15,9 @@
 // Verdicts are pinned to the exact file (its SHA-256), never to a name, so a
 // re-rendered file can never inherit an approval it did not earn.
 import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { readJson, writeJson } from './files.js';
+import { ROOT } from './paths.js';
 
 export const VERDICTS = ['approved', 'rejected', 'passed'];
 
@@ -67,6 +68,18 @@ export function normalBox(box) {
   w = Math.min(1 - x, Math.max(0, w)); h = Math.min(1 - y, Math.max(0, h));
   if (w < 0.005 || h < 0.005) return null;
   return [x, y, w, h].map(n => Math.round(n * 10000) / 10000);
+}
+
+/**
+ * The person's area notes on a take, for an agent to act on: each with the frame
+ * it was drawn on (an absolute path, when that picture still exists). Notes an
+ * agent left on the take are not the person's.
+ */
+export function personsMarks(take) {
+  return take.notes.filter(note => note.by !== 'agent' && note.box).map(note => {
+    const image = note.image ? resolve(ROOT, note.image) : null;
+    return { take: take.take, time: note.time ?? null, text: note.text, box: note.box, image: image && existsSync(image) ? image : null };
+  });
 }
 
 /** One note as a line for the terminal: who, when and where, then the words. */

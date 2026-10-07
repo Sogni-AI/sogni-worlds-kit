@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { applyMark, awaitingFilms } from '../cli/commands/review.js';
-import { describeNote, listTakes, normalBox, readStillNotes } from '../cli/lib/takes.js';
+import { rewriteFilm } from '../cli/agent/judge.js';
+import { describeNote, listTakes, normalBox, personsMarks, readStillNotes } from '../cli/lib/takes.js';
 import { ffmpeg } from '../cli/lib/media.js';
 import { tempDir, pathsAt, syntheticVideo } from './helpers.js';
 
@@ -57,4 +58,22 @@ test('an area note needs a box, words and a take or picture that exists', async 
   assert.match(await applyMark(plan, paths, { sha: 'sha-loop', box: [0, 0, 0.5, 0.5], text: '  ' }), /Say what/);
   assert.match(await applyMark(plan, paths, { sha: 'nope', box: [0, 0, 0.5, 0.5], text: 'x' }), /not in this world/);
   assert.match(await applyMark(plan, paths, { still: 'zz', box: [0, 0, 0.5, 0.5], text: 'x' }), /not in this world/);
+});
+
+test('a retake shows the writer the person\'s area notes and the frames they drew on', async () => {
+  const paths = await world();
+  await applyMark(plan, paths, { sha: 'sha-loop', time: 0.5, box: [0.5, 0.25, 0.2, 0.3], text: 'smoke from this house only' });
+  const [take] = listTakes(paths, 'a-loop');
+  const marks = personsMarks(take);
+  assert.equal(marks.length, 1);
+  assert.equal(marks[0].time, 0.5);
+  assert.ok(existsSync(marks[0].image), 'the marked frame is found from the note');
+  let request;
+  const llm = { json: async args => { request = args; return { diagnosis: 'the smoke was everywhere', film: { frames: 192, idea: 'i', action: 'smoke rises from the one chimney', sound: 'wind' } }; } };
+  const loop = { id: 'a-loop', kind: 'loop', frames: 192, idea: 'x', action: 'x', sound: 'y' };
+  await rewriteFilm(llm, { film: loop, reasons: ['take 1: too much smoke'], marks, fromStill: join(paths.stills, 'a.jpg'), toStill: join(paths.stills, 'a.jpg'), fromSeen: 'a cottage', toSeen: 'a cottage', mature: false });
+  const texts = request.user.filter(part => part.type === 'text').map(part => part.text);
+  assert.match(texts[0], /drew a red box on a frame/);
+  assert.ok(texts.some(text => text.startsWith('Take 1 at 0.5 s, the red box: "smoke from this house only"')));
+  assert.equal(request.user.filter(part => part.type === 'image_url').length, 2, 'the start picture and the marked frame');
 });

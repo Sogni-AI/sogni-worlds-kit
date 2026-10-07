@@ -343,6 +343,12 @@ const PAGE = `
     const api = groupOf(section);
     if (api) api.pause();
     const video = fig.querySelector('video');
+    // A take that has not decoded a frame yet (the browser loads a page of 2K takes lazily) would give a blank picture to draw on.
+    if (video.readyState < 2) {
+      const button = fig.querySelector('.mark'), was = button.textContent;
+      button.textContent = 'Play it first, then mark'; setTimeout(() => { button.textContent = was; }, 1800);
+      return;
+    }
     const time = video.currentTime;
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;

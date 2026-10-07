@@ -11,7 +11,7 @@ import { shown, worldPaths, filmId, loopId } from '../lib/paths.js';
 import { filmsOf, readPlan, writePlan } from '../lib/plan.js';
 import { lintPlan } from '../lib/lint.js';
 import { readJson, writeJson } from '../lib/files.js';
-import { filmState, listTakes, readNotes, readVerdicts, addNote, recordVerdict } from '../lib/takes.js';
+import { filmState, listTakes, personsMarks, readNotes, readVerdicts, addNote, recordVerdict } from '../lib/takes.js';
 import { connect, describeBilling } from '../lib/sogni.js';
 import { Llm, MODELS } from '../lib/llm.js';
 import { log, usd } from '../lib/log.js';
@@ -385,13 +385,17 @@ async function retake({ llm, id, paths, film, state, mature }) {
   const { doc, plan } = readPlan(id);
   const verdicts = readVerdicts(paths);
   const takes = listTakes(paths, film.id, verdicts);
-  const reasons = takes.filter(t => t.verdict?.verdict === 'rejected').map(t => `take ${t.take}: ${t.verdict.note}`);
+  const rejected = takes.filter(t => t.verdict?.verdict === 'rejected');
+  // What the person said, with any area notes they drew on the take: the words go here,
+  // and the frames they drew on go to the writer as pictures.
+  const reasons = rejected.map(t => `take ${t.take}: ${t.verdict.note}${personsMarks(t).map(m => `; they marked ${m.time != null ? `at ${m.time} s ` : ''}(box x ${m.box[0]} y ${m.box[1]} w ${m.box[2]} h ${m.box[3]}): "${m.text}"`).join('')}`);
+  const marks = rejected.flatMap(personsMarks);
   const pi = plan.places.findIndex(p => p.id === film.from);
   const place = plan.places[pi];
   const to = plan.places.find(p => p.id === film.to);
   const object = film.object ? place.objects.find(o => o.id === film.object) : null;
   const { diagnosis, film: next } = await rewriteFilm(llm, {
-    film, label: object?.label, hint: object?.hint, target: object?.target ?? '', objectId: object?.id ?? '', reasons,
+    film, label: object?.label, hint: object?.hint, target: object?.target ?? '', objectId: object?.id ?? '', reasons, marks,
     fromStill: join(paths.dir, place.still), toStill: join(paths.dir, to.still), fromSeen: place.seen, toSeen: to.seen, mature,
   });
   const at = film.kind === 'loop' ? ['places', pi, 'loop'] : ['places', pi, 'objects', place.objects.indexOf(object), 'film'];

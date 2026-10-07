@@ -22,7 +22,7 @@ export function worldPaths(id) {
     selections: join(dir, 'selections'), // SAM 3 masks and traced outlines
     renders: join(dir, 'renders'),       // every take of every film, with its receipt
     audio: join(dir, 'audio'),           // narration and generated music, with receipts
-    review: join(dir, 'review'),         // verdicts.json and notes.json
+    review: join(dir, 'review'),         // verdicts, notes, area notes and their marks/ pictures
     build: join(dir, 'build'),           // the finished world: world.json + media, ready to play
     cache: join(dir, '.cache'),          // derived scratch files, safe to delete
   };

@@ -88,17 +88,21 @@ const RETAKE_SCHEMA = {
 };
 
 /** Rewrite a rejected film's direction so the observed defect has no cause left in the words. */
-export async function rewriteFilm(llm, { film, label, hint, target = '', objectId = '', reasons, fromStill, toStill, fromSeen, toSeen, mature }) {
+export async function rewriteFilm(llm, { film, label, hint, target = '', objectId = '', reasons, marks = [], fromStill, toStill, fromSeen, toSeen, mature }) {
   const kind = film.kind;
+  // The person's area notes: the frame they paused on, with the red box they drew. The writer keeps
+  // a request's last eight pictures, so after the two stills there is room for six of them.
+  const drawn = marks.filter(m => m.image).slice(-6);
   const text = [
     `This ${kind} film was rejected. Rewrite its direction so the defect cannot happen again. Another seed on the same words repeats the same failure: change the words that caused it (the route, the camera move, what passes through the frame, the length), and keep everything that was right.`,
     `Why it was rejected: ${reasons.join(' | ')}`,
+    drawn.length ? `The person drew a red box on ${drawn.length === 1 ? 'a frame' : `${drawn.length} frames`} of the rejected take to show exactly where (each picture below comes with their words). Fix what is inside the box and keep what was right outside it.` : null,
     label ? `What the visitor clicked: "${label}" (${hint ?? ''}). That object must still cause the film and lead it: keep the route through it, and change how it happens, never what it is.` : 'It is the place\'s loop.',
     `Start picture (seen): ${fromSeen}`,
     kind === 'crossing' ? `End picture (seen): ${toSeen}` : 'It ends back on the start picture.',
     `The rejected direction: ${JSON.stringify({ frames: film.frames, idea: film.idea, action: film.action, sound: film.sound })}`,
     `Reply with JSON {"diagnosis": "which words caused the defect and what you changed", "film": {"frames", "idea", "action", "sound"}}.${kind === 'loop' ? ' A loop is always 192 frames.' : ''}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
   const drift = answer => (label ? clickCauses({ label, target, id: objectId }, answer.film) : null);
   const check = answer => lintDirection({ ...answer.film, kind }, `${label ?? ''} ${hint ?? ''} ${answer.film.idea}`)
     .filter(f => f.level === 'error' || ['face-turn', 'dark-screen', 'static'].includes(f.rule))
@@ -114,6 +118,7 @@ export async function rewriteFilm(llm, { film, label, hint, target = '', objectI
       { type: 'text', text },
       { type: 'text', text: 'The start picture:' }, await imagePart(fromStill),
       ...(kind === 'crossing' ? [{ type: 'text', text: 'The end picture:' }, await imagePart(toStill)] : []),
+      ...(await Promise.all(drawn.map(async m => [{ type: 'text', text: `Take ${m.take}${m.time != null ? ` at ${Number(m.time).toFixed(1)} s` : ''}, the red box: "${m.text}"` }, await imagePart(m.image)]))).flat(),
     ],
     schema: RETAKE_SCHEMA,
     check,
