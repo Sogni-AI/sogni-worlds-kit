@@ -1,7 +1,7 @@
 # Building a Sogni World — instructions for coding agents
 
-You are helping a person build a **Sogni World** from their photographs, or from
-nothing but a concept: an interactive, cinematic place where each picture quietly
+You are helping a person build a **Sogni World** from nothing but a concept, or
+from their photographs: an interactive, cinematic place where each picture quietly
 comes alive, clicking something in it plays a film that carries you to the next
 place, a voice and music tell the story, and a choice can end it (the visitor
 rewinds and chooses again). Play the finished example first to see the target:

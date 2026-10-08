@@ -16,6 +16,7 @@ agent) what comes next.
 | # | Command | Model / tool | Writes |
 | --- | --- | --- | --- |
 | 1 | `new` | — | `world.yaml` from the template, empty folders |
+| 1b | *(paint, when there are no photos)* | Krea 2 Turbo (`krea2_turbo_fp8_scaled`) · Sogni Krea 2 Identity Edit, via the built-in agent or the Creative Agent Skill | `photos/<place>.png` |
 | 2 | `ingest` | sharp | `stills/<place>.jpg`, `stills/index.json`, places in `world.yaml` |
 | 3 | *(your agent)* | its own vision | `world.yaml`: story, objects, film directions |
 | 4 | `lint` · `quote` | the SDK's cost estimate | nothing: problems and a price |

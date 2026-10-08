@@ -68,14 +68,14 @@ No photos? Skip this: give your agent a concept instead and it paints the places
 
 ## 5. Hand it to your agent
 
-Open your agent in the kit folder and say:
-
-> Build a Sogni World from the photos in worlds/my-trip.
-
-or, with no photos:
+Open your agent in the kit folder and give it an idea:
 
 > Build a Sogni World from this concept: a lighthouse keeper's last night on a rock
 > in the Atlantic, in seven places. Two choices are fatal. Paint the places.
+
+or, with photographs:
+
+> Build a Sogni World from the photos in worlds/my-trip.
 
 It follows [AGENTS.md](../AGENTS.md):
 

@@ -2,7 +2,7 @@
   "name": "sogni-worlds-kit",
   "version": "0.1.0",
   "private": true,
-  "description": "Build an interactive, cinematic choose-your-own-adventure world you click through, from your photos or from a concept alone, with your own coding agent, the Sogni Creative Agent Skill and a Sogni API key.",
+  "description": "Build an interactive, cinematic choose-your-own-adventure world you click through, from a concept alone or from your photos, with your own coding agent, the Sogni Creative Agent Skill and a Sogni API key.",
   "license": "MIT",
   "type": "module",
   "engines": {

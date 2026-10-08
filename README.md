@@ -1,12 +1,16 @@
-<a href="https://worlds.sogni.ai/demo/the-long-white-cloud"><img src="docs/media/hero.webp" width="960" alt="The Long White Cloud playing in the kit's player: the Begin screen, then a living photograph of Mark and Jen at a round hobbit door in Hobbiton with clickable labels. The door's traced outline lights up, a click, and a film ducks through the door and a root-lined passage, landing at Te Pā Tū in Rotorua, where Mark's narration appears as a subtitle."></a>
-
-<sub>A real recording of the player: one click on the round door, one film, the next place. Click it to play the whole world, or [watch it as MP4](docs/media/hero.mp4).</sub>
+<table>
+  <tr>
+    <td width="50%"><a href="https://worlds.sogni.ai/demo"><img src="docs/media/dream-thread.jpg" alt="The Dream Thread's first place: Simon, a pink sloth with round glasses and a small horn, on a moonlit stone path below a colossal moss-covered stone giant, a lantern-lit staircase climbing to a glowing door behind him."></a><br><b>The Dream Thread</b> · 23 places painted from one idea and one picture of a sloth</td>
+    <td width="50%"><a href="https://worlds.sogni.ai/demo/the-long-white-cloud"><img src="docs/media/hero.webp" alt="The Long White Cloud playing in the kit's player: the Begin screen, then a living photograph of Mark and Jen at a round hobbit door in Hobbiton with clickable labels. The door's traced outline lights up, a click, and a film ducks through the door and a root-lined passage, landing at Te Pā Tū in Rotorua, where Mark's narration appears as a subtitle."></a><br><b>The Long White Cloud</b> · 22 places from a trip's own photographs (a real recording of the player; <a href="docs/media/hero.mp4">MP4</a>)</td>
+  </tr>
+</table>
 
 # Sogni Worlds Kit
 
 **A cinematic, choose-your-own-adventure world you click through, built by your
-coding agent from your photos, or from nothing but an idea.**
+coding agent from nothing but an idea. Your own photographs work too.**
 
+[▶ Play The Dream Thread](https://worlds.sogni.ai/demo) ·
 [▶ Play The Long White Cloud](https://worlds.sogni.ai/demo/the-long-white-cloud) ·
 [How this was made](https://worlds.sogni.ai/how-this-was-made) ·
 [How agents built Sogni World](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/) ·
@@ -18,18 +22,20 @@ ridge or down through the cloud. A voice tells the story and music sits
 underneath. Some choices can be fatal, and the visitor rewinds to choose again;
 some things you click are collectibles you pick up and turn over in 3D.
 
-This repo holds everything we used to build *The Long White Cloud*, a trip
-through New Zealand in 22 photographs on [worlds.sogni.ai](https://worlds.sogni.ai):
+This repo holds everything we used to build the worlds on
+[worlds.sogni.ai](https://worlds.sogni.ai):
 
-- the pipeline that renders and judges every film
+- the pipeline that paints, renders and judges every picture and film
 - the rules for directing those films
 - the player that shows the finished world
 - the instructions your agent follows
+- the real plans behind *The Dream Thread* and *The Long White Cloud*: every
+  direction and seed ([examples/](examples/))
 
-You bring the taste, and either your photos or a concept. Your agent (Claude Code,
+You bring the taste and an idea; photos are optional. Your agent (Claude Code,
 Codex or Hermes) does the rest with the
 [Sogni Creative Agent Skill](https://github.com/Sogni-AI/sogni-creative-agent-skill)
-and your Sogni API key: eleven open-source models paint the places, trace what you
+and your Sogni API key: eight open-source models paint the places, trace what you
 click, film every crossing, narrate, score and build the collectibles
 ([every model](#the-models)). Start in the evening, and a whole world of dozens of
 2K films is yours to judge by morning.
@@ -40,11 +46,11 @@ click, film every crossing, narrate, score and build the collectibles
 git clone https://github.com/Sogni-AI/sogni-worlds-kit
 cd sogni-worlds-kit
 npm install
-npm run dev
+npm run dev                                   # The Dream Thread, straight from Sogni's CDN
+EXAMPLE=the-long-white-cloud npm run dev      # the photo world
 ```
 
-Open the URL it prints. *The Long White Cloud* plays straight from Sogni's CDN. No
-account needed.
+Open the URL it prints. No account needed.
 
 ## Build your own
 
@@ -53,22 +59,24 @@ You need Node 22.12+, [ffmpeg](https://ffmpeg.org/download.html), a
 
 ```bash
 node world setup            # saves your API key, checks your plan, installs the Creative Agent Skill
-node world new my-trip      # then copy your photos into worlds/my-trip/photos/, or bring an idea instead
+node world new my-world     # bring an idea; or copy photos into worlds/my-world/photos/
 ```
 
-Open your agent in this folder and say either:
+Open your agent in this folder and give it an idea:
 
-> Build a Sogni World from the photos in worlds/my-trip.
+> Build a Sogni World from this concept: a lighthouse keeper's last night on a rock
+> in the Atlantic, in seven places. Two choices are fatal and every place hides a
+> collectible. Paint the places.
 
-> Build a Sogni World from this concept, with no photos: a lighthouse keeper's last
-> night on a rock in the Atlantic, in seven places. Two choices are fatal and every
-> place hides a collectible. Paint the places.
+Or, with photographs:
+
+> Build a Sogni World from the photos in worlds/my-world.
 
 Your agent reads [AGENTS.md](AGENTS.md) and then:
 
-1. interviews you: the story, the people and the order of places. For a concept it
-   writes a short bible instead (places, characters, look, what leads where) and
-   paints the places with Krea 2 for you to approve
+1. interviews you, writes a short bible (places, characters, look, what leads
+   where) and paints the places with Krea 2 for you to approve. With photos it
+   asks about the trip, the people and the order of places instead
 2. looks at every still at full size and writes the plan: what to click, where it
    leads (and which choices end the story), and a direction for every film
 3. shows you the plan and the cost, then renders a **canary** (one journey and one
@@ -126,15 +134,15 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
 </table>
 
 ```
- photos / paint ─► ingest ─► plan ─────► select ─────► render ───────────► screen ─► review ─► build ─► play / export
+ paint / photos ─► ingest ─► plan ─────► select ─────► render ───────────► screen ─► review ─► build ─► play / export
  (Krea 2)          stills   world.yaml   SAM 3         MiniMax H3          checks    you       world.json
                             (your agent  outlines      first-and-last-     + agent   approve   + finished
                              writes it)                frame, 2-stage 2K   rejects             films
 ```
 
-- **Stills.** Every place is one of your photos, or a picture painted from your
-  concept (Krea 2 Turbo; Identity Edit keeps the same character from place to
-  place), colour-managed and cropped once to the film shape. Every film starts and
+- **Stills.** Every place is a picture painted from your concept (Krea 2 Turbo;
+  Identity Edit keeps the same character from place to place), or one of your
+  photos, colour-managed and cropped once to the film shape. Every film starts and
   ends on those exact pixels.
 - **Clickable objects.** Segment Anything 3 turns a click on the boat into an
   outline of the boat.
@@ -155,18 +163,25 @@ Full walk-through: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## The models
 
-Every model the kit calls is open source with public weights, and all of them run
-on Sogni's decentralized GPU network through your one API key:
+Eight open-source models do the work, all with public weights, all running on
+Sogni's decentralized GPU network through your one API key:
 
 | What it does | Model |
 | --- | --- |
-| Paints the places when there are no photos | Krea 2 Turbo; Sogni Krea 2 Identity Edit keeps the same character from place to place (Dark Beast variants for 18+ worlds) |
+| Paints the places from your concept | Krea 2 Turbo |
+| Keeps the same character in every place, from one reference picture | Sogni Krea 2 Identity Edit |
+| Paints 18+ worlds (horror, gore) | Dark Beast Krea 2, with its own Identity Edit |
 | Traces what you click | Segment Anything 3 |
-| Films every crossing, loop and moment | MiniMax H3, first-and-last-frame, two-stage, native 2K with its own sound |
+| Films every crossing, loop and moment | MiniMax H3: first-and-last-frame, two-stage, native 2K with its own sound |
 | Narrates | Qwen3-TTS: a designed voice, or a clone of a voice you own |
-| Scores | MiniMax Music 3, or ACE-Step 1.5 |
-| Cuts out and builds the collectibles | BiRefNet, then Pixal3D for the 3D figure |
-| Writes, judges and points (the built-in agent, and `audit-clicks`) | DeepSeek V4 Flash, Qwen 3.6 |
+| Scores | MiniMax Music 3 |
+| Builds the 3D collectibles | Pixal3D |
+
+No coding agent? Two more open models can be the agent: DeepSeek V4 Flash writes,
+judges and screens, and Qwen 3.6 points at the things to click
+(`node world agent`, [docs/agent.md](docs/agent.md)). Two more sit behind the
+scenes when asked: ACE-Step 1.5 scores a world that needs an exact tempo and key,
+and `figures` cuts an object out with BiRefNet before Pixal3D builds it.
 
 ## The craft, in five rules
 
@@ -219,7 +234,7 @@ cli/                  the pipeline (Node, the Sogni SDK, sharp, ffmpeg)
 player/               the world player (Vite + TypeScript, no framework)
 schema/               world.json format
 docs/                 how it works, directing films, agents, costs, hosting, formats
-examples/             The Long White Cloud: its real plan and a playable world.json
+examples/             The Dream Thread and The Long White Cloud: their real plans and playable world.json files
 skills/sogni-worlds/  a skill to install in your agent so it can start a world from anywhere
 worlds/               your worlds
 ```
