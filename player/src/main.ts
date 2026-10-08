@@ -113,7 +113,7 @@ class Player {
     this.beforeFilm();
     let found = false;
     try {
-      await this.stage.play(spot.film, landing);
+      if (spot.film) await this.stage.play(spot.film, landing);
       if (spot.to) this.history.push({ from: from.id, spot });
       if (spot.collect) found = this.collect(from, spot);
     } catch (error) {

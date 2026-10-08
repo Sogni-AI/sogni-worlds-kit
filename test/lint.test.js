@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { lintDirection, lintPlan, throughLattice } from '../cli/lib/lint.js';
 
@@ -76,14 +76,17 @@ test('plan structure: unknown destinations, duplicate ids and points outside the
   assert.ok(messages.some(m => m.includes('`at`')));
 });
 
-test('the example plan lints clean', () => {
-  const file = new URL('../examples/the-long-white-cloud/world.yaml', import.meta.url);
-  if (!existsSync(file)) return;
-  const plan = parse(readFileSync(file, 'utf8'));
-  for (const place of plan.places) place.objects ??= [];
-  plan.voices ??= {};
-  const errors = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).filter(f => f.level === 'error');
-  assert.deepEqual(errors, []);
+test('every example plan lints clean', () => {
+  const examples = new URL('../examples/', import.meta.url);
+  const names = existsSync(examples) ? readdirSync(examples).filter(name => existsSync(new URL(`${name}/world.yaml`, examples))) : [];
+  assert.ok(names.includes('the-long-white-cloud') && names.includes('the-dream-thread'), 'both example worlds ship a plan');
+  for (const name of names) {
+    const plan = parse(readFileSync(new URL(`${name}/world.yaml`, examples), 'utf8'));
+    for (const place of plan.places) place.objects ??= [];
+    plan.voices ??= {};
+    const errors = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).filter(f => f.level === 'error');
+    assert.deepEqual(errors, [], `examples/${name}/world.yaml`);
+  }
 });
 
 test('findings name the field and quote the words that set them off', () => {

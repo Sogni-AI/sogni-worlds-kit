@@ -1,5 +1,6 @@
 // The player's dev server and build.
-//   npm run dev                 plays examples/the-long-white-cloud (streamed from Sogni's CDN)
+//   npm run dev                 plays examples/the-dream-thread (streamed from Sogni's CDN)
+//   EXAMPLE=<id> npm run dev    plays another example, e.g. EXAMPLE=the-long-white-cloud
 //   WORLD=<id> npm run dev      plays worlds/<id>/build/world.json (what `node world play <id>` does)
 //   npm run build:player        a static player that reads ./world.json beside it (what `node world export` uses)
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -88,8 +89,9 @@ function repoFolders(): Plugin {
 
 export default defineConfig(({ command }) => {
   const world = process.env.WORLD;
+  const example = process.env.EXAMPLE || 'the-dream-thread';
   const defaultWorld = process.env.VITE_DEFAULT_WORLD
-    ?? (command === 'serve' ? (world ? `/worlds/${world}/build/world.json` : '/examples/the-long-white-cloud/world.json') : '');
+    ?? (command === 'serve' ? (world ? `/worlds/${world}/build/world.json` : `/examples/${example}/world.json`) : '');
   return {
     root: PLAYER,
     base: './',

@@ -74,9 +74,9 @@ and the films start and end on video frames.
 | `to` | | The place this crossing lands on. `null` or absent makes it a *moment*: the film plays and you stay here. |
 | `next` | | In a story told in order, this is the way to the next stop (the Next stop button takes it). |
 | `shortcut` | | A crossing that jumps out of the story's order, labelled as a shortcut. |
-| `collect` | | A collectible (never with `to`): its moment plays, then it joins the visitor's collection, counted in the top bar ("Figures 2/5") and kept in their browser. |
+| `collect` | | A collectible (never with `to`): its moment plays, then it joins the visitor's collection, counted in the top bar ("Figures 2/5") and kept in their browser. With a `figure` and no `film`, it is picked up straight from the picture. |
 | `figure` | | A collectible's 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the moment the visitor turns the figure over (`@google/model-viewer`, loaded only then); the collection panel shows found figures and silhouettes of hidden ones. |
-| `film` | yes | The film. See below. |
+| `film` | yes* | The film. See below. *A collectible with a `figure` may leave it out. |
 | `rewind` | | The same film reversed, played by Back after you took this crossing. Without it, Back jumps straight to the previous place. |
 
 ### A film

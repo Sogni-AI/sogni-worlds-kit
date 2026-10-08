@@ -120,7 +120,10 @@
     },
     "hotspot": {
       "type": "object",
-      "required": ["id", "label", "at", "film"],
+      "required": ["id", "label", "at"],
+      "description": "Every hotspot has a film, except a collectible with a figure, which may be picked up straight from the picture.",
+      "if": { "properties": { "collect": { "const": true }, "figure": { "type": "object" } }, "required": ["collect", "figure"] },
+      "else": { "required": ["film"] },
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string" },
@@ -140,7 +143,7 @@
         "to": { "type": ["string", "null"], "description": "The place this crossing lands on; null for a moment that returns here." },
         "next": { "type": "boolean", "description": "In a story told in order, this is the way to the next stop." },
         "shortcut": { "type": "boolean", "description": "A crossing that jumps out of the story's order, offered as an easter egg." },
-        "collect": { "type": "boolean", "description": "A collectible: its moment plays, then it joins the visitor's collection (kept in their browser). Never has \"to\"." },
+        "collect": { "type": "boolean", "description": "A collectible: its moment plays (or, with a figure and no film, it is picked up straight away), then it joins the visitor's collection (kept in their browser). Never has \"to\"." },
         "figure": {
           "type": ["object", "null"],
           "description": "A collectible's 3D figure (Pixal3D GLB): after its moment the visitor turns it over, and it appears in their collection.",

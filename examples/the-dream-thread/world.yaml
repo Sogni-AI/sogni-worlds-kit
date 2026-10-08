@@ -1,0 +1,1507 @@
+# The Dream Thread — the real plan behind https://worlds.sogni.ai/demo
+
+# A world with no photographs in it. Every place was painted from a concept: Krea 2 Turbo for the
+# first picture, then Sogni Krea 2 Identity Edit to keep the same character from one reference
+# picture of Simon (the model and seed are noted on each place). The pictures are not in this
+# repository; the playable copy (examples/the-dream-thread/world.json) streams them, the films, the rewinds
+# and the 3D figures from where they are published.
+
+# Every film direction below is the shot and soundscape that rendered the film now live in that
+# world (MiniMax H3 FastH3 first-and-last-frame, two-stage, 1344x768 delivered at 2688x1536), with
+# its seed. 11 of the 57 films were written for the kit's prompt format and
+# `node world render` rebuilds their prompts byte for byte; the rest were directed before the kit
+# existed, under an earlier form of the same recipe (the alignment line rounds differently, the
+# landing sentence is phrased in the direction itself, and 25 of them asked for music), so
+# a re-render from this plan would be the same direction, not the same bytes. Where a direction
+# breaks a rule the kit learned later, the film says so with `allow` and lint still shows the warning.
+
+# Not in this plan, because the kit's format has no place for it: the world's regional score
+# (twelve MiniMax Music 3 cues), the rendered ways back through a recurring object, an object
+# that leads two ways, and the sheets of questions Simon can ask. Simon's thirteen figures are:
+# `collect` objects without a film, picked up straight from the picture.
+
+# Use it as a worked example of a free-roaming world: seen / objects / select / film, with
+# `order: free` and an intro card. Then make your own with `node world new <id>`.
+
+id: the-dream-thread
+title: The Dream Thread
+subtitle: A pink sloth, a sleeping giant, and absolutely no itinerary
+story: "Simon, a small pink sloth with reading glasses and a horn nobody in the story brings up, wakes at a moonlit crossroads below a sleeping stone giant. Twenty-three places, each painted in its own look (moonlit fantasy, cut paper, risograph ink, neon rain, watercolour, stop-motion clay), joined by the things he can climb, open, ride or follow: every journey is one continuous shot through the thing you clicked, and it lands exactly on the next picture. Simon is somewhere in every place, and in thirteen of them he can be picked up and turned over. Nobody in it is real."
+order: free
+start: junction
+canvas: 1344x768
+contentFilter: off
+intro:
+  eyebrow: Story adventure · 23 places
+  tagline: Wander 23 hand-built places, take every journey between them, and collect the figures hiding along the way.
+  begin: Begin the story
+voices: {}
+music: null
+places:
+  # painted with Sogni Krea 2 Identity Edit, seed 360910
+  - id: junction
+    still: stills/junction.jpg
+    title: The Dream Thread Wakes
+    chapter: The beginning
+    caption: Three distant signals are waiting for a curious traveler.
+    seen: "Night, moonlit: a small pink fuzzy sloth with round black glasses, a cream face, a blue nose and a short striped ivory horn stands at the centre of a wet stone path, facing the camera. Behind him on the left a stone staircase climbs the hillside, lit by hanging lanterns and a string of small lights, up to a carved wooden door glowing orange at the top. On the right a colossal moss-covered stone giant sits with its head bowed, a waterfall threading down beside it, under a full moon in a cloudy sky. Ferns and mist in the foreground; a lantern on a post at lower left."
+    objects:
+      - id: giant
+        label: Take the giant’s hand
+        hint: A garden with a very unusual gardener
+        at:
+          - 0.74
+          - 0.38
+        select:
+          positive:
+            - - 0.74
+              - 0.38
+        goes: guardian-garden
+        film:
+          frames: 243
+          seed: 920260002
+          idea: He lifts you toward the garden he has been growing.
+          action: A wide photographic view shows a small round pink sloth on a stone ledge, a towering moss-covered stone guardian behind him on the right and a lantern staircase on the left. The guardian bends its connected right arm and brings an open palm level with the ledge. The sloth turns toward the hand and steps onto its solid mossy surface, first one foot and then the other. The camera tracks beside him in three-quarter profile as the open hand lifts him toward the garden above. The stone wrist passes close across the camera, its opaque surface filling the view briefly. Moving around that same wrist, the camera reveals the sunlit garden from the rising palm. The brass telescope and glowing seed lie to the left and a red cable car hangs to the right. The sloth remains standing with both feet on the palm while the camera eases forward and settles above the garden. His round black glasses, cream face, blue muzzle, small striped horn and pink body remain clearly visible. The guardian holds its hand steady.
+          sound: Small footsteps brush stone and moss. Deep stone creaks accompany the lifting arm. Wind stirs leaves above distant running water.
+          allow:
+            - opening
+      - id: lanterns
+        label: Follow the lanterns
+        hint: Good music. Late hours. No bedtime.
+        at:
+          - 0.25
+          - 0.7
+        select:
+          positive:
+            - - 0.25
+              - 0.7
+        goes: neon-after-hours
+        film:
+          frames: 243
+          seed: 910221
+          idea: The lantern trail spills into a city that never quite sleeps.
+          action: Photorealistic fantasy footage with a moonlit cinematic look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the dark forest path beside the lantern posts, with the sleeping giant and the moon behind him. He turns left and trots down the lantern-lit stone steps, and the camera follows in a smooth tracking shot a few paces behind him as the lanterns pass the lens one after another, each glowing brighter than the last. The path curves around a huge moss-covered boulder, and its dark mossy face slides across the lens and fills the frame. As the boulder clears, the steps lead down onto a rain-wet cobbled street at night under strings of hanging lanterns, with a waterfall falling through the trees at the end of the street. He hops off the last step onto the wet stones, and the camera arcs around his left side past a glowing jukebox beside a diner window with a pink neon sign, while a red scooter stands beside a spiral iron staircase at the right. He stops in the middle of the street, turns to face the camera and stands with his arms at his sides, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Crickets, a trickling stream and the soft creak of lantern chains, padded footsteps on stone steps, then rain pattering on cobbles, splashing footsteps, the hiss of a waterfall and a jukebox song playing faintly from the diner.
+      - id: door
+        label: Open the impossible door
+        hint: A seaside made by hand
+        at:
+          - 0.4
+          - 0.14
+        select:
+          positive:
+            - - 0.4
+              - 0.14
+        goes: paper-coast
+        film:
+          frames: 243
+          seed: 920260001
+          idea: A seaside made by hand.
+          action: "One continuous traveling shot. The small round pink plush mascot in Picture 1 walks up the lantern-lit stone staircase on the left toward the existing carved door. He has the same round black glasses, cream facial mask, blue nose, small striped horn and pink fur as the supplied pictures. His torso and rounded rump are entirely pink; he is tailless. The camera moves LEFT with him, tracking alongside him at his walking speed so his face remains visible in three-quarter profile and his gaze stays on the steps ahead. Keep him in the left third, about one third of the picture height, with space above and ahead of him. His alternating footsteps grip each stair. The world has real depth: near lanterns pass the lens quickly and the stone giant remains far behind. At the top he opens the existing door and steps through. Tracking beside him, the camera slips close behind the thick opaque carved door leaf: solid dark wood sweeps across the ENTIRE lens. Continuing the same lateral movement, the camera emerges from behind a nearby paper-house wall into the harbor of Picture 2. He walks out of the doorway beside the camera in three-quarter profile, following the harbor path. The camera then eases out ahead of him and he turns his face toward its final position only as it settles into the exact supplied ending composition. One continuous physical journey with one recognizable character and tangible solid buildings, without transparent scenery or dissolving environments."
+          sound: Quiet footsteps on stone, wooden latch and hinges, then footsteps on the harbor path, soft water and a rustling paper kite. No voices.
+          allow:
+            - opening
+            - negation
+            - capitals
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360911
+  - id: guardian-garden
+    still: stills/guardian-garden.jpg
+    title: The Guardian’s Garden
+    chapter: The garden route
+    caption: Some friendships are larger than life.
+    seen: "Dusk on a mountainside garden: the pink sloth stands on the open mossy palm of the green stone giant, which fills the right half of the picture with its head bowed and the moon above it. A brass telescope on a wooden tripod points out of frame at left; a glowing seed pod shaped like a bud lights the lower middle, pink flowers and lanterns around it. A small red cable car hangs on a wire at the right edge, the sun setting over misty valleys behind it. Far left, the lantern staircase and glowing door of the junction."
+    objects:
+      - id: telescope
+        label: The stone giant
+        hint: Ride the giant’s hand to the cloud observatory
+        at:
+          - 0.75
+          - 0.76
+        select:
+          positive:
+            - - 0.75
+              - 0.76
+        goes: cloud-observatory
+        film:
+          frames: 243
+          seed: 920260003
+          idea: Ride the giant’s hand to the cloud observatory.
+          action: Photorealistic fantasy footage with a moonlit cinematic look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn sits in the open stone palm of the moss-covered giant, looking down at the brass telescope in the garden. He points up at the moon, and the giant lifts its hand high. The camera rises with them in a smooth pedestal up at fast speed, past the lanterns on the stone steps, the treetops and the glowing door on the hill, as the sloth holds on to the giant's mossy thumb with his fur blowing back. The hand rises into a layer of cloud, and bright white cloud fills the entire frame. The hand emerges above a sunlit sea of cloud beside a white observatory dome with a curved balcony, where a brass telescope stands on a tripod and a red cable car waits on a platform at the right. The sloth steps off the stone palm onto the balcony's curved wooden floor, and the giant's hand sinks back down into the clouds below the rail. The camera pulls out as the sloth stands beside the telescope with his feet planted on the floor, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Night insects and a trickling stream, a deep grinding of stone as the giant's arm lifts, rushing wind as they climb, a soft whoosh through the cloud, then thin high-altitude wind and a faint cable hum on the balcony.
+      - id: seed
+        label: Open the glowing seed
+        hint: A whole library taking root
+        at:
+          - 0.43
+          - 0.71
+        select:
+          positive:
+            - - 0.43
+              - 0.71
+        goes: moss-library
+        film:
+          # the live prompt also asked for music: A gentle celesta and harp phrase that swells with the light and settles into a slow, quiet close.
+          frames: 243
+          seed: 920260004
+          idea: Pages appear in the rings of an old tree.
+          action: One continuous shot that begins as photorealistic moonlit fantasy footage and becomes a hand-drawn ink and watercolor illustration after the golden light. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn sits in the open stone palm of the moss-covered giant at the right. The giant slowly lowers its huge hand to the ground beside the glowing seed pod in the flower bed, and the sloth climbs down off the palm onto the grass. The camera tracks with the descending hand and eases left as he crouches beside the seed pod and strokes its pale petals with one paw. The petals unfurl and warm golden light pours out, swelling until it fills the entire frame. The light softens into gentle daylight, and the camera pulls back from the same glowing seed pod, now drawn in ink and watercolor, standing among ferns and pink flowers at the left of a library carved into a living tree, with shelves of books, green cushions and a brass telescope by a round window. The camera trucks right to find the sloth sitting on a mossy root seat with an open book in his paws; he turns a page and looks up, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Night insects and a trickling stream, a deep grinding of stone as the giant's hand comes down, soft footsteps on grass, a rising chime as the seed opens, then a quiet library with birdsong through the window, rustling leaves and a page turning.
+      - id: tram
+        label: Catch the red tram
+        hint: A slow ride above the rainforest
+        at:
+          - 0.92
+          - 0.64
+        select:
+          positive:
+            - - 0.92
+              - 0.64
+        goes: rainforest-tram
+        film:
+          frames: 294
+          seed: 920260005
+          idea: A slow line above an enormous forest.
+          action: "Begin exactly in Picture 1. The guardian gently brings its occupied palm alongside the red cable car already visible on the right. The sloth turns into three-quarter profile toward the cabin. Its door slides open and he visibly steps from the palm across the threshold onto the cabin floor. Track alongside his shoulder into the red cabin, passing so close to the solid red door pillar that it briefly fills the entire image. The camera continues inside the same cabin. Through its side window, the guardian recedes and near leaves sweep past faster than the deep forest gorge: a tangible cable-car ride with strong parallax. Keep the sloth in the near side of the view looking out of the window, his face in profile and his feet on the floor. The red cabin gently docks at the wooden rainforest station. Its door opens; follow him out onto the platform at walking pace. Pass close behind the opaque red cabin door frame as he exits, then curve smoothly around his left side and ease backward along the platform into the exact view of Picture 2. The telescope is on the left, the bench and basket on the right, and the cabin he just rode stays docked on the left. The distant cabin in the final reference stays distant. Boarding, travel and disembarking are legible actions in that order. Reserve the frontal final pose for the last instant. All changes in location are revealed through real moving cabin geometry, never transparent scenery. Preserve exactly one pink sloth with the same black glasses, cream face, blue nose and striped horn as both references, four limbs and consistent size. Keep his rounded body pink; do not invent a tail, back stripe, extra horns or duplicate traveller. Use one continuous directed camera move, with solid foreground occlusion rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent."
+          sound: A sliding cabin door, two footfalls on the cabin floor, a soft rolling cable hum and wind, followed by wooden platform footsteps and distant waterfall. No speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.6642
+          - 0.4948
+        select:
+          positive:
+            - - 0.6642
+              - 0.4948
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360912
+  - id: neon-after-hours
+    still: stills/neon-after-hours.jpg
+    title: Neon After Hours
+    chapter: The city route
+    caption: The city is just waking up.
+    seen: "Night on a wet city street: the pink sloth stands in the middle, facing the camera. At left a glowing jukebox beside a diner window under pink neon letters (DINER) and other neon signs; strings of lanterns cross overhead; a black spiral staircase climbs the brick building at right; a red Vespa scooter is parked at lower right outside a lit shop window with shelves. A waterfall and a moonlit forest show in the gap between the buildings."
+    objects:
+      - id: jukebox
+        label: Play one more song
+        hint: Waffles taste better after midnight
+        at:
+          - 0.11
+          - 0.66
+        select:
+          positive:
+            - - 0.11
+              - 0.66
+        goes: midnight-diner
+        film:
+          frames: 294
+          seed: 923230008
+          idea: Chrome softens into an all-night booth.
+          action: "A dimensional animated film opens on the pink sloth standing on the wet night paving between the glowing jukebox at left, beneath the pink DINER neon, and the red scooter parked at right, lanterns strung overhead, the spiral stair at right and the moonlit waterfall behind. He slaps the jukebox’s big button; the record drops with a clunk and a bright 1980s synth-pop track blasts out, the jukebox’s colored tubes pulsing with the beat. He hits it hard: his shoulders pop on the downbeats, his elbows lock into a jerky robot, his knees pump through a running man that splashes the puddles, one arm sprinklers out to the side and he points at the moon on the synth stab. He spins on one foot so his fur flares, lands in a low crouch and pops back up moonwalking left toward the jukebox, his face absurdly serious behind his glasses. The camera tracks left with him at his speed and passes close behind the jukebox: its wooden cabinet and glowing tubes slide across the whole view and cover it for a beat while the music keeps playing. As the camera clears the cabinet’s far edge, the diner’s open front is right there beside the jukebox: a small chrome table and a red vinyl booth just inside the lit doorway, a yellow kite propped against the end of the booth, a plate with a waffle waiting on the table and the red scooter parked beyond at right beside the lit window. He moonwalks the last two steps to the booth, spins once on the final synth chord, drops onto the red booth seat, slides his right paw onto the table beside the waffle plate, rests his left paw on his knee and freezes in a proud pose as the song stops, the jukebox glowing at the left edge. The view settles in the composition established by Picture 2."
+          sound: "A jukebox button clicks and a record drops, then a bright 1980s synth-pop track plays from the jukebox: a punchy drum machine, slap bass, glittering synth stabs and a soaring lead line, louder for the beat the camera passes right behind the cabinet. Wet feet squeak and splash on the paving, fur whooshes through the spins, vinyl squeaks as he lands on the booth and the song ends on one held chord. Rain drips from the lanterns and the waterfall roars softly behind."
+          allow:
+            - opening
+            - capitals
+      - id: stairs
+        label: Find the rooftop
+        hint: A quiet view above the city
+        at:
+          - 0.72
+          - 0.32
+        select:
+          positive:
+            - - 0.72
+              - 0.32
+        goes: rooftop-dance
+        film:
+          frames: 362
+          seed: 920260011
+          idea: A quiet view above the city.
+          action: "Begin in the neon courtyard. The sloth looks up toward the existing black spiral stair on the right and walks to its lowest tread. The original scooter stays parked. Truck right with him, then rise around the outside of the fixed stair at exactly his climbing speed. Keep him in side profile with his glasses and blue nose visible, his feet landing on successive metal treads and one hand sliding on the rail. The courtyard falls away beneath us with strong parallax; never leave him for an empty stair view. As we round the upper curve, reveal a low clothesline across the landing with two absurdly large striped wool socks and an opaque cream bedsheet. He gives a small amused duck under one sock and continues. Dip the camera with him. A breeze swings the real bedsheet across our path: its thick fabric and seam pass right across the lens, covering every edge for a brief beat as the upward-forward movement continues. Emerge past the far edge of the same sheet with the sloth stepping off the stair onto the rooftop. Leave the laundry behind us outside the final view. Track beside him across the terrace, then gently arc into the exact closing rooftop composition, revealing the round dance platform and mirror ball on the right. Keep the masonry, treads and rail rigid; the stair is never a moving ride. The visual joke is his serious little climb through this ridiculous midnight laundry, followed by the wide rooftop reveal. Preserve the one pink sloth from the references: black glasses, cream face, blue nose, one striped horn, rounded pink fur and four limbs. Keep a profile or three-quarter face visible while he looks along his route. No tail, pale back stripe, duplicate traveller or changing proportions. One unbroken tracking shot, beginning exactly at Picture 1 and settling into Picture 2. Follow the traveller at their speed with believable foot contact; keep them visible except for the brief specified foreground cover. Sets and props stay rigid. Reveal the destination through parallax and complete solid occlusion, never a dissolve, fade, flash, transparent overlap or melting architecture. No dialogue."
+          sound: Wet footsteps become clear metal stair clinks, a hand slides on the rail, then fabric flaps close to the lens. Rooftop wind takes over as his feet reach stone. Subtle city ambience, distant waterfall and no voices.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: scooter
+        label: Take the scenic route
+        hint: Trade the city glow for a desert sunset
+        at:
+          - 0.86
+          - 0.73
+        select:
+          positive:
+            - - 0.86
+              - 0.73
+        goes: desert-roadtrip
+        film:
+          frames: 294
+          seed: 609128
+          idea: City glow stretches into a desert sunset.
+          action: The sloth turns toward the existing red scooter on the right. The camera trucks beside his glasses and blue muzzle in profile as he walks up, sits on the saddle, grips the handlebars and brings his feet onto the scooter floor. He rolls forward through the narrow lane alongside the brick diner. Track in a low side chase, keeping his profile visible rather than exposing a prolonged rear view. A close solid brick corner sweeps fully across the lens while the forward motion continues. Emerge alongside the same moving scooter on the open desert road. Near roadside plants sweep past rapidly while far mesas move slowly, establishing a real ride. He steers into the diner forecourt, brakes, puts one foot down and steps off beside the scooter. Curve gently around his side into the exact final composition of Picture 2, with the jukebox on its table to the right. The scooter never duplicates or changes shape, both wheels stay grounded, and the transition occurs entirely behind the opaque corner. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink body. Keep his reference features visible in profile; no invented tail, cream back stripe, extra horns or duplicate traveller. One continuous directed camera move, opaque physical cover rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Natural footfalls and handling sounds remain synchronized to the visible actions. Source ambience recedes behind the physical obstruction and the destination ambience emerges ahead, with no intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360913
+  - id: paper-coast
+    still: stills/paper-coast.jpg
+    title: The Paper Coast
+    chapter: The seaside route
+    caption: A new world, folded just for you.
+    seen: "A cut-paper seaside village in daylight: the pink sloth stands on a paper path along a harbour, red-roofed paper houses rising up the hill at left and a yellow paper kite with a red tail flying above them. At lower left a wicker picnic basket with a loaf of bread sits on a wooden bench; at right a brass diving bell hangs from a wooden crane on a jetty over layered paper waves; paper cliffs, pines and clouds beyond, a paper sun at top right."
+    objects:
+      - id: basket
+        label: Follow the fresh bread
+        hint: A warm little world made of clay
+        at:
+          - 0.21
+          - 0.74
+        select:
+          positive:
+            - - 0.21
+              - 0.74
+        goes: sunlit-bakery
+        film:
+          # the live prompt also asked for music: A cheerful accordion tune at a brisk walking tempo.
+          frames: 243
+          seed: 910237
+          idea: A warm little world made of clay.
+          action: One continuous shot that begins as handmade cut-paper craft with layered paper textures and becomes handmade stop-motion clay after the door. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the paper harbor path beside the bench with the wicker basket and its long loaf of bread. A curl of warm steam rises from the loaf and drifts off up the lane between the paper houses. He lifts his nose, sniffs and follows the drifting steam, walking faster and faster, and the camera follows in a smooth tracking shot a few paces behind him as layered paper walls and window boxes slide past close to the lens. The steam curls under the round wooden door of a little bakery at the end of the lane; he pushes the door open, and its thick wooden face swings across the lens and fills the frame. Inside is a tiny clay bakery with a brick oven glowing with fire, copper pans on the wall, a yellow kite pinned beside an arched window and a table of golden croissants. He walks onto the terracotta tiles, breathes in the warm air and turns to face the camera, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Paper waves lapping at the harbor, gulls and a breeze rustling paper, soft footsteps on a cobbled path, a wooden door creaking open, then the crackle of an oven fire and the gentle clink of copper pans.
+      - id: bell
+        label: Take the diving bell
+        hint: A window into the reef
+        at:
+          - 0.8
+          - 0.58
+        select:
+          positive:
+            - - 0.8
+              - 0.58
+        goes: coral-station
+        film:
+          # the live prompt also asked for music: A slow, low cello line that sinks with the bell and resolves into a soft sustained chord in the lounge.
+          frames: 243
+          seed: 910238
+          idea: The harbour creases into a window on the reef.
+          action: One continuous shot that begins as handmade cut-paper craft with layered paper textures and becomes clean photorealistic 3D-rendered science fiction under the water. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the paper harbor path. He walks to the brass diving bell hanging from a wooden crane on the dock at the right, opens its round hatch and climbs inside, and his face appears at the round porthole. The crane swings out and lowers the bell into the paper waves, and the camera follows it down in a smooth tracking shot as the water closes over the lens and white bubbles fill the frame. The bubbles clear into deep blue sunlit water full of coral and swirling silver fish, and the bell sinks past the long curved window of an underwater lounge and in through a round opening in its floor. It settles onto the round metal grate at the right of the lounge in a gush of bubbles. The hatch swings open, and the sloth climbs out onto the wooden floor, walks past the brass telescope to the middle of the room in front of the reef window and turns to face the camera, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Paper waves and gulls, the creak of a wooden crane and a hatch clanking shut, a splash, then deep muffled bubbling and the groan of cable as the bell sinks, a hiss of air as it settles, the hatch opening and the quiet hum of the underwater lounge.
+      - id: kite
+        label: Go where the wind goes
+        hint: An afternoon printed in bright ink
+        at:
+          - 0.4
+          - 0.16
+        select:
+          positive:
+            - - 0.4
+              - 0.16
+        goes: kite-festival
+        film:
+          # the live prompt also asked for music: A soaring fiddle melody at a lively tempo that lifts with the kite and settles into a light, happy phrase on the hill.
+          frames: 243
+          seed: 910239
+          idea: An afternoon printed in bright ink.
+          action: One continuous shot that begins as handmade cut-paper craft with layered paper textures and becomes a flat risograph storybook print with bright ink colors after the cloud. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the paper harbor path with the yellow kite flying above the rooftops. He takes hold of the kite's string, and a strong gust lifts the kite high. The camera flies up with the kite in a smooth arc shot at fast speed, circling it as it swoops over the red paper rooftops, the harbor, the cliffs and the paper sea, its red tail streaming. The kite sails into a white paper cloud that fills the entire frame. It comes out into a bright sky over a flat printed sea, a green hill and a village of red-roofed houses, and the camera glides down along the taut kite string to the sloth standing on the grassy hill holding it, with a picnic basket of bread beside him. The camera settles in front of him as the kite hovers above his shoulder, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: A rising gust of wind, the snap and flutter of a paper kite, gulls wheeling below, wind rushing past, then a gentle breeze across a hilltop and waves breaking far below.
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360914
+  - id: cloud-observatory
+    still: stills/cloud-observatory.jpg
+    title: Above the Weather
+    chapter: Beyond the garden
+    caption: The forecast is wonder.
+    seen: "A cream-and-chrome observatory dome above a sea of clouds: the pink sloth stands at the railing of a curved deck at the centre. A brass telescope on a tripod, a small lantern hanging from it, points up at left, with orange leather seats around the deck; at right a small red cable car sits on a platform below its cable, clouds stretching to the horizon under a blue sky."
+    objects:
+      - id: tram
+        label: Ride back through the canopy
+        hint: The rainforest is one tram ride away
+        at:
+          - 0.86
+          - 0.59
+        select:
+          positive:
+            - - 0.86
+              - 0.59
+        goes: rainforest-tram
+        film:
+          # the live prompt also asked for music: A light marimba figure at a relaxed, rolling tempo that rises gently as the car drops below the clouds.
+          frames: 243
+          seed: 910206
+          idea: Down through the cloud into the rainforest.
+          action: Photorealistic 3D-rendered footage with a bright, cinematic look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the curved observatory balcony above a sea of white cloud. He turns right and walks along the chrome rail to the red cable car waiting at the platform edge, slides its door open and steps inside. The camera trucks right with him, then keeps pace beside the cable car in a smooth tracking shot as the car rolls off the platform and glides down the steel cables. The car sinks into the cloud sea, and bright white cloud fills the entire frame. The car drops out beneath the cloud into warm morning light over a vast green rainforest, where a waterfall pours down a cliff and treetops rush past below. The cable car glides down into a small wooden station on a misty ridge and slows to a stop. The door slides open and the sloth steps out onto the rain-wet wooden deck, his feet planted on the boards, with a brass telescope on a tripod at the left and a picnic basket with a loaf on the bench at the right. The camera eases back and pans to face him as he stands in front of the red car, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Thin high-altitude wind, the whir of cable pulleys and a gentle clunk as the car leaves the platform, a soft rush of air through the cloud, then birdsong, dripping leaves and the distant roar of a waterfall as the car rolls into the station and the door slides open.
+      - id: summit
+        label: Swing the telescope to the mountains
+        hint: Something up there is worth the walk
+        at:
+          - 0.31
+          - 0.31
+        select:
+          positive:
+            - - 0.31
+              - 0.31
+        goes: the-knife-edge
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361100
+          idea: Something up there is worth the walk.
+          action: "Begin at the exact composition of Picture 1. The camera swings off the telescope and out over the observatory rail, the rail sweeping past the lens, and flies low across the cloud sea toward the mountains standing out of it. It closes on the nearest of them, climbs the face with the rock sliding past close on one side, and comes over the top onto a snow ridge at first light with the pink sloth standing on the crest. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 771400
+  - id: the-knife-edge
+    still: stills/the-knife-edge.jpg
+    title: The Knife Edge
+    chapter: Where the mountains start
+    caption: Nobody is above you now.
+    seen: "First light on a snow ridge: the pink sloth, dark goggles on a strap around his neck, stands in the snow at the centre. A string of coloured prayer flags runs along the ridge at left past a brass telescope on a tripod with a lantern; an orange dome tent sits on the snow at right; a coil of red rope and an ice axe planted in the snow in the foreground; a knife-edge ridge rises to a snowy summit behind, a sea of cloud and a sunrise horizon on the right and a starry sky above."
+    objects:
+      - id: flags
+        label: Follow the prayer flags
+        hint: They lead back over the clouds
+        at:
+          - 0.19
+          - 0.51
+        select:
+          positive:
+            - - 0.19
+              - 0.51
+        goes: cloud-observatory
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361101
+          idea: They lead back over the clouds.
+          action: "Begin at the exact composition of Picture 1. The prayer flags snap in the wind and the camera follows the cord along the ridge, each flag cracking past close enough to fill the frame as it passes. At the last one it leaves the crest and drops away down through the cloud sea, comes out underneath it in clear sky, and rises onto the observatory deck beside the rail. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: tent
+        label: Crawl into the tent
+        hint: It is warmer in there than it should be
+        at:
+          - 0.68
+          - 0.51
+        select:
+          positive:
+            - - 0.68
+              - 0.51
+        goes: sunlit-bakery
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361102
+          idea: It is warmer in there than it should be.
+          action: "Begin at the exact composition of Picture 1. The camera leaves the crest and goes down the snow slope toward the orange tent, the snow rushing underneath, and ducks in at the open flap, the fabric passing right across the lens and going dark for a beat. It comes out the far side into the warm clay bakery, the counter edge passing close as it settles. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: rope
+        label: Follow the fixed rope down
+        hint: It goes all the way to the green
+        at:
+          - 0.62
+          - 0.83
+        select:
+          positive:
+            - - 0.62
+              - 0.83
+        goes: rainforest-tram
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361103
+          idea: It goes all the way to the green.
+          action: "Begin at the exact composition of Picture 1. The pink sloth takes the fixed rope and goes over the edge, and the camera drops with it down the face, rock and old snow tearing past close on both sides. The wall gives out into empty air, the cloud closes over the lens for a beat, and the camera comes down through it into warm wet green and settles on the rainforest tram platform. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+  # painted with Sogni Krea 2 Identity Edit, seed 360915
+  - id: moss-library
+    still: stills/moss-library.jpg
+    title: A Library Takes Root
+    chapter: Beyond the garden
+    caption: Please whisper. The trees are reading.
+    seen: "An ink-and-watercolour library grown inside a tree: the pink sloth sits on a mossy ledge at the centre reading an open book, bookshelves curving around the trunk behind him. At left a glowing seed pod lights the ferns beside him, a lantern hangs from a branch and a waterfall falls past a window; at right a brass telescope on a tripod points out of an arched window at misty hills, with a stack of books and a potted plant on the sill; pink flowers and moss in the foreground."
+    objects:
+      - id: telescope
+        label: Read between the stars
+        hint: The observatory has room for one more
+        at:
+          - 0.79
+          - 0.32
+        select:
+          positive:
+            - - 0.79
+              - 0.32
+        goes: cloud-observatory
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 920260009
+          idea: The watercolour opens into a bright observatory.
+          action: "Begin at the exact composition of Picture 1. The camera leaves the telescope and flies out the open library window, the frame of it wiping past on both sides, and climbs away from the tree. It keeps climbing through cloud until the observatory white deck swings into view and it comes alongside the rail. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: seed
+        label: Open the glowing seed
+        hint: Something has been growing in there
+        at:
+          - 0.13
+          - 0.55
+        select:
+          positive:
+            - - 0.13
+              - 0.55
+        goes: the-residency
+        film:
+          # the live prompt also asked for music: A slow solo piano phrase at a gentle, even tempo that follows the descent down the spiral.
+          frames: 243
+          seed: 910229
+          idea: Something has been growing in there.
+          action: Hand-drawn ink and watercolor illustration with soft washes and fine ink lines, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn sits on the mossy root seat with an open book. He closes the book, sets it on a cushion, gets up and walks to the tall glowing seed pod among the ferns at the left. He parts its pale petals with both paws, and inside a spiral iron staircase winds down into warm light. He steps in and starts down the stairs, and the camera follows him in a smooth descending arc shot around the spiral at an even pace, the glowing petal walls turning past the lens. The staircase opens into a glasshouse studio, where watercolor paintings hang drying on a line, easels stand among potted plants and a clay pot sits on a pottery wheel. At the foot of the stairs he takes a paint-splashed apron from a hook and ties it on, picks up a brush and a small bowl from the pottery table and walks to the middle of the studio. He turns to face the camera, holding the brush and bowl, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: A quiet library with birdsong and rustling pages, a book closing softly, a gentle chime as the petals part, iron steps ringing under slow footsteps, then the warm hush of a glasshouse with birds outside, a brush tapping a bowl and a pottery wheel turning.
+      - id: lantern
+        label: Take the lantern outside
+        hint: A whole street is lit like this
+        at:
+          - 0.13
+          - 0.19
+        select:
+          positive:
+            - - 0.13
+              - 0.19
+        goes: neon-after-hours
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361107
+          idea: A whole street is lit like this.
+          action: "Begin at the exact composition of Picture 1. The pink sloth carries the hanging lantern out of the library and down the stairs cut into the trunk, the camera following close as the steps turn and turn again and the bark wall wipes the frame. The last turn comes out at street level in the rain, and the camera follows the lantern under the strung lights of the wet neon street. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.4234
+          - 0.5765
+        select:
+          positive:
+            - - 0.4234
+              - 0.5765
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360916
+  - id: rainforest-tram
+    still: stills/rainforest-tram.jpg
+    title: The Slow Way There
+    chapter: Beyond the garden
+    caption: You have arrived exactly on sloth time.
+    seen: "A wooden tram-station deck in a misty rainforest: the pink sloth stands on wet planks at the centre. At left a red cable car hangs from its carriage under a steel gantry, a brass telescope on a tripod on the rail in front of it and a waterfall through the trees behind; at right a second red car far down the cable in the mist, sunlight through the canopy, and a wicker picnic basket with a baguette and a red checked cloth on a wooden bench."
+    objects:
+      - id: basket
+        label: Find the baker
+        hint: A shortcut from the forest to fresh croissants
+        at:
+          - 0.83
+          - 0.75
+        select:
+          positive:
+            - - 0.83
+              - 0.75
+        goes: sunlit-bakery
+        film:
+          frames: 294
+          seed: 609121
+          idea: A shortcut from the forest to fresh croissants.
+          action: The sloth turns toward the picnic basket on the right-hand bench. Track beside his face in profile as he walks to it, lifts it by the handle and follows the wooden platform toward the station’s sheltered walkway. The basket remains a hand-carried object at its original size. The camera follows close beside the basket; its opaque woven side passes directly in front of the entire lens as he turns through the walkway, revealing real wicker texture during the brief cover. Continue the same forward motion and emerge beside him carrying the same basket through the bakery entrance into Picture 2. The warm clay walls are revealed around a solid wooden jamb; no tram cabin appears in the bakery. He puts the basket on a low shelf beyond the immediate view, then walks up beside the croissant workbench. Track that action and curve into the exact final image, with the small brass bell on the left and yellow kite above right. He is empty-handed at arrival because he visibly set down the basket. The forest changes into clay scenery only while solid wicker and wood conceal the lens. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink body. Keep his reference features visible in profile; no invented tail, cream back stripe, extra horns or duplicate traveller. One continuous directed camera move, opaque physical cover rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Natural footfalls and handling sounds remain synchronized to the visible actions. Source ambience recedes behind the physical obstruction and the destination ambience emerges ahead, with no intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: telescope
+        label: Look through the telescope
+        hint: It is pointed a very long way from here
+        at:
+          - 0.18
+          - 0.52
+        select:
+          positive:
+            - - 0.18
+              - 0.52
+        goes: midtown-downpour
+        film:
+          # the live prompt also asked for music: A driving cello ostinato that accelerates with the flight and drops away into the sound of the rain.
+          frames: 243
+          seed: 910241
+          idea: It is pointed a very long way from here.
+          action: One continuous shot that begins as photographic travel footage of a misty rainforest morning and becomes photographic cinematic footage of a city avenue in heavy rain. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the wet wooden deck of the cable car station. He steps to the brass telescope on the left, swings it toward the far horizon and puts one eye to the eyepiece. The camera pushes in along the brass barrel into the front lens, and the circle of distant sky grows until it fills the entire frame. The camera flies forward at fast speed out across the misty valley and over the forest, into a bank of grey storm cloud that fills the frame, and then drops out of the cloud between tall skyscrapers into pouring rain. It dives down the avenue past yellow taxis and umbrellas and levels out above a glistening sidewalk beside a green subway entrance, where the same pink sloth now stands with rain running off his fur. The camera pulls back as a food cart with a striped umbrella and a yellow taxi pass behind him, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Birdsong and dripping leaves, the squeak of the telescope turning on its mount, rushing wind as the view flies forward, a roll of thunder in the cloud, then heavy rain on pavement, traffic hiss, horns and a steam vent sighing.
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360917
+  - id: midnight-diner
+    still: stills/midnight-diner.jpg
+    title: Waffles After Midnight
+    chapter: Beyond the city
+    caption: Your usual table. In a place you have never been.
+    seen: "Inside a diner at night: the pink sloth sits in a red booth at a small chrome-edged table with a plate of waffles, one hand on the table. At left a glowing jukebox and, in the window, the DINER neon sign read from behind; red-and-white striped booths, pendant lamps and a framed poster behind him; at right a yellow kite with a red tail leans against the window beside a potted plant, and a red Vespa scooter is parked outside the glass."
+    objects:
+      - id: kite
+        label: Take breakfast outside
+        hint: Follow a yellow kite to the sea
+        at:
+          - 0.82
+          - 0.38
+        select:
+          positive:
+            - - 0.82
+              - 0.38
+        goes: kite-festival
+        film:
+          frames: 294
+          seed: 609124
+          idea: Rain gives way to a bright illustrated afternoon.
+          action: The sloth leaves the waffle plate on the table, stands from the red booth and walks toward the large yellow kite on the right. Track beside his face in profile as he lifts the kite from its hook and carries it through the diner entrance, holding its wooden spar securely. Wind catches the paper as he turns outside. The camera follows close beside him; the opaque yellow kite sweeps across and fully fills the lens for a brief moment, with its paper fibers and crossed spar still solid and legible. Continue the same walking motion through that cover and emerge alongside him on the coastal hill in Picture 2. He holds the line while the same yellow kite rises above him in the breeze. Track with his short steps across the grass; reveal the paper village left and sea right with near grass moving faster than the distant shore. He stops beside the picnic basket already on the hill and the camera curves into the exact final image. The sloth remains on foot, never lifted by the kite. The change of material and place is concealed by real kite paper, not a dissolve. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink body. Keep his reference features visible in profile; no invented tail, cream back stripe, extra horns or duplicate traveller. One continuous directed camera move, opaque physical cover rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Natural footfalls and handling sounds remain synchronized to the visible actions. Source ambience recedes behind the physical obstruction and the destination ambience emerges ahead, with no intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: vespa
+        label: Take the red Vespa
+        hint: It has been waiting for somebody to ask
+        at:
+          - 0.87
+          - 0.7
+        select:
+          positive:
+            - - 0.87
+              - 0.7
+        goes: dust-city
+        film:
+          frames: 294
+          seed: 609119
+          idea: It has been waiting for somebody to ask.
+          action: The sloth leaves the waffle plate on the table, gets up from the red booth and walks to the red scooter already parked on the right. The camera tracks beside his face in profile. Show him sitting on the saddle, gripping both handlebars and setting his feet on the scooter floor before it rolls. Follow in a low three-quarter side tracking shot as he rides past the diner’s brick corner; the very close opaque corner sweeps across and fully hides the lens while forward motion continues. Emerge alongside the same moving scooter on a hard-packed desert path, its wheels rotating and touching the ground. The camp’s illuminated tower grows through parallax as he rides toward it. He brakes beside the piano, puts one foot down, steps off and stands alongside the parked scooter. The camera gently arcs into the exact final camp composition. The scooter remains a single continuous vehicle and never materializes underneath him; show mounting, riding, stopping and dismounting in order. Match Picture 1 exactly at the start and Picture 2 exactly at the end. One pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink fur. Keep his face visible in profile during travel, without a new tail, back stripe, extra horn or duplicate traveller. A single continuous tracking shot with complete physical occlusion, no cross-dissolve, hard fade, flash, morphing or transparent scenery. The sloth remains silent.
+          sound: Natural footsteps and small object handling sounds follow the camera continuously. The source room ambience recedes behind the solid obstruction and the destination ambience emerges ahead. No intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360924
+  - id: dust-city
+    still: stills/dust-city.jpg
+    title: A City Made of Art
+    chapter: Somewhere far out
+    caption: The road ran out an hour ago. The city is still here.
+    seen: "Night on a dry lakebed under stars: the pink sloth stands beside a red Vespa scooter at the centre, its headlight on. At left an old upright piano and its stool stand on the sand with neon fish sculptures glowing green, pink and blue behind them; at the back a tall effigy of lit cubes with a winged figure on top; at right a glowing geodesic dome tent with its door open and an armchair inside, smaller tents and lights in the distance."
+    objects:
+      - id: piano
+        label: Play the piano nobody owns
+        hint: Somebody on a rooftop will dance to it
+        at:
+          - 0.13
+          - 0.52
+        select:
+          positive:
+            - - 0.13
+              - 0.52
+        goes: rooftop-dance
+        film:
+          frames: 294
+          seed: 609129
+          idea: Somebody on a rooftop will dance to it.
+          action: The sloth leaves the parked scooter and walks to the upright piano on the left. Track alongside his glasses and muzzle in profile as he presses three piano keys with one hand, then walks around the piano’s left end toward the warm light beyond. Follow very close beside him. The opaque dark wooden piano side sweeps completely across the lens as the camera rounds that corner, maintaining continuous forward motion. Emerge alongside the same walking sloth from behind the rooftop jukebox’s solid cabinet, revealing the terrace of Picture 2 through foreground parallax. He steps toward the dance floor, following the rhythm with small foot movements, while the camera arcs into the exact final composition with the mirror ball right and spiral stair left. The desert scooter stays parked before the piano conceals it; the rooftop scooter is revealed already parked. He does not ride either one on this piano route. The scene changes only behind the dark opaque wooden cabinet; never show both locations transparently at once. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth, the original black glasses, cream face, blue nose and striped horn, four limbs and rounded pink fur. No new tail, back stripe, spikes or extra traveller. Use one continuous directed camera move with a brief complete occlusion by real solid scenery; no dissolve, fade, flash, transparent overlap or scenery morph. The sloth remains silent.
+          sound: Natural footfalls, the described small object sounds and room ambience track the visible actions. Source ambience recedes and destination ambience grows through the passage. No speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: dome
+        label: Follow the lit doorway
+        hint: Out past the last camp, towards morning
+        at:
+          - 0.84
+          - 0.55
+        select:
+          positive:
+            - - 0.84
+              - 0.55
+        goes: desert-roadtrip
+        film:
+          # the live prompt also asked for music: A twangy electric guitar line over a loping drum beat at a steady cruising tempo.
+          frames: 243
+          seed: 920260020
+          idea: Out past the last camp, towards morning.
+          action: Photographic live-action footage with a long-exposure night look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands behind his red scooter on the dusty lakebed at night, its headlight glowing. He swings a leg over the seat, twists the throttle and rides toward the geodesic dome on the right, whose doorway glows warm yellow. The camera follows in a smooth tracking shot just behind the scooter at fast speed as dust lifts in its headlight beam. He rides straight in through the lit doorway, the warm canvas wall of the dome fills the frame as the camera passes through behind him, and he crosses the rug-strewn interior and rides out through a doorway on the far side. Beyond the dome the sky is brightening into a golden sunset over red desert buttes, and the scooter bumps off the dirt onto an empty two-lane highway. The camera travels alongside him as he rides down the road, then pulls ahead and swings around to face him as he rolls up beside a picnic table with a small glowing jukebox and a roadside diner with a red neon sign. He stops, hops off and stands beside the scooter with one paw on its seat, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Distant music from several camps and the crackle of dust underfoot, the buzz of a small scooter engine, a soft flap of canvas as he rides through the dome, then open desert wind, tyres humming on asphalt and the engine idling down as he stops.
+          allow:
+            - music
+      - id: effigy
+        label: Look for the way inside it
+        hint: Something is lit in there, and it is not fire
+        at:
+          - 0.38
+          - 0.28
+        select:
+          positive:
+            - - 0.38
+              - 0.28
+        goes: green-room
+        film:
+          frames: 362
+          seed: 922262104
+          idea: Something is lit in there, and it is not fire.
+          action: A dimensional animated film opens on the pink sloth beside his red scooter, with the tall mirrored effigy left of center and the illuminated dome tent at right. He puts the scooter on its stand and walks to the effigy. He admires his reflection in a low mirrored tile, puffs out his chest and gives the enormous figure an extravagant bow. His reflected horn catches the warm light of the tent entrance. He follows that glint around the effigy and toward the tent, still practicing his ridiculous bow as he walks. The camera accompanies him to the open fabric entrance; the chair inside and the canvas seams stay visible as he steps over the pegged sill. The camera follows into the tent and turns with him toward the adjoining open green dressing room. He carries his grand entrance straight through that second visible opening, then shakes the dust from his fur beside the buffet. When the costumed guests turn toward the dusty arrival, he converts the shake into a final theatrical bow and straightens before the vanity mirrors. The view settles in the composition established by Picture 2.
+          sound: The scooter stand clicks, sand grinds under feet, fingertips ping a mirror tile and canvas rustles beside the open entrance. Dust shakes from fur, glasses clink on the buffet and the guests give a brief amused murmur.
+          allow:
+            - opening
+  # painted with Sogni Krea 2 Identity Edit, seed 360918
+  - id: rooftop-dance
+    still: stills/rooftop-dance.jpg
+    title: Above the City
+    chapter: Beyond the city
+    caption: The city feels different from up here.
+    seen: "Blue hour on a rooftop: the pink sloth stands on wet paving at the centre, a mirror ball on a stand beside a small round wooden dance floor at right. At left the jukebox under the DINER neon sign and a red Vespa parked by the black spiral staircase that climbs to a planted balcony; strings of lights cross the sky; potted plants and pink flowers at right; the city skyline and a full moon behind."
+    objects:
+      - id: scooter
+        label: Chase the next sunset
+        hint: The desert is waiting at the end of the road
+        at:
+          - 0.26
+          - 0.62
+        select:
+          positive:
+            - - 0.26
+              - 0.62
+        goes: desert-roadtrip
+        film:
+          frames: 294
+          seed: 609127
+          idea: The desert is waiting at the end of it.
+          action: The sloth turns toward the parked red scooter on the left, walks to its saddle and visibly mounts it with both hands on the handlebars. The camera tracks beside his face in three-quarter profile. He slowly rolls the scooter along the terrace toward the broad brick service passage beside the diner wall, keeping both wheels on a level surface. Follow at wheel height in a side chase as the thick opaque brick corner passes very close and completely hides the lens briefly. Continue the same forward riding motion through the cover and emerge alongside the same moving scooter on the desert road in Picture 2. Track its rotating wheels and the sloth’s stable seated posture, with close roadside plants rushing faster than the far mesas. He pulls onto the diner forecourt, brakes, plants a foot and dismounts beside the scooter. The camera arcs into the exact final composition with the jukebox table to the right. Show the whole ride rather than mounting only after arrival. No flight off the roof, no new tail, and no transparent desert over the terrace. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink body. Keep his reference features visible in profile; no invented tail, cream back stripe, extra horns or duplicate traveller. One continuous directed camera move, opaque physical cover rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Natural footfalls and handling sounds remain synchronized to the visible actions. Source ambience recedes behind the physical obstruction and the destination ambience emerges ahead, with no intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: discoball
+        label: Follow the mirror ball down
+        hint: The light is coming from somewhere below
+        at:
+          - 0.8
+          - 0.65
+        select:
+          positive:
+            - - 0.8
+              - 0.65
+        goes: basement-club
+        film:
+          frames: 362
+          seed: 920260945
+          idea: The light is coming from somewhere below.
+          action: At the rooftop dance terrace of Picture 1, the pink sloth spins the existing mirrored ball on its pedestal. Its square reflections race across his glasses and the wet paving. He lifts it with both paws and carries it carefully down the visible iron spiral stair, taking the steps in a rhythmic little sideways dance. The camera descends on the inner side of the same railing. At the bottom the open brick club door is already spilling music and colored light. He carries the ball across the solid threshold. [Shot 2] At 00:10.000, a straight cut as the dark doorjamb crosses the lens shows the club already dancing. He places the same ball on a low speaker beside the payphone, gives it one last spin and steps into Picture 2 among the dancers.
+          sound: Mirrored glass ticking on its stand, quick metal stair footfalls, the club beat growing through the doorway and a solid ball setting down on the speaker. Music is diegetic from club speakers.
+          allow:
+            - opening
+            - one-shot
+            - music
+            - timestamps
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360927
+  - id: the-wreck
+    still: stills/the-wreck.jpg
+    title: The Grand Staircase
+    chapter: Somewhere much deeper
+    caption: Nobody down here is in a hurry.
+    seen: "Inside a sunken liner, lit green: the pink sloth stands on a patterned carpet in a flooded hall at the centre. At left a round brass bulkhead door with a porthole stands open; above him hangs a chandelier furred with growth; a grand staircase with a red runner climbs at right, where several still figures stand on the landing and beside the bannister; a wooden reception desk with a brass bell at lower right."
+    objects:
+      - id: bulkhead
+        label: Push the bulkhead door
+        hint: Back up towards the lamps
+        at:
+          - 0.2831
+          - 0.4649
+        select:
+          positive:
+            - - 0.09
+              - 0.47
+        goes: coral-station
+        film:
+          frames: 243
+          seed: 910256
+          idea: Back up towards the lamps.
+          action: Photographic cinematic footage, a medium-wide shot starts in the exact framing of Picture 1. The pink sloth stands in the dry dim liner hall with the oval brass hatch open at his left. His black glasses, cream face, blue nose and striped forehead horn stay clearly visible. The camera slides smoothly left toward the open hatch while the sloth approaches it in three-quarter front view, keeping his gaze toward the camera. He braces a paw on the brass rim and steps over the sill. The camera retreats through the opening ahead of him, looking back toward his face as he follows. The thick riveted brass arch is a single rigid solid shape; its ceiling bolts, curved rim and attached dark ceiling plate keep fixed shapes and move through the view only with the camera travel. Continuing backwards along the short dry metal corridor, the camera keeps the sloth visible from the front, with both sides of his glasses and his forehead horn in view. Blue daylight enters from the observation lounge behind the camera. Camera and sloth cross the lounge threshold, and the camera arcs gently to put the long glass reef window behind the sloth. The telescope at the left and diving helmet at the right stay in their fixed places. The sloth stops in the pose, spacing and composition established by Picture 2, his mouth closed while his eyes follow the fish beyond the glass.
+          sound: Low timber creaks; soft footsteps on wood; a hollow footstep over the metal sill; quiet corridor ventilation; footsteps enter the observation lounge and stop; its steady mechanical hum continues.
+          allow:
+            - opening
+      - id: chandelier
+        label: Climb the grand staircase
+        hint: The party is at the top
+        at:
+          - 0.689
+          - 0.5072
+        select:
+          positive:
+            - - 0.47
+              - 0.12
+        goes: green-room
+        film:
+          frames: 294
+          seed: 609123
+          idea: The party is at the top.
+          action: The sloth glances up at the warm chandelier and turns toward the grand staircase behind him. The camera trucks alongside his three-quarter profile as he climbs the carpeted treads, one hand brushing the solid banister. The still people at the top shift just enough to leave a clear passage for this single traveller. Track at his pace, keeping him visible rather than craning away to the chandelier. At the landing, curve very close behind the thick solid newel post and dark door jamb. They sweep fully across the lens for a brief moment while the forward move continues. Emerge alongside the same sloth entering the green room through its existing EXIT doorway. The warm chandelier bulbs motivate the warm vanity bulbs revealed beyond the jamb, but neither lamp is used as a white flash. Guests in the doorway step aside and he walks into the open floor space beside the buffet. Curve around his side into the exact final composition of Picture 2. The wreck staircase remains opaque until it is hidden, then the green room is revealed as a complete solid set. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink body. Keep his reference features visible in profile; no invented tail, cream back stripe, extra horns or duplicate traveller. One continuous directed camera move, opaque physical cover rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Natural footfalls and handling sounds remain synchronized to the visible actions. Source ambience recedes behind the physical obstruction and the destination ambience emerges ahead, with no intelligible speech.
+          allow:
+            - opening
+            - negation
+            - capitals
+            - transition
+  # painted with Sogni Krea 2 Identity Edit, seed 360928
+  - id: the-residency
+    still: stills/the-residency.jpg
+    title: Nobody Is Finished
+    chapter: Inside the seed
+    caption: There is a spare apron on the hook, in your size.
+    seen: "A watercolour-and-ink glasshouse studio: the pink sloth stands at the centre in a paint-spattered apron, holding a brush. Easels with half-finished colour-wash paintings stand at left, more washes pegged on a line under the glass roof, potted plants on a table; at right a potter's wheel with a wet clay pot on a round stand, a clay bust on a stool behind it, and an iron spiral staircase climbing to the right; flowers and ferns in the foreground."
+    objects:
+      - id: easel
+        label: Step into the wet canvas
+        hint: It is still wet, and it is raining in it
+        at:
+          - 0.1994
+          - 0.7294
+        select:
+          positive:
+            - - 0.3
+              - 0.5
+        goes: midtown-downpour
+        film:
+          # the live prompt also asked for music: A light, high piano phrase that gives way to a low, steady double-bass pulse as the rain arrives.
+          frames: 243
+          seed: 910251
+          idea: It is still wet, and it is raining in it.
+          action: One continuous shot that begins as a hand-drawn ink and watercolor illustration and becomes photographic cinematic footage of a city avenue in heavy rain. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in his paint-splashed apron in the glasshouse studio with a brush and a small bowl. He walks to the big canvas on the easel at the left and dabs grey paint across it, and rain begins to fall inside the painting, streaking the wet paint down the canvas. He sets down the brush and bowl, unties his apron and hangs it on the corner of the easel, then steps right up into the wet canvas. The camera follows him in, and streaming grey and blue wet paint fills the entire frame. The paint runs away like rain down a window, revealing a real avenue in a hard downpour, tall buildings rising out of sight, yellow taxis and a food cart under a striped umbrella. The sloth walks along the glistening sidewalk with rain running off his fur, and the camera trucks right with him and arcs around to his front as he stops beside a green subway entrance, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Birds outside the glasshouse and a brush tapping a bowl, a soft patter of rain starting inside the canvas, the squelch of wet paint, then heavy rain on pavement, traffic hiss, horns and a steam vent sighing.
+      - id: stair
+        label: Take the spiral stair up
+        hint: Back to somewhere quieter
+        at:
+          - 0.8577
+          - 0.3545
+        select:
+          positive:
+            - - 0.8
+              - 0.4
+        goes: moss-library
+        film:
+          frames: 243
+          seed: 609108
+          idea: Back to somewhere quieter.
+          action: Begin exactly in Picture 1. The sloth sets his paintbrush on the nearby pottery table, lifts off his apron and drapes it over the table edge. He turns right toward the existing spiral stair and begins climbing its wooden treads. Track beside him along the curve, his face in three-quarter profile, keeping his feet visibly supported by each tread. The camera rises at his pace. Near the top, move close behind the thick dark stair post and under the solid landing edge, which together physically cover the entire lens for a brief moment. Continue rising through this cover and emerge alongside him into the moss-lined library of Picture 2. He walks toward the cushioned root seat, picks up the open book already resting there and sits down with it in his lap. The camera smoothly curves outward and lowers to the exact final framing, with the glowing seed on the left and the telescope on the right. The watercolor-and-ink style remains consistent throughout. Keep the library shelves hidden behind opaque wood until their reveal; no glass ceiling dissolves into books. His apron and brush stay downstairs, and the book is physically picked up rather than appearing in his hands. Preserve one pink sloth with the same black glasses, cream face, blue nose and striped horn in both original stills, four limbs and a rounded pink body. Keep his reference features in profile during travel; no invented tail, back stripe, extra horn or duplicate character. Use one continuous camera move with a brief complete occlusion by solid foreground scenery, no cross-dissolve, hard fade, flash or morph. The sloth remains silent.
+          sound: Brush tapping wood, soft fabric, small wooden stair creaks, leaves brushing the landing and quiet paper pages at the library seat.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: wheel
+        label: Spin the potter’s wheel
+        hint: Something much larger is turning below it
+        at:
+          - 0.7
+          - 0.64
+        select:
+          positive:
+            - - 0.7
+              - 0.64
+        goes: the-render-farm
+        film:
+          frames: 294
+          seed: 609130
+          idea: Something much larger is turning below it.
+          action: Hand-drawn ink and watercolour animation, a medium-wide shot begins in the position and framing established by Picture 1, inside the glass-roofed studio with the easels at the left, the pink sloth holding a brush at the centre and the pottery wheel at the right. The sloth puts his brush down on the easel ledge, turns right and walks to the pottery wheel. With one paw he gives the edge of its round turntable a quick push; the clay pot spins in place on its solid stand. He steps around the right side of the table and follows the clear floor into the adjoining studio bay behind the tree. The camera tracks right beside him, with the tree moving past at the left edge and the glass roof remaining overhead. Tall racks of stacked drawing paper appear ahead as the view turns around the fixed trunk. The sloth passes the first paper rack, approaches the little table with the blue paper wave and stops to its left. The camera arcs gently left to face him, settling into the pose, spacing and composition established by Picture 2 at the end of the shot. His pink fur, black glasses, cream face, blue nose, striped horn and paint-spotted apron remain the same through the walk; the brush remains behind on the easel. The fans turn evenly in their fixed housings along the far wall.
+          sound: The wooden brush handle taps the easel ledge; soft footsteps cross the studio floor; the pottery wheel spins with a short wooden rattle; footsteps continue around the table; dry sheets of paper rustle in the airflow from the steadily turning fans.
+  # painted with Sogni Krea 2 Identity Edit, seed 360929
+  - id: midtown-downpour
+    still: stills/midtown-downpour.jpg
+    title: Eight Million
+    chapter: A very long way from here
+    caption: You are the only dry thing for a mile.
+    seen: "A rainy city avenue in grey light: the pink sloth stands on a wet pavement at the centre. At left a green subway entrance with stairs going down, a lit sign and a brass telescope on its railing, a red tram and steam behind it, a lamp post above; at right a hot-dog cart under a red, yellow and blue umbrella, people with umbrellas crossing, and a yellow taxi with its rear door open; more yellow taxis and tall buildings fade into the rain."
+    objects:
+      - id: subway
+        label: Take the stairs down
+        hint: The noise is coming from underneath
+        at:
+          - 0.16
+          - 0.58
+        select:
+          positive:
+            - - 0.16
+              - 0.58
+        goes: basement-club
+        film:
+          frames: 243
+          seed: 609107
+          idea: The noise is coming from underneath.
+          action: Begin exactly in Picture 1. The sloth turns left toward the existing green-railed subway entrance and places a hand on the rail. Track beside him as he walks down the real stairs, each foot landing on a tread. His glasses and blue muzzle stay in side profile; the camera descends at his pace without overtaking him. The wet street remains above and behind until the camera passes beneath the solid stairwell lintel. Its opaque dark underside briefly fills the entire lens during the downward move. Continue through the cover and emerge following the same sloth at the foot of the stairs into a short brick passage lit blue. He pushes through the existing club doorway, and the camera curves around the open door with him into the basement club of Picture 2. The low ceiling and dancers appear through the doorway with foreground parallax. He steps to the clear place in front of the DJ booth, and the camera arcs gently to settle into the exact final composition, with the payphone and open door on the right. His hands relax into a small dance pose only upon arrival. The stairwell stays solid; rainfall never dissolves through the club walls. There is one descending traveller, continuous grounded motion and no sudden drop through a floor. Preserve one pink sloth with the same black glasses, cream face, blue nose and striped horn in both original stills, four limbs and a rounded pink body. Keep his reference features in profile during travel; no invented tail, back stripe, extra horn or duplicate character. Use one continuous camera move with a brief complete occlusion by solid foreground scenery, no cross-dissolve, hard fade, flash or morph. The sloth remains silent.
+          sound: Rain recedes above the stairs, soft steps become enclosed echoes, a door hinge moves, then muted club bass and indistinct crowd ambience without intelligible speech.
+          allow:
+            - opening
+            - negation
+            - music
+            - transition
+      - id: cab
+        label: Get in the waiting cab
+        hint: It already knows where you are going
+        at:
+          - 0.91
+          - 0.5
+        select:
+          positive:
+            - - 0.91
+              - 0.5
+        goes: midnight-diner
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361107
+          idea: It already knows where you are going.
+          action: Begin at the exact composition of Picture 1. The pink sloth gets into the waiting cab and the door shuts on the rain. The camera rides with it through smeared traffic light until the avenue thins into a quiet wet street and the warm window of the midnight diner. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. Use one continuous, gently paced cinematic movement; preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent.
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+      - id: cart
+        label: Follow the cart when it moves
+        hint: It goes somewhere at four in the morning
+        at:
+          - 0.66
+          - 0.42
+        select:
+          positive:
+            - - 0.66
+              - 0.42
+        goes: the-slow-shift
+        film:
+          frames: 243
+          seed: 920260028
+          idea: It goes somewhere at four in the morning.
+          action: Photographic live-action footage in one continuous shot, beginning on a cinematic rain-soaked avenue in daylight and ending in a corner store under flat green fluorescent light. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the wet sidewalk in a hard downpour. Behind him the vendor's food cart with its striped umbrella starts to roll away across the crosswalk, and he turns and follows it. The camera follows in a smooth tracking shot behind the sloth and the cart as they move down the glistening avenue, and the daylight deepens into night as the streetlights come on and the traffic thins. The cart turns a corner, and its big striped umbrella swings across the lens and fills the frame. As the umbrella lifts away, the cart rolls on past a lit corner store, and the sloth pushes through its heavy steel doors on the right into a narrow aisle under green fluorescent light, lined with cans and cereal boxes and a wire newspaper rack. He walks to the front counter beside the red slushie machine, turns toward the room and rests one paw on the countertop as the clerk looks up from the register, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Pouring rain, traffic hiss and a steam vent sighing, the rattle of cart wheels over wet asphalt, rain drumming on the umbrella, then a steel door clanking and the flat hum of fluorescent tubes, a slushie machine whirring and a register beep.
+  # painted with Sogni Krea 2 Identity Edit, seed 360930
+  - id: the-slow-shift
+    still: stills/the-slow-shift.jpg
+    title: The Slow Shift
+    chapter: Four in the morning
+    caption: The clerk nods. It takes a while.
+    seen: "Inside a corner store under fluorescent light: the pink sloth stands at the centre with one hand on the white counter at left, where a slushie machine turns red and yellow beside stacked goods; a clerk in a dark jacket looks down behind the counter; three customers browse the shelves at the back; a wire rack of newspapers stands at right in front of a grey metal double door; a cracked tiled floor."
+    objects:
+      - id: slushie
+        label: Watch the slushie machine turn
+        hint: It keeps time with somewhere under the city
+        at:
+          - 0.1301
+          - 0.5107
+        select:
+          positive:
+            - - 0.11
+              - 0.4
+        goes: basement-club
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361111
+          idea: Whatever is under the city keeps the same time.
+          action: "Begin at the exact composition of Picture 1. The pink sloth leaves the slushie machine and pushes out through the back aisle, shelves passing close on both sides. The camera follows down the stairs behind the storeroom, the door swinging shut across the lens, and comes out on a packed basement dance floor in magenta and cyan. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: backdoor
+        label: Take the propped-open back door
+        hint: Out into the rain again
+        at:
+          - 0.9
+          - 0.45
+        select:
+          positive:
+            - - 0.9
+              - 0.45
+        goes: midtown-downpour
+        film:
+          frames: 243
+          seed: 609114
+          idea: Out into the rain again.
+          action: The sloth lifts his hand from the counter and turns toward the existing dark green double exit doors on the right. Track alongside his face in profile as he passes the newspaper rack and pushes one door open. Rain is already visible in the gap outside. He walks through the threshold with both feet on the ground. Follow close to the heavy opaque door leaf so it swings fully across the lens briefly; continue the same forward camera movement. Emerge beside him from behind a green street structure into the wet avenue. The hot-dog cart and yellow cabs are revealed by the near door edge moving out of frame, not by transparent shelves. Track his walk along the sidewalk and curve around his side to settle beside the subway stairs into the exact final image. Customers and merchandise stay inside, the sloth stays on foot, and the rain belongs only outside. Match Picture 1 exactly at the start and Picture 2 exactly at the end. One pink sloth with the same black glasses, cream face, blue nose, striped horn, four limbs and rounded pink fur. Keep his face visible in profile during travel, without a new tail, back stripe, extra horn or duplicate traveller. A single continuous tracking shot with complete physical occlusion, no cross-dissolve, hard fade, flash, morphing or transparent scenery. The sloth remains silent.
+          sound: Natural footsteps and small object handling sounds follow the camera continuously. The source room ambience recedes behind the solid obstruction and the destination ambience emerges ahead. No intelligible speech.
+          allow:
+            - opening
+            - negation
+            - transition
+  # painted with Sogni Krea 2 Identity Edit, seed 360931
+  - id: the-render-farm
+    still: stills/the-render-farm.jpg
+    title: Where It Is Made
+    chapter: Under the glasshouse
+    caption: So this is where the weather comes from.
+    seen: "A watercolour workshop under a glass dome: the pink sloth stands at the centre in a paint-spattered apron. Behind him metal racks hold stacks of paper sheets with small red, green and yellow lamps on top; at right rows of cabinets with wooden windmill fans, a half-finished paper wave standing on a stool, and a trolley stacked with paper; at left an empty easel with a bare canvas leaning on it, a table with a potted plant, and a cloth pegged on a line."
+    objects:
+      - id: rack
+        label: Climb into the rack
+        hint: One slot is empty and something is due back
+        at:
+          - 0.3766
+          - 0.2742
+        select:
+          positive:
+            - - 0.62
+              - 0.35
+        goes: green-room
+        film:
+          # the live prompt also asked for music: N/A --workers=1.0.221,1.0.222
+          frames: 243
+          seed: 931771
+          idea: One slot is empty and something is due back.
+          action: One continuous shot that begins as a hand-drawn ink and watercolor illustration and becomes photographic live-action footage under warm practical light. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in his paint-splashed apron among the paper racks and turning fans of the render farm, colored signal lamps glowing on top of the machines. He unties his apron and tosses it onto the wooden stool beside the paper wave. He walks to the paper cart at the right, lifts one huge blank sheet from the top of the stack with both hands and turns toward the camera, holding it up high. He walks toward the camera until the cream-colored sheet covers the entire frame, its fibers and creases visible. His pink claws punch through the middle of the sheet and rip it open from the center outward, and the torn halves curl back past the edges of the frame, revealing a real green-walled room lit by bulb-framed mirrors, with a long table of fruit platters and silver urns, folding chairs and a crowd of costumed guests chatting at the left. The sloth, now real with thick fluffy fur, steps through the torn opening, walks to the middle of the room and turns to face the camera, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Whirring paper fans and a soft hum from the machines, the rustle of the apron landing on the stool, a crisp rattle as the big sheet lifts off the stack, a loud tearing rip of paper, then the warm murmur of a crowded green room, clinking cups and a folding chair scraping.
+      - id: trolley
+        label: Follow the loaded trolley
+        hint: It is going back up to be finished
+        at:
+          - 0.8616
+          - 0.748
+        select:
+          positive:
+            - - 0.92
+              - 0.67
+        goes: the-residency
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361105
+          idea: It is going back up to be finished.
+          action: Begin at the exact composition of Picture 1. The loaded trolley is pushed away down the aisle and the camera follows it up a ramp, paper racks giving way to cracked glass and late sun, into the glasshouse studio full of half-finished work. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. Use one continuous, gently paced cinematic movement; preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent.
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+  # painted with Sogni Krea 2 Identity Edit, seed 360926
+  - id: green-room
+    still: stills/green-room.jpg
+    title: Everyone Is Here
+    chapter: Inside the effigy
+    caption: Nobody looks up. You are clearly on the list.
+    seen: "A barn-sized green room with green walls: the pink sloth stands at the centre in front of three bulb-lit mirrors. At left a long table with silver trophies and trays of fruit and pastries, folding chairs, and a crowd of costumed guests (a man in a white coat, a grey-bearded wizard in a pointed hat, a figure in a fur cloak reading a sheet, an astronaut, a bearded man in furs seated at the table); at right a dark stage door stands open onto a bright corridor where a woman in a red dress and a knight in armour wait, an EXIT sign above the door."
+    objects:
+      - id: stagedoor
+        label: Take the stage door
+        hint: It is nearly your turn out there
+        at:
+          - 0.7876
+          - 0.4211
+        select:
+          positive:
+            - - 0.88
+              - 0.45
+        goes: dust-city
+        film:
+          frames: 243
+          seed: 609104
+          idea: It is nearly your turn out there.
+          action: Begin exactly in Picture 1. The pink sloth turns toward the existing open EXIT doorway on the right. The camera tracks beside him at shoulder height as he walks diagonally through the room toward that opening, his face in three-quarter profile. The cowboy and armored guest step aside naturally to leave a clear path, remaining the same people. Follow the sloth through the existing door. As he clears the threshold, glide very close behind the thick dark wooden door jamb; its solid surface moves across and completely covers the lens briefly while the forward tracking continues. Emerge with him from the shadow of a backstage passage into the warm night desert of Picture 2. Reveal dry ground beneath his walking feet, then the illuminated tower, piano and geodesic tents through foreground parallax as the camera rounds the end of the wall. The red scooter is already parked ahead, fully solid when first revealed. He walks alongside it, stops with one hand near the handlebar, and the camera eases backward and around his side into the exact final framing. The room disappears only behind the opaque jamb and wall; the people never fade into desert objects. Keep the journey focused on his walk, avoiding a prolonged view of his back. He remains on foot throughout; no mounting or vehicle riding is needed. Preserve exactly one pink sloth with the same black glasses, cream face, blue nose and striped horn as both references, four limbs and consistent size. Keep his rounded body pink; do not invent a tail, back stripe, extra horns or duplicate traveller. Use one continuous directed camera move, with solid foreground occlusion rather than a cross-dissolve, hard fade, flash, morph or transparent overlap. The sloth remains silent.
+          sound: Muted room chatter without intelligible words recedes behind the doorway, footsteps change from concrete to sand, dry night wind and a quiet distant camp hum. No speech.
+          allow:
+            - opening
+            - negation
+            - capitals
+            - transition
+      - id: queue
+        label: Talk to the wizard
+        hint: He has been called twice and has not moved
+        at:
+          - 0.2
+          - 0.4
+        select:
+          positive:
+            - - 0.2
+              - 0.4
+        goes: now-serving
+        film:
+          frames: 362
+          seed: 609211
+          idea: He knows the way. He has been called before.
+          action: "Begin among the original backstage guests. The sloth glances toward the right-hand EXIT doorway, walks toward it with the camera leading from his front-left side. The woman in the red dress and the armored knight make a small natural space; everyone else remains in their original places. Pass through the existing wooden threshold with the sloth, then travel inches behind the thick opaque dark door jamb until it fully covers the lens for a brief beat. Emerge in the adjacent waiting room beside the service counter. The new waiting-room cast is already in place, never transformed from the backstage guests. Track sideways with the sloth along the counter; he takes one paper ticket from the red wall dispenser and turns to read it. The camera eases backward past the yellow bird and seated furry guest into the exact final composition with the sloth holding his ticket. Keep the counter windows, wall dispenser, fluorescent lights and numbered sign rigid and consistent. Extras make only tiny breathing and head motions; no crowd reshuffling or changing faces. Keep the one pink sloth exactly consistent: black glasses, blue nose, cream face, striped horn, rounded pink body, four limbs, no tail or pale stripe on his back. Keep his face visible in profile or three-quarter view while he looks where he is going; do not have him perform for the lens. Start exactly at Picture 1 and finish exactly at Picture 2. One continuous professionally blocked tracking shot, with fixed architecture, real foot contact and motivated camera movement. Keep the traveller in frame except for the brief specified physical occlusion. Solid foreground cover conceals the change of set; no dissolve, hard fade, flash, transparent overlap, liquid walls, teleportation or character duplication. No dialogue."
+          sound: Clear synchronized footsteps and handling sounds on the visible surfaces. Natural local ambience follows the camera, with believable changes in room acoustics. No voices.
+          allow:
+            - opening
+            - negation
+            - capitals
+            - transition
+  # painted with Sogni Krea 2 Identity Edit, seed 771205
+  - id: now-serving
+    still: stills/now-serving.jpg
+    title: Now Serving
+    chapter: Through the back door
+    caption: Now serving 1240. You are holding 1241. Nobody can believe your luck.
+    seen: "A waiting room with green walls under fluorescent light: the pink sloth stands at the centre holding a paper ticket. A black board above the service window reads NOW SERVING 1240; at the window a red ticket dispenser, a small yellow one-eyed figure on the counter, and a clerk in a top hat with more costumed figures behind the glass; at left a long table with silver trophies and trays of food and a crowd of costumed characters (a wizard, a dark-helmeted figure in black, a green ogre, a white-armoured trooper, a tall yellow bird, a shaggy brown figure) sitting and standing; orange plastic chairs and a potted plant at right."
+    objects:
+      - id: chair
+        label: Sit down and wait
+        hint: Waiting does something to time
+        at:
+          - 0.92
+          - 0.68
+        select:
+          positive:
+            - - 0.92
+              - 0.68
+        goes: the-slow-shift
+        film:
+          # the live prompt also asked for music: A quick pizzicato string figure that races along with the sliding chair and lands on a single plucked note at the stop.
+          frames: 243
+          seed: 910234
+          idea: Waiting does something to time.
+          action: Photographic live-action footage under flat municipal fluorescent light, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the crowded waiting room holding his paper ticket, surrounded by costumed guests. He tucks the ticket under one arm, strolls to the empty orange chair at the right edge of the room and flops down into it. The chair's metal legs skid, and the chair slides backward across the polished linoleum with him in it, gathering speed, as the camera tracks alongside at fast speed and the guests turn their heads to watch. The chair scoots straight through a pair of swinging grey doors at the far end of the room, and the doors' dull metal faces swing across the lens and fill the frame. Beyond the doors the chair glides out into the narrow aisle of a corner store under green fluorescent light, past shelves of cans and cereal boxes and a wire newspaper rack, and spins to a stop in front of the counter. The sloth hops up, and the empty chair slides on out of frame to the left. He steps to the counter beside the red slushie machine and rests one paw on the countertop as the clerk looks up from the register, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: The murmur of the waiting crowd and a ticket-machine chime, a chair creak and a long squeal of metal legs sliding across linoleum, a few surprised gasps, the double bang of swinging doors, then the hum of fluorescent tubes, a slushie machine whirring and a register beep.
+      - id: plant
+        label: Touch the rubber plant
+        hint: It is the only living thing in here, and it grows
+        at:
+          - 0.73
+          - 0.6
+        select:
+          positive:
+            - - 0.73
+              - 0.6
+        goes: moss-library
+        film:
+          # the live prompt also asked for music: A light woodwind melody on flute and clarinet at a flowing tempo that brightens as the leaves open.
+          frames: 243
+          seed: 910236
+          idea: It is the only living thing in here, and it grows.
+          action: One continuous shot that begins as photographic live-action footage under flat fluorescent light and becomes a hand-drawn ink and watercolor illustration inside the leaves. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the crowded waiting room. He turns to the potted rubber plant by the counter, crouches beside it and gently parts its broad glossy leaves with both paws. The camera pushes in past his shoulder through the gap at fast speed, and dark green leaves fill the entire frame. The camera keeps flying forward through layer after layer of leaves that grow larger and brighter, turning into inked and watercolored leaves, vines and ferns, until it bursts out through a curtain of hanging vines into a library carved into a living tree, with shelves of books, green cushions, a glowing seed pod among the ferns at the left and a brass telescope by a round window. The camera glides down to the sloth sitting on a mossy root seat with an open book in his paws, and he looks up from the page, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: The murmur of the waiting crowd and fluorescent hum, the rustle of big leaves being parted, a rushing sweep of foliage past the listener, then birdsong through a window, a trickle of water and a page turning.
+      - id: clerk
+        label: Talk to the clerk
+        hint: He can see your number from there
+        at:
+          - 0.68
+          - 0.36
+        select:
+          positive:
+            - - 0.68
+              - 0.36
+        film:
+          frames: 192
+          seed: 920260952
+          idea: "The Clerk speaks: Ticket forty-one? Oh! We only take forty-two. Try again, fluffy."
+          action: "A fixed wide view holds Simon in the municipal waiting room of Picture 1, clutching his paper ticket, while the small yellow goggled clerk stands behind the service window. The clerk rings the counter bell with an impatient fingertip. The Clerk, a Minion’s small high nasal male voice, rubbery and pinched through the nose, with squeaky rising vowels, chirping consonants and quick tumbling syllables, impatient little breaths between phrases and a mischievous lilt (S1), says: <d>[English] Ticket forty-one? Oh! We only take forty-two. Try again, fluffy.</d> He slides the ticket back under the glass with one finger and gives Simon a cheeky salute. Simon, an adult man in his thirties with a warm low-mid baritone, chest-resonant and gently gravelly, a relaxed conversational American accent with rounded vowels and softly voiced consonants, speaking slowly in short connected phrases with small thinking pauses, a dry amused smile in his delivery, curiosity carried by emphasis rather than a rise in pitch, finishing each sentence with a calm downward inflection (S2), answers: <d>[English] I knew there was a catch.</d> He turns the ticket over, peeks at its other side, then looks toward the red dispenser while the same guests remain in place."
+          sound: Sharp counter bell, squeaky nasal clerk voice, paper scratching under the glass, Simon’s adult baritone reply, small room reactions and fluorescent hum. No score.
+          allow:
+            - opening
+            - negation
+      - id: dispenser
+        label: Take a ticket from the machine
+        hint: Your number is closer than you think
+        at:
+          - 0.74
+          - 0.35
+        select:
+          positive:
+            - - 0.74
+              - 0.35
+        goes: green-room
+        film:
+          # the live prompt also asked for music: A short brass fanfare on the number flip, then a quick bassoon line as he scrambles through the window.
+          frames: 243
+          seed: 910235
+          idea: Your number is closer than you think.
+          action: Photographic live-action footage under flat fluorescent light, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the crowded waiting room holding his paper ticket. He walks to the red ticket machine on the counter and pulls a fresh ticket. The number board above the service windows flips from "1240" to "1241" with a clack, and every costumed guest in the room turns to look at him. He waves his ticket, hurries to the open service window, climbs up over the counter and squeezes through the window hatch. The camera follows close behind him in a smooth tracking shot, and the dark window frame and the back of the office pass across the lens and fill the frame. Beyond it he drops down into a large green-walled room lit by bulb-framed mirrors, with a long table of fruit platters and silver urns, folding chairs and a crowd of costumed guests at the left, and an open doorway at the right where a woman in a red dress and a knight in armor stand talking. He smooths his fur, walks to the middle of the room and turns to face the camera, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: The murmur of the waiting crowd, a paper ticket tearing from the machine, a loud clack and a chime as the number board flips, a hush as the room turns, scrambling paws on the counter, then the warm chatter of a crowded green room with clinking cups.
+      - id: display
+        label: Watch the number board
+        hint: It has not moved in some time
+        at:
+          - 0.67
+          - 0.1
+        select:
+          positive:
+            - - 0.67
+              - 0.1
+        film:
+          frames: 260
+          seed: 922262013
+          idea: "The Clerk speaks: Twelve forty! Window one."
+          action: "A dimensional animated film holds a fixed view of the crowded green waiting room, with the pink sloth holding his ticket and the yellow Minion clerk behind the center service window. The number board rattles and settles at twelve forty. The Clerk, a Minion’s small high nasal male voice, rubbery and pinched through the nose, with squeaky rising vowels, chirping consonants and quick tumbling syllables, impatient little breaths between phrases and a mischievous lilt (S1), leans forward in his blue overalls and calls: <d>[English] Twelve forty! Window one!</d> The sloth raises his ticket eagerly and takes one step forward, his mouth closed. The Minion looks at a small lunch container on his side of the counter, looks back at the waiting sloth and adds in the same nasal voice: <d>[English] My lunch number. Yours is later.</d> He gives a mischievous little shrug and picks up the lunch container. The sloth slowly lowers his ticket and returns to his place. The Minion sets the container back behind the window and resumes his official stance. The view settles in the composition established by Picture 2."
+          sound: Mechanical number cards rattle. The Minion’s high nasal voice carries both calls, with a small mischievous chuckle between them. Paper rustles and the lunch container taps the counter over the fluorescent hum.
+          allow:
+            - opening
+  # painted with Sogni Krea 2 Identity Edit, seed 360925
+  - id: basement-club
+    still: stills/basement-club.jpg
+    title: Two In The Morning
+    chapter: Under the roof
+    caption: Nobody here asked where you came from.
+    seen: "A low-ceilinged basement club in pink and blue light: the pink sloth stands at the centre on a concrete floor. At left a DJ booth with a mixer on top of stacked speaker cabinets, and a crowd dancing with their arms up under the lights; at right a payphone on a brick wall and an open steel door onto a corridor where more people stand in blue light."
+    objects:
+      - id: booth
+        label: Take over the decks
+        hint: This track was played on a lakebed once
+        at:
+          - 0.11
+          - 0.64
+        select:
+          positive:
+            - - 0.11
+              - 0.64
+        goes: dust-city
+        film:
+          frames: 243
+          seed: 609106
+          idea: This track was played on a lakebed once.
+          action: "Begin exactly in Picture 1. The sloth turns toward the DJ booth on the left and takes three short dance-like steps toward its near corner. Track to his right side, keeping his curious face in profile. He leans toward the turntable, taps one finger in time on the wooden booth, and follows the narrow clear route around its left end. The camera follows close at his shoulder, lowering slightly as the solid dark speaker cabinet passes inches from the lens and covers the whole view. Continue the same leftward arc through this brief physical occlusion. Emerge past the upright piano's dark wooden side in the desert camp of Picture 2: its solid cabinet carries the same foreground motion as the booth, making a precise concealed scenic transition. The sloth has stepped out beside the piano on the sand and walks across to the already parked red scooter. Keep him in three-quarter profile while the camera tracks with him, revealing the illuminated tower and dome tents behind through layered parallax. He stops beside the scooter and the camera settles into the exact final view. The sloth stays on foot. The dancers remain inside the club before the opaque booth blocks them; no crowd transforms into tents, no turntable becomes a scooter and no set is seen half transparent. Preserve one pink sloth with the same black glasses, cream face, blue nose and striped horn in both original stills, four limbs and a rounded pink body. Keep his reference features in profile during travel; no invented tail, back stripe, extra horn or duplicate character. Use one continuous camera move with a brief complete occlusion by solid foreground scenery, no cross-dissolve, hard fade, flash or morph. The sloth remains silent."
+          sound: Footsteps and a few soft taps on wood, muffled club bass heard through the room falling away behind the cabinet, then sand crunch and desert wind; no intelligible voices.
+          allow:
+            - opening
+            - negation
+            - music
+            - transition
+      - id: payphone
+        label: Answer the payphone
+        hint: It has been ringing a while
+        at:
+          - 0.68
+          - 0.35
+        select:
+          positive:
+            - - 0.68
+              - 0.35
+        goes: midnight-diner
+        film:
+          frames: 243
+          seed: 910203
+          idea: It has been ringing a while.
+          action: Photographic live-action footage with a cinematic look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the basement club while the payphone on the brick wall behind him rings. He turns, steps to the payphone and lifts its single black receiver off the hook with his right paw, holding it to his ear as its coiled steel cord swings. He listens, his eyebrows rise behind his glasses, and he nods twice, then hangs the receiver back on its hook. He turns toward the camera and hurries straight at the lens, and the camera pushes in at fast speed until his long pink fur fills the whole frame. The camera pulls back out of the pink fur at an even pace into a warm pastel diner under round pendant lamps, where he is sliding into a red vinyl booth beside a chrome-edged table with a plate of golden waffles. A tall yellow kite leans by the window and a jukebox glows at the left edge of the room. He settles onto the seat and rests one paw beside the plate, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: "A payphone bell rings sharply over the muffled bass of the club, the receiver clicks off its hook, a faint crackle comes down the line, the receiver clunks back into its cradle, then the club gives way to the soft clatter of a diner: a squeak of vinyl as he slides in, cutlery on plates and a coffee machine hissing."
+      - id: door
+        label: Push the fire door
+        hint: There is daylight behind it, somehow
+        at:
+          - 0.87
+          - 0.5
+        select:
+          positive:
+            - - 0.87
+              - 0.5
+        goes: neon-after-hours
+        film:
+          frames: 243
+          seed: 910202
+          idea: There is daylight behind it, somehow.
+          action: Photographic live-action footage with a cinematic look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the basement club under magenta and blue stage lights while dancers move behind him. He turns to his right and breaks into a quick, bouncing trot toward the open steel fire door at the right edge of the room, where cold blue light spills across the concrete. The camera follows in a smooth tracking shot a few paces behind his shoulder at fast speed. He plants both paws on the push bar and shoves; the heavy steel door swings wide toward the lens, and its dark painted face sweeps across the whole frame. As the door edge clears, the camera glides out behind him onto a rain-wet cobbled street at night under strings of glowing lanterns, with a waterfall falling through the dark trees ahead. His paws splash through shallow puddles that mirror the neon. The camera arcs around his left side at fast speed, passing a glowing jukebox beside a diner window with a pink neon sign, while a red scooter waits beside a spiral iron staircase on the right. He skids to a stop on the wet stones in the middle of the street, turns to face the camera and straightens up with his arms at his sides, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: Thumping bass and a cheering crowd in the low-ceilinged club, quick padded footsteps on concrete, the clank of a push bar and the groan of a heavy steel door, then the club sound drops away behind the closing door and gives way to rain pattering on cobbles, splashing footsteps, the hiss of a waterfall and the buzz of neon.
+  # painted with Sogni Krea 2 Identity Edit, seed 360919
+  - id: desert-roadtrip
+    still: stills/desert-roadtrip.jpg
+    title: Miles of Maybe
+    chapter: Beyond the city
+    caption: Sometimes the detour is the destination.
+    seen: "Golden hour on an empty desert road: the pink sloth stands at the centre with one hand on the seat of a red Vespa scooter parked at the roadside. Red mesa cliffs and buttes line the horizon; at right a small diner with a neon sign glows against the rock, a jukebox standing on a metal picnic table in front of it; dry scrub on either side of the road."
+    objects:
+      - id: jukebox
+        label: Play the road-trip favorite
+        hint: Back to the diner for one more song
+        at:
+          - 0.81
+          - 0.61
+        select:
+          positive:
+            - - 0.81
+              - 0.61
+        goes: midnight-diner
+        film:
+          frames: 362
+          seed: 922262015
+          idea: Back to the diner for one more song.
+          action: A dimensional animated film opens on the pink sloth beside the red scooter, the tabletop jukebox at right and the roadside diner already standing behind it. He presses the jukebox selector. A coin drops loudly into its return tray. He presses again and receives the same indignant clunk. He pockets the returned coin, gives the jukebox a disappointed pat and wheels his scooter toward the diner entrance. The camera tracks alongside the scooter while the diner grows steadily larger behind them. At the entrance he parks it against the outside wall, steps back and gives it a formal valet’s bow. He straightens and walks through the existing open door. The camera follows across the metal sill while its jambs and exterior wall stay visible at the sides. The indoor jukebox and red booth come into view as the camera turns left. He slides into the booth, regards the waiting waffle plate and rests one paw beside it. The scooter remains parked outside the entrance. The view settles in the composition established by Picture 2.
+          sound: The jukebox button clicks, a coin clatters twice in the return tray, scooter tires crunch gravel and its stand snaps down. The diner bell rings at the doorway and the booth squeaks beneath his weight.
+          allow:
+            - opening
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 361021
+  - id: sunlit-bakery
+    still: stills/sunlit-bakery.jpg
+    title: Freshly Baked Sunshine
+    chapter: Beyond the seaside
+    caption: A little flour. A little magic. A very happy sloth.
+    seen: "A stop-motion clay bakery: the pink sloth stands at the centre on a terracotta-tiled floor in front of a clay bread oven with a fire inside and logs stacked beneath it. At left copper pans hang on the wall and a small brass diving bell sits on a wooden cabinet; at right a wooden table and shelf of golden croissants dusted with flour, a yellow kite with a red bow hanging on the wall, and sunlight through an arched window."
+    objects:
+      - id: kite
+        label: Ride the kite to the hill
+        hint: Catch the breeze above the rooftops
+        at:
+          - 0.88
+          - 0.2
+        select:
+          positive:
+            - - 0.88
+              - 0.2
+        goes: kite-festival
+        film:
+          frames: 294
+          seed: 920260036
+          idea: Let the kite carry you above the rooftops.
+          action: A wide shot frames the pink sloth beside the bread table and the yellow kite hung on the bakery wall. He lifts the kite from its peg by the wooden crosspiece and opens the arched window’s casements. A gust catches the yellow paper, tugging its line and drawing him up onto the table. He plants one paw on the sill, then launches through the clear window opening with a delighted kick of both feet. The camera follows alongside as the taut kite carries him over the red roofs toward the grassy paper headland. He lands in a springy two-footed bounce beside the bread basket, pays out a little string and steadies the kite above his shoulder. The camera eases back into the final coastal composition.
+          sound: The wooden crosspiece taps its peg, hinges squeak and yellow paper snaps in the breeze. Claws scrape the sill, wind rushes around his feet and the grass gives a soft thud beneath his landing.
+          allow:
+            - opening
+      - id: bell
+        label: Explore beneath the harbor
+        hint: A quiet lounge under the waves
+        at:
+          - 0.1
+          - 0.44
+        select:
+          positive:
+            - - 0.1
+              - 0.44
+        goes: coral-station
+        film:
+          frames: 294
+          seed: 920260015
+          idea: A quiet lounge under the waves.
+          action: The sloth turns toward the small brass diving-bell ornament on the left cabinet. Track beside his face in profile as he walks over and lightly taps its top, producing a clear small bell note. Keep the ornament exactly its original small scale and firmly on the countertop. At the chime, the existing wooden cabinet door beneath it swings open, revealing a dark passage. He crouches and ducks through that low cupboard opening; follow close beside his shoulder, lowering the camera through the same opening. The opaque wooden door and jamb pass extremely close and completely fill the lens while the forward move continues. Emerge following him out through a low service opening into the coral station of Picture 2. He straightens on its dry wooden floor and walks beside the wide underwater observation window. The camera rises with him and curves into the exact final view, revealing the telescope left and the full-sized brass diving bell already docked on the right. The original tiny ornament stays in the bakery, never grows and never duplicates on its counter. The large station bell is revealed only after the solid cabinet cover; no water hole opens in the bakery floor. Begin exactly at Picture 1 and end exactly at Picture 2. Preserve one pink sloth, the original black glasses, cream face, blue nose and striped horn, four limbs and rounded pink fur. No new tail, back stripe, spikes or extra traveller. Use one continuous directed camera move with a brief complete occlusion by real solid scenery; no dissolve, fade, flash, transparent overlap or scenery morph. The sloth remains silent.
+          sound: Natural footfalls, the described small object sounds and room ambience track the visible actions. Source ambience recedes and destination ambience grows through the passage. No speech.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 360922
+  - id: coral-station
+    still: stills/coral-station.jpg
+    title: Underwater, Unhurried
+    chapter: Beyond the seaside
+    caption: Come for the coral. Stay for the quiet.
+    seen: "Inside an undersea station with pale green walls: the pink sloth stands at the centre on a wooden floor. A wide window at left looks out on a reef of pink and orange coral with shoals of fish in blue water, a brass telescope on a tripod pointing at it; at right a brass diving bell stands on a round grating with bubbles rising from it, beside cabinets, a sink and a round porthole showing more fish."
+    objects:
+      - id: telescope
+        label: From deep blue to sky blue
+        hint: One curious instrument, two remarkable views
+        at:
+          - 0.22
+          - 0.36
+        select:
+          positive:
+            - - 0.22
+              - 0.36
+        goes: cloud-observatory
+        film:
+          # the live prompt also asked for music: A slow harp arpeggio that climbs in pitch as the picture rises from the water into the sky.
+          frames: 243
+          seed: 920260017
+          idea: Deep blue becomes sky blue.
+          action: Photorealistic 3D-rendered footage with a bright, clean science-fiction look, one continuous shot. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands in the underwater lounge beside the long reef window. He steps left to the brass telescope on its wooden tripod, bends and puts one eye to the eyepiece. The camera arcs around behind the telescope and pushes in along its brass barrel toward the big front lens, and the circle of deep blue reef water in the lens grows until it fills the entire frame. The camera keeps pushing forward through open blue water as a school of silver fish scatters past the lens and sunbeams slant down from above. The camera rises toward the bright surface, bursts up through it in a rush of white bubbles that fill the frame, and climbs into pale blue sky above a sea of white cloud. Ahead, a white observatory dome sits on the clouds with a curved balcony, a brass telescope on a tripod and a small red cable car on a platform at the right. The camera glides in over the chrome rail and pulls back to find the sloth standing on the balcony beside the telescope, his feet planted on the floorboards, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: The low hum of the underwater lounge and the creak of the tripod, a soft brass click at the eyepiece, then muffled rushing water, fizzing bubbles and a bright splash as the camera breaks the surface, and finally thin wind and a faint cable hum on the balcony.
+      - id: bell
+        label: Climb into the diving bell
+        hint: "It only goes one direction: down"
+        at:
+          - 0.79
+          - 0.55
+        select:
+          positive:
+            - - 0.79
+              - 0.55
+        goes: the-wreck
+        film:
+          # the live prompt also asked for music: A quiet three-note celesta phrase, soft enough to leave the environmental sounds clear.
+          frames: 124
+          seed: 361107
+          idea: "It only goes one direction: down."
+          action: "Begin at the exact composition of Picture 1. The pink sloth climbs into the brass diving bell and the camera descends alongside it. The lit lounge window rises up out of frame, the lowering cable runs through the top of the shot, and silt and fish cross close to the lens in the lamp beam. Out of the dark below, the liner’s rail comes up past the camera, and it swings in over the deck and down to the flooded staircase. Keep one recognizable pink fuzzy sloth with the same black glasses, blue nose, striped horn and friendly facial proportions throughout. The move is a real journey through real space: the camera physically travels, things pass close to the lens and block the frame as they go by, and the geography stays continuous the whole way. One place is never blended, morphed, wiped or faded into the other, and the picture never softens, whitens out or goes to mush in the middle — if the two ends cannot be joined by travelling, travel further rather than dissolving. Preserve coherent limbs and stable identity as the surrounding style follows the two reference images. Come to rest at the exact framing, pose, colors and object placement of Picture 2. The sloth remains silent."
+          sound: Soft natural sounds of the depicted movement, quiet footsteps and a gentle airy transition, resolving into the destination's calm ambient sound.
+          allow:
+            - opening
+            - negation
+            - transition
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon
+  # painted with Sogni Krea 2 Identity Edit, seed 361023
+  - id: kite-festival
+    still: stills/kite-festival.jpg
+    title: An Afternoon in Bright Ink
+    chapter: Beyond the seaside
+    caption: Some days deserve every color.
+    seen: "A risograph-print hilltop in flat bright colours: the pink sloth stands on green grass at the centre, a yellow kite with a red tail flying on its string above his shoulder. A village of red-roofed houses sits on the hill at left; a deep blue sea with paper waves and cliffs stretches away to the right under white cut-out clouds; a wicker picnic basket with two loaves sits on the grass at lower right."
+    objects:
+      - id: basket
+        label: Refill the picnic basket
+        hint: There is always time for another pastry
+        at:
+          - 0.66
+          - 0.86
+        select:
+          positive:
+            - - 0.66
+              - 0.86
+        goes: sunlit-bakery
+        film:
+          # the live prompt also asked for music: A bright ukulele and glockenspiel tune at a skipping tempo.
+          frames: 243
+          seed: 910222
+          idea: There is always time for another one.
+          action: One continuous shot that begins as a flat risograph storybook print with bright ink colors and paper texture and becomes handmade stop-motion clay after the window. In the position and framing established by Picture 1, the pink sloth with long bubblegum-pink fur, round black glasses, a blue nose and a striped horn stands on the grassy hill with the yellow kite flying above him and the picnic basket of bread at his feet. He picks up the basket by its handle. A gust tugs the kite loose, and it sails off toward the red-roofed village on the left with its red tail streaming. The camera follows the kite in a smooth tracking shot as it swoops down over the rooftops and in through a small arched window, and the window's warm wooden frame sweeps across the lens. Inside is a tiny clay bakery with a brick oven glowing with fire, copper pans on the wall and a table of golden croissants, and the kite settles onto the wall at the upper right. The camera pans down as the sloth comes in through the door carrying the basket, sets it on the floor behind the croissant table and walks to the middle of the tiled floor, settling into the pose, spacing, and composition established by Picture 2 at the end of the shot. The sloth remains silent.
+          sound: A breezy hilltop with gulls and flapping paper, the rustle of the kite in a gust, a soft wooden knock as it passes the window, then the crackle of the oven fire, the clink of copper pans and a basket set down on clay tiles.
+      - id: simon
+        label: Pick up Simon
+        hint: Turn him over in your hands
+        at:
+          - 0.5
+          - 0.6
+        select:
+          positive:
+            - - 0.5
+              - 0.6
+        collect: true
+        figureName: Simon

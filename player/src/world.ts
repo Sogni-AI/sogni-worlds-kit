@@ -17,7 +17,8 @@ export type Hotspot = {
   collect?: boolean;
   /** A collectible's 3D figure (Pixal3D GLB) to turn over once found, and its picture in the collection. */
   figure?: { model: string; icon?: string; name?: string } | null;
-  film: Film;
+  /** Absent only on a collectible with a figure, which is picked up straight from the picture. */
+  film?: Film;
   rewind?: Film | null;
 };
 export type Line = { text: string; speaker?: string; start?: number; end?: number };
@@ -77,7 +78,8 @@ export async function loadWorld(url: string): Promise<World> {
     if (place.narration?.src) place.narration.src = at(place.narration.src);
     for (const spot of place.hotspots) {
       if (spot.to && !ids.has(spot.to)) throw new Error(`${place.id}/${spot.id} leads to "${spot.to}", which is not a place.`);
-      spot.film = film(spot.film);
+      if (spot.film) spot.film = film(spot.film);
+      else if (!(spot.collect && spot.figure)) throw new Error(`${place.id}/${spot.id} has no film.`);
       if (spot.rewind) spot.rewind = film(spot.rewind);
       if (spot.figure) spot.figure = { ...spot.figure, model: at(spot.figure.model), ...(spot.figure.icon ? { icon: at(spot.figure.icon) } : {}) };
     }

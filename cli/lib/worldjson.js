@@ -133,7 +133,8 @@ export function validateWorld(world) {
         else for (const key of ['icon', 'name']) if (f[key] !== undefined && typeof f[key] !== 'string') issues.push(`${at}.figure.${key}: a string`);
       }
       if (hotspot.next && hotspot.shortcut) issues.push(`${at}: cannot be both the next stop and a shortcut`);
-      film(hotspot.film, `${at}.film`, issues);
+      // A collectible with a figure may have no film: it is picked up straight from the picture.
+      if (hotspot.film !== undefined || !(hotspot.collect && hotspot.figure)) film(hotspot.film, `${at}.film`, issues);
       if (hotspot.rewind !== undefined) film(hotspot.rewind, `${at}.rewind`, issues, { nullable: true });
     }
   }
