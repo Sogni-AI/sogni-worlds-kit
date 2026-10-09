@@ -163,6 +163,7 @@ One entry per photograph, in story order. `ingest` adds `id`, `photo` and
 | `narration` | `{ voice, lines }`. Each line is `"text"` (in `voice`) or `{ voice: other, text }` for a second speaker. |
 | `loop` | The living photograph (below). |
 | `ending` | Optional: `{ kind: death \| end, title, text }`. Arriving here ends the story; a death offers Rewind to choose again. An ending needs no objects and no loop. |
+| `music` | Optional: `{ file, volume, underFilms, credit }`, a track you have the rights to, under this place instead of the world's `music` while the visitor is here (the player fades between them); `null` keeps this place silent. `node world music` generates only the world's track. |
 | `objects` | What you can click (below). |
 
 ## loop

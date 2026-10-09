@@ -249,6 +249,10 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       if (place.objects.length) add('warn', `${where}.ending`, 'an ending stops the story, so its objects are never offered');
     }
     if (!place.seen) add('warn', where, 'write `seen`: what is really in the picture, after looking at it at full size');
+    if (place.music !== undefined && place.music !== null) {
+      if (!place.music.file) add('error', `${where}.music`, 'music on a place is a `file` you have the rights to (only the world\'s `music` can be generated)');
+      else if (contained(`${where}.music`, 'music file', place.music.file) && checkFiles && !existsSync(file(place.music.file))) add('error', `${where}.music`, `${place.music.file} is missing`);
+    }
     if (place.narration) {
       // lines: "text" in the narration's voice, or { voice, text } for another speaker.
       const voice = place.narration.voice;

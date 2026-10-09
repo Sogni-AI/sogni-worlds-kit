@@ -22,7 +22,7 @@ const good = () => ({
         rewind: { src: 'films/harbour-ferry-rewind.mp4' },
       }],
     },
-    { id: 'beach', title: 'The Beach', still: 'stills/beach.jpg', loop: null, narration: null, hotspots: [] },
+    { id: 'beach', title: 'The Beach', still: 'stills/beach.jpg', loop: null, narration: null, music: { src: 'audio/music-beach.mp3', underFilms: 0 }, hotspots: [] },
   ],
 });
 
@@ -40,16 +40,17 @@ test('every broken rule is reported', () => {
   world.places[0].hotspots[0].shortcut = true;
   delete world.places[0].hotspots[0].film.src;
   world.places[0].surprise = true;
+  world.places[1].music = { src: 'audio/music-beach.mp3', volume: 9 };
   world.places.push({ ...world.places[1] });
   const issues = validateWorld(world).join('\n');
-  for (const expected of ['format must be', 'start: "nowhere"', 'order: "moon"', '.to: "moon"', '.at:', 'both the next stop and a shortcut', '.film.src: required', 'unknown field "surprise"', '"beach" appears twice']) {
+  for (const expected of ['format must be', 'start: "nowhere"', 'order: "moon"', '.to: "moon"', '.at:', 'both the next stop and a shortcut', '.film.src: required', 'unknown field "surprise"', '"beach" appears twice', 'places[beach].music.volume: 0 to 4']) {
     assert.match(issues, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), expected);
   }
 });
 
 test('media references are every file the world plays', () => {
   const refs = mediaRefs(good());
-  for (const ref of ['stills/harbour.jpg', 'films/harbour-loop-720.mp4', 'audio/narration-harbour.mp3', 'films/harbour-ferry-rewind.mp4', 'audio/music.mp3']) {
+  for (const ref of ['stills/harbour.jpg', 'films/harbour-loop-720.mp4', 'audio/narration-harbour.mp3', 'films/harbour-ferry-rewind.mp4', 'audio/music.mp3', 'audio/music-beach.mp3']) {
     assert.ok(refs.includes(ref), ref);
   }
 });

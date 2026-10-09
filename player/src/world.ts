@@ -32,6 +32,8 @@ export type Place = {
   narration?: { src?: string; lines: Line[] } | null;
   /** Arriving here ends the story: a death (rewind to choose again) or an ending. */
   ending?: { kind: 'death' | 'end'; title: string; text?: string } | null;
+  /** The track under this place, in place of the world's while you are here; null for silence here. */
+  music?: Music | null;
   hotspots: Hotspot[];
 };
 export type Music = { src: string; volume?: number; underFilms?: number; credit?: string };
@@ -76,6 +78,7 @@ export async function loadWorld(url: string): Promise<World> {
     place.still = at(place.still);
     if (place.loop) place.loop = film(place.loop);
     if (place.narration?.src) place.narration.src = at(place.narration.src);
+    if (place.music) place.music.src = at(place.music.src);
     for (const spot of place.hotspots) {
       if (spot.to && !ids.has(spot.to)) throw new Error(`${place.id}/${spot.id} leads to "${spot.to}", which is not a place.`);
       if (spot.film) spot.film = film(spot.film);

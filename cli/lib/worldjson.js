@@ -56,15 +56,15 @@ export function validateWorld(world) {
     if (!Array.isArray(world.order)) issues.push('order: a list of place ids, or null');
     else for (const id of world.order) if (!ids.has(id)) issues.push(`order: "${id}" is not a place`);
   }
-  if (world.music !== undefined && world.music !== null) {
-    if (!isObject(world.music)) issues.push('music: an object or null');
-    else {
-      extra(world.music, ['src', 'volume', 'underFilms', 'credit'], 'music', issues);
-      if (!isString(world.music.src)) issues.push('music.src: required');
-      if (world.music.volume !== undefined && !(world.music.volume >= 0 && world.music.volume <= 4)) issues.push('music.volume: 0 to 4');
-      if (world.music.underFilms !== undefined && !(world.music.underFilms >= 0 && world.music.underFilms <= 1)) issues.push('music.underFilms: 0 to 1');
-    }
-  }
+  const music = (value, where) => {
+    if (value === undefined || value === null) return;
+    if (!isObject(value)) { issues.push(`${where}: an object or null`); return; }
+    extra(value, ['src', 'volume', 'underFilms', 'credit'], where, issues);
+    if (!isString(value.src)) issues.push(`${where}.src: required`);
+    if (value.volume !== undefined && !(value.volume >= 0 && value.volume <= 4)) issues.push(`${where}.volume: 0 to 4`);
+    if (value.underFilms !== undefined && !(value.underFilms >= 0 && value.underFilms <= 1)) issues.push(`${where}.underFilms: 0 to 1`);
+  };
+  music(world.music, 'music');
   if (world.speakers !== undefined) {
     if (!isObject(world.speakers)) issues.push('speakers: an object keyed by name');
     else for (const [name, speaker] of Object.entries(world.speakers)) {
@@ -76,7 +76,8 @@ export function validateWorld(world) {
   for (const [index, place] of places.entries()) {
     const where = `places[${isObject(place) && place.id ? place.id : index}]`;
     if (!isObject(place)) { issues.push(`${where}: must be an object`); continue; }
-    extra(place, ['id', 'title', 'chapter', 'caption', 'still', 'loop', 'narration', 'ending', 'hotspots'], where, issues);
+    extra(place, ['id', 'title', 'chapter', 'caption', 'still', 'loop', 'narration', 'ending', 'music', 'hotspots'], where, issues);
+    music(place.music, `${where}.music`);
     if (place.ending !== undefined && place.ending !== null) {
       if (!isObject(place.ending) || !['death', 'end'].includes(place.ending.kind) || !isString(place.ending.title)) issues.push(`${where}.ending: { kind: "death" | "end", title, text? }`);
       else {
@@ -152,6 +153,7 @@ export function mediaRefs(world) {
     add(place.still);
     addFilm(place.loop);
     add(place.narration?.src);
+    add(place.music?.src);
     for (const hotspot of place.hotspots ?? []) { addFilm(hotspot.film); addFilm(hotspot.rewind); add(hotspot.figure?.model); add(hotspot.figure?.icon); }
   }
   return [...refs];

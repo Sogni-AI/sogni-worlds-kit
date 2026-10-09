@@ -3,7 +3,7 @@
   "id": "the-dream-thread",
   "title": "The Dream Thread",
   "subtitle": "A pink sloth, a sleeping giant, and absolutely no itinerary",
-  "credit": "Every picture, film and 3D figure was generated on the Sogni Supernet: the places painted with Krea 2 Turbo and Sogni Krea 2 Identity Edit from one reference picture of Simon, the objects traced with Segment Anything 3, every crossing rendered with MiniMax H3 (FastH3 first-and-last-frame, two-stage, 2K) and Simon stood up in 3D with Pixal3D. On worlds.sogni.ai a score composed with MiniMax Music 3 follows you from region to region; this copy plays without it. Built by Claude Code and Codex agents with a human approving every take.",
+  "credit": "Every picture, film, cue and 3D figure was generated on the Sogni Supernet: the places painted with Krea 2 Turbo and Sogni Krea 2 Identity Edit from one reference picture of Simon, the objects traced with Segment Anything 3, every crossing rendered with MiniMax H3 (FastH3 first-and-last-frame, two-stage, 2K), the score composed with MiniMax Music 3 (a cue for each region, following you from place to place) and Simon stood up in 3D with Pixal3D. Built by Claude Code and Codex agents with a human approving every take.",
   "aspect": {
     "width": 2688,
     "height": 1536
@@ -24,6 +24,12 @@
       "chapter": "The beginning",
       "caption": "Three distant signals are waiting for a curious traveler.",
       "still": "https://worlds.sogni.ai/mascot-world/junction.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-luminous-junction.ab53f66d6c08deed9705bb48385e1ce40b2681eaafda31a6066dc0a981b0a0ed.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "giant",
@@ -125,6 +131,12 @@
       "chapter": "The garden route",
       "caption": "Some friendships are larger than life.",
       "still": "https://worlds.sogni.ai/mascot-world/guardian-garden.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/guardian-garden.e1fe2c09ae61ee47cfc4d914b4b5c51558273eaefe300a44e4c2b3c42b4f120f.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "telescope",
@@ -226,6 +238,12 @@
       "chapter": "The city route",
       "caption": "The city is just waking up.",
       "still": "https://worlds.sogni.ai/mascot-world/neon-after-hours.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/hidden-frequency.1ceb099812471aa9215889bf8ba3e8613b2ca0685fa950fac2e2d5da3c63d861.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "jukebox",
@@ -327,6 +345,12 @@
       "chapter": "The seaside route",
       "caption": "A new world, folded just for you.",
       "still": "https://worlds.sogni.ai/mascot-world/paper-coast.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/unfold-the-sea.d8e9403f58b3fda71d1386c0885eb3ae08492d05de2055fc7d4f245448c6d186.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "basket",
@@ -428,6 +452,12 @@
       "chapter": "Beyond the garden",
       "caption": "The forecast is wonder.",
       "still": "https://worlds.sogni.ai/mascot-world/cloud-observatory.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/cloud-observatory-v2.09b7cc3a3373e0bb344c29b37cbe92684ca19d82cdd03be83aedc8ac6375380d.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "tram",
@@ -505,6 +535,12 @@
       "chapter": "Where the mountains start",
       "caption": "Nobody is above you now.",
       "still": "https://worlds.sogni.ai/mascot-world/the-knife-edge.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-knife-edge-trim6.ab4cf92bd1b013a4ffa1ab5922a9cfd2ef0bdd7d75f2c61e47247576ae945f71.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "flags",
@@ -586,6 +622,12 @@
       "chapter": "Beyond the garden",
       "caption": "Please whisper. The trees are reading.",
       "still": "https://worlds.sogni.ai/mascot-world/moss-library.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/moss-library-v2.2e616f3d8e66a5e16f3ca6f35589fa883fab99264ff6982da42e957f308aa705.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "telescope",
@@ -687,6 +729,12 @@
       "chapter": "Beyond the garden",
       "caption": "You have arrived exactly on sloth time.",
       "still": "https://worlds.sogni.ai/mascot-world/rainforest-tram.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/rainforest-tram.8245be7537e368e32ae563fc34cd171134e94fd321833cc4d4e1cac5118d21b9.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "basket",
@@ -764,6 +812,12 @@
       "chapter": "Beyond the city",
       "caption": "Your usual table. In a place you have never been.",
       "still": "https://worlds.sogni.ai/mascot-world/midnight-diner.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/midnight-diner-v2.a2394b524a14621eff94836b53d54f76b724a02d6205b0701146216e7e9ac31d.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "kite",
@@ -841,6 +895,12 @@
       "chapter": "Somewhere far out",
       "caption": "The road ran out an hour ago. The city is still here.",
       "still": "https://worlds.sogni.ai/mascot-world/dust-city.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/dust-city.029cb9c7153f0fc6ac8b7f4ba1064f0e8dd6247958265a3647836153a343fa9a.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "piano",
@@ -922,6 +982,12 @@
       "chapter": "Beyond the city",
       "caption": "The city feels different from up here.",
       "still": "https://worlds.sogni.ai/mascot-world/rooftop-dance.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/rooftop-dance.3925d37f4da79558c8c54d54de49cd251cefde77700782c74249476397ec90a6.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "scooter",
@@ -999,6 +1065,12 @@
       "chapter": "Somewhere much deeper",
       "caption": "Nobody down here is in a hurry.",
       "still": "https://worlds.sogni.ai/mascot-world/the-wreck.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-wreck.de6de66da3effc212677cf88aaf38e07f48899f9311e13dd5d2ea16ef51e985b.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "bulkhead",
@@ -1056,6 +1128,12 @@
       "chapter": "Inside the seed",
       "caption": "There is a spare apron on the hook, in your size.",
       "still": "https://worlds.sogni.ai/mascot-world/the-residency.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-residency.4f8d8b9013d5930409ff935db0767e3fe168d829b123f66b94908b32298421ca.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "easel",
@@ -1137,6 +1215,12 @@
       "chapter": "A very long way from here",
       "caption": "You are the only dry thing for a mile.",
       "still": "https://worlds.sogni.ai/mascot-world/midtown-downpour.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/midtown-downpour.16427c5d30a184dbd39a882effcdcff3443099c996ae1553ae2e2c6642fa048a.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "subway",
@@ -1218,6 +1302,12 @@
       "chapter": "Four in the morning",
       "caption": "The clerk nods. It takes a while.",
       "still": "https://worlds.sogni.ai/mascot-world/the-slow-shift.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-slow-shift.1cab210e5c8cfbb97e37e75b744f3f393185c6717be0505d1c323f253f451097.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "slushie",
@@ -1275,6 +1365,12 @@
       "chapter": "Under the glasshouse",
       "caption": "So this is where the weather comes from.",
       "still": "https://worlds.sogni.ai/mascot-world/the-render-farm.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/the-render-farm.a1018c083865aef1f1e4b58549e30cbb4d1f6dd971bde4a543fa4c3c9dc0adba.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "rack",
@@ -1332,6 +1428,12 @@
       "chapter": "Inside the effigy",
       "caption": "Nobody looks up. You are clearly on the list.",
       "still": "https://worlds.sogni.ai/mascot-world/green-room.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/green-room.d2e5b3522c91da1ff397be99fab214a3cf51c06bdd00c8cfa9a21a8f33ec990e.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "stagedoor",
@@ -1389,6 +1491,12 @@
       "chapter": "Through the back door",
       "caption": "Now serving 1240. You are holding 1241. Nobody can believe your luck.",
       "still": "https://worlds.sogni.ai/mascot-world/now-serving-v3.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/now-serving-v3.f11ee3a9c2a8f076233631faf697427734b2aec0f19d0587f59cf370e3ac5951.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "chair",
@@ -1508,6 +1616,12 @@
       "chapter": "Under the roof",
       "caption": "Nobody here asked where you came from.",
       "still": "https://worlds.sogni.ai/mascot-world/basement-club.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/basement-club.e65628d3f3350da26ab779595f716effefa0391803bdd015c4e125a647d91355.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "booth",
@@ -1589,6 +1703,12 @@
       "chapter": "Beyond the city",
       "caption": "Sometimes the detour is the destination.",
       "still": "https://worlds.sogni.ai/mascot-world/desert-roadtrip.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/desert-roadtrip.12185b7d80b5d105b82ea231a8ad48cd552164b5e2aa33bf208b0bedfdbfb1a4.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "jukebox",
@@ -1642,6 +1762,12 @@
       "chapter": "Beyond the seaside",
       "caption": "A little flour. A little magic. A very happy sloth.",
       "still": "https://worlds.sogni.ai/mascot-world/sunlit-bakery-v2.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/sunlit-bakery.2361a1923009ada8be3700bc49e4e686bdb695248200f6a2f3612a51dd51b881.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "kite",
@@ -1719,6 +1845,12 @@
       "chapter": "Beyond the seaside",
       "caption": "Come for the coral. Stay for the quiet.",
       "still": "https://worlds.sogni.ai/mascot-world/coral-station.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/coral-station.17f4e1aeed28348327fbbbd459b05bdcae0fcf9b65a123a10cc37ef49b32fc85.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "telescope",
@@ -1796,6 +1928,12 @@
       "chapter": "Beyond the seaside",
       "caption": "Some days deserve every color.",
       "still": "https://worlds.sogni.ai/mascot-world/kite-festival-v2.png",
+      "music": {
+        "src": "https://cdn.sogni.ai/sogni-world/v1/score/kite-festival.48b096c690537abc0aba5b1248971a759bf09bfb00ae803bf6a7f71332a922cf.mp3",
+        "volume": 1,
+        "underFilms": 0,
+        "credit": "MiniMax Music 3: twelve instrumental cues composed for the world, one per region"
+      },
       "hotspots": [
         {
           "id": "basket",

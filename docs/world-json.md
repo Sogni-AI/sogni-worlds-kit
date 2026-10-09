@@ -28,7 +28,7 @@ can be copied to any static host as it is.
 | `aspect` | yes | `{ width, height }` of the stills and films (for a 3:2 world, `2304 × 1536`). Every place is shown at this shape. |
 | `start` | yes | The id of the first place. |
 | `order` | | Place ids in story order. When present the world is a story told in order: each place offers its next stop first, and the Places panel lists places in this order. `null` or absent for a free-roaming world. |
-| `music` | | One track under the whole world, or `null`. See below. |
+| `music` | | One track under the whole world, or `null`. See below. A place can carry its own `music` in its place. |
 | `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles. |
 | `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "A Sogni World", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
 | `map` | | `false` hides the Places panel, for a world with secrets or fatal choices. Default `true`. |
@@ -56,6 +56,7 @@ can be copied to any static host as it is.
 | `loop` | | The living photograph: a film whose first and last frames are the still. It plays over the still with its sound, lap after lap. |
 | `narration` | | `{ src?, lines: [{ text, speaker?, start?, end? }] }`. With `src`, each line shows while the audio is between its `start` and `end` (seconds). Without audio, or with sound off, the lines show at reading pace. |
 | `ending` | | `{ kind: "death" \| "end", title, text? }`: arriving here ends the story. The player shows a card ("You died" or "The end", the title and text) with **Rewind** (the crossing that led here, played backwards) and **Start over**. |
+| `music` | | The track under this place, with the same fields as the world's `music`. It replaces the world's track while you are here (the player fades one out and the next in on arrival); `null` means silence here. Absent, the world's track carries on. |
 | `hotspots` | yes | The things to click (may be empty). |
 
 The player shows a place with its loop's video frames rather than the JPEG

@@ -82,6 +82,7 @@
         "caption": { "type": "string", "description": "One line shown on arrival." },
         "still": { "type": "string", "description": "The canonical still. Every film that starts or ends here starts or ends on exactly this picture." },
         "loop": { "oneOf": [{ "$ref": "#/$defs/film" }, { "type": "null" }], "description": "The living photograph: plays over the still, starting and ending on it." },
+        "music": { "oneOf": [{ "$ref": "#/$defs/music" }, { "type": "null" }], "description": "The track under this place, in place of the world's while you are here; null for silence here. Absent, the world's track carries on." },
         "narration": {
           "type": ["object", "null"],
           "required": ["lines"],

@@ -3,7 +3,7 @@
 import './styles.css';
 import { collectionCard, figuresOf, foundCard, inspect, type Figure } from './figures';
 import { Hotspots } from './hotspots';
-import { Music } from './music';
+import { Music, musicCredits } from './music';
 import { Narration } from './narration';
 import { Stage } from './stage';
 import { beginScreen, errorScreen, Ui } from './ui';
@@ -44,7 +44,7 @@ class Player {
     this.figures = figuresOf(world);
     this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot), spot => this.collection.has(`${this.place?.id}/${spot.id}`));
     this.narration = new Narration(root, world);
-    this.music = new Music(world.music);
+    this.music = new Music(world.music, world);
     this.narration.onSpeaking = speaking => this.music.duck(speaking || this.stage.playingFilm);
     this.ui = new Ui(root, world, {
       next: () => { const spot = nextStop(this.place); if (spot) void this.go(spot); },
@@ -56,7 +56,7 @@ class Player {
       setQuality: quality => this.setQuality(quality),
       restart: () => void this.restart(),
       collection: () => this.showCollection(),
-    }, this.music.present, this.music.credit);
+    }, this.music.present, musicCredits(world));
     this.ui.setQuality(this.stage.quality);
     this.ui.setCollection(this.collection.size, this.collectibles);
     this.setSound(this.soundOn);
@@ -80,8 +80,9 @@ class Player {
   }
 
   async begin() {
-    this.music.start();
-    await this.arrive(placeOf(this.world, this.world.start), FIRST_NARRATION_MS, true);
+    const start = placeOf(this.world, this.world.start);
+    this.music.start(start.music);
+    await this.arrive(start, FIRST_NARRATION_MS, true);
   }
 
   /**
@@ -91,6 +92,7 @@ class Player {
   private async arrive(place: Place, narrationDelay: number | null, show: boolean) {
     this.place = place;
     this.visited.add(place.id);
+    this.music.switchTo(place.music);
     if (show) await this.stage.show(place);
     this.hotspots.render(place);
     const next = nextStop(place);

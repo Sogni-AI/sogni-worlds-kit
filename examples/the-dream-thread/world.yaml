@@ -15,10 +15,11 @@
 # a re-render from this plan would be the same direction, not the same bytes. Where a direction
 # breaks a rule the kit learned later, the film says so with `allow` and lint still shows the warning.
 
-# Not in this plan, because the kit's format has no place for it: the world's regional score
-# (twelve MiniMax Music 3 cues), the rendered ways back through a recurring object, an object
-# that leads two ways, and the sheets of questions Simon can ask. Simon's thirteen figures are:
-# `collect` objects without a film, picked up straight from the picture.
+# The score is 23 MiniMax Music 3 cues, one per region, carried as `music` on each place
+# (the files are not in this repository either; the playable copy streams them). Not in this plan,
+# because the kit's format has no place for it: the rendered ways back through a recurring object,
+# an object that leads two ways, and the sheets of questions Simon can ask. Simon's thirteen
+# figures are `collect` objects without a film, picked up straight from the picture.
 
 # Use it as a worked example of a free-roaming world: seen / objects / select / film, with
 # `order: free` and an intro card. Then make your own with `node world new <id>`.
@@ -45,6 +46,11 @@ places:
     chapter: The beginning
     caption: Three distant signals are waiting for a curious traveler.
     seen: "Night, moonlit: a small pink fuzzy sloth with round black glasses, a cream face, a blue nose and a short striped ivory horn stands at the centre of a wet stone path, facing the camera. Behind him on the left a stone staircase climbs the hillside, lit by hanging lanterns and a string of small lights, up to a carved wooden door glowing orange at the top. On the right a colossal moss-covered stone giant sits with its head bowed, a waterfall threading down beside it, under a full moon in a cloudy sky. Ferns and mist in the foreground; a lantern on a post at lower left."
+    music:
+      file: music/junction.mp3
+      volume: 1
+      underFilms: 0
+      credit: The Luminous Junction (MiniMax Music 3)
     objects:
       - id: giant
         label: Take the giant’s hand
@@ -123,6 +129,11 @@ places:
     chapter: The garden route
     caption: Some friendships are larger than life.
     seen: "Dusk on a mountainside garden: the pink sloth stands on the open mossy palm of the green stone giant, which fills the right half of the picture with its head bowed and the moon above it. A brass telescope on a wooden tripod points out of frame at left; a glowing seed pod shaped like a bud lights the lower middle, pink flowers and lanterns around it. A small red cable car hangs on a wire at the right edge, the sun setting over misty valleys behind it. Far left, the lantern staircase and glowing door of the junction."
+    music:
+      file: music/garden.mp3
+      volume: 1
+      underFilms: 0
+      credit: Guardian Garden (MiniMax Music 3)
     objects:
       - id: telescope
         label: The stone giant
@@ -199,6 +210,11 @@ places:
     chapter: The city route
     caption: The city is just waking up.
     seen: "Night on a wet city street: the pink sloth stands in the middle, facing the camera. At left a glowing jukebox beside a diner window under pink neon letters (DINER) and other neon signs; strings of lanterns cross overhead; a black spiral staircase climbs the brick building at right; a red Vespa scooter is parked at lower right outside a lit shop window with shelves. A waterfall and a moonlit forest show in the gap between the buildings."
+    music:
+      file: music/city.mp3
+      volume: 1
+      underFilms: 0
+      credit: Neon After Hours — Hidden Frequency (MiniMax Music 3)
     objects:
       - id: jukebox
         label: Play one more song
@@ -281,6 +297,11 @@ places:
     chapter: The seaside route
     caption: A new world, folded just for you.
     seen: "A cut-paper seaside village in daylight: the pink sloth stands on a paper path along a harbour, red-roofed paper houses rising up the hill at left and a yellow paper kite with a red tail flying above them. At lower left a wicker picnic basket with a loaf of bread sits on a wooden bench; at right a brass diving bell hangs from a wooden crane on a jetty over layered paper waves; paper cliffs, pines and clouds beyond, a paper sun at top right."
+    music:
+      file: music/coast.mp3
+      volume: 1
+      underFilms: 0
+      credit: Paper Coast — Unfold the Sea (MiniMax Music 3)
     objects:
       - id: basket
         label: Follow the fresh bread
@@ -355,6 +376,11 @@ places:
     chapter: Beyond the garden
     caption: The forecast is wonder.
     seen: "A cream-and-chrome observatory dome above a sea of clouds: the pink sloth stands at the railing of a curved deck at the centre. A brass telescope on a tripod, a small lantern hanging from it, points up at left, with orange leather seats around the deck; at right a small red cable car sits on a platform below its cable, clouds stretching to the horizon under a blue sky."
+    music:
+      file: music/cloud-observatory.mp3
+      volume: 1
+      underFilms: 0
+      credit: Above the Weather (MiniMax Music 3)
     objects:
       - id: tram
         label: Ride back through the canopy
@@ -415,6 +441,11 @@ places:
     chapter: Where the mountains start
     caption: Nobody is above you now.
     seen: "First light on a snow ridge: the pink sloth, dark goggles on a strap around his neck, stands in the snow at the centre. A string of coloured prayer flags runs along the ridge at left past a brass telescope on a tripod with a lantern; an orange dome tent sits on the snow at right; a coil of red rope and an ice axe planted in the snow in the foreground; a knife-edge ridge rises to a snowy summit behind, a sea of cloud and a sunrise horizon on the right and a starry sky above."
+    music:
+      file: music/the-knife-edge.mp3
+      volume: 1
+      underFilms: 0
+      credit: The Knife Edge (MiniMax Music 3)
     objects:
       - id: flags
         label: Follow the prayer flags
@@ -489,6 +520,11 @@ places:
     chapter: Beyond the garden
     caption: Please whisper. The trees are reading.
     seen: "An ink-and-watercolour library grown inside a tree: the pink sloth sits on a mossy ledge at the centre reading an open book, bookshelves curving around the trunk behind him. At left a glowing seed pod lights the ferns beside him, a lantern hangs from a branch and a waterfall falls past a window; at right a brass telescope on a tripod points out of an arched window at misty hills, with a stack of books and a potted plant on the sill; pink flowers and moss in the foreground."
+    music:
+      file: music/moss-library.mp3
+      volume: 1
+      underFilms: 0
+      credit: A Library Takes Root (MiniMax Music 3)
     objects:
       - id: telescope
         label: Read between the stars
@@ -571,6 +607,11 @@ places:
     chapter: Beyond the garden
     caption: You have arrived exactly on sloth time.
     seen: "A wooden tram-station deck in a misty rainforest: the pink sloth stands on wet planks at the centre. At left a red cable car hangs from its carriage under a steel gantry, a brass telescope on a tripod on the rail in front of it and a waterfall through the trees behind; at right a second red car far down the cable in the mist, sunlight through the canopy, and a wicker picnic basket with a baguette and a red checked cloth on a wooden bench."
+    music:
+      file: music/rainforest-tram.mp3
+      volume: 1
+      underFilms: 0
+      credit: The Slow Way There (MiniMax Music 3)
     objects:
       - id: basket
         label: Find the baker
@@ -630,6 +671,11 @@ places:
     chapter: Beyond the city
     caption: Your usual table. In a place you have never been.
     seen: "Inside a diner at night: the pink sloth sits in a red booth at a small chrome-edged table with a plate of waffles, one hand on the table. At left a glowing jukebox and, in the window, the DINER neon sign read from behind; red-and-white striped booths, pendant lamps and a framed poster behind him; at right a yellow kite with a red tail leans against the window beside a potted plant, and a red Vespa scooter is parked outside the glass."
+    music:
+      file: music/midnight-diner.mp3
+      volume: 1
+      underFilms: 0
+      credit: Waffles After Midnight (MiniMax Music 3)
     objects:
       - id: kite
         label: Take breakfast outside
@@ -692,6 +738,11 @@ places:
     chapter: Somewhere far out
     caption: The road ran out an hour ago. The city is still here.
     seen: "Night on a dry lakebed under stars: the pink sloth stands beside a red Vespa scooter at the centre, its headlight on. At left an old upright piano and its stool stand on the sand with neon fish sculptures glowing green, pink and blue behind them; at the back a tall effigy of lit cubes with a winged figure on top; at right a glowing geodesic dome tent with its door open and an armchair inside, smaller tents and lights in the distance."
+    music:
+      file: music/dust-city.mp3
+      volume: 1
+      underFilms: 0
+      credit: A City Made of Art (MiniMax Music 3)
     objects:
       - id: piano
         label: Play the piano nobody owns
@@ -760,6 +811,11 @@ places:
     chapter: Beyond the city
     caption: The city feels different from up here.
     seen: "Blue hour on a rooftop: the pink sloth stands on wet paving at the centre, a mirror ball on a stand beside a small round wooden dance floor at right. At left the jukebox under the DINER neon sign and a red Vespa parked by the black spiral staircase that climbs to a planted balcony; strings of lights cross the sky; potted plants and pink flowers at right; the city skyline and a full moon behind."
+    music:
+      file: music/rooftop-dance.mp3
+      volume: 1
+      underFilms: 0
+      credit: Above the City (MiniMax Music 3)
     objects:
       - id: scooter
         label: Chase the next sunset
@@ -823,6 +879,11 @@ places:
     chapter: Somewhere much deeper
     caption: Nobody down here is in a hurry.
     seen: "Inside a sunken liner, lit green: the pink sloth stands on a patterned carpet in a flooded hall at the centre. At left a round brass bulkhead door with a porthole stands open; above him hangs a chandelier furred with growth; a grand staircase with a red runner climbs at right, where several still figures stand on the landing and beside the bannister; a wooden reception desk with a brass bell at lower right."
+    music:
+      file: music/the-wreck.mp3
+      volume: 1
+      underFilms: 0
+      credit: The Grand Staircase (MiniMax Music 3)
     objects:
       - id: bulkhead
         label: Push the bulkhead door
@@ -872,6 +933,11 @@ places:
     chapter: Inside the seed
     caption: There is a spare apron on the hook, in your size.
     seen: "A watercolour-and-ink glasshouse studio: the pink sloth stands at the centre in a paint-spattered apron, holding a brush. Easels with half-finished colour-wash paintings stand at left, more washes pegged on a line under the glass roof, potted plants on a table; at right a potter's wheel with a wet clay pot on a round stand, a clay bust on a stool behind it, and an iron spiral staircase climbing to the right; flowers and ferns in the foreground."
+    music:
+      file: music/the-residency.mp3
+      volume: 1
+      underFilms: 0
+      credit: Nobody Is Finished (MiniMax Music 3)
     objects:
       - id: easel
         label: Step into the wet canvas
@@ -936,6 +1002,11 @@ places:
     chapter: A very long way from here
     caption: You are the only dry thing for a mile.
     seen: "A rainy city avenue in grey light: the pink sloth stands on a wet pavement at the centre. At left a green subway entrance with stairs going down, a lit sign and a brass telescope on its railing, a red tram and steam behind it, a lamp post above; at right a hot-dog cart under a red, yellow and blue umbrella, people with umbrellas crossing, and a yellow taxi with its rear door open; more yellow taxis and tall buildings fade into the rain."
+    music:
+      file: music/midtown-downpour.mp3
+      volume: 1
+      underFilms: 0
+      credit: Eight Million (MiniMax Music 3)
     objects:
       - id: subway
         label: Take the stairs down
@@ -1003,6 +1074,11 @@ places:
     chapter: Four in the morning
     caption: The clerk nods. It takes a while.
     seen: "Inside a corner store under fluorescent light: the pink sloth stands at the centre with one hand on the white counter at left, where a slushie machine turns red and yellow beside stacked goods; a clerk in a dark jacket looks down behind the counter; three customers browse the shelves at the back; a wire rack of newspapers stands at right in front of a grey metal double door; a cracked tiled floor."
+    music:
+      file: music/the-slow-shift.mp3
+      volume: 1
+      underFilms: 0
+      credit: The Slow Shift (MiniMax Music 3)
     objects:
       - id: slushie
         label: Watch the slushie machine turn
@@ -1054,6 +1130,11 @@ places:
     chapter: Under the glasshouse
     caption: So this is where the weather comes from.
     seen: "A watercolour workshop under a glass dome: the pink sloth stands at the centre in a paint-spattered apron. Behind him metal racks hold stacks of paper sheets with small red, green and yellow lamps on top; at right rows of cabinets with wooden windmill fans, a half-finished paper wave standing on a stool, and a trolley stacked with paper; at left an empty easel with a bare canvas leaning on it, a table with a potted plant, and a cloth pegged on a line."
+    music:
+      file: music/the-render-farm.mp3
+      volume: 1
+      underFilms: 0
+      credit: Where It Is Made (MiniMax Music 3)
     objects:
       - id: rack
         label: Climb into the rack
@@ -1100,6 +1181,11 @@ places:
     chapter: Inside the effigy
     caption: Nobody looks up. You are clearly on the list.
     seen: "A barn-sized green room with green walls: the pink sloth stands at the centre in front of three bulb-lit mirrors. At left a long table with silver trophies and trays of fruit and pastries, folding chairs, and a crowd of costumed guests (a man in a white coat, a grey-bearded wizard in a pointed hat, a figure in a fur cloak reading a sheet, an astronaut, a bearded man in furs seated at the table); at right a dark stage door stands open onto a bright corridor where a woman in a red dress and a knight in armour wait, an EXIT sign above the door."
+    music:
+      file: music/green-room.mp3
+      volume: 1
+      underFilms: 0
+      credit: Everyone Is Here (MiniMax Music 3)
     objects:
       - id: stagedoor
         label: Take the stage door
@@ -1152,6 +1238,11 @@ places:
     chapter: Through the back door
     caption: Now serving 1240. You are holding 1241. Nobody can believe your luck.
     seen: "A waiting room with green walls under fluorescent light: the pink sloth stands at the centre holding a paper ticket. A black board above the service window reads NOW SERVING 1240; at the window a red ticket dispenser, a small yellow one-eyed figure on the counter, and a clerk in a top hat with more costumed figures behind the glass; at left a long table with silver trophies and trays of food and a crowd of costumed characters (a wizard, a dark-helmeted figure in black, a green ogre, a white-armoured trooper, a tall yellow bird, a shaggy brown figure) sitting and standing; orange plastic chairs and a potted plant at right."
+    music:
+      file: music/now-serving.mp3
+      volume: 1
+      underFilms: 0
+      credit: Now Serving (MiniMax Music 3)
     objects:
       - id: chair
         label: Sit down and wait
@@ -1251,6 +1342,11 @@ places:
     chapter: Under the roof
     caption: Nobody here asked where you came from.
     seen: "A low-ceilinged basement club in pink and blue light: the pink sloth stands at the centre on a concrete floor. At left a DJ booth with a mixer on top of stacked speaker cabinets, and a crowd dancing with their arms up under the lights; at right a payphone on a brick wall and an open steel door onto a corridor where more people stand in blue light."
+    music:
+      file: music/basement-club.mp3
+      volume: 1
+      underFilms: 0
+      credit: Two In The Morning (MiniMax Music 3)
     objects:
       - id: booth
         label: Take over the decks
@@ -1315,6 +1411,11 @@ places:
     chapter: Beyond the city
     caption: Sometimes the detour is the destination.
     seen: "Golden hour on an empty desert road: the pink sloth stands at the centre with one hand on the seat of a red Vespa scooter parked at the roadside. Red mesa cliffs and buttes line the horizon; at right a small diner with a neon sign glows against the rock, a jukebox standing on a metal picnic table in front of it; dry scrub on either side of the road."
+    music:
+      file: music/desert-roadtrip.mp3
+      volume: 1
+      underFilms: 0
+      credit: Miles of Maybe (MiniMax Music 3)
     objects:
       - id: jukebox
         label: Play the road-trip favorite
@@ -1354,6 +1455,11 @@ places:
     chapter: Beyond the seaside
     caption: A little flour. A little magic. A very happy sloth.
     seen: "A stop-motion clay bakery: the pink sloth stands at the centre on a terracotta-tiled floor in front of a clay bread oven with a fire inside and logs stacked beneath it. At left copper pans hang on the wall and a small brass diving bell sits on a wooden cabinet; at right a wooden table and shelf of golden croissants dusted with flour, a yellow kite with a red bow hanging on the wall, and sunlight through an arched window."
+    music:
+      file: music/sunlit-bakery.mp3
+      volume: 1
+      underFilms: 0
+      credit: Freshly Baked Sunshine (MiniMax Music 3)
     objects:
       - id: kite
         label: Ride the kite to the hill
@@ -1414,6 +1520,11 @@ places:
     chapter: Beyond the seaside
     caption: Come for the coral. Stay for the quiet.
     seen: "Inside an undersea station with pale green walls: the pink sloth stands at the centre on a wooden floor. A wide window at left looks out on a reef of pink and orange coral with shoals of fish in blue water, a brass telescope on a tripod pointing at it; at right a brass diving bell stands on a round grating with bubbles rising from it, beside cabinets, a sink and a round porthole showing more fish."
+    music:
+      file: music/coral-station.mp3
+      volume: 1
+      underFilms: 0
+      credit: Underwater, Unhurried (MiniMax Music 3)
     objects:
       - id: telescope
         label: From deep blue to sky blue
@@ -1474,6 +1585,11 @@ places:
     chapter: Beyond the seaside
     caption: Some days deserve every color.
     seen: "A risograph-print hilltop in flat bright colours: the pink sloth stands on green grass at the centre, a yellow kite with a red tail flying on its string above his shoulder. A village of red-roofed houses sits on the hill at left; a deep blue sea with paper waves and cliffs stretches away to the right under white cut-out clouds; a wicker picnic basket with two loaves sits on the grass at lower right."
+    music:
+      file: music/kite-festival.mp3
+      volume: 1
+      underFilms: 0
+      credit: An Afternoon in Bright Ink (MiniMax Music 3)
     objects:
       - id: basket
         label: Refill the picnic basket

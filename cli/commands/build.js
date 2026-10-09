@@ -137,6 +137,21 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       missing.push({ film: `narration of ${place.id}`, kind: 'narration', state: 'unrendered' });
     }
   }
+  // A place's own track (a file the person has the rights to) in place of the world's while they are there.
+  const placeMusic = {};
+  for (const place of plan.places) {
+    if (place.music === undefined) continue;
+    if (place.music === null) { placeMusic[place.id] = null; continue; }
+    const source = place.music.file ? join(paths.dir, place.music.file) : null;
+    if (source && existsSync(source)) {
+      const target = join(out, 'audio', `music-${place.id}${extname(source)}`);
+      mkdirSync(join(out, 'audio'), { recursive: true });
+      copyFileSync(source, target);
+      placeMusic[place.id] = clean({ src: rel(out, target), volume: place.music.volume, underFilms: place.music.underFilms, credit: place.music.credit });
+    } else {
+      missing.push({ film: `music of ${place.id}`, kind: 'music', state: 'unrendered' });
+    }
+  }
   let music = null;
   if (plan.music) {
     const receiptPath = join(paths.audio, 'music', 'music.json');
@@ -203,6 +218,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       loop: loop ? { src: loop.src, src720: loop.src720, seconds: loop.info.seconds } : null,
       narration: narration[place.id] ?? null,
       ending: place.ending ? clean({ kind: place.ending.kind, title: place.ending.title, text: place.ending.text || undefined }) : undefined,
+      music: placeMusic[place.id],
       hotspots,
     });
   });
