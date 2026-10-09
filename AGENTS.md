@@ -247,6 +247,7 @@ Tell the person how to host it (docs/hosting.md).
 | SAM found nothing | The clicks scored below the threshold | Use one clear positive point on the object; add negatives separately |
 | Submission outcome unknown | The connection dropped mid-submit | Run the same command again; it reconciles, never duplicates |
 | A take keeps failing the same way | The direction causes it | Rewrite the direction (docs/directing-films.md#retakes) |
+| Sensitive content detected (narration) | The voice model's own check refused the line; a resigned or despairing phrase can trip it | Reword that line in `world.yaml` and run `narrate` again; tell the person what changed |
 
 ## Tools beyond the pipeline: the Sogni Creative Agent Skill
 

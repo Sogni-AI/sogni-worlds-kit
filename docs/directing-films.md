@@ -171,6 +171,13 @@ ends and the camera stays mostly static.
 Plan a few surprises per world, and cause each one with something really in the
 picture. Keep them rare enough to stay surprising.
 
+Give a moment an action that lasts, not an instant. A moment directed as a
+lightning flash spends its first second flashing and then freezes for the rest
+(two takes in a row, a clean-room build, 2026-10-09); the same object directed as
+"steps to the window, wipes the glass with his sleeve and looks out as the beam
+passes" moves the whole way. A flash or a flare can be part of a moment, never
+the whole of it.
+
 ## Real people and faces
 
 The model can't guarantee a real person's face stays theirs in the middle of a
