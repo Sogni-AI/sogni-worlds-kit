@@ -326,17 +326,36 @@ export async function waitForProject(client, { project, projectId, ownerPid }, {
 }
 
 /** Download a finished video (or other media) and check it against the server's own hash. */
-export async function downloadResult(client, result, { contentType = 'video/mp4', maxBytes = 256 * 1024 * 1024 } = {}) {
+export async function downloadResult(client, result, { contentType = 'video/mp4', maxBytes = 256 * 1024 * 1024, idleMs = 120_000 } = {}) {
   if (result.completedWorkerJobs?.length !== 1) throw new Error('The project did not return exactly one result');
   const job = result.completedWorkerJobs[0];
   if (!job.imgID) throw new Error('The finished job has no result file');
   const url = contentType.startsWith('image/')
     ? await client.projects.downloadUrl({ jobId: result.id, imageId: job.imgID, type: 'complete' })
     : await client.projects.mediaDownloadUrl({ jobId: result.id, id: job.imgID, type: 'complete', contentType });
-  const response = await fetch(url, { signal: AbortSignal.timeout(180_000) });
-  if (!response.ok) throw new Error(`Downloading the result failed (HTTP ${response.status}); run the command again to retry the download`);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length > maxBytes) throw new Error('The result is larger than expected');
+  // A 2K film is 10–25 MB. Abort only when the connection stalls (no bytes for idleMs),
+  // so a slow link that keeps delivering still finishes instead of timing out whole.
+  const controller = new AbortController();
+  let stall = setTimeout(() => controller.abort(), idleMs);
+  const chunks = [];
+  let length = 0;
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Downloading the result failed (HTTP ${response.status}); run the command again to retry the download`);
+    for await (const chunk of response.body) {
+      clearTimeout(stall);
+      stall = setTimeout(() => controller.abort(), idleMs);
+      length += chunk.length;
+      if (length > maxBytes) throw new Error('The result is larger than expected');
+      chunks.push(chunk);
+    }
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error(`Downloading the result stalled for ${Math.round(idleMs / 1000)} s after ${(length / 1e6).toFixed(1)} MB; run the command again to retry the download`);
+    throw error;
+  } finally {
+    clearTimeout(stall);
+  }
+  const bytes = Buffer.concat(chunks);
   return { bytes, job };
 }
 
