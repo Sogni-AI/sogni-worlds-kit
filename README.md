@@ -1,6 +1,6 @@
 <table>
   <tr>
-    <td width="50%"><a href="https://worlds.sogni.ai/demo"><img src="docs/media/dream-thread.jpg" alt="The Dream Thread's first place: Simon, a pink sloth with round glasses and a small horn, on a moonlit stone path below a colossal moss-covered stone giant, a lantern-lit staircase climbing to a glowing door behind him."></a><br><b>The Dream Thread</b> · 23 places painted from one idea and one picture of a sloth</td>
+    <td width="50%"><a href="https://worlds.sogni.ai/demo"><img src="docs/media/dream-thread.webp" alt="The Dream Thread playing in the kit's player: the Begin card, then Simon, a pink sloth with round glasses and a small horn, on a moonlit path below a stone giant, with clickable labels. Simon's outline lights up, he is picked up and turned over as a 3D figure, then the giant's outline lights, a click, and the giant's hand lifts him up to a garden above the clouds."></a><br><b>The Dream Thread</b> · 23 places painted from one idea and one picture of a sloth (a real recording of the player; <a href="docs/media/dream-thread.mp4">MP4</a>)</td>
     <td width="50%"><a href="https://worlds.sogni.ai/demo/the-long-white-cloud"><img src="docs/media/hero.webp" alt="The Long White Cloud playing in the kit's player: the Begin screen, then a living photograph of Mark and Jen at a round hobbit door in Hobbiton with clickable labels. The door's traced outline lights up, a click, and a film ducks through the door and a root-lined passage, landing at Te Pā Tū in Rotorua, where Mark's narration appears as a subtitle."></a><br><b>The Long White Cloud</b> · 22 places from a trip's own photographs (a real recording of the player; <a href="docs/media/hero.mp4">MP4</a>)</td>
   </tr>
 </table>
@@ -154,7 +154,7 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
   then the visitor picks up its 3D figure and turns it over.
 - **Voice and music.** Narration in a cloned voice (your own, with your recording)
   or a designed one, via Qwen3-TTS. Music generated with MiniMax Music 3, or a
-  track you own.
+  track you own; one under the whole world, or one per place.
 - **Judging.** Automatic checks flag dissolves, hard cuts and frozen endings. Your
   agent looks at every take, and you approve what ships, marking exactly where a
   frame goes wrong when it does.
