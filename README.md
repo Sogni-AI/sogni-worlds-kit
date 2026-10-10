@@ -158,6 +158,9 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
 - **Judging.** Automatic checks flag dissolves, hard cuts and frozen endings. Your
   agent looks at every take, and you approve what ships, marking exactly where a
   frame goes wrong when it does.
+- **Never skipped.** The player fetches the likely next films ahead, and on a slow
+  connection a crossing waits, says how much has arrived and offers 720p. The
+  journeys are the point, so it never jumps to the destination by itself.
 
 Full walk-through: [docs/how-it-works.md](docs/how-it-works.md).
 

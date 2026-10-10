@@ -240,3 +240,27 @@ button.collection-pill:hover, button.collection-pill:focus-visible { background:
 @media (prefers-reduced-motion: reduce) {
   .label { transition: none; }
 }
+
+/* ── A slow connection ───────────────────────────────────────── */
+/* The film is never skipped for the visitor: they are told, offered the lighter picture, and it plays through. */
+.slow { position: absolute; z-index: 9; left: 50%; bottom: 92px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px); margin: 0; padding: 11px 16px; border-radius: 14px; background: rgba(17, 19, 23, 0.92); border: 1px solid var(--faint); font-size: 14px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+.slow[hidden] { display: none; }
+.slow .spinner { width: 14px; height: 14px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.25); border-top-color: var(--accent); border-radius: 50%; animation: slow-spin 1s linear infinite; }
+.slow button { font: inherit; font-weight: 600; color: #ffd278; background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
+.slow button[hidden] { display: none; }
+@keyframes slow-spin { to { transform: rotate(360deg); } }
+
+/* ── The map as pictures ─────────────────────────────────────── */
+/* A story told in order is drawn as the trip, one picture after the next; a free world as a grid of its places. */
+.panel-card.map-card { width: min(920px, 100%); }
+.trip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; counter-reset: place; }
+.trip-stop { width: 100%; display: grid; gap: 5px; padding: 6px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--ink); cursor: pointer; font: inherit; text-align: left; counter-increment: place; }
+.trip-stop img { width: 100%; aspect-ratio: var(--ratio); object-fit: cover; border-radius: 8px; display: block; background: #000; }
+.trip-stop .title { font-size: 13px; line-height: 1.25; }
+.trip-stop .title::before { content: counter(place) ' · '; color: var(--muted); }
+.trip-stop .chapter { font-size: 11px; color: var(--muted); }
+.trip-stop:hover { background: rgba(255, 255, 255, 0.06); }
+.trip-stop.visited .title::after { content: ' ✓'; color: var(--muted); font-size: 12px; }
+.trip-stop.current { border-color: rgba(255, 138, 102, 0.7); background: rgba(255, 138, 102, 0.1); }
+.trip.free .trip-stop .title::before { content: none; }
+@media (max-width: 640px) { .trip { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 7px; } }

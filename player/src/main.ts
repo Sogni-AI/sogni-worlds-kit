@@ -4,10 +4,11 @@ import './styles.css';
 import { collectionCard, figuresOf, foundCard, inspect, type Figure } from './figures';
 import { Hotspots } from './hotspots';
 import { Music, musicCredits } from './music';
+import { fetchAhead } from './video-cache';
 import { Narration } from './narration';
 import { Stage } from './stage';
 import { beginScreen, errorScreen, Ui } from './ui';
-import { loadWorld, nextStop, placeOf, worldUrl, type Hotspot, type Place, type Quality, type World } from './world';
+import { loadWorld, nextStop, pick, placeOf, worldUrl, type Film, type Hotspot, type Place, type Quality, type World } from './world';
 
 /** Seconds of quiet before the first place speaks, and between later arrivals and their narration. */
 const FIRST_NARRATION_MS = 3000;
@@ -28,6 +29,8 @@ class Player {
   private readonly collectibles: number;
   private readonly figures: Figure[];
   private busy = false;
+  /** Stops the fetch-ahead of the films this place may play next. */
+  private stopFetching?: () => void;
   private soundOn = store.get('sound') !== 'off';
   private readonly stage: Stage;
   private readonly hotspots: Hotspots;
@@ -45,6 +48,7 @@ class Player {
     this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot), spot => this.collection.has(`${this.place?.id}/${spot.id}`));
     this.narration = new Narration(root, world);
     this.music = new Music(world.music, world);
+    this.stage.onStall = (stalled, loaded) => this.ui.slow(stalled ? { loaded, quality: this.stage.quality } : null);
     this.narration.onSpeaking = speaking => this.music.duck(speaking || this.stage.playingFilm);
     this.ui = new Ui(root, world, {
       next: () => { const spot = nextStop(this.place); if (spot) void this.go(spot); },
@@ -99,7 +103,10 @@ class Player {
     const nextTitle = next?.to ? placeOf(this.world, next.to).title : undefined;
     this.ui.setPlace(place, nextTitle, this.history.length > 0 && !place.ending, this.visited);
     if (narrationDelay !== null) this.narration.start(place, narrationDelay);
-    this.stage.preload(next?.film);
+    // Fetch what may play next, likeliest first: the next stop, then the other ways on.
+    this.stopFetching?.();
+    const ahead = [next?.film, ...place.hotspots.map(spot => spot.film)].filter((film): film is Film => Boolean(film));
+    this.stopFetching = fetchAhead([...new Set(ahead.map(film => pick(film, this.stage.quality)))]);
     if (place.ending) {
       const from = this.history.at(-1)?.from;
       this.ui.showEnding(place.ending, this.history.length > 0, from ? placeOf(this.world, from).title : undefined);
@@ -183,6 +190,9 @@ class Player {
   }
 
   private beforeFilm() {
+    // The film has the connection to itself.
+    this.stopFetching?.();
+    this.stopFetching = undefined;
     this.narration.stop();
     this.hotspots.hide();
     this.ui.closePanels();
@@ -206,11 +216,12 @@ class Player {
   }
 
   private setQuality(quality: Quality) {
-    this.stage.quality = quality;
     store.set('quality', quality);
     this.ui.setQuality(quality);
-    // The loop restarts in the new quality from its first frame, which is the still.
-    if (!this.busy) void this.stage.show(this.place);
+    // A playing film carries on in the new picture from the same moment; a
+    // place's loop restarts in it from its first frame, which is the still.
+    if (this.busy) this.stage.switchQuality(quality);
+    else { this.stage.quality = quality; void this.stage.show(this.place); }
   }
 }
 
@@ -218,10 +229,18 @@ const readList = (text: string | null): string[] => {
   try { const value = JSON.parse(text ?? '[]'); return Array.isArray(value) ? value.filter(v => typeof v === 'string') : []; } catch { return []; }
 };
 
-/** 720p on phones and small windows, 2K elsewhere. */
+/**
+ * What a visitor who has not chosen is shown: 2K on a desktop or a tablet (a
+ * side of at least 1000 px, which every iPad has in either orientation and no
+ * phone has in any), 720p on a phone or when the browser asks to save data.
+ */
 function defaultQuality(): Quality {
-  const shortSide = Math.min(screen.width, screen.height) * (window.devicePixelRatio || 1);
-  return window.innerWidth < 900 || shortSide < 1000 ? '720' : '2k';
+  try {
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return '720';
+    return window.matchMedia('(min-width: 1000px), (min-height: 1000px)').matches ? '2k' : '720';
+  } catch {
+    return '720';
+  }
 }
 
 async function boot() {

@@ -7,7 +7,8 @@
 // it has a loop, because a JPEG and a video decode to slightly different colours
 // and the films start and end on video frames.
 import { LoopDeck } from './loop-deck';
-import { playWithSound, setSource, whenEnded, whenPainted } from './media';
+import { bufferedFraction, playWithSound, setSource, watchStall, whenEnded, whenPainted } from './media';
+import { localOrRemote } from './video-cache';
 import { pick, type Film, type Place, type Quality, type World } from './world';
 
 export class Stage {
@@ -22,6 +23,10 @@ export class Stage {
   private volume = 1;
   private muted = false;
   quality: Quality = '2k';
+  /** The film on screen, while one plays. */
+  private playing: Film | null = null;
+  /** Told when the playing film is starved of bytes (and when it flows again), with how much of it has arrived. */
+  onStall?: (stalled: boolean, loaded: number | null) => void;
 
   constructor(root: HTMLElement, world: World) {
     const backdrop = el('div', 'backdrop');
@@ -64,7 +69,7 @@ export class Stage {
   async show(place: Place) {
     this.setStill(place);
     this.hideFilm();
-    if (place.loop) await this.deck.start(pick(place.loop, this.quality));
+    if (place.loop) await this.deck.start(localOrRemote(pick(place.loop, this.quality)));
     else {
       this.deck.stop();
       this.follow(null);
@@ -77,23 +82,54 @@ export class Stage {
    * loop is a straight cut between identical frames.
    */
   async play(film: Film, landing: Place) {
-    const src = pick(film, this.quality);
-    setSource(this.film, src);
+    this.playing = film;
+    setSource(this.film, localOrRemote(pick(film, this.quality)));
     this.film.currentTime = 0;
     this.applyVolume();
+    // A slow connection never skips the film: the place stays on screen until
+    // the first frame has arrived, the visitor is told while it is starved, and
+    // it plays through. Skip stays theirs to press.
+    const report = (value: boolean) => { this.film.classList.toggle('stalled', value); this.onStall?.(value, bufferedFraction(this.film)); };
+    const stop = watchStall(this.film, report);
+    const loaded = () => { if (this.film.classList.contains('stalled')) this.onStall?.(true, bufferedFraction(this.film)); };
+    this.film.addEventListener('progress', loaded);
     void playWithSound(this.film);
-    await whenPainted(this.film);
+    await whenPainted(this.film, Infinity);
     this.film.classList.add('on');
     this.deck.stop();
     this.follow(this.film);
-    // Get the landing ready while the film plays.
-    const loopSrc = landing.loop ? pick(landing.loop, this.quality) : null;
-    if (loopSrc) this.deck.load(loopSrc);
-    await whenEnded(this.film);
+    // Get the landing ready while the film plays (in the quality it ends in).
+    const landingLoop = () => (landing.loop ? localOrRemote(pick(landing.loop, this.quality)) : null);
+    if (landingLoop()) this.deck.load(landingLoop()!);
+    await this.untilEnded();
+    stop();
+    this.film.removeEventListener('progress', loaded);
+    this.film.classList.remove('stalled');
+    this.onStall?.(false, null);
+    this.playing = null;
     this.setStill(landing);
+    const loopSrc = landingLoop();
     if (loopSrc) await this.deck.start(loopSrc);
     else this.follow(null);
     this.hideFilm();
+  }
+
+  /**
+   * Wait for the film's last frame. A load error on a slow or dropped
+   * connection is retried once from where it was; only a second failure
+   * ends the film where it is, so a broken file never strands the visitor.
+   */
+  private async untilEnded() {
+    let retried = false;
+    for (;;) {
+      await whenEnded(this.film);
+      if (this.film.ended || retried || !this.film.error) return;
+      retried = true;
+      const at = this.film.currentTime;
+      this.film.load();
+      this.film.currentTime = at;
+      void playWithSound(this.film);
+    }
   }
 
   /** Jump to the end of the film that is playing (its last frame is the landing). */
@@ -107,10 +143,21 @@ export class Stage {
     return this.film.classList.contains('on');
   }
 
-  /** Buffer a film while nothing is playing, so the next stop starts at once. */
-  preload(film: Film | undefined) {
-    if (!film || this.playingFilm) return;
-    setSource(this.film, pick(film, this.quality));
+  /**
+   * Change the picture while a film plays: the lighter file takes over at the
+   * same moment, without pausing at zero, which is what a visitor on a slow
+   * connection is offered.
+   */
+  switchQuality(quality: Quality) {
+    this.quality = quality;
+    if (!this.playing) return;
+    const src = localOrRemote(pick(this.playing, quality));
+    if (this.film.getAttribute('src') === src) return;
+    const at = this.film.currentTime, wasPlaying = !this.film.paused && !this.film.ended;
+    this.film.src = src;
+    if (at > 0) this.film.currentTime = at;
+    if (wasPlaying) void playWithSound(this.film);
+    this.follow(this.film);
   }
 
   setSound(volume: number, muted: boolean) {

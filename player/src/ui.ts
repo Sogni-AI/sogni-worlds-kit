@@ -44,6 +44,9 @@ export class Ui {
   private readonly collectionPanel = el('section', 'panel');
   private readonly toastBox = el('p', 'toast');
   private toastTimer?: ReturnType<typeof setTimeout>;
+  private readonly slowBox = el('div', 'slow');
+  private readonly slowText = el('span', 'text');
+  private readonly slowButton = el('button', '', 'Switch to 720p');
 
   constructor(private readonly root: HTMLElement, private readonly world: World, private readonly actions: Actions, musicPresent: boolean, musicCredit?: string) {
     const top = el('header', 'bar top');
@@ -79,8 +82,25 @@ export class Ui {
     }
     this.ending.hidden = true;
     this.toastBox.hidden = true;
-    root.append(top, bottom, this.ending, this.toastBox, this.mapPanel, this.aboutPanel, this.collectionPanel);
+    this.slowBox.hidden = true;
+    this.slowBox.setAttribute('role', 'status');
+    this.slowButton.type = 'button';
+    this.slowButton.addEventListener('click', () => actions.setQuality('720'));
+    this.slowBox.append(el('span', 'spinner'), this.slowText, this.slowButton);
+    root.append(top, bottom, this.ending, this.toastBox, this.slowBox, this.mapPanel, this.aboutPanel, this.collectionPanel);
     this.keyboard();
+  }
+
+  /**
+   * A film starved of bytes: say so, with how much has arrived, and offer the
+   * lighter picture when the visitor is on 2K. Never skip it for them.
+   */
+  slow(state: { loaded: number | null; quality: Quality } | null) {
+    this.slowBox.hidden = !state;
+    if (!state) return;
+    const here = state.loaded !== null ? `: ${Math.round(state.loaded * 100)}% of the film is here` : '';
+    this.slowText.textContent = `Slow connection${here}. It plays through; nothing is skipped.`;
+    this.slowButton.hidden = state.quality !== '2k';
   }
 
   /** The visitor's collection: found / total, shown once the world has collectibles. */
@@ -205,18 +225,29 @@ export class Ui {
     panel.hidden = !opening;
   }
 
+  /**
+   * The world drawn as its pictures. A story told in order is the trip, one
+   * picture after the next, numbered; a free world is a grid of its places.
+   * The place you are in is marked, and the ones you have seen are ticked.
+   */
   private renderMap(current: string, visited: Set<string>) {
-    const card = el('div', 'panel-card');
-    card.append(el('h2', '', 'Places'));
-    const list = el('ol', 'places');
+    const card = el('div', 'panel-card map-card');
+    const linear = Boolean(this.world.order);
+    card.append(el('h2', '', linear ? 'The trip' : 'Places'));
+    const list = el('ol', `trip${linear ? '' : ' free'}`);
     const ids = this.world.order ?? this.world.places.map(place => place.id);
     for (const id of ids) {
       const place = this.world.places.find(p => p.id === id);
       if (!place) continue;
       const item = el('li');
-      const button = el('button', `place-link${id === current ? ' current' : ''}${visited.has(id) ? ' visited' : ''}`);
+      const button = el('button', `trip-stop${id === current ? ' current' : ''}${visited.has(id) ? ' visited' : ''}`);
       button.type = 'button';
-      button.append(el('span', 'title', place.title), el('span', 'chapter', place.chapter ?? ''));
+      const picture = el('img') as HTMLImageElement;
+      picture.src = place.still;
+      picture.alt = '';
+      picture.loading = 'lazy';
+      button.append(picture, el('span', 'title', place.title));
+      if (place.chapter) button.append(el('span', 'chapter', place.chapter));
       button.addEventListener('click', () => {
         this.mapPanel.hidden = true;
         this.actions.jump(id);
