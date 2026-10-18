@@ -18,7 +18,7 @@ pipeline, a player and the full instructions.
 
 2. **Read `AGENTS.md` in the kit and follow it.** It is the complete workflow:
    setup, interview, plan, select, render (canary first), screen, the person's
-   review, retakes, narration, music, build, play, export.
+   review, retakes, narration, music, build, play, export, gallery submission.
 
 3. **Drive with `node world next`.** It prints the one next action and its exact
    command. `node world status` shows everything.
@@ -33,3 +33,9 @@ Rules that matter even before you open AGENTS.md:
 
 Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
 is strongly recommended for a whole world.
+
+After hosting the finished export, offer `node world submit <id> --url <public
+HTTPS link> --creator "Their name"`. It prints a prefilled submission link to
+worlds.sogni.ai: the person signs in, checks permissions and sends it for review.
+Approved worlds appear in the public community gallery with creator credit.
+Decisions, resubmission and withdrawal are in My worlds; hosting stays with them.

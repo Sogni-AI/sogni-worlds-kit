@@ -92,7 +92,33 @@ Open the link on a phone and on a computer, with sound on:
 - Back plays the way you came;
 - narration and music play after the first tap, and the music steps back under films.
 
+## Submit to the Sogni community gallery
+
+After checking the live copy, run:
+
+```bash
+node world submit <world> --url https://your-world.example/ --creator "Your name"
+```
+
+Open the printed link (or add `--open`). It fills in the title, description,
+opening picture, creator credit and scene/path counts from your built world.
+Sign in with your Sogni account, check the details and sharing permissions, then
+submit. You can also fill in the form at
+[worlds.sogni.ai/submit-world](https://worlds.sogni.ai/submit-world) directly.
+
+Submitting is free. Your world must play publicly without a login. Sogni reviews
+the complete experience before listing it in the public community gallery.
+Approval and feedback appear in [My worlds](https://worlds.sogni.ai/?view=mine),
+where you can update or withdraw the listing. The gallery credits you and links
+visitors to your hosted world; your files stay with your host. Your Sogni API key
+is never sent with the submission.
+
 ## Updating a world
+
+If it is listed in Sogni's public gallery, withdraw the listing from
+[My worlds](https://worlds.sogni.ai/?view=mine) before changing the content.
+After uploading the update, open that listing and submit the new version for
+review. A listing under review is not shown in the gallery.
 
 Approve new takes, `node world build`, `node world export`, and upload the
 folder again. Unchanged films are not re-encoded. Film file names stay the same

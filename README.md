@@ -99,6 +99,13 @@ node world play             # play it locally
 node world export           # a static folder you can host anywhere
 ```
 
+Once hosted, share it with the Sogni community:
+`node world submit <world> --url https://your-world.example/ --creator "Your name"`.
+Open the printed link, sign in and send it for review. Approved worlds appear in
+the [public community gallery](https://worlds.sogni.ai/#community-worlds-title)
+with your credit and a link to play. You keep hosting it; manage decisions,
+updates and withdrawal in [My worlds](https://worlds.sogni.ai/?view=mine).
+
 Lost at any point? `node world next` prints the one thing to do now.
 
 ## Get the Unlimited plan
@@ -225,7 +232,7 @@ collectible figures: [docs/agent.md](docs/agent.md).
 | Plan | `new` · `ingest` · `lint` · `quote` | Create a world, make stills, check the plan, price it |
 | Make | `select` · `render` · `figures` · `narrate` · `music` | Outlines, films, 3D collectibles, voice, score |
 | Judge | `screen` · `audit-clicks` · `note` · `reject` · `review` | Automatic checks, does each film answer its click, agent notes, your verdicts and area notes |
-| Finish | `build` · `play` · `export` | Assemble, play locally, publish a static site |
+| Finish | `build` · `play` · `export` · `submit` | Assemble, play, host and submit to the community gallery |
 | Where am I? | `status` · `next` | The whole picture, or just the next step |
 
 ## What's in here

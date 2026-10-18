@@ -238,6 +238,14 @@ node world export      # a static folder you can host anywhere
 
 Tell the person how to host it (docs/hosting.md).
 
+Once it is online, offer to showcase it in the public community gallery:
+`node world submit <id> --url https://their-host.example/ --creator "Their name"`.
+Give the person the printed link; they sign in to Sogni, confirm their credit and
+sharing permissions, and submit for review. Never submit on their behalf without
+their request. Decisions, updates and withdrawal are in My worlds at
+worlds.sogni.ai. Before changing a listed world's content, withdraw its listing,
+then resubmit the updated version. Hosting stays with the creator.
+
 ## When something goes wrong
 
 | Message | What it means | What to do |
