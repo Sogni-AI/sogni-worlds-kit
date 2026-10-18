@@ -32,7 +32,7 @@ can be copied to any static host as it is.
 | `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles. |
 | `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "A Sogni World", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
 | `map` | | `false` hides the Places panel, for a world with secrets or fatal choices. Default `true`. |
-| `draft` | | `true` when the build used takes nobody has approved yet (`node world build --drafts`); the player shows "Draft". |
+| `draft` | | `true` when the build used takes nobody has approved yet (`node world build --drafts`). The player marks it "Draft" in the top bar while you play it locally (`node world play`); an exported copy says so in its About panel instead, so visitors are not greeted by it. |
 | `places` | yes | The places. See below. |
 
 ### `music`
@@ -70,13 +70,14 @@ and the films start and end on video frames.
 | `id` | yes | Unique within the place (usually the object: `door`, `ferry`). |
 | `label` | yes | What happens, as an action: "Duck through the round door". |
 | `hint` | | A short tease shown on hover. |
-| `at` | yes | `[x, y]`: where the label sits, as fractions (0–1) of the picture's width and height. |
+| `at` | yes | `[x, y]`: where the label sits, as fractions (0–1) of the picture's width and height. Beside the object, not on it: the player moves a label that lands on a small object (under 40% of the picture each way) to just above it, or below it near the top. |
 | `outline` | | `{ width, height, path }`: the object's traced outline as an SVG path, drawn in a `width × height` space covering the whole picture. It lights up on hover and is the click target. |
 | `to` | | The place this crossing lands on. `null` or absent makes it a *moment*: the film plays and you stay here. |
 | `next` | | In a story told in order, this is the way to the next stop (the Next stop button takes it). |
 | `shortcut` | | A crossing that jumps out of the story's order, labelled as a shortcut. |
 | `collect` | | A collectible (never with `to`): its moment plays, then it joins the visitor's collection, counted in the top bar ("Figures 2/5") and kept in their browser. With a `figure` and no `film`, it is picked up straight from the picture. |
-| `figure` | | A collectible's 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the moment the visitor turns the figure over (`@google/model-viewer`, loaded only then); the collection panel shows found figures and silhouettes of hidden ones. |
+| `figure` | | A 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the film the visitor turns the figure over (`@google/model-viewer`, loaded only then). A collectible's figure also joins the collection panel, which shows found figures and silhouettes of hidden ones; a figure without `collect` is only turned over. |
+| `details` | | A card about the object, `{ title?, text, facts? }` (`facts` is a list of `[label, value]` pairs), shown beside its film until the visitor closes it or moves on. |
 | `film` | yes* | The film. See below. *A collectible with a `figure` may leave it out. |
 | `rewind` | | The same film reversed, played by Back after you took this crossing. Without it, Back jumps straight to the previous place. |
 

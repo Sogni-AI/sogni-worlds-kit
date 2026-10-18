@@ -34,6 +34,7 @@ export async function run(argv) {
   const total = files.reduce((sum, file) => sum + file.size, 0);
   const large = files.filter(file => file.size > GITHUB_FILE_LIMIT);
   log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files)`);
+  if (readJson(worldFile).draft) log.warn(`A draft: some films in it have no approved take yet (its About panel says so). Before sharing it, have them judged on node world review ${id}, then build and export again.`);
   if (large.length) {
     log.warn(`GitHub Pages refuses files over 100 MB: ${large.map(f => `${relative(out, f.path)} (${mb(f.size)})`).join(', ')}. Use another host for those, or shorten the film.`);
   }

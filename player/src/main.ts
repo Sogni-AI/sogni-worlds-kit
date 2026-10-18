@@ -24,6 +24,8 @@ class Player {
   /** How the visitor got here: each crossing taken, so Back can play it in reverse. */
   private readonly history: { from: string; spot: Hotspot }[] = [];
   private readonly visited = new Set<string>();
+  /** Objects whose film the visitor has seen, as "<place>/<object>", so their labels say so. */
+  private readonly played = new Set<string>();
   /** Collectibles found, as "<place>/<object>", kept per world in the visitor's browser. */
   private readonly collection: Set<string>;
   private readonly collectibles: number;
@@ -45,7 +47,8 @@ class Player {
     this.collection = new Set(readList(store.get(`collection:${world.id}`)));
     this.collectibles = world.places.reduce((n, place) => n + place.hotspots.filter(spot => spot.collect).length, 0);
     this.figures = figuresOf(world);
-    this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot), spot => this.collection.has(`${this.place?.id}/${spot.id}`));
+    this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot),
+      spot => this.collection.has(`${this.place?.id}/${spot.id}`), spot => this.played.has(`${this.place?.id}/${spot.id}`));
     this.narration = new Narration(root, world);
     this.music = new Music(world.music, world);
     this.stage.onStall = (stalled, loaded) => this.ui.slow(stalled ? { loaded, quality: this.stage.quality } : null);
@@ -120,9 +123,12 @@ class Player {
     const from = this.place;
     const landing = spot.to ? placeOf(this.world, spot.to) : from;
     this.beforeFilm();
+    if (spot.details) this.ui.showDetails(spot.details);
+    else this.ui.hideDetails();
     let found = false;
     try {
       if (spot.film) await this.stage.play(spot.film, landing);
+      this.played.add(`${from.id}/${spot.id}`);
       if (spot.to) this.history.push({ from: from.id, spot });
       if (spot.collect) found = this.collect(from, spot);
     } catch (error) {
@@ -131,9 +137,12 @@ class Player {
     } finally {
       this.afterFilm();
     }
+    // A card belongs to the place its object is in.
+    if (spot.to) this.ui.hideDetails();
     await this.arrive(landing, spot.to ? NARRATION_MS : null, false);
     // A figure is picked up and turned over first; the collection card waits until it is put down.
-    const figure = spot.collect ? this.figures.find(f => f.key === `${from.id}/${spot.id}`) : undefined;
+    // A figure that is not a collectible (an object to look at from every side) is only turned over.
+    const figure = this.figures.find(f => f.key === `${from.id}/${spot.id}`);
     if (figure) {
       await inspect(this.root, figure);
       if (found) foundCard(this.root, figure, this.collection.size, this.collectibles, () => this.showCollection());
@@ -141,7 +150,8 @@ class Player {
   }
 
   private showCollection() {
-    this.ui.showCollection(collectionCard(this.figures, this.collection, figure => void inspect(this.root, figure)));
+    const collectibles = this.figures.filter(figure => figure.spot.collect);
+    this.ui.showCollection(collectionCard(collectibles, this.collection, figure => void inspect(this.root, figure)));
   }
 
   /** Back the way you came: the crossing played in reverse when there is one. */
@@ -150,6 +160,7 @@ class Player {
     if (!last || this.busy) return;
     this.busy = true;
     this.history.pop();
+    this.ui.hideDetails();
     const previous = placeOf(this.world, last.from);
     this.beforeFilm();
     try {
@@ -177,6 +188,7 @@ class Player {
   private async restart() {
     if (this.busy) return;
     this.narration.stop();
+    this.ui.hideDetails();
     this.history.length = 0;
     await this.arrive(placeOf(this.world, this.world.start), NARRATION_MS, true);
   }
@@ -185,6 +197,7 @@ class Player {
   private async jump(id: string) {
     if (this.busy || id === this.place.id) return;
     this.narration.stop();
+    this.ui.hideDetails();
     this.history.length = 0;
     await this.arrive(placeOf(this.world, id), NARRATION_MS, true);
   }

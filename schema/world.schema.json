@@ -132,7 +132,7 @@
         "hint": { "type": "string" },
         "at": {
           "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 }, "minItems": 2, "maxItems": 2,
-          "description": "Where the label sits, as fractions of the picture's width and height."
+          "description": "Where the label sits, as fractions of the picture's width and height: beside the object, not on it."
         },
         "outline": {
           "type": ["object", "null"],
@@ -147,13 +147,24 @@
         "collect": { "type": "boolean", "description": "A collectible: its moment plays (or, with a figure and no film, it is picked up straight away), then it joins the visitor's collection (kept in their browser). Never has \"to\"." },
         "figure": {
           "type": ["object", "null"],
-          "description": "A collectible's 3D figure (Pixal3D GLB): after its moment the visitor turns it over, and it appears in their collection.",
+          "description": "A 3D figure (Pixal3D GLB) the visitor turns over after the film. A collectible's figure also appears in their collection; without collect it is only turned over.",
           "required": ["model"],
           "additionalProperties": false,
           "properties": {
             "model": { "type": "string", "description": "The GLB, relative to world.json." },
             "icon": { "type": "string", "description": "The object cut out on transparency (PNG): its picture in the collection." },
             "name": { "type": "string", "description": "What it is called in the collection." }
+          }
+        },
+        "details": {
+          "type": ["object", "null"],
+          "description": "A card about the object, shown beside its film until the visitor closes it or moves on: what a hotel room's sauna is, a home's view, a product's specifications.",
+          "required": ["text"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string" },
+            "text": { "type": "string", "description": "A sentence or two about it." },
+            "facts": { "type": "array", "items": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 }, "description": "[label, value] pairs: [\"Session\", \"30–60 minutes\"]." }
           }
         },
         "film": { "$ref": "#/$defs/film" },

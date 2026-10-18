@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { assemblePrompt, CANVASES, isValidFrames, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
 import { filmsOf, placeById } from './plan.js';
 import { isInsideWorld } from './paths.js';
+import { detailsIssues } from './worldjson.js';
 
 const ID = /^[a-z0-9][a-z0-9-]*$/;
 const NEGATION = /\b(no|not|never|without|nothing|none|nobody|neither|nor|don't|doesn't|didn't|isn't|aren't|won't|cannot|can't)\b/i;
@@ -289,6 +290,7 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       if (object.collect && object.goes) add('error', at, 'a collectible stays in its place: remove `goes` (its film is a moment)');
       if (object.figure !== undefined && typeof object.figure !== 'boolean') add('error', at, '`figure` is true or false');
       for (const key of ['figureName', 'figureNoun']) if (object[key] !== undefined && typeof object[key] !== 'string') add('error', at, `\`${key}\` is text`);
+      if (object.details !== undefined && object.details !== null) for (const issue of detailsIssues(object.details)) add('error', at, issue);
       if (object.goes !== undefined && object.goes !== null) {
         if (object.goes === place.id) add('error', at, 'a film that returns here is a moment: remove `goes`');
         else if (!plan.places.some(p => p.id === object.goes)) add('error', at, `goes to "${object.goes}", which is not a place`);

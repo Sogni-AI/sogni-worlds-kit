@@ -17,10 +17,13 @@ export type Hotspot = {
   collect?: boolean;
   /** A collectible's 3D figure (Pixal3D GLB) to turn over once found, and its picture in the collection. */
   figure?: { model: string; icon?: string; name?: string } | null;
+  /** A card about the object, shown beside its film until the visitor closes it or moves on. */
+  details?: Details | null;
   /** Absent only on a collectible with a figure, which is picked up straight from the picture. */
   film?: Film;
   rewind?: Film | null;
 };
+export type Details = { title?: string; text: string; facts?: [string, string][] };
 export type Line = { text: string; speaker?: string; start?: number; end?: number };
 export type Place = {
   id: string;

@@ -205,6 +205,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
         shortcut: object.goes ? Boolean(object.shortcut ?? (linear && !isNext)) && !isNext : undefined,
         collect: object.collect && !object.goes ? true : undefined,
         figure: figures[filmId(place.id, object.id)],
+        details: object.details ? clean({ title: object.details.title, text: object.details.text, facts: object.details.facts }) : undefined,
         film: { src: entry.src, src720: entry.src720, seconds: entry.info.seconds },
         rewind: object.goes ? entry.rewind : undefined,
       }));

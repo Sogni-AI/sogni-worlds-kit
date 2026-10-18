@@ -54,3 +54,14 @@ test('media references are every file the world plays', () => {
     assert.ok(refs.includes(ref), ref);
   }
 });
+
+test('an object may carry a details card: { title?, text, facts? }', () => {
+  const world = good();
+  world.places[0].hotspots[0].details = { title: 'The ferry', text: 'Twice a day to the island.', facts: [['Crossing', '40 minutes']] };
+  assert.deepEqual(validateWorld(world), []);
+  world.places[0].hotspots[0].details = { title: 'The ferry', facts: [['Crossing']], colour: 'blue' };
+  const issues = validateWorld(world).join('\n');
+  assert.match(issues, /details\.text/);
+  assert.match(issues, /details\.facts/);
+  assert.match(issues, /unknown field "colour"/);
+});

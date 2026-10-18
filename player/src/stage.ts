@@ -44,6 +44,8 @@ export class Stage {
     this.frame = el('div', 'frame');
     this.frame.style.setProperty('--aspect', `${world.aspect.width} / ${world.aspect.height}`);
     this.frame.style.setProperty('--ratio', String(world.aspect.width / world.aspect.height));
+    // The page knows the picture's shape too, so what sits below the picture can find its edge.
+    root.style.setProperty('--ratio', String(world.aspect.width / world.aspect.height));
     this.still = el('img', 'layer still') as HTMLImageElement;
     this.still.alt = '';
     this.frame.append(this.still);

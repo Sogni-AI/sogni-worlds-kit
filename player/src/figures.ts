@@ -10,12 +10,12 @@ import type { Hotspot, Place, World } from './world';
 
 export type Figure = { key: string; place: Place; spot: Hotspot; name: string; model: string; icon?: string };
 
-/** Every figure in the world, in story order. */
+/** Every figure in the world, in story order: the collectibles and the objects to turn over. */
 export function figuresOf(world: World): Figure[] {
   const order = world.order ?? world.places.map(place => place.id);
   const places = order.map(id => world.places.find(place => place.id === id)).filter((place): place is Place => Boolean(place));
   return places.flatMap(place => place.hotspots
-    .filter(spot => spot.collect && spot.figure?.model)
+    .filter(spot => spot.figure?.model)
     .map(spot => ({ key: `${place.id}/${spot.id}`, place, spot, name: spot.figure!.name ?? spot.label, model: spot.figure!.model, icon: spot.figure!.icon })));
 }
 

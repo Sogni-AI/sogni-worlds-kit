@@ -21,6 +21,23 @@ function film(value, where, issues, { nullable = false } = {}) {
   if (value.seconds !== undefined && !(typeof value.seconds === 'number' && value.seconds > 0)) issues.push(`${where}.seconds: must be a positive number`);
 }
 
+/**
+ * What is wrong with an object's details card (the same shape in world.yaml and
+ * world.json): { title?, text, facts?: [[label, value], …] }. An empty list
+ * means it is fine.
+ */
+export function detailsIssues(details) {
+  if (!isObject(details)) return ['details is { title?, text, facts? }'];
+  const issues = [];
+  for (const key of Object.keys(details)) if (!['title', 'text', 'facts'].includes(key)) issues.push(`details: unknown field "${key}" (title, text, facts)`);
+  if (!isString(details.text)) issues.push('details.text: a sentence or two about the object');
+  if (details.title !== undefined && !isString(details.title)) issues.push('details.title: must be text');
+  if (details.facts !== undefined && !(Array.isArray(details.facts) && details.facts.every(f => Array.isArray(f) && f.length === 2 && f.every(isString)))) {
+    issues.push('details.facts: a list of [label, value] pairs of text');
+  }
+  return issues;
+}
+
 /** Every rule a world.json must meet; an empty list means it is playable. */
 export function validateWorld(world) {
   const issues = [];
@@ -111,7 +128,7 @@ export function validateWorld(world) {
     for (const [i, hotspot] of place.hotspots.entries()) {
       const at = `${where}.hotspots[${isObject(hotspot) && hotspot.id ? hotspot.id : i}]`;
       if (!isObject(hotspot)) { issues.push(`${at}: must be an object`); continue; }
-      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'film', 'rewind'], at, issues);
+      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'details', 'film', 'rewind'], at, issues);
       if (!isString(hotspot.id)) issues.push(`${at}.id: required`);
       else if (hotspotIds.has(hotspot.id)) issues.push(`${at}: id appears twice in this place`);
       hotspotIds.add(hotspot.id);
@@ -133,6 +150,7 @@ export function validateWorld(world) {
         if (typeof f !== 'object' || typeof f.model !== 'string' || !f.model) issues.push(`${at}.figure: { model: "<file>.glb", icon?, name? }`);
         else for (const key of ['icon', 'name']) if (f[key] !== undefined && typeof f[key] !== 'string') issues.push(`${at}.figure.${key}: a string`);
       }
+      if (hotspot.details !== undefined && hotspot.details !== null) for (const issue of detailsIssues(hotspot.details)) issues.push(`${at}.${issue}`);
       if (hotspot.next && hotspot.shortcut) issues.push(`${at}: cannot be both the next stop and a shortcut`);
       // A collectible with a figure may have no film: it is picked up straight from the picture.
       if (hotspot.film !== undefined || !(hotspot.collect && hotspot.figure)) film(hotspot.film, `${at}.film`, issues);

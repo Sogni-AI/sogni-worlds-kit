@@ -1,7 +1,7 @@
 // Everything around the picture: where you are, the buttons, the Map and
 // About panels, the Begin screen and the keyboard.
 import { el } from './stage';
-import type { Place, Quality, World } from './world';
+import type { Details, Place, Quality, World } from './world';
 
 const REPO = 'https://github.com/Sogni-AI/sogni-worlds-kit';
 
@@ -47,6 +47,7 @@ export class Ui {
   private readonly slowBox = el('div', 'slow');
   private readonly slowText = el('span', 'text');
   private readonly slowButton = el('button', '', 'Switch to 720p');
+  private readonly detailsCard = el('aside', 'details-card');
 
   constructor(private readonly root: HTMLElement, private readonly world: World, private readonly actions: Actions, musicPresent: boolean, musicCredit?: string) {
     const top = el('header', 'bar top');
@@ -56,7 +57,8 @@ export class Ui {
     this.qualityButton.title = 'Picture quality';
     buttons.append(this.soundButton);
     if (musicPresent) buttons.append(this.musicControl());
-    if (world.draft) buttons.prepend(el('span', 'draft-chip', 'Draft · not yet approved'));
+    // The maker sees a draft marked while playing it locally; a visitor finds the note in About.
+    if (world.draft && import.meta.env.DEV) buttons.prepend(el('span', 'draft-chip', 'Draft · not yet approved'));
     this.collection.hidden = true;
     this.collection.type = 'button';
     this.collection.title = 'Your collection';
@@ -64,15 +66,17 @@ export class Ui {
     buttons.prepend(this.collection);
     buttons.append(this.qualityButton);
     if (world.map !== false) buttons.append(this.iconButton('map', 'Places', () => this.toggle(this.mapPanel)));
-    buttons.append(this.iconButton('about', 'About this world', () => this.toggle(this.aboutPanel)),
-      this.iconButton('full', 'Full screen', () => toggleFullscreen()));
+    buttons.append(this.iconButton('about', 'About this world', () => this.toggle(this.aboutPanel)));
+    // iPhone Safari has no full screen for a page: offer the button only where it works.
+    if (document.fullscreenEnabled) buttons.append(this.iconButton('full', 'Full screen', () => toggleFullscreen()));
     top.append(this.where, buttons);
 
     const bottom = el('footer', 'bar bottom');
     this.backButton.addEventListener('click', actions.back);
     this.skipButton.addEventListener('click', actions.skip);
     this.nextButton.addEventListener('click', actions.next);
-    for (const button of [this.backButton, this.skipButton, this.nextButton]) button.type = 'button';
+    // Nothing to go back to, skip or go on to until the first place has arrived.
+    for (const button of [this.backButton, this.skipButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
     bottom.append(this.backButton, this.skipButton, this.nextButton);
 
     this.buildAbout(musicCredit);
@@ -87,7 +91,10 @@ export class Ui {
     this.slowButton.type = 'button';
     this.slowButton.addEventListener('click', () => actions.setQuality('720'));
     this.slowBox.append(el('span', 'spinner'), this.slowText, this.slowButton);
-    root.append(top, bottom, this.ending, this.toastBox, this.slowBox, this.mapPanel, this.aboutPanel, this.collectionPanel);
+    this.detailsCard.hidden = true;
+    this.detailsCard.setAttribute('aria-live', 'polite');
+    root.append(top, bottom, this.ending, this.toastBox, this.slowBox, this.detailsCard, this.mapPanel, this.aboutPanel, this.collectionPanel);
+    this.turnHint();
     this.keyboard();
   }
 
@@ -148,6 +155,28 @@ export class Ui {
     this.nextButton.hidden = true;
     this.backButton.hidden = true;
     (choices.firstElementChild as HTMLElement | null)?.focus();
+  }
+
+  /** An object's card: what it is, beside its film, until closed or the visitor moves on. */
+  showDetails(details: Details) {
+    const close = el('button', 'details-close', '×');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', () => this.hideDetails());
+    const parts: HTMLElement[] = [close];
+    if (details.title) parts.push(el('h2', '', details.title));
+    parts.push(el('p', 'details-text', details.text));
+    if (details.facts?.length) {
+      const facts = el('dl');
+      for (const [label, value] of details.facts) facts.append(el('dt', '', label), el('dd', '', value));
+      parts.push(facts);
+    }
+    this.detailsCard.replaceChildren(...parts);
+    this.detailsCard.hidden = false;
+  }
+
+  hideDetails() {
+    this.detailsCard.hidden = true;
   }
 
   hideEnding() {
@@ -265,15 +294,37 @@ export class Ui {
     if (this.world.subtitle) card.append(el('p', 'lede', this.world.subtitle));
     if (this.world.credit) card.append(el('p', '', this.world.credit));
     if (musicCredit) card.append(el('p', 'small', `Music: ${musicCredit}`));
+    if (this.world.draft) card.append(el('p', 'small', 'A draft: its maker has not yet approved every film in it.'));
     const made = el('p');
     made.innerHTML = `Made with <a href="https://www.sogni.ai" target="_blank" rel="noopener">Sogni</a>. Build your own from your photos, with your own coding agent: <a href="${REPO}" target="_blank" rel="noopener">sogni-worlds-kit</a>.`;
     const more = el('p', 'small');
     more.innerHTML = '<a href="https://worlds.sogni.ai/how-this-was-made" target="_blank" rel="noopener">How the official worlds were made</a> · '
       + '<a href="https://blog.sogni.ai/blogs/how-agents-built-sogni-world/" target="_blank" rel="noopener">How agents built Sogni World</a> · '
       + '<a href="https://worlds.sogni.ai" target="_blank" rel="noopener">worlds.sogni.ai</a>';
-    const keys = el('p', 'small keys', 'Keys: N next stop · B back · S skip film · M sound · F full screen · Esc close');
+    const keys = el('p', 'small keys', `Click the picture itself to hide or show the labels. Keys: N next stop · B back · S skip film · M sound${document.fullscreenEnabled ? ' · F full screen' : ''} · Esc close`);
     card.append(made, more, keys);
     this.aboutPanel.append(card);
+  }
+
+  /**
+   * A landscape world on a phone held upright is a strip across the middle of
+   * the screen: say once, under the picture, that turning the phone shows it
+   * whole. The note shows only while the phone is upright (styles.css) and
+   * stays away once closed.
+   */
+  private turnHint() {
+    if (this.world.aspect.width <= this.world.aspect.height) return;
+    try { if (localStorage.getItem('sogni-world:turn-hint') === 'closed') return; } catch { /* private window */ }
+    const hint = el('p', 'turn-hint', 'Turn your phone sideways for the whole picture');
+    const close = el('button', '', '×');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', () => {
+      hint.remove();
+      try { localStorage.setItem('sogni-world:turn-hint', 'closed'); } catch { /* private window */ }
+    });
+    hint.append(close);
+    (this.root.querySelector('.frame') ?? this.root).append(hint);
   }
 
   private keyboard() {
@@ -285,7 +336,7 @@ export class Ui {
       else if (key === 'b') this.actions.back();
       else if (key === 's') this.actions.skip();
       else if (key === 'm') this.actions.toggleSound();
-      else if (key === 'f') toggleFullscreen();
+      else if (key === 'f' && document.fullscreenEnabled) toggleFullscreen();
     });
   }
 }

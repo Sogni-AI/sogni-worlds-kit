@@ -54,12 +54,17 @@ button { font: inherit; color: inherit; }
 
 .label {
   position: absolute; transform: translate(-50%, -50%); z-index: 2;
-  display: grid; gap: 1px; max-width: min(240px, 42%); padding: 6px 11px 7px;
+  display: grid; gap: 1px; width: max-content; max-width: min(240px, 42%); padding: 6px 11px 7px;
   text-align: left; cursor: pointer; border: 1px solid var(--faint); border-radius: 12px;
   background: var(--glass); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   opacity: 0; transition: opacity 160ms ease;
 }
+/* A label moved off a small object sits just above it, or just below it near the top of the picture. */
+.label[data-anchor='above'] { transform: translate(-50%, calc(-100% - 8px)); }
+.label[data-anchor='below'] { transform: translate(-50%, 8px); }
 .labels-on .label, .hotspot.lit .label, .label:focus-visible { opacity: 1; }
+/* An object whose film the visitor has seen. */
+.hotspot.played .label .action::after { content: ' ✓'; color: var(--muted); font-weight: 400; }
 .label:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .label .eyebrow { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .next .label .eyebrow { color: var(--accent); }
@@ -109,6 +114,7 @@ button { font: inherit; color: inherit; }
 .pill.primary:hover { background: #fff; }
 .pill.big { padding: 13px 34px; font-size: 16px; }
 .pill[hidden] { display: none; }
+.pill:focus-visible, .icon-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .caption {
   margin: 6px 0 0; max-width: min(460px, 100%);
@@ -231,6 +237,26 @@ button.collection-pill:hover, button.collection-pill:focus-visible { background:
   .caption { font-size: 14px; }
   .pill { padding: 8px 13px; font-size: 13px; }
 }
+/* A phone held upright: the buttons on a row of their own above the place's name, which wraps instead of being cut off. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .bar.top { flex-direction: column-reverse; align-items: stretch; gap: 4px; padding-bottom: 18px; }
+  .bar.top .buttons { flex-wrap: wrap; flex-shrink: 1; justify-content: flex-end; row-gap: 2px; }
+  .where .world-title, .where .place { white-space: normal; }
+  .where .chapter { display: inline; }
+  .caption { max-width: 100%; }
+  .collection-pill, .draft-chip { padding: 4px 8px; font-size: 10.5px; }
+}
+.turn-hint { display: none; }
+@media (max-width: 640px) and (orientation: portrait) {
+  .turn-hint {
+    position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); z-index: 3;
+    display: flex; align-items: center; gap: 6px; width: max-content; max-width: calc(100vw - 32px); margin: 0;
+    padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--glass); border: 1px solid var(--faint);
+    font-size: 12.5px; color: var(--muted); white-space: nowrap;
+  }
+  .turn-hint button { width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: var(--ink); font-size: 17px; cursor: pointer; }
+  .in-film .turn-hint { display: none; }
+}
 @media (max-height: 480px) {
   .bar.top { padding-bottom: 12px; }
   .bar.bottom { padding-top: 10px; }
@@ -239,6 +265,32 @@ button.collection-pill:hover, button.collection-pill:focus-visible { background:
 }
 @media (prefers-reduced-motion: reduce) {
   .label { transition: none; }
+}
+
+/* ── An object's details card ───────────────────────────────── */
+/* Beside the picture on a wide screen; above the bottom buttons on a phone. */
+.details-card {
+  position: absolute; z-index: 6; right: max(16px, env(safe-area-inset-right)); top: calc(max(12px, env(safe-area-inset-top)) + 64px);
+  width: min(340px, calc(100vw - 32px)); max-height: calc(100dvh - 190px); overflow: auto; padding: 16px 18px 14px;
+  border: 1px solid var(--faint); border-radius: 14px; background: rgba(17, 19, 23, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  user-select: text; -webkit-user-select: text; animation: ending-in 260ms ease both;
+}
+.details-card[hidden] { display: none; }
+.details-card h2 { margin: 0 28px 8px 0; font: 400 24px/1.15 var(--serif); }
+.details-card .details-text { margin: 0; font-size: 14px; line-height: 1.55; }
+.details-card dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--faint); font-size: 13px; }
+.details-card dt { color: var(--muted); }
+.details-card dd { margin: 0; }
+.details-close { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; }
+.details-close:hover, .details-close:focus-visible { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+@media (max-width: 640px), (max-height: 480px) {
+  .details-card { top: auto; left: 16px; right: 16px; width: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 56px); max-height: 38dvh; padding: 12px 14px 10px; }
+  .details-card h2 { font-size: 20px; }
+  .details-card .details-text { font-size: 13px; }
+}
+/* A phone held upright has room under a wide picture: the card sits there, off the picture. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .details-card { top: min(calc(50% + 50vw / var(--ratio, 1.75) + 8px), calc(100% - 220px)); max-height: none; }
 }
 
 /* ── A slow connection ───────────────────────────────────────── */

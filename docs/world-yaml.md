@@ -189,12 +189,13 @@ loop:
 | `id` | Unique within the place. The film id is `<place>-<object>`. |
 | `label` | What happens, as an action: "Duck through the round door". |
 | `hint` | A short tease under the label. |
-| `at` | Where the label sits: `[x, y]` as fractions of the picture. |
+| `at` | Where the label sits: `[x, y]` as fractions of the picture. Put it **beside** the object, in open space just above it, never on it: a label is the size of a small object and hides the very thing it names. (The player moves a label it finds on a small object to just above it, but it cannot know where the open space is.) |
 | `select` | SAM 3 clicks that outline the object: `positive` points on it, `negative` points on what it touches, an optional `box` `[x0, y0, x1, y1]`, or `text` (e.g. `sheep`) with `instances` for a group. Optional `cleanup: { keepRatio, holeRatio }`. `node world select` draws `selections/<place>-<object>.preview.jpg` so you can check it. |
 | `goes` | The place this crossing lands on. **Omit it** for a moment: a film that happens here and returns to this still. |
 | `shortcut` | `true` for a crossing that jumps out of the story's order. |
 | `collect` | `true` for a collectible: a moment (no `goes`) that adds this object to the visitor's collection. `node world figures` stands it up in 3D (Pixal3D) so the visitor can turn it over when they find it. |
-| `figure` | `false` keeps a collectible flat (no 3D figure); `true` gives any object a figure. |
+| `figure` | `false` keeps a collectible flat (no 3D figure); `true` gives any object a figure the visitor turns over after its film, without collecting it. A world that is not a game (a home, a hotel room, a product) uses `figure: true` instead of `collect`. |
+| `details` | A card about the object, shown beside its film until the visitor closes it or moves on: `{ title, text, facts: [[label, value], …] }`. For a world that shows something real (a hotel room, a home, a product): what it is, in a sentence or two, and the facts a visitor would ask for. |
 | `figureName` | What the figure is called in the collection. Default: the label without its verb ("Touch the neon lotus" → "The neon lotus"). |
 | `figureNoun` | The plain noun Pixal3D is told the object is ("telescope"). Default: the head noun of `target` or `label`. |
 | `film` | The direction (below). |
