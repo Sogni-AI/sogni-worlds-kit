@@ -1,6 +1,6 @@
 ---
 name: sogni-worlds
-description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review or publish a Sogni World, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
+description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a Sogni World to the public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
 ---
 
 # Sogni Worlds
@@ -34,8 +34,15 @@ Rules that matter even before you open AGENTS.md:
 Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
 is strongly recommended for a whole world.
 
-After hosting the finished export, offer `node world submit <id> --url <public
-HTTPS link> --creator "Their name"`. It prints a prefilled submission link to
-worlds.sogni.ai: the person signs in, checks permissions and sends it for review.
-Approved worlds appear in the public community gallery with creator credit.
-Decisions, resubmission and withdrawal are in My worlds; hosting stays with them.
+When the person approves the finished world, tell them that independently built
+Kit worlds can appear in Sogni's public community gallery and ask: **"Would you
+like to submit this world to Sogni's public community gallery?"** Explain that
+their name is credited, they keep hosting it, and Sogni reviews it before listing.
+
+If they agree, help host the finished export if needed (docs/hosting.md), then run
+`node world submit <id> --url <public HTTPS link> --creator "Their name"`. Give
+them the printed, prefilled submission link: they sign in to Sogni, check their
+sharing permissions and send it for review. Decisions, resubmission and
+withdrawal are in My worlds. If they decline, continue with their chosen sharing
+plan; gallery submission is optional. An agreement to build a world alone is not
+permission to submit it publicly.

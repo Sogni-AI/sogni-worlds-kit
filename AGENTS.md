@@ -238,11 +238,14 @@ node world export      # a static folder you can host anywhere
 
 Tell the person how to host it (docs/hosting.md).
 
-Once it is online, offer to showcase it in the public community gallery:
+When the person approves the finished world, tell them that independently built
+Kit worlds can be listed in Sogni's public community gallery and ask: "Would you
+like to submit this world to Sogni's public community gallery?" Submission is
+optional. If they agree, help host the export if needed, then run
 `node world submit <id> --url https://their-host.example/ --creator "Their name"`.
 Give the person the printed link; they sign in to Sogni, confirm their credit and
-sharing permissions, and submit for review. Never submit on their behalf without
-their request. Decisions, updates and withdrawal are in My worlds at
+sharing permissions, and submit for review. Building a world does not authorize
+public submission. Decisions, updates and withdrawal are in My worlds at
 worlds.sogni.ai. Before changing a listed world's content, withdraw its listing,
 then resubmit the updated version. Hosting stays with the creator.
 
