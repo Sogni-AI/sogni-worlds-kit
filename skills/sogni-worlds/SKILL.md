@@ -35,9 +35,10 @@ Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited
 is strongly recommended for a whole world.
 
 When the person approves the finished world, tell them that independently built
-Kit worlds can appear in Sogni's public community gallery and ask: **"Would you
-like to submit this world to Sogni's public community gallery?"** Explain that
-their name is credited, they keep hosting it, and Sogni reviews it before listing.
+Kit worlds can appear in Sogni's public community gallery. If they haven't
+already chosen whether to submit, ask: **"Would you like to submit this world to
+Sogni's public community gallery?"** Explain that their name is credited, they
+keep hosting it, and Sogni reviews it before listing.
 
 If they agree, help host the finished export if needed (docs/hosting.md), then run
 `node world submit <id> --url <public HTTPS link> --creator "Their name"`. Give
