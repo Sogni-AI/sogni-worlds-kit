@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { shown, worldPaths, filmId, loopId } from '../lib/paths.js';
 import { filmsOf, readPlan, writePlan } from '../lib/plan.js';
-import { lintPlan } from '../lib/lint.js';
+import { lintPlan, lintViews } from '../lib/lint.js';
 import { readJson, writeJson } from '../lib/files.js';
 import { filmState, listTakes, personsMarks, readNotes, readVerdicts, addNote, recordVerdict } from '../lib/takes.js';
 import { connect, describeBilling } from '../lib/sogni.js';
@@ -161,13 +161,14 @@ export async function run(argv) {
     const stills = Object.fromEntries(plan.places.map(p => [p.id, join(paths.dir, p.still)]));
     state.places ??= {};
     for (const [index, place] of context.places.entries()) {
-      if (state.places[place.id]) { place.titleWritten = state.places[place.id].answer.title; continue; }
+      if (state.places[place.id]) { place.titleWritten = state.places[place.id].answer.title; place.beats = beatsOf(state.places[place.id].answer); continue; }
       log.step(`Writing ${place.id}`);
       const { answer, review } = await writePlace(llm, { place, index, context, stillPath: stills[place.id], destinationStills: stills });
       state.places[place.id] = { answer, review };
       save();
       context.places[index].title = answer.title;
       context.places[index].titleWritten = answer.title;
+      context.places[index].beats = beatsOf(answer);
       if (review.length) log.dim(`${place.id}: its own review fixed ${review.length} thing${review.length === 1 ? '' : 's'}: ${review.map(r => `${r.film} (${r.rule})`).join(', ')}`);
     }
     ({ doc, plan } = readPlan(id));
@@ -196,7 +197,7 @@ export async function run(argv) {
     writePlan(id, doc);
     ({ plan } = readPlan(id));
     const errors = lintPlan(plan, paths).filter(f => f.level === 'error');
-    for (const f of lintPlan(plan, paths)) (f.level === 'error' ? log.fail : log.warn)(`${f.where}: ${f.message}`);
+    for (const f of [...lintPlan(plan, paths), ...await lintViews(plan, paths)]) (f.level === 'error' ? log.fail : log.warn)(`${f.where}: ${f.message}`);
     if (errors.length) throw new Error(`The plan still has ${errors.length} error${errors.length === 1 ? '' : 's'} after the agent's fixes; see above (node world lint ${id})`);
     log.ok(`The plan is written: ${plan.places.length} places, ${filmsOf(plan).length} films. Lint is clean.`);
     const { run: showPlan } = await import('./plan.js');
@@ -487,3 +488,6 @@ function openInBrowser(url) {
     spawn(command, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref();
   } catch { /* no browser here: the address is printed above */ }
 }
+
+/** What a written place's objects do, one line each, so the places after it do something else. */
+const beatsOf = answer => (answer.objects ?? []).map(o => `${o.label}: ${o.film?.idea ?? ''}`.trim());

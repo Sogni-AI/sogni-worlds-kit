@@ -13,6 +13,10 @@ import { FFMPEG, run, probe } from './media.js';
 import { FPS } from './h3.js';
 
 export const W = 96;
+/** Below this whole-film reach (mean grey change from the first frame, 0–255) a loop barely moves. */
+export const LOOP_REACH = 3.5;
+/** Below this, little happens in a moment. */
+export const MOMENT_REACH = 5;
 export const H = 64;
 const PIXELS = W * H;
 
@@ -34,6 +38,28 @@ export const mad = (a, b) => {
   for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
   return sum / a.length;
 };
+
+/**
+ * A picture's layout, whatever its lighting: edge strength (gradient
+ * magnitude) of the picture squashed to 192×128 with its levels stretched.
+ * Two photographs of one room by day and by night share it; two places do not.
+ */
+export async function layoutOf(path, width = 192, height = 128) {
+  const grey = await sharp(path).resize(width, height, { fit: 'fill' }).greyscale().normalise().raw().toBuffer();
+  const edges = new Float64Array(width * height);
+  for (let y = 1; y < height - 1; y++) for (let x = 1; x < width - 1; x++) {
+    const i = y * width + x;
+    edges[i] = Math.hypot(grey[i + 1] - grey[i - 1], grey[i + width] - grey[i - width]);
+  }
+  return edges;
+}
+
+/**
+ * Above this, two stills are one viewpoint (the same room at another hour, or
+ * with other furniture). Measured on two one-shot worlds: such pairs scored
+ * 0.60–0.73, every crossing between real places 0.11 or less.
+ */
+export const SAME_VIEW = 0.4;
 
 /** Pearson correlation of two equally sized pictures (1 = the same picture). */
 export function correlation(a, b) {
@@ -212,15 +238,30 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
   let still = 0;
   for (let i = step.length - 1; i >= 0 && step[i] < 0.6; i--) still++;
   metrics.stillTailSeconds = time(still);
+  // How far the picture ever gets from its first frame, over the whole film. A
+  // single nudge (the landing on a pinned last frame, a jump at frame 1) resets
+  // a count of still frames, but not this. Measured on two one-shot worlds:
+  // loops judged dead stayed under 3, living ones reached 8 to 31; moments in
+  // which a device only lit up stayed under 4.3, moments where something
+  // happened reached 8 or more (a thin shower of rain reached only 3.1, so this
+  // says where to look, never what to decide).
+  const reach = frames.reduce((most, frame) => Math.max(most, mad(frame, frames[0])), 0);
+  metrics.reach = +reach.toFixed(2);
+  let littleHappens = false;
   if (kind === 'loop') {
     // A living photograph holds its camera still on purpose, so a still tail is
     // not a stall. What matters is whether the picture moves at all: loops were
     // rejected as "way too subtle" when only one small thing moved.
-    if (still >= step.length - 1) {
+    if (still >= step.length - 1 || reach < LOOP_REACH) {
       flags.push({ code: 'barely-moves', severity: 'warn', frame: 0, at: 0,
         message: 'Almost nothing moves at screening size. Subtle motion (cloud, water, breath) can still be there: watch it at full size and check the whole picture feels alive.' });
     }
-  } else if (still >= Math.round(1.5 * FPS)) {
+  } else if (kind === 'moment' && reach < MOMENT_REACH) {
+    littleHappens = true;
+    flags.push({ code: 'little-happens', severity: 'warn', frame: Math.round(n / 2), at: time(Math.round(n / 2)),
+      message: `Across the whole film the picture stays close to its first frame (reach ${reach.toFixed(1)}): look at it at full size and ask what the visitor sees happen. A light, a screen or a glow coming on and going off again is not a payoff; a moment shows something take place (docs/directing-films.md › Every click pays off)` });
+  }
+  if (kind !== 'loop' && !littleHappens && still >= Math.round(1.5 * FPS)) {
     flags.push({ code: 'frozen-tail', severity: 'warn', frame: n - still, at: time(n - still),
       message: `The last ${time(still)} s barely move: the film stalls before it lands` });
   }

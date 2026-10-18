@@ -97,6 +97,9 @@ function placeBrief({ place, index, context, required }) {
   if (narration.voice === 'none') lines.push('Narration: none. Reply with "narration": [].');
   else lines.push(`Narration: 1 to 3 short spoken lines for this place, ${narration.style ?? 'spoken by a narrator who tells the story'}, in plain spoken English, each line under 20 words. Use only facts the person gave or that are visible. ${narration.notes ?? ''}`.trim());
 
+  const done = places.filter(p => p.id !== place.id && p.beats?.length);
+  if (done.length) lines.push('', '# What the other places already do', 'Each beat happens once in a world: give this place\'s objects their own actions, never another switch-on, encounter or trick already listed here.', ...done.map(p => `- ${p.id}: ${p.beats.join(' | ')}`));
+
   lines.push('', `# This place: "${place.id}" (place ${index + 1} of ${places.length})`);
   if (place.story) lines.push(`What the person said about it: ${place.story}`);
   if (place.idea) lines.push(`What this place is for: ${place.idea}`);
@@ -117,7 +120,7 @@ function placeBrief({ place, index, context, required }) {
     const others = places.filter(p => p.id !== place.id && !required.some(r => r.to === p.id) && !p.ending);
     if (context.order === 'linear' && others.length) lines.push(`- Optional: at most one shortcut ("shortcut": true) to another place in the story: ${others.map(p => `${p.id} ("${p.title ?? p.id}")`).join(', ')}. Only if a clickable thing here really suggests it.`);
     if (context.order === 'linear' && index === places.length - 1 && places.length > 1 && !place.ending) lines.push(`- This is the last place in the story: one object should lead back to the start ("goes": "${places[0].id}") so the journey can begin again.`);
-    lines.push('- Every other object is a moment: "goes": "" — a small, surprising event with a clear cause and a payoff, caused by that object (a kea lands on the mirror and tugs its rubber seal; a lantern\'s flame leans toward the visitor), and the picture returns to rest. Never a moment in which someone only breathes, shifts or sways: the loop already does that.');
+    lines.push('- Every other object is a moment: "goes": "" — a small, surprising event with a clear cause and a payoff, caused by that object (a kea lands on the mirror and tugs its rubber seal; a lantern\'s flame leans toward the visitor), and the picture returns to rest. Never a moment in which someone only breathes, shifts or sways: the loop already does that. Never a device switched on: the moment ends on its start picture, so the device is off again by the end and the visitor saw a light come and go.');
     if (context.mechanics?.collectibles && place.collectible) lines.push(`- Collectible: one object must be "${place.collectible}", with "collect": true and "goes": "" — finding it adds a figure to the visitor's collection. Its moment film shows it coming to life briefly and returning to rest. Its label names it ("${place.collectible}") and its hint teases it.`);
     else lines.push('- Set "collect": false on every object.');
   }
@@ -198,6 +201,9 @@ const REVIEW_CHECKLIST = [
   'Is each film\'s length right for what happens (a long journey 243–362 frames, a moment 141–243)?',
   'Does every label describe what really happens in its film and fit what the picture shows (nothing asks to light what is already lit, open what is already open)?',
   'Is every moment a small surprising event with a payoff, caused by its object, rather than someone breathing, shifting or swaying (which the loop already shows)? Are the objects things someone would want to click?',
+  'Halfway through each moment, what can the visitor see that the still did not show them? A light, glow or screen that comes on and goes off again is not a payoff, nor is an effect nobody can see (clean air, warmth, cold, a signal).',
+  'Is the way out of each crossing (the door, stairs or window it leaves by) visible in this picture, and does each crossing move to another view rather than turning this picture into another version of itself (another hour, other furniture)?',
+  'Does any object here repeat a beat another place already uses (listed under "What the other places already do")?',
 ];
 
 /** Write one place's plan. Returns the checked answer. */

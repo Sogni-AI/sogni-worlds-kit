@@ -80,6 +80,19 @@ test('a still living photograph is "barely moves", never a frozen tail', async (
   assert.ok(codes(crossing).includes('frozen-tail'), codes(crossing).join(', '));
 });
 
+test('a moment in which only a small light comes on and goes off is "little happens"; one where something moves is not', async () => {
+  // A room with a small lamp that glows for a second and a half, then nothing; the camera never moves.
+  const glow = join(dir, 'glow-moment.mp4');
+  await syntheticVideo(glow, { source: "color=c=0x335577:size=192x128:rate=24,drawbox=x=40:y=30:w=60:h=40:color=white:t=fill,drawbox=x=150:y=90:w=12:h=12:color=orange:t=fill:enable='between(t,1,2.5)'", seconds: 6 });
+  const quiet = analyseFrames(await greyFrames(glow), { kind: 'moment' });
+  assert.ok(codes(quiet).includes('little-happens'), codes(quiet).join(', '));
+  assert.ok(!codes(quiet).includes('frozen-tail'), 'the whole film is the problem, not its tail');
+  // Something crosses the picture and leaves again.
+  const event = join(dir, 'event-moment.mp4');
+  await syntheticVideo(event, { source: "color=c=0x335577:size=SIZE:rate=24[bg];color=c=white:size=80x70:rate=24[box];[bg][box]overlay=x='-80+60*t':y=30:shortest=1", seconds: 6 });
+  assert.ok(!codes(analyseFrames(await greyFrames(event), { kind: 'moment' })).includes('little-happens'));
+});
+
 test('a nearly inaudible take is flagged "quiet" (a silent one stays "silent")', async () => {
   const still = join(dir, 'q.png');
   await ffmpeg(['-f', 'lavfi', '-i', 'color=c=0x446688:size=192x128,drawbox=x=30:y=30:w=60:h=40:color=white:t=fill', '-frames:v', '1', still]);

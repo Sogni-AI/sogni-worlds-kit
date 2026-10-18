@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { assemblePrompt, CANVASES, isValidFrames, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
 import { filmsOf, placeById } from './plan.js';
 import { isInsideWorld } from './paths.js';
+import { correlation, layoutOf, SAME_VIEW } from './screen.js';
 import { detailsIssues } from './worldjson.js';
 
 const ID = /^[a-z0-9][a-z0-9-]*$/;
@@ -198,6 +199,34 @@ export function lintDirection(film, concept = '') {
   }
   for (const rule of allowed) if (!RULES[rule]) issues.push({ level: 'error', rule: 'allow', field: 'allow', message: `allow names an unknown rule "${rule}" (rules: ${Object.keys(RULES).join(', ')})` });
   return issues;
+}
+
+/**
+ * Crossings between two stills taken from one viewpoint: the same room at
+ * another hour, or with other furniture in it. There is no route to travel,
+ * so first-and-last-frame blends one picture into the other (a dissolve, a
+ * fade through dark, furniture that melts away) unless something physical
+ * sweeps the whole frame on the way. Reads the stills, so it runs apart from
+ * lintPlan; a still that is missing is skipped (lintPlan reports it).
+ */
+export async function lintViews(plan, paths) {
+  const findings = [];
+  const layouts = new Map();
+  const layout = async place => {
+    if (!place?.still) return null;
+    const file = join(paths.dir, place.still);
+    if (!isInsideWorld(paths.dir, place.still) || !existsSync(file)) return null;
+    if (!layouts.has(place.id)) layouts.set(place.id, await layoutOf(file));
+    return layouts.get(place.id);
+  };
+  for (const film of filmsOf(plan).filter(f => f.kind === 'crossing')) {
+    const [a, b] = [await layout(placeById(plan, film.from)), await layout(placeById(plan, film.to))];
+    if (!a || !b) continue;
+    const alike = correlation(a, b);
+    if (alike < SAME_VIEW) continue;
+    findings.push({ level: 'warn', where: `films.${film.id}`, message: `"${film.from}" and "${film.to}" are the same view (layout ${alike.toFixed(2)} alike): a crossing between them has no route to travel, so the film will likely dissolve one picture into the other. It holds only when something physical sweeps across the whole frame and carries the change (a blind drops and rises). Otherwise make the change a moment, or give the second place another viewpoint (docs/directing-films.md › Crossings)` });
+  }
+  return findings;
 }
 
 const inUnit = point => Array.isArray(point) && point.length === 2 && point.every(v => typeof v === 'number' && v >= 0 && v <= 1);

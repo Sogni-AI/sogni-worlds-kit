@@ -15,6 +15,7 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 - Moments and surprises
 - Real people and faces
 - Choosing objects and clicks
+- Every click pays off — read before choosing objects
 - Lengths
 - Judging a take — what to reject on sight
 - Retakes
@@ -145,6 +146,18 @@ another.
   one side, or go around them.
 - **Geography first.** Show how you get there: through the door, over the ridge,
   down through the cloud. Spectacle doesn't replace a route.
+- **The way out is in the start picture.** The door, the stairs or the window the
+  camera leaves by must be visible in Picture 1. A fast pan to a part of the room
+  the picture doesn't show makes the model invent it, and the room rearranges on
+  the way (a wall vanishes, a door appears, the furniture swaps).
+- **A crossing moves; it never changes a place.** Two pictures of one view (the
+  same room at another hour, or with other furniture in it) have no route between
+  them, so the model blends one into the other: furniture fades away, a ghost of
+  the new piece fades in, the light dips through dark. It holds only when
+  something physical sweeps the whole frame and carries the change, such as a
+  blind dropping and rising again on the morning. Otherwise show the change as a
+  moment, or paint the second place from another viewpoint. `lint` warns when a
+  crossing's two stills share a view.
 - **Give it personality.** Aim for "quirky and fun, or super cool, or cheeky", not
   "the camera walks forward". Build a small setup, escalation and payoff around the
   object. Make sure two crossings in one world don't use the same trick.
@@ -160,7 +173,10 @@ A loop is the photograph breathing. It plays whenever the visitor is at that pla
   shadows slide, people shift their weight, water moves. Too subtle reads as broken.
 - **Everything returns to where it started.** The same still is at both ends, so any
   moved prop or person must be back in place by the end.
-- **Foley on every loop.** 192 frames (8 s) is the standard length.
+- **Foley on every loop.** 192 frames (8 s) is the standard length; a shorter
+  loop repeats where the visitor sees it. The sound comes from something in or
+  just beyond the picture (traffic far below the glass, a fridge's hum, water
+  running); an empty room with nothing to hear gets a silent loop.
 
 ## Moments and surprises
 
@@ -177,6 +193,15 @@ lightning flash spends its first second flashing and then freezes for the rest
 "steps to the window, wipes the glass with his sleeve and looks out as the beam
 passes" moves the whole way. A flash or a flare can be part of a moment, never
 the whole of it.
+
+**A moment can't leave anything changed.** It ends on its own start picture, so a
+device switched on in it is switched off again before the end, and a light that
+glows for three seconds and goes out is all the visitor gets. Direct something
+that runs its course instead: water pours, swirls and settles; a blanket unrolls
+under someone's hands and is smoothed flat; a person steps into the red light and
+it washes over them. A switch, a glow or a screen waking is never the whole of a
+moment. Keep the camera still: a moment that pushes in to show a small thing has
+to snap back to land.
 
 ## Real people and faces
 
@@ -217,6 +242,39 @@ film. So in films:
   and the player gives an outline under 0.4% of the frame a finger-sized margin.
   Below 0.2%, check the preview shows the whole object, not a speck of it.
 
+## Every click pays off
+
+A click is a promise of a film worth watching. Before an object goes in the plan,
+answer one question for it: **halfway through its film, what can the visitor see
+that the still did not show them?** If the honest answer is "the same picture,
+and a light comes on", choose another object or another action.
+
+- **Film what can be seen.** Clean air, warmth, cold, a charge, a signal or a
+  setting can't be filmed. A device earns a click only through a visible
+  consequence that lasts: mist rolls off the plunge and fogs the glass, the sauna
+  door opens on a billow of steam.
+- **Someone has to use it.** A world about using things (a hotel room, a home, a
+  product) needs a person in the pictures doing it. In an empty room the only
+  thing the model can animate is a light.
+- **One beat, once.** Two objects in one world that do the same thing (a device
+  switched on, a character who lets you closer) spend one surprise twice. Give
+  every object its own verb, and every place something new. Narration and
+  captions follow the same rule: say a thing once.
+- **Fewer, better.** Two strong objects beat four thin ones. Cut an object whose
+  film you can't make worth watching; a dead click is worse than no object.
+- **Labels sit beside their objects.** Put `at` in open space just above the
+  object (below it, near the top of the picture), never on it: a label is the
+  size of a small object and hides the very thing it names.
+- **The mechanics fit the world.** Collectibles ("Figures 2/5") are a game. A
+  home, a hotel room or a product tour has none: give a real object `figure: true`
+  so the visitor can turn it over, with no collection.
+- **Figures are solid things.** A figure is built from the object's cut-out. A
+  lamp, a boot, a statue or an animal turns over well; a photograph, a page, a
+  screen, a painting or a sign becomes a slab with a smeared back. The cut-out
+  must hold only the named object, not the case, shelf or table it sits on: look
+  at `figures/<place>-<object>.png` (`node world figures --cutouts`) before any
+  mesh is made, then turn every figure over in the player.
+
 ## Lengths
 
 Frames sit on H3's grid, 124 + 17n: **124** (5.2 s) up to **362** (15.1 s).
@@ -247,6 +305,10 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
 - smeared struts from a bridge or tower route;
 - music in the soundtrack when none was asked for;
 - a frozen tail (the last seconds don't move) or a flash at a loop's seam;
+- a moment in which nothing happens: a light, a glow or a screen comes on and
+  goes off again, or the picture barely changes (screening says `little-happens`);
+- a room that rearranges itself on the way (a wall, a door or furniture that
+  appears, vanishes or swaps);
 - a film that ignores what was clicked: the clicked thing plays no part, or the
   film does something other than its label promises.
 

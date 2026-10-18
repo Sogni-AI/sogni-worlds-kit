@@ -30,6 +30,10 @@ Rules that matter even before you open AGENTS.md:
 - Never edit a still or use a video frame as one.
 - Look at every picture at full size before writing about it.
 - A retake rewrites the direction that caused the defect.
+- Every click pays off: halfway through its film the visitor sees something the
+  still did not show. A light that comes on and goes off again is not a moment.
+- Asked for a finished world with no reviewing along the way? Follow AGENTS.md ›
+  "When the person hands you the whole build": you are the first reviewer.
 
 Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
 is strongly recommended for a whole world.

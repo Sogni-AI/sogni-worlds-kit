@@ -117,3 +117,28 @@ test('plan paths must stay inside the world folder', () => {
   const outside = lintPlan(plan, { dir: '/worlds/trip' }, { checkFiles: false }).filter(f => /outside the world's folder/.test(f.message)).map(f => f.where);
   assert.deepEqual(outside.sort(), ['films.a-door.keyframes', 'music', 'places.a', 'voices.me'].sort());
 });
+
+test('a crossing between two stills of one view is warned about; one between places is not', async () => {
+  const { mkdirSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const sharp = (await import('sharp')).default;
+  const { tempDir } = await import('./helpers.js');
+  const { lintViews } = await import('../cli/lib/lint.js');
+  const dir = tempDir('views');
+  mkdirSync(join(dir, 'stills'));
+  // A room: a window, a bed and a lamp, drawn as shapes. By night it is the same layout, darker and bluer.
+  const room = (sky, wall) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="384" height="256"><rect width="384" height="256" fill="${wall}"/><rect x="40" y="30" width="140" height="110" fill="${sky}"/><rect x="200" y="150" width="160" height="70" fill="#8a6"/><rect x="230" y="60" width="14" height="90" fill="#ccc"/><circle cx="237" cy="55" r="20" fill="#fe8"/></svg>`);
+  const street = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="384" height="256"><rect width="384" height="256" fill="#556"/><polygon points="0,256 160,90 224,90 384,256" fill="#333"/><rect x="300" y="20" width="60" height="200" fill="#a55"/><rect x="10" y="40" width="50" height="160" fill="#5a5"/></svg>');
+  await sharp(room('#9cf', '#ddc')).jpeg().toFile(join(dir, 'stills', 'day.jpg'));
+  await sharp(room('#124', '#334')).jpeg().toFile(join(dir, 'stills', 'night.jpg'));
+  await sharp(street).jpeg().toFile(join(dir, 'stills', 'street.jpg'));
+  const crossing = { film: { frames: 243, action: 'x', sound: 'y' } };
+  const plan = { places: [
+    { id: 'day', still: 'stills/day.jpg', objects: [{ id: 'blind', goes: 'night', ...crossing }, { id: 'door', goes: 'street', ...crossing }] },
+    { id: 'night', still: 'stills/night.jpg', objects: [] },
+    { id: 'street', still: 'stills/street.jpg', objects: [] },
+  ] };
+  const findings = await lintViews(plan, { dir });
+  assert.deepEqual(findings.map(f => f.where), ['films.day-blind']);
+  assert.equal(findings[0].level, 'warn');
+});

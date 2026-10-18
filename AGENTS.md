@@ -133,14 +133,20 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 - `loop`: a living photograph (static camera, the whole frame gently alive, Foley).
 - `objects`: two to four things to click. In a linear story, exactly one of them
   `goes` to the next place. Give each one a `label` (an action: "Duck through the
-  round door"), a `hint`, an `at` point for the label, and `select` clicks.
+  round door"), a `hint`, an `at` point for the label (in open space beside the
+  object, never on it), and `select` clicks. Every object must pass the payoff
+  question in docs/directing-films.md › Every click pays off: halfway through its
+  film, what can the visitor see that the still did not show them?
 - A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`.
 - `narration.lines` if there is a voice: short, spoken sentences in the person's own words.
 
 Then run `node world lint` and fix every error. A finding names the film, the field
-(`action` or `sound`) and the words that tripped it. Then run `node world plan` and
-show the person its table (place → objects → where each goes, with the one-line
-ideas). Wait for their OK before spending anything.
+(`action` or `sound`) and the words that tripped it; a crossing between two stills
+of one view is warned about too. Then run `node world plan` and show the person its
+table (place → objects → where each goes, with the one-line ideas), and for each
+moment the answer to the payoff question. Read the table once as a whole: no beat
+(a device switched on, the same kind of encounter, the same trick) may happen
+twice in the world. Wait for their OK before spending anything.
 
 ### 5. Select the objects
 
@@ -259,6 +265,38 @@ sharing permissions, and submit for review. Building a world does not authorize
 public submission. Decisions, updates and withdrawal are in My worlds at
 worlds.sogni.ai. Before changing a listed world's content, withdraw its listing,
 then resubmit the updated version. Hosting stays with the creator.
+
+## When the person hands you the whole build
+
+Sometimes the person gives you an idea and asks for a finished world without
+judging anything along the way. The bar stays the same, and you are the first
+reviewer: nothing you could have caught should reach them.
+
+1. **Critique the plan before you spend.** Answer the payoff question for every
+   object, find any beat used twice, and check every crossing leaves through a way
+   out its start picture shows. Then read all the world's words in one pass, in
+   story order (captions, labels, hints, narration, ending texts): every name and
+   fact stays the same from first mention to last, the mystery or argument can be
+   followed, and no line or phrase is said twice. Cut or rewrite what fails. A product, a home or a
+   hotel room needs a person in the pictures using things, and no collectibles
+   (`figure: true` lets the visitor turn a real object over instead).
+2. **Render the canary and judge it yourself** at full size before the rest
+   (`render --canary`, then `render --skip-canary`): a fault in how you write
+   directions repeats in every film written the same way.
+3. **Screen every take and reject on sight**, including a moment where nothing
+   happens (`little-happens`) and a room that rearranges itself. Rewrite the
+   direction and retake, at most twice per film. A film that still fails is cut,
+   and its object goes with it.
+4. **Check every outline and figure.** Each selection preview holds the named
+   object and only it; each figure's cut-out is the object alone, and you turn
+   every built figure over (front, sides, back, top) in the player.
+5. **Play the built world as a visitor** at desktop size and at phone size,
+   upright and sideways: every label readable and beside its object, every film
+   plays and lands, every ending reachable, nothing said twice.
+6. **Hand over honestly.** The world stays a draft (`build --drafts`) until the
+   person approves its films on `node world review`. Tell them what you rejected
+   and why, what you cut, and what you could not fix, and give them the review
+   link.
 
 ## When something goes wrong
 

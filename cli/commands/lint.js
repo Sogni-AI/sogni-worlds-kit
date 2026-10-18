@@ -1,7 +1,7 @@
 import { parse } from '../index.js';
 import { resolveWorldId, shown } from '../lib/paths.js';
 import { readPlan } from '../lib/plan.js';
-import { lintPlan } from '../lib/lint.js';
+import { lintPlan, lintViews } from '../lib/lint.js';
 import { log } from '../lib/log.js';
 import { nextStep } from './status.js';
 
@@ -24,7 +24,7 @@ export async function run(argv) {
   const { values, world } = parse(argv, { json: { type: 'boolean' } });
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
-  const findings = lintPlan(plan, paths);
+  const findings = [...lintPlan(plan, paths), ...await lintViews(plan, paths)];
   if (values.json) {
     console.log(JSON.stringify({ errors: findings.filter(f => f.level === 'error').length, findings }, null, 2));
     return findings.some(f => f.level === 'error') ? 1 : 0;

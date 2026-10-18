@@ -18,6 +18,8 @@ const REJECT_ON_SIGHT = [
   'a real person\'s face drifting into someone else\'s',
   'smeared struts from a bridge or tower route',
   'a frozen tail (the last seconds don\'t move) or a flash at a loop\'s seam',
+  'a moment in which nothing happens: a light, a glow or a screen comes on and goes off again, or the picture barely changes',
+  'a room that rearranges itself on the way (a wall, a door or furniture appears, vanishes or swaps)',
   'the film plainly ignores its direction (the camera goes somewhere else)',
   'the film ignores what the visitor clicked: the clicked thing plays no part, or the film does something other than its label promises',
 ];
