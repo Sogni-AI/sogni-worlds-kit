@@ -5,6 +5,7 @@ dist/
 !.env.example
 .DS_Store
 *.tmp
+.claude/settings.local.json
 
 # Your worlds: the plan, verdicts and receipts are small and worth keeping;
 # photos, recordings and rendered media are large (and personal).

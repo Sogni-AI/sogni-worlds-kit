@@ -31,8 +31,20 @@ Agent Skill as a plugin, inside Claude Code:
 /plugin install sogni-creative-agent@sogni
 ```
 
+When `/plugin install` asks where to install, choose just for you, not for this
+repository: the kit ships its own `.claude/settings.json`.
+
 Claude reads full-size images natively, which suits the "look at every still at
 full size" rule.
+
+When you start Claude Code in the kit folder, the kit's `.claude/settings.json`
+stops Claude's file tools (and commands like `cat`) from reading your `.env`, your
+Sogni credentials file, your SSH and AWS credentials and `.pem` or `.key` files,
+and makes it ask you before a recursive delete, `git clean`, `git reset --hard`, a
+force push, `sudo` or piping a download into a shell, even when you've turned
+permission prompts off. These are guardrails, not a sandbox. Your own settings go
+in `.claude/settings.local.json`, which git ignores; if `git pull` stops on
+`.claude/settings.json`, move your settings there and pull again.
 
 ## Codex
 

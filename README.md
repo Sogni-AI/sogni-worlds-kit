@@ -239,6 +239,7 @@ collectible figures: [docs/agent.md](docs/agent.md).
 
 ```
 AGENTS.md             instructions your agent follows (CLAUDE.md points to it)
+.claude/              Claude Code guardrails around your keys and destructive commands
 world.js              `node world <command>`
 cli/                  the pipeline (Node, the Sogni SDK, sharp, ffmpeg)
 player/               the world player (Vite + TypeScript, no framework)
@@ -262,6 +263,7 @@ worlds/               your worlds
 
 ## License
 
-Code: [MIT](LICENSE). The example world's photographs, films and voices are not
-part of the license. The example links to them where they're published on
-worlds.sogni.ai; don't copy or redistribute them.
+Code: [MIT](LICENSE). The example worlds under `examples/` are not part of the
+license ([examples/README.md](examples/README.md)): their photographs, films,
+narration and voices belong to their owners, and the examples only link to them
+where they're published on worlds.sogni.ai; don't copy or redistribute them.

@@ -44,6 +44,15 @@ screen and assemble. They approve the plan, judge the films and decide what ship
    around them moves (docs/directing-films.md#real-people-and-faces).
 9. **Keep the person informed, briefly.** After each stage, say what you did, what it
    cost and what you need from them, in two or three sentences, then continue.
+10. **Keep their key and their files safe.** Never read or print the Sogni API key:
+    the CLI reads it from the environment, `.env` or `~/.config/sogni/credentials`
+    itself, and `node world doctor` checks it. If it's missing, have the person run
+    `node world setup` in their own terminal: it asks for the key itself, so the key
+    never passes through you. Never delete photos, stills, takes, audio or a world
+    folder unless the person asks you to, and never run `git clean`,
+    `git reset --hard` or a force push in the kit: most of `worlds/` is not in git,
+    the photos are personal and every take cost money. Never host, publish or submit
+    a world the person hasn't asked you to.
 
 ## The workflow
 
@@ -54,7 +63,8 @@ node world doctor
 ```
 
 If anything fails, run `node world setup` (it saves the Sogni API key, checks the
-plan and prints how to install the Sogni Creative Agent Skill for your agent). If
+plan and prints how to install the Sogni Creative Agent Skill for your agent; with
+no key saved yet, the person runs it in their own terminal, where it asks). If
 the person has no Unlimited plan, recommend one before a whole world: a world is
 dozens of 2K films (docs/costs-and-plans.md).
 

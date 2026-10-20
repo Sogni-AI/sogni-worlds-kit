@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Read(~/.config/sogni/credentials)",
+      "Read(~/.ssh/**)",
+      "Edit(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Edit(~/.aws/**)",
+      "Read(*.pem)",
+      "Read(*.key)"
+    ],
+    "ask": [
+      "Bash(rm -r*)",
+      "Bash(rm -R*)",
+      "Bash(rm -fr*)",
+      "Bash(rm -fR*)",
+      "Bash(rm -f -r*)",
+      "Bash(rm -f -R*)",
+      "Bash(rm --recursive*)",
+      "Bash(find * -delete*)",
+      "Bash(git clean*)",
+      "Bash(git reset --hard*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
+      "Bash(sudo *)",
+      "Bash(sh)",
+      "Bash(sh -)",
+      "Bash(sh -s*)",
+      "Bash(bash)",
+      "Bash(bash -)",
+      "Bash(bash -s*)",
+      "Bash(zsh)",
+      "Bash(zsh -s*)",
+      "PowerShell(Remove-Item -r*)",
+      "PowerShell(Remove-Item * -r*)",
+      "PowerShell(git clean*)",
+      "PowerShell(git reset --hard*)",
+      "PowerShell(git push --force*)",
+      "PowerShell(git push -f*)",
+      "PowerShell(git push * --force*)",
+      "PowerShell(git push * -f)",
+      "PowerShell(git push * -f *)",
+      "PowerShell(Invoke-Expression*)"
+    ]
+  }
+}
