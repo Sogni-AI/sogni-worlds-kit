@@ -20,6 +20,7 @@ import { writeBible, paintPlaces } from '../agent/concept.js';
 import { lookAt, writePlace, writeWorld } from '../agent/write.js';
 import { checkOutline, locate, selectionResult } from '../agent/point.js';
 import { judgeTake, rewriteFilm } from '../agent/judge.js';
+import { pickCloseLook } from '../agent/reveal.js';
 import { gather } from './status.js';
 import { wantsFigure } from './figures.js';
 import { figureFiles } from '../lib/figures.js';
@@ -191,6 +192,9 @@ export async function run(argv) {
           at: before?.at, select: before?.select,
           goes: o.goes || undefined, shortcut: o.goes && o.shortcut ? true : undefined, collect: o.collect ? true : undefined,
           film: { frames: o.film.frames, idea: o.film.idea, action: o.film.action, sound: o.film.sound },
+          reveal: !o.goes && o.reveal?.paint ? clean({ paint: o.reveal.paint, line: o.reveal.line || undefined, done: o.reveal.done || undefined,
+            // A close look painted on an earlier run is kept, with what was seen in it.
+            still: before?.reveal?.still, seen: before?.reveal?.seen }) : undefined,
         });
       })));
     });
@@ -243,6 +247,29 @@ export async function run(argv) {
       }
     }
     if (values.until === 'select') return 0;
+
+    // 7b. Close looks: painted from each place's still, the candidate that kept the room picked by eye,
+    // and described, before any film is written against them or rendered.
+    ({ doc, plan } = readPlan(id));
+    const unpainted = plan.places.flatMap((place, pi) => place.objects.map((object, oi) => ({ place, object, pi, oi })))
+      .filter(({ object }) => !object.goes && object.reveal?.paint && !object.reveal.still);
+    if (unpainted.length) {
+      const { run: reveals } = await import('./reveals.js');
+      log.title(`Painting ${unpainted.length} close look${unpainted.length === 1 ? '' : 's'}`);
+      await reveals([id, ...unpainted.flatMap(({ place, object }) => ['--only', `${place.id}-${object.id}`])]);
+      for (const { place, object } of unpainted) {
+        const key = `${place.id}-${object.id}`;
+        const choice = await pickCloseLook(llm, { paths, key, paint: object.reveal.paint });
+        if (!choice) { log.warn(`${key}: no candidate kept the room; leaving it for you (node world reveals ${id} --only ${key} --force)`); continue; }
+        await reveals([id, '--pick', key, String(choice.n)]);
+        ({ doc, plan } = readPlan(id));
+        const pi = plan.places.findIndex(p => p.id === place.id), oi = plan.places[pi].objects.findIndex(o => o.id === object.id);
+        const look = await lookAt(llm, { stillPath: join(paths.dir, plan.places[pi].objects[oi].reveal.still), story: object.reveal.paint, about: brief.about });
+        doc.setIn(['places', pi, 'objects', oi, 'reveal', 'seen'], look.seen);
+        writePlan(id, doc);
+        log.ok(`${key}: candidate ${choice.n} (${choice.why})`);
+      }
+    }
 
     // 8. The quote, then rendering, screening and the agent's own retakes.
     const { run: quote } = await import('./quote.js');
@@ -342,14 +369,15 @@ async function judgeNewTakes({ llm, plan, paths, state, mature }) {
   state.judged ??= {};
   const jobs = [];
   for (const film of filmsOf(plan)) {
-    for (const take of listTakes(paths, film.id, verdicts, notes)) {
-      if (take.journal.status !== 'completed' || take.verdict || !take.screen || state.judged[take.sha]) continue;
+    for (const take of listTakes(paths, film.id, verdicts, notes, film)) {
+      if (take.stale || take.journal.status !== 'completed' || take.verdict || !take.screen || state.judged[take.sha]) continue;
       jobs.push({ film, take });
     }
   }
   await Promise.all(jobs.map(async ({ film, take }) => {
     const from = plan.places.find(p => p.id === film.from);
-    const object = film.object ? from.objects.find(o => o.id === film.object) : null;
+    // A film back is the visitor's "done", not a click: nothing clicked has to lead it.
+    const object = film.object && film.kind !== 'back' ? from.objects.find(o => o.id === film.object) : null;
     const result = await judgeTake(llm, { take, film, object, ...endsSeen(plan, film), cacheDir: join(paths.cache, 'judge'), mature });
     if (object && result.clickedThingLeads === false && result.verdict !== 'reject') {
       result.verdict = 'reject';

@@ -90,6 +90,7 @@ details pre { white-space: pre-wrap; background: var(--bg); border: 1px solid va
 .judge button:disabled { opacity: .5; cursor: wait; }
 .sheet { display: inline-block; margin-top: 4px; color: var(--accent); }
 .vbox { position: relative; display: block; width: fit-content; max-width: 100%; line-height: 0; }
+.back-preview video { display: block; max-width: 100%; margin-top: 6px; } .back-preview .meta { margin: 4px 0 0; }
 .marks-layer { position: absolute; inset: 0; pointer-events: none; }
 .mk { position: absolute; border: 2px solid #ff4d4d; border-radius: 3px; opacity: .3; transition: opacity .2s; }
 .mk.now { opacity: 1; box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
@@ -278,6 +279,7 @@ const PAGE = `
     return '<figure class="cmp-clip" data-sha="' + esc(take.sha) + '">'
       + '<figcaption>Take ' + take.take + '</figcaption>'
       + '<div class="vbox"><video src="' + esc(take.url) + '" preload="auto" playsinline></video><div class="marks-layer"></div></div>'
+      + (take.back ? '<div class="back-preview"><video src="' + esc(take.back) + '" preload="auto" playsinline></video><p class="meta">The same film played backwards: it puts the object down when the visitor is done. Approving the take approves this too.</p></div>' : '')
       + '<div class="take-panel"><div class="meta">' + esc(take.meta) + '</div>' + flagList(take) + notes(take)
       + (take.sheet ? '<a class="sheet" href="' + esc(take.sheet) + '" target="_blank" rel="noopener">Contact sheet</a>' : '')
       + '<div class="mark-row"><button type="button" class="mark" title="Pause here and drag a box over what you mean (M)">Mark an area</button><ul class="areas"></ul></div>'

@@ -163,7 +163,7 @@ export function lintDirection(film, concept = '') {
     const negation = NEGATION.exec(plain);
     if (negation) error('negation', field, `${quote(negation[0])} — state only what is there; a negation names the thing you do not want`);
     const capitals = /\b[A-Z]{3,}\b/.exec(plain.replace(/\[English\]/g, ''));
-    if (capitals) error('capitals', field, `${quote(capitals[0])} — no words in capitals (put visible lettering in "double quotes")`);
+    if (capitals) error('capitals', field, `${quote(capitals[0])} — no words in capitals; writing the picture shows is named as what it reads: a sign that reads "EXIT"`);
     const lowerStart = /[.!?]\s+[a-z][\w’'-]*/.exec(plain);
     if (lowerStart) error('sentences', field, `${quote(lowerStart[0].replace(/^[.!?]\s+/, ''))} — start every sentence with a capital letter`);
     const musical = spoken(text).replace(BIRDSONG, '');
@@ -184,9 +184,9 @@ export function lintDirection(film, concept = '') {
   for (const sentence of throughLattice(action)) error('lattice', 'action', `"${sentence.slice(0, 90)}…" — route the camera far below, far to one side or around the structure; flying along or through a bridge or tower smears its struts`);
   const dark = DARK_SCREEN.exec(spoken(action));
   if (dark) warn('dark-screen', 'action', `${quote(dark[0])} — a dark screen is not a physical crossing: keep the occluding surface and its moving edge visible`);
-  // The kit writes the camera of a film on one still (locked unless the plan chose another); the others move as their direction says.
+  // The kit writes the camera of a film on one still: a moment's is locked, a loop's is its plan's choice.
   if (film.camera !== undefined && film.camera !== null) {
-    if (!ON_ONE_STILL.has(film.kind)) error('camera', 'camera', `only a loop or a moment has a camera choice; a ${film.kind} moves the way its direction says`);
+    if (film.kind !== 'loop') error('camera', 'camera', `only a loop has a camera choice; a ${film.kind === 'moment' ? 'moment keeps a locked camera' : `${film.kind} moves the way its direction says`}`);
     else if (!CAMERAS.includes(film.camera)) error('camera', 'camera', `camera is one of ${CAMERAS.join(', ')} (got ${JSON.stringify(film.camera)}); leave it out for locked`);
   }
   const faceTurn = ON_ONE_STILL.has(film.kind) ? FACE_TURN.exec(spoken(action)) : null;
@@ -241,8 +241,9 @@ export async function lintViews(plan, paths) {
  */
 function lintReveal(object, at, { plan, place, add, contained, checkFiles, file }) {
   const reveal = object.reveal;
-  if (typeof reveal !== 'object' || Array.isArray(reveal)) return add('error', at, 'reveal is { paint, still, seen, line, done, back }');
-  for (const key of Object.keys(reveal)) if (!['paint', 'still', 'seen', 'line', 'voice', 'done', 'back'].includes(key)) add('error', at, `unknown field "${key}" (paint, still, seen, line, voice, done, back)`);
+  if (plan.places.some(p => p.id === `${place.id}-${object.id}`)) add('error', at, `a place is called "${place.id}-${object.id}", the name of this close look: rename the place or the object`);
+  if (typeof reveal !== 'object' || Array.isArray(reveal)) return add('error', at, 'reveal is { paint, zoom, still, seen, line, voice, done, back }');
+  for (const key of Object.keys(reveal)) if (!['paint', 'zoom', 'still', 'seen', 'line', 'voice', 'done', 'back'].includes(key)) add('error', at, `unknown field "${key}" (paint, zoom, still, seen, line, voice, done, back)`);
   if (object.goes) add('error', at, 'a crossing goes somewhere else; only a moment holds on a close look (remove `goes` or the reveal)');
   if (!object.film) add('error', at, 'a reveal needs the object\'s `film`: the film from the place into the close look');
   if (!reveal.still) {
@@ -250,14 +251,13 @@ function lintReveal(object, at, { plan, place, add, contained, checkFiles, file 
     else add('warn', at, 'not painted yet: `node world reveals` paints candidates from the place\'s still, then pick one');
   } else if (contained(at, 'reveal still', reveal.still) && checkFiles && !existsSync(file(reveal.still))) add('error', at, `${reveal.still} is missing`);
   if (reveal.still && !reveal.seen) add('warn', at, 'write `seen`: what is really in the close look, after looking at it at full size');
-  if (!reveal.back) add('error', at, 'a reveal needs `back`: the film from the close look to the place\'s still ({ frames, idea, action, sound })');
+  if (reveal.back !== undefined && reveal.back !== null && (typeof reveal.back !== 'object' || Array.isArray(reveal.back))) add('error', at, '`back` is a film ({ frames, idea, action, sound }); leave it out and build plays the film in backwards');
+  if (reveal.zoom !== undefined && !(typeof reveal.zoom === 'number' && reveal.zoom >= 1 && reveal.zoom <= 3)) add('error', at, '`zoom` is a number from 1 to 3 (how far the close look moves in on the object)');
   for (const key of ['line', 'done', 'seen', 'paint']) if (reveal[key] !== undefined && typeof reveal[key] !== 'string') add('error', at, `\`${key}\` is text`);
   if (!reveal.line && !object.figure && !object.collect) add('warn', at, 'a close look pays off with what it tells: give it a `line` for the narrator (the clue, the name, what it means), or a figure to turn over');
-  if (reveal.line) {
-    const voice = reveal.voice ?? place.narration?.voice ?? Object.keys(plan.voices)[0];
-    if (!voice) add('error', at, 'the line needs a voice: define one under voices (the narrator), or give the place narration');
-    else if (!plan.voices[voice]) add('error', at, `voice "${voice}" is not defined under voices`);
-  }
+  // A line with no voice anywhere is spoken by a studio voice (narrate); a named one must exist.
+  const voice = reveal.voice ?? place.narration?.voice;
+  if (reveal.line && voice && !plan.voices[voice]) add('error', at, `voice "${voice}" is not defined under voices`);
 }
 
 const inUnit = point => Array.isArray(point) && point.length === 2 && point.every(v => typeof v === 'number' && v >= 0 && v <= 1);
@@ -349,7 +349,7 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       if (object.collect !== undefined && typeof object.collect !== 'boolean') add('error', at, '`collect` is true or false');
       if (object.collect && object.goes) add('error', at, 'a collectible stays in its place: remove `goes` (its film is a moment)');
       if (object.figure !== undefined && typeof object.figure !== 'boolean') add('error', at, '`figure` is true or false');
-      for (const key of ['figureName', 'figureNoun']) if (object[key] !== undefined && typeof object[key] !== 'string') add('error', at, `\`${key}\` is text`);
+      for (const key of ['figureName', 'figureNoun', 'figureLook']) if (object[key] !== undefined && typeof object[key] !== 'string') add('error', at, `\`${key}\` is text`);
       if (object.details !== undefined && object.details !== null) for (const issue of detailsIssues(object.details)) add('error', at, issue);
       if (object.goes !== undefined && object.goes !== null) {
         if (object.goes === place.id) add('error', at, 'a film that returns here is a moment: remove `goes`');
@@ -357,6 +357,10 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       }
       if (!object.film) add('warn', at, 'no film yet: nothing happens when it is clicked');
       if (object.reveal !== undefined && object.reveal !== null) lintReveal(object, `${at}.reveal`, { plan, place, add, contained, checkFiles, file });
+      // A figure handled in a moment is lifted and set down in one film before it can be turned over.
+      else if (!object.goes && object.film && (object.figure === true || (object.collect === true && object.figure !== false))) {
+        add('warn', at, 'a figure the visitor picks up is a close look: give it a reveal (the film lifts it into the close look, the figure turns over there, and the film runs back to put it down), or no film at all');
+      }
     }
   }
   if (plan.start && plan.places.length && !ids.has(plan.start)) add('error', 'start', `"${plan.start}" is not a place`);

@@ -29,6 +29,8 @@ export class Stage {
   quality: Quality = '2k';
   /** The film on screen, while one plays. */
   private playing: Film | null = null;
+  /** Ends the film that is playing where it is (Skip pressed before it could even start). */
+  private abandon?: () => void;
   /** Told when the playing film is starved of bytes (and when it flows again), with how much of it has arrived. */
   onStall?: (stalled: boolean, loaded: number | null) => void;
 
@@ -115,7 +117,10 @@ export class Stage {
   async playToHold(film: Film, still: string) {
     await this.roll(film);
     this.setStill({ still });
-    this.follow(this.film);
+    // Held on the film's last frame; if it never played, on the close look's own picture.
+    this.deck.stop();
+    if (this.film.classList.contains('on')) this.follow(this.film);
+    else this.follow(null);
   }
 
   /**
@@ -139,14 +144,20 @@ export class Stage {
     const loaded = () => { if (video.classList.contains('stalled')) this.onStall?.(true, bufferedFraction(video)); };
     video.addEventListener('progress', loaded);
     void playWithSound(video);
-    await whenPainted(video, Infinity);
-    video.classList.add('on');
-    previous.classList.remove('on');
-    previous.pause();
-    this.deck.stop();
-    this.follow(video);
-    whilePlaying?.();
-    await this.untilEnded();
+    let given = false;
+    const abandoned = new Promise<void>(resolve => { this.abandon = () => { given = true; resolve(); }; });
+    await Promise.race([whenPainted(video, Infinity), abandoned]);
+    // Given up before its first frame: nothing of it is shown; the caller lands where the film would have.
+    if (!given) {
+      video.classList.add('on');
+      previous.classList.remove('on');
+      previous.pause();
+      this.deck.stop();
+      this.follow(video);
+      whilePlaying?.();
+      await Promise.race([this.untilEnded(), abandoned]);
+    } else video.pause();
+    this.abandon = undefined;
     stop();
     video.removeEventListener('progress', loaded);
     video.classList.remove('stalled');
@@ -187,11 +198,16 @@ export class Stage {
     }
   }
 
-  /** Jump to the end of the film that is playing (its last frame is the landing). */
+  /**
+   * Jump to the end of the film that is playing (its last frame is the
+   * landing); one that has not loaded enough to know its length is given up,
+   * so a film that never arrives cannot strand the visitor. A held close
+   * look is not a film: Skip leaves it alone.
+   */
   skip() {
-    if (this.film.classList.contains('on') && Number.isFinite(this.film.duration)) {
-      this.film.currentTime = Math.max(0, this.film.duration - 0.05);
-    }
+    if (!this.playing) return;
+    if (Number.isFinite(this.film.duration)) this.film.currentTime = Math.max(0, this.film.duration - 0.05);
+    else this.abandon?.();
   }
 
   /** A film is running (not a close look held on its last frame). */
@@ -250,7 +266,8 @@ export class Stage {
       this.backdropVideo.classList.remove('on');
       return;
     }
-    const src = video.currentSrc || video.getAttribute('src') || '';
+    // The attribute, not currentSrc: right after a switch to 720p currentSrc still names the 2K file.
+    const src = video.getAttribute('src') || video.currentSrc || '';
     // Loops repeat in the backdrop on their own; films play once.
     this.backdropVideo.loop = video !== this.film;
     setSource(this.backdropVideo, src);

@@ -139,9 +139,10 @@ collectible is an object with `collect: true`: its moment plays, then the visito
 picks up its 3D figure and turns it over, and it joins their collection
 ("Figures 2/5", kept in their browser), where hidden ones show as silhouettes.
 The agent makes the figures with `node world figures`: the object's SAM 3
-outline says where it is, BiRefNet cuts it out, Pixal3D builds a GLB of about
-60,000 triangles. Run `node world figures <id> --cutouts` to look at the
-cut-outs before any mesh is made. Both are ordinary
+outline says where it is, Qwen Image Edit draws it again alone, whole and
+detailed on a white plate, and Pixal3D builds a GLB of about 60,000 triangles
+from that plate. Run `node world figures <id> --cutouts` to look at the plates
+before any mesh is made. Both are ordinary
 `world.yaml` fields ([world-yaml.md](world-yaml.md)), so a coding agent can use
 them too.
 

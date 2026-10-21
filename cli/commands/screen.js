@@ -1,5 +1,5 @@
 // screen: automatic checks on every new take, before anyone watches it.
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
@@ -9,6 +9,7 @@ import { resolveWorldId, shown } from '../lib/paths.js';
 import { writeJson, sha256File } from '../lib/files.js';
 import { listTakes } from '../lib/takes.js';
 import { contactSheet, screenTake } from '../lib/screen.js';
+import { rewindFilm } from '../lib/finish.js';
 
 /** The opening strip: where the clicked thing has to move first. */
 const OPENING_SECONDS = [0, 0.3, 0.6, 0.9, 1.3, 1.7, 2.2, 2.7];
@@ -54,14 +55,25 @@ export async function run(argv) {
       // A crossing or moment has to start with what was clicked: its first seconds, densely, for looking at that.
       const opening = film.object ? join(paths.renders, film.id, `take-${take.take}.opening.jpg`) : null;
       if (opening) await contactSheet(take.files.video, opening, { frames: result.probe?.frames, at: OPENING_SECONDS.map(s => Math.round(s * (result.probe?.fps || 24))) });
-      // Where the picture changes fastest, every frame: a dissolve or a fade often lasts a quarter of a
-      // second, shorter than the gap between two frames of the contact sheet.
+      // Every frame of two stretches: a dissolve or a fade often lasts a quarter of a second, shorter than
+      // the gap between two frames of the contact sheet. Where the screen flagged a blend, a cut or a break
+      // first, then where the picture changes fastest; two centres closer than 16 frames are one stretch.
+      const dir = join(paths.renders, film.id);
+      for (const name of readdirSync(dir)) if (name.startsWith(`take-${take.take}.change-`)) rmSync(join(dir, name));
+      const flagged = result.flags.filter(f => ['dissolve', 'hard-cut', 'structure-break'].includes(f.code) && Number.isInteger(f.frame)).map(f => f.frame);
+      const centres = [];
+      for (const frame of [...flagged, ...(result.metrics.changes ?? []).map(c => c.frame)]) {
+        if (centres.length < 2 && centres.every(c => Math.abs(c - frame) >= 16)) centres.push(frame);
+      }
       const changes = [];
-      for (const [index, stretch] of (result.metrics.changes ?? []).entries()) {
-        const strip = join(paths.renders, film.id, `take-${take.take}.change-${index + 1}.jpg`);
-        await contactSheet(take.files.video, strip, { frames: result.probe?.frames, at: Array.from({ length: 16 }, (_, i) => stretch.frame - 8 + i) });
+      for (const [index, centre] of centres.sort((a, b) => a - b).entries()) {
+        const strip = join(dir, `take-${take.take}.change-${index + 1}.jpg`);
+        await contactSheet(take.files.video, strip, { frames: result.probe?.frames, at: Array.from({ length: 16 }, (_, i) => centre - 8 + i) });
         changes.push(strip);
       }
+      // A close look with no film back of its own is put down by this film played backwards: made now,
+      // so the review shows (and approves) the two together.
+      if (film.kind === 'reveal' && !closeLookBack(plan, film)) await rewindFilm(take.files.video, take.files.back, null, { sound: 'forward' });
       const sha = sha256File(take.files.video);
       if (take.journal.sha256 && sha !== take.journal.sha256) {
         result.flags.unshift({ code: 'changed', severity: 'error', message: 'The file no longer matches its render receipt (SHA-256)' });
@@ -107,4 +119,9 @@ function stillAt(paths, relative) {
   if (!relative) return null;
   const path = join(paths.dir, relative);
   return existsSync(path) ? path : null;
+}
+
+/** The written film back of a close look, if its plan has one (otherwise build plays the film in backwards). */
+function closeLookBack(plan, film) {
+  return plan.places.find(place => place.id === film.from)?.objects.find(object => object.id === film.object)?.reveal?.back ?? null;
 }

@@ -56,7 +56,7 @@ export function gather(id) {
   const unjudged = [];
   const feedback = [];
   for (const film of films) {
-    const list = listTakes(paths, film.id, verdicts, notes);
+    const list = listTakes(paths, film.id, verdicts, notes, film);
     takes += list.length;
     const state = filmState(list);
     byState[state].push(film.id);
@@ -65,7 +65,7 @@ export function gather(id) {
     if (rejected) feedback.push({ film: film.id, take: rejected.take, verdict: rejected.verdict.note ?? '', notes: rejected.notes.filter(n => n.by !== 'agent') });
     for (const take of list) {
       if (take.journal.status === 'completed') finishedTakes += 1;
-      if (take.journal.status !== 'completed' || take.verdict) continue;
+      if (take.stale || take.journal.status !== 'completed' || take.verdict) continue;
       unjudged.push(`${film.id} take ${take.take}`);
       if (!take.screen) unscreened.push(`${film.id} take ${take.take}`);
       else if (!take.notes.some(n => n.by === 'agent')) unlooked.push({ film: film.id, take: take.take });
@@ -75,8 +75,12 @@ export function gather(id) {
   const narrated = plan.places.filter(p => p.narration?.lines?.length);
   const narrationNeeded = [...narrated.filter(p => !existsSync(join(paths.audio, 'narration', `${p.id}.json`))).map(p => p.id),
     ...revealSpeech(plan).filter(r => !existsSync(join(paths.audio, 'narration', 'reveals', `${r.id}.json`))).map(r => r.id)];
-  // A close look still to paint (node world reveals): its films cannot render without it.
-  const revealsNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(o => !o.goes && o.reveal?.paint && !o.reveal.still).map(o => `${p.id}-${o.id}`));
+  // Close looks, in the order they are made: painted (node world reveals), one candidate picked, then looked at
+  // (seen written, and the film's arrival matched to it). Their films cannot render before.
+  const reveals = plan.places.flatMap(p => (p.objects ?? []).filter(o => !o.goes && o.reveal).map(o => ({ key: `${p.id}-${o.id}`, reveal: o.reveal })));
+  const revealsNeeded = reveals.filter(r => r.reveal.paint && !r.reveal.still && !existsSync(join(paths.reveals, 'candidates', `${r.key}.json`))).map(r => r.key);
+  const revealsToPick = reveals.filter(r => !r.reveal.still && existsSync(join(paths.reveals, 'candidates', `${r.key}.json`))).map(r => r.key);
+  const revealsUnseen = reveals.filter(r => r.reveal.still && !r.reveal.seen).map(r => r.key);
   const musicNeeded = Boolean(plan.music) && !existsSync(join(paths.audio, 'music', 'music.json'));
   // A collectible with an outline and no 3D figure yet (node world figures).
   const figuresNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(wantsFigure).map(o => `${p.id}-${o.id}`))
@@ -90,7 +94,7 @@ export function gather(id) {
     stillNotes: Object.entries(readStillNotes(paths)).flatMap(([place, list]) => list.map(note => ({ place, ...note }))),
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
-    narrationNeeded, narratedPlaces: narrated.length, revealsNeeded, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
+    narrationNeeded, narratedPlaces: narrated.length, revealLines: revealSpeech(plan).length, revealsNeeded, revealsToPick, revealsUnseen, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
   };
 }
 
@@ -116,7 +120,9 @@ export function nextAction(s) {
   }
   if (s.selections.needed.length) return { why: `${s.selections.needed.length} object${s.selections.needed.length === 1 ? ' needs' : 's need'} outlines`, command: `node world select ${id}` };
   if (s.selections.failed.length) return { why: `SAM 3 could not outline ${s.selections.failed.join(', ')}`, command: `change their select clicks in world.yaml (changed clicks are selected again automatically), then: node world select ${id}` };
-  if (s.revealsNeeded?.length) return { why: `${s.revealsNeeded.length} close look${s.revealsNeeded.length === 1 ? ' is' : 's are'} not painted yet (${s.revealsNeeded.join(', ')})`, command: `node world reveals ${id}   — look at every candidate at full size, then: node world reveals ${id} --pick <place-object> <n>, and write reveal.seen` };
+  if (s.revealsNeeded?.length) return { why: `${s.revealsNeeded.length} close look${s.revealsNeeded.length === 1 ? ' is' : 's are'} not painted yet (${s.revealsNeeded.join(', ')})`, command: `node world reveals ${id}` };
+  if (s.revealsToPick?.length) return { why: `${s.revealsToPick.join(', ')}: candidates painted, none picked`, command: `look at every candidate in worlds/${id}/reveals/candidates/ at full size beside its .zoom.png (the room unchanged, the writing exactly as named), then: node world reveals ${id} --pick ${s.revealsToPick[0]} <n>   (or change reveal.paint and paint again with --force)` };
+  if (s.revealsUnseen?.length) return { why: `${s.revealsUnseen.join(', ')}: a close look nobody has described`, command: `open worlds/${id}/reveals/${s.revealsUnseen[0]}.jpg at full size, write its reveal.seen, rewrite the object's film so it arrives on that picture exactly as seen describes it (any writing named as what it reads), then: node world lint ${id}` };
   if (!s.takes) return { why: 'nothing rendered yet', command: `node world quote ${id}   — then: node world render ${id} --canary` };
   const canary = s.canary && !['approved', 'none'].includes(s.canary.state) ? canaryNext(s.canary, id) : null;
   if (canary && s.canary.state !== 'unjudged') return canary;
@@ -186,8 +192,9 @@ export async function run(argv) {
     log.info(`pictures    ${s.stillNotes.length} area note${s.stillNotes.length === 1 ? '' : 's'} on stills`);
     for (const note of s.stillNotes) log.dim(`              ${note.place}: ${describeNote(note)}`);
   }
-  const narrationState = !s.narratedPlaces ? 'none planned'
-    : `${s.narratedPlaces - s.narrationNeeded.length} of ${s.narratedPlaces} place${s.narratedPlaces === 1 ? '' : 's'} recorded`;
+  const spoken = s.narratedPlaces + (s.revealLines ?? 0);
+  const narrationState = !spoken ? 'none planned'
+    : `${spoken - s.narrationNeeded.length} of ${spoken} recorded (${s.narratedPlaces} place${s.narratedPlaces === 1 ? '' : 's'}, ${s.revealLines ?? 0} close look${s.revealLines === 1 ? '' : 's'})`;
   const musicState = !s.hasMusic ? 'none planned' : s.musicNeeded ? 'to make' : 'made';
   log.info(`audio       narration ${narrationState}; music ${musicState}`);
   log.info(`build       ${s.built ? (s.buildStale ? 'out of date' : `up to date (${shown(join(worldPaths(id).build, 'world.json'))})`) : 'not built'}`);

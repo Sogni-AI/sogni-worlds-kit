@@ -57,3 +57,24 @@ test('a reveal is two films: into the close look, and back to the place, each wi
     ['office-coat', 'crossing', 'stills/office.jpg', 'stills/street.jpg', 243],
   ]);
 });
+
+test('a close look is painted, picked and described before its films: next says which, in that order', async () => {
+  const { nextAction } = await import('../cli/commands/status.js');
+  const base = { id: 'w', exists: true, places: 1, photos: 1, photosNotIngested: 0, stillsMissing: [], planWritten: true, errors: [], takes: 1,
+    selections: { needed: [], failed: [], done: 1 }, revealsNeeded: [], revealsToPick: [], revealsUnseen: [] };
+  assert.match(nextAction({ ...base, revealsNeeded: ['a-glove'] }).command, /^node world reveals w$/);
+  assert.match(nextAction({ ...base, revealsToPick: ['a-glove'] }).command, /--pick a-glove <n>/);
+  assert.match(nextAction({ ...base, revealsUnseen: ['a-glove'] }).command, /write its reveal\.seen, rewrite the object's film/);
+});
+
+test('the room a close look keeps: 1 for the same room, low for a repainted one', async () => {
+  const sharp = (await import('sharp')).default;
+  const { roomKept } = await import('../cli/commands/reveals.js');
+  const scene = (shift) => sharp({ create: { width: 480, height: 270, channels: 3, background: '#203040' } })
+    .composite([{ input: { create: { width: 120, height: 200, channels: 3, background: '#c0a060' } }, left: 40 + shift, top: 30 },
+      { input: { create: { width: 90, height: 60, channels: 3, background: '#e0e0e0' } }, left: 300, top: 160 - shift }]).png().toBuffer();
+  const object = { x: 0.6, y: 0.55, width: 0.2, height: 0.25 };
+  const room = await scene(0);
+  assert.equal(await roomKept(room, room, object), 1);
+  assert.ok(await roomKept(room, await scene(200), object) < 0.8, 'the furniture moved');
+});

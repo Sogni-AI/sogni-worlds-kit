@@ -45,8 +45,9 @@ test('bridge and tower routes are errors unless the structure is passed far off;
 test('the camera of a loop or moment is a choice the kit knows; a crossing has none; frames must be on the grid', () => {
   // The kit writes the camera sentence itself, so a loop's direction no longer has to say "static".
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop' })), []);
-  for (const camera of ['locked', 'handheld', 'sway']) assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera })), [], camera);
-  assert.ok(rules(lintDirection({ ...good, kind: 'moment', camera: 'dolly' })).includes('camera'));
+  for (const camera of ['locked', 'sweep']) assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera })), [], camera);
+  assert.ok(rules(lintDirection({ ...good, kind: 'loop', camera: 'dolly' })).includes('camera'));
+  assert.ok(rules(lintDirection({ ...good, kind: 'moment', camera: 'sweep' })).includes('camera'), 'a moment keeps a locked camera');
   assert.ok(rules(lintDirection({ ...good, camera: 'locked' })).includes('camera'), 'a crossing moves as its direction says');
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', allow: ['static'] })), [], 'an old plan that allowed the retired rule still lints');
   assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
@@ -148,7 +149,7 @@ test('a crossing between two stills of one view is warned about; one between pla
   assert.equal(findings[0].level, 'warn');
 });
 
-test('a reveal: only on a moment, painted or described, with a film back; a close look says or shows something', () => {
+test('a reveal: only on a moment, painted or described, its film back optional; a close look says or shows something', () => {
   const base = {
     id: 'w', title: 'W', canvas: '1344x768', order: 'free', voices: { narrator: { design: 'a low voice' } },
     places: [{ id: 'office', still: 'stills/office.jpg', title: 'Office', seen: 'An office.', narration: { voice: 'narrator', lines: ['Rain.'] }, objects: [] }],
@@ -164,7 +165,9 @@ test('a reveal: only on a moment, painted or described, with a film back; a clos
   assert.ok(findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', line: 'x', back: film } })).some(f => f.where.includes('reveal') && /write `seen`/.test(f.message)));
   assert.ok(at(findings(withObject({ reveal: { paint: 'A hand turns the glove over.', line: 'x', back: film } })), 'warn').some(m => /not painted yet/.test(m)));
   assert.ok(at(findings(withObject({ reveal: { line: 'x', back: film } })), 'error').some(m => /paint/.test(m)));
-  assert.ok(at(findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', seen: 's', line: 'x' } })), 'error').some(m => /needs `back`/.test(m)));
+  // Without a written film back, build plays the film in backwards: no film back is needed.
+  assert.deepEqual(at(findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', seen: 's', line: 'x' } })), 'error'), []);
+  assert.ok(at(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', line: 'x', zoom: 5 } })), 'error').some(m => /zoom/.test(m)));
   assert.ok(at(findings(withObject({ goes: 'office', reveal: { still: 'r.jpg', seen: 's', back: film } })), 'error').some(m => /only a moment/.test(m)));
   assert.ok(at(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', back: film } })), 'warn').some(m => /give it a `line`/.test(m)), 'a silent close look is a warning');
   assert.ok(at(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', back: film, line: 'x', voice: 'stranger' } })), 'error').some(m => /not defined/.test(m)));

@@ -53,7 +53,8 @@ test('a loop or a moment says its two pictures are one photograph and carries th
   const loop = assemblePrompt({ kind: 'loop', frames: 192, action, sound: 'Wind.' });
   assert.ok(loop.startsWith('How the reference pictures align with the target video — Picture 1 and Picture 2 are the same photograph.'));
   assert.ok(loop.includes(`[Shot 1] ${CAMERA.locked} ${action}`), 'locked unless chosen, before the direction');
-  assert.ok(assemblePrompt({ kind: 'moment', frames: 141, action, sound: 'Wind.', camera: 'sway' }).includes(CAMERA.sway));
+  assert.ok(assemblePrompt({ kind: 'loop', frames: 192, action, sound: 'Wind.', camera: 'sweep' }).includes(CAMERA.sweep));
+  assert.ok(assemblePrompt({ kind: 'moment', frames: 141, action, sound: 'Wind.', camera: 'sweep' }).includes(CAMERA.locked), 'a moment is always locked');
   for (const kind of ['crossing', 'reveal', 'back']) {
     const prompt = assemblePrompt({ kind, frames: 141, action, sound: 'Wind.', camera: 'locked' });
     assert.ok(!prompt.includes('same photograph') && !prompt.includes(CAMERA.locked) && prompt.includes(LANDING), kind);

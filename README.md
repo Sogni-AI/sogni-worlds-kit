@@ -35,7 +35,7 @@ This repo holds everything we used to build the worlds on
 You bring the taste and an idea; photos are optional. Your agent (Claude Code,
 Codex or Hermes) does the rest with the
 [Sogni Creative Agent Skill](https://github.com/Sogni-AI/sogni-creative-agent-skill)
-and your Sogni API key: eight open-source models paint the places, trace what you
+and your Sogni API key: nine open-source models paint the places, trace what you
 click, film every crossing, narrate, score and build the collectibles
 ([every model](#the-models)). Start in the evening, and a whole world of dozens of
 2K films is yours to judge by morning.
@@ -173,7 +173,7 @@ Full walk-through: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## The models
 
-Eight open-source models do the work, all with public weights, all running on
+Nine open-source models do the work, all with public weights, all running on
 Sogni's decentralized GPU network through your one API key:
 
 | What it does | Model |
@@ -182,6 +182,7 @@ Sogni's decentralized GPU network through your one API key:
 | Keeps the same character in every place, from one reference picture | Sogni Krea 2 Identity Edit |
 | Paints 18+ worlds (horror, gore) | Dark Beast Krea 2, with its own Identity Edit |
 | Traces what you click | Segment Anything 3 |
+| Paints each close look into its place, and draws each 3D figure alone before it is built | Qwen Image Edit 2511 |
 | Films every crossing, loop and moment | MiniMax H3: first-and-last-frame, two-stage, native 2K with its own sound |
 | Narrates | Qwen3-TTS: a designed voice, or a clone of a voice you own |
 | Scores | MiniMax Music 3 |
@@ -191,7 +192,7 @@ No coding agent? Two more open models can be the agent: DeepSeek V4 Flash writes
 judges and screens, and Qwen 3.6 points at the things to click
 (`node world agent`, [docs/agent.md](docs/agent.md)). Two more sit behind the
 scenes when asked: ACE-Step 1.5 scores a world that needs an exact tempo and key,
-and `figures` cuts an object out with BiRefNet before Pixal3D builds it.
+and `figures` cuts each figure's plate out with BiRefNet for its icon in the collection.
 
 ## The craft, in five rules
 

@@ -14,16 +14,17 @@
 //
 // Verdicts are pinned to the exact file (its SHA-256), never to a name, so a
 // re-rendered file can never inherit an approval it did not earn.
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { readJson, writeJson } from './files.js';
+import { readJson, sha256File, writeJson } from './files.js';
 import { ROOT } from './paths.js';
 
 export const VERDICTS = ['approved', 'rejected', 'passed'];
 
 export const takeFiles = (paths, film, take) => {
   const base = join(paths.renders, film, `take-${take}`);
-  return { journal: `${base}.json`, video: `${base}.mp4`, screen: `${base}.screen.json`, sheet: `${base}.sheet.jpg` };
+  // back: a close look's film played backwards (what puts the object down), made by screen for the review.
+  return { journal: `${base}.json`, video: `${base}.mp4`, screen: `${base}.screen.json`, sheet: `${base}.sheet.jpg`, back: `${base}.back.mp4` };
 };
 
 export const verdictsFile = paths => join(paths.review, 'verdicts.json');
@@ -92,9 +93,16 @@ export function describeNote(note) {
 }
 
 /** Every take of one film, oldest first, with its receipt, checks and verdict. */
-export function listTakes(paths, film, verdicts = readVerdicts(paths), notes = readNotes(paths)) {
+/**
+ * Every take of a film, oldest first. Given the `film` itself (from filmsOf),
+ * a take rendered between other pictures than the film's stills are now (a
+ * close look painted again, a moment that became a close look) is marked
+ * `stale`: it no longer fits, so it counts as neither approved nor waiting.
+ */
+export function listTakes(paths, film, verdicts = readVerdicts(paths), notes = readNotes(paths), filmPlan = null) {
   const dir = join(paths.renders, film);
   if (!existsSync(dir)) return [];
+  const ends = filmPlan ? endShas(paths, filmPlan) : null;
   return readdirSync(dir)
     .map(name => /^take-(\d+)\.json$/.exec(name)?.[1])
     .filter(Boolean)
@@ -105,6 +113,8 @@ export function listTakes(paths, film, verdicts = readVerdicts(paths), notes = r
       const journal = readJson(files.journal);
       const screen = existsSync(files.screen) ? readJson(files.screen) : null;
       const sha = journal.sha256 ?? null;
+      const rendered = Object.fromEntries((journal.references ?? []).filter(r => r.role !== 'keyframe').map(r => [r.role, r.sha256]));
+      const stale = Boolean(ends) && ['first', 'last'].some(role => ends[role] && rendered[role] && ends[role] !== rendered[role]);
       return {
         film,
         take,
@@ -112,10 +122,25 @@ export function listTakes(paths, film, verdicts = readVerdicts(paths), notes = r
         journal,
         screen,
         sha,
+        stale,
         verdict: sha ? verdicts[sha] ?? null : null,
         notes: sha ? notes[sha] ?? [] : [],
       };
     });
+}
+
+/** The SHA-256 of a film's first and last stills as they are now (null for one that is missing). */
+const shaCache = new Map();
+function endShas(paths, film) {
+  const sha = relative => {
+    if (!relative) return null;
+    const file = join(paths.dir, relative);
+    if (!existsSync(file)) return null;
+    const key = `${file}:${statSync(file).mtimeMs}`;
+    if (!shaCache.has(key)) shaCache.set(key, sha256File(file));
+    return shaCache.get(key);
+  };
+  return { first: sha(film.first), last: sha(film.last) };
 }
 
 /** The next take number for a film. */
@@ -130,7 +155,8 @@ export const nextTake = takes => (takes.at(-1)?.take ?? 0) + 1;
  *   rejected    every finished take was rejected: rewrite the direction, then render again
  *   unrendered  no take yet
  */
-export function filmState(takes) {
+export function filmState(allTakes) {
+  const takes = allTakes.filter(t => !t.stale);
   if (takes.some(t => t.verdict?.verdict === 'approved')) return 'approved';
   if (takes.some(t => t.journal.status === 'completed' && !t.verdict)) return 'unjudged';
   if (takes.some(t => ['submitting', 'submitted'].includes(t.journal.status))) return 'rendering';
@@ -141,4 +167,4 @@ export function filmState(takes) {
 }
 
 /** The take a build uses: the newest approved one. */
-export const approvedTake = takes => takes.filter(t => t.verdict?.verdict === 'approved').at(-1) ?? null;
+export const approvedTake = takes => takes.filter(t => !t.stale && t.verdict?.verdict === 'approved').at(-1) ?? null;

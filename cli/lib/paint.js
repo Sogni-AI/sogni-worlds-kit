@@ -16,6 +16,15 @@ export const PAINT_MODELS = Object.freeze({
   darkEdit: 'dark_beast_krea2_identity_edit_v1_2',
 });
 
+/**
+ * Qwen Image Edit 2511: an edit that keeps everything it is not told to change,
+ * so the light, the furniture and the room stay where the reference has them.
+ * It makes a figure's clean plate (the object alone on white, the recipe the
+ * live worlds' 3D figures were rebuilt with) and a close look (the place's
+ * own picture, zoomed, with only the object changed), at the model's defaults.
+ */
+export const EDIT_MODEL = 'qwen_image_edit_2511_fp8';
+
 /** The reviewed step counts: 8 for text-to-image, 10 for an edit. */
 const STEPS = { text: 8, edit: 10 };
 
@@ -78,6 +87,43 @@ export async function paint(session, { prompt, width, height, seed, context = []
     }
     if (!images.length) throw new Error('Sogni returned no pictures (the safe-content filter may have withheld them)');
     return { modelId, projectId: project.id, images };
+  } finally {
+    refusals.stop();
+  }
+}
+
+/**
+ * `count` Qwen Image Edit results of one instruction on up to three context
+ * pictures, at the model's own steps and guidance. Returns PNG buffers.
+ */
+export async function edit(session, { prompt, context, width, height, seed, count = 1, contentFilter = false }) {
+  if (!context?.length || context.length > 3) throw new Error('an edit takes one to three context pictures');
+  const options = await session.client.projects.getModelOptions?.(EDIT_MODEL).catch(() => null);
+  const refusals = watchRefusals(session.client);
+  try {
+    const project = await refusals.creating(() => session.client.projects.create({
+      type: 'image', modelId: EDIT_MODEL, positivePrompt: prompt, negativePrompt: '', stylePrompt: '',
+      steps: options?.steps?.default ?? 20, guidance: options?.guidance?.default ?? 4,
+      ...(options?.sampler?.default ? { sampler: options.sampler.default } : {}),
+      ...(options?.scheduler?.default ? { scheduler: options.scheduler.default } : {}),
+      numberOfMedia: count, numberOfPreviews: 0, sizePreset: 'custom', width, height,
+      ...(Number.isInteger(seed) ? { seed } : {}), contextImages: context, outputFormat: 'png',
+      disableNSFWFilter: !contentFilter, network: 'fast', tokenType: session.billing.tokenType, billingMode: session.billing.mode,
+    }));
+    const urls = await Promise.race([
+      project.waitForCompletion(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('the edit took longer than 15 minutes')), 15 * 60_000)),
+    ]);
+    const refused = refusals.get(project.id);
+    if (refused) throw new RefusedError(refused);
+    const images = [];
+    for (const url of urls.filter(Boolean)) {
+      const response = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+      if (!response.ok) throw new Error(`downloading an edited picture failed (HTTP ${response.status})`);
+      images.push(Buffer.from(await response.arrayBuffer()));
+    }
+    if (!images.length) throw new Error('Sogni returned no pictures (the safe-content filter may have withheld them)');
+    return { modelId: EDIT_MODEL, projectId: project.id, images };
   } finally {
     refusals.stop();
   }

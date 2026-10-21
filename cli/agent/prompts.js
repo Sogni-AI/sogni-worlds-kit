@@ -39,6 +39,7 @@ export function examplePlace() {
         goes: o.goes ?? null,
         shortcut: Boolean(o.shortcut),
         film: { frames: o.film.frames, idea: o.film.idea, action: o.film.action, sound: o.film.sound },
+        reveal: { paint: '', line: '', done: '' },
       })),
     },
   };

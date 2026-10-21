@@ -192,10 +192,19 @@ button.collection-pill:hover, button.collection-pill:focus-visible { background:
 
 .inspector { position: absolute; inset: 0; z-index: 15; display: grid; grid-template-rows: 1fr auto; background: radial-gradient(ellipse at center, rgba(40, 42, 48, 0.94), rgba(5, 6, 8, 0.97)); animation: ending-in 300ms ease both; }
 .inspector.over-still { background: radial-gradient(ellipse at center, rgba(20, 22, 26, 0.6), rgba(5, 6, 8, 0.88)); }
-/* The close look's line is read over the figure, above its dimming. */
-:has(> .inspector.over-still) > .subtitle { z-index: 16; }
+/* A close look's line is read above everything on screen: the figure's dimming, an object's card. */
+.holding .subtitle { z-index: 16; }
+/* Over a figure, it sits between the figure and its name and button (two rows on a phone), and the figure keeps clear of it. */
+.holding:has(> .inspector) .subtitle { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 92px); }
+.holding .inspector-stage { margin-bottom: 84px; }
+@media (max-width: 600px) {
+  .holding:has(> .inspector) .subtitle { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 124px); }
+  .holding .inspector-stage { margin-bottom: 110px; }
+}
 .inspector-stage { position: relative; min-height: 0; }
 .inspector-stage model-viewer { width: 100%; height: 100%; background: transparent; --poster-color: transparent; }
+/* Dragging the figure focuses the viewer: no box is drawn around the picture for it. */
+.inspector-stage model-viewer:focus, .inspector-stage model-viewer:focus-visible { outline: none; }
 .inspector-state { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--muted); font-size: 15px; pointer-events: none; }
 .inspector-state[hidden] { display: none; }
 .inspector-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; justify-content: center; padding: 14px 16px max(16px, env(safe-area-inset-bottom)); }

@@ -21,7 +21,7 @@ screen and assemble. They approve the plan, judge the films and decide what ship
 3. **Say what it costs before spending.** Before the first render, run
    `node world quote` and tell the person the total and how it's paid (their
    Unlimited plan or their token balance). Start with `node world render --canary`
-   (one crossing and one loop). A plain `render` refuses to start the rest until the
+   (one crossing, one loop and the first close look). A plain `render` refuses to start the rest until the
    person has approved the canary on the review page.
 4. **Stills are sacred.** `ingest` makes each canonical still once. Never edit,
    re-save, crop, upscale or replace a still, and never use a video frame or a
@@ -87,7 +87,8 @@ Ask, in one message:
   as a linear story.)
 - For each place: where is it and what happened there? Anything funny or surprising?
 - Narration: none, their own voice (they record 10–30 s of clean speech into
-  `voices/` and give you the exact transcript), or a designed voice?
+  `voices/` and give you the exact transcript), or a designed voice? Close looks are
+  told by the narrator: with no narration, a close look can only show a figure.
 - Music: none, generated (describe the mood), or a track they own the rights to?
 
 ### 3. Create the world and bring in the pictures, in story order
@@ -120,12 +121,14 @@ No photos? Paint the places from the concept, then ingest them like photographs:
   size (1344×768 for 16:9, 1152×768 for 3:2). Save them into `photos/` in story
   order.
 
-Whichever way they are painted, **read every piece of writing in every painted
-place at full size before ingesting it**: signs, mirrors, notes, posters, labels.
-Writing appears only where the story needs it, with its exact words in double
-quotes in the prompt; letters that spell nothing ("Cpole Ligicac" in lipstick on a
-mirror) mean painting it again. A still is fixed once ingested, and every film
-starts and ends on it (docs/directing-films.md › Writing in pictures).
+Whichever way they are painted, **you write the words of any writing a place
+shows**: a model spells only the words its prompt gives it. A mirror the story
+marks in lipstick gets lipstick that reads "MIDNIGHT, PIER 9", a sign gets its
+name; short words chosen for the story. Then read every piece of writing in every
+painted place at full size before ingesting it: letters that spell nothing
+("Cpole Ligicac" in lipstick on a mirror) mean painting it again. A still is fixed
+once ingested, and every film starts and ends on it (docs/directing-films.md ›
+Writing in pictures).
 
 Fatal choices and collectibles are plain `world.yaml` fields (`ending`, `collect`,
 `intro`; docs/world-yaml.md), whichever way the pictures were made.
@@ -138,20 +141,26 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 - `seen`: what is really in the picture, from looking at it at full size.
 - `title`, `chapter`, `caption`, from what the person told you.
 - `loop`: a living photograph (the whole frame gently alive, Foley). The kit locks
-  its camera; choose `camera: handheld` or `sway` only where the place itself moves
-  or the world is seen through someone's eyes (docs/directing-films.md › Loops).
+  its camera; give a loop `camera: sweep` (a slow look across and back) only when
+  the place is a wide scene the eye travels across (docs/directing-films.md › Loops).
 - `objects`: two to four things to click. In a linear story, exactly one of them
   `goes` to the next place. Give each one a `label` (an action: "Duck through the
-  round door"), a `hint`, an `at` point for the label (in open space beside the
-  object, never on it), and `select` clicks. Every object must pass the payoff
-  question in docs/directing-films.md › Every click pays off: what does the visitor
-  know after this click that they did not know before? Anything picked up, opened,
-  read or asked is a **close look** (`reveal`): the film lands on a painted close-up
-  that shows the clue, the narrator says its `line`, and a film back puts it down
-  (docs/directing-films.md › Close looks). A moment that only points at a thing, or
-  makes it vanish and come back, tells the visitor nothing.
-- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`; and
-  for a close look, `reveal: { paint, line, done, back }` (docs/world-yaml.md › reveal).
+  round door"), a `hint`, an `at` point for the label (in open space just above the
+  object, never on it), and `select` clicks.
+- Every object passes the payoff question (docs/directing-films.md › Every click pays
+  off): halfway through, what does the visitor see that the still did not show, and
+  what do they know afterwards? A moment that only points at a thing, or makes it
+  vanish and come back, tells the visitor nothing.
+- Anything picked up, opened, read, turned over or asked is a **close look**
+  (`reveal`): the film lands on a close-up of the place that shows the clue, the
+  narrator says its `line`, and the film runs backwards to put it down
+  (docs/directing-films.md › Close looks). A collectible or figure the visitor
+  handles is always one.
+- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`; for a
+  close look, `reveal: { paint, line, done }` (docs/world-yaml.md › reveal); for a
+  figure, `figureLook`. Any writing a film shows is named in its action as what it
+  reads, and anyone who speaks has their exact words written in it
+  (`<d>[English] …</d>`, one short line per speaker); never leave words to the model.
 - `narration.lines` if there is a voice: short, spoken sentences in the person's own words.
 
 Then run `node world lint` and fix every error. A finding names the film, the field
@@ -175,11 +184,14 @@ grabbed) and run `node world select` again: an object whose clicks changed is
 outlined again by itself. `select --only <place>-<object>` redoes one outline even
 when its clicks didn't change.
 
-Then paint the close looks: `node world reveals` paints candidates for each
-`reveal.paint` from the place's own still (Krea 2 Identity Edit). Look at every
-candidate at full size (the object and people as in the place, any writing exactly
-the quoted words), keep one with `node world reveals --pick <place-object> <n>`,
-and write its `reveal.seen`.
+Then make the close looks, in this order (`node world next` walks you through it):
+`node world reveals` crops each place's still around the object and edits in only
+what `reveal.paint` describes (Qwen Image Edit), three candidates each, with a
+`room kept` score. Look at every candidate at full size beside its `.zoom.png` (the
+room unchanged, the object and people as in the place, the writing exactly the
+words you named), keep one with `node world reveals --pick <place-object> <n>`, write
+its `reveal.seen`, then rewrite the object's film so it arrives on that picture
+exactly as `seen` describes it, and lint.
 
 ### 6. Quote, then render the canary
 
@@ -220,9 +232,10 @@ The form is `<verb> [world] <film> <take> "text"`: the film id, the take number,
 then the words in quotes. The world id can be left out only when `worlds/` holds a
 single world (`node world reject harbour-ferry 1 "…"`).
 
-Reject on sight: dissolves or fades, morphs, hard cuts, writing that is not real
-words, a loop or moment whose camera pushes in and back (`camera-moves`), an object
-that vanishes and comes back, a real person's face changing, smeared bridge or tower struts, music nobody asked for, a
+Reject on sight (the full list is docs/directing-films.md › Judging a take):
+dissolves or fades, morphs, hard cuts, writing that is not real words, a loop or
+moment whose camera pushes in and back (`camera-moves`), an object that vanishes
+and comes back, a real person's face changing, smeared bridge or tower struts, music nobody asked for, a
 frozen tail, and a film that ignores what was clicked (the clicked thing must lead
 the film and do what its label says; a retake changes the route, never the cause).
 The last one is the fault people find most often by hand, so check it with a
@@ -260,7 +273,7 @@ moments can wait.
 ```bash
 node world narrate     # a take per place and per close look's line, in the planned voice; the person listens on review
 node world music       # MiniMax Music 3
-node world figures --cutouts   # collectibles only: look at each cut-out, then
+node world figures --cutouts   # each figure drawn alone on a white plate: look at every plate, then
 node world figures             # build the 3D figures the visitor turns over
 ```
 
@@ -308,15 +321,21 @@ reviewer: nothing you could have caught should reach them.
    (`figure: true` lets the visitor turn a real object over instead).
 2. **Render the canary and judge it yourself** at full size before the rest
    (`render --canary`, then `render --skip-canary`): a fault in how you write
-   directions repeats in every film written the same way.
-3. **Screen every take and reject on sight**, including a moment where nothing
-   happens (`little-happens`) and a room that rearranges itself. Rewrite the
-   direction and retake, at most twice per film. A film that still fails is cut,
-   and its object goes with it.
+   directions repeats in every film written the same way. Handing you the whole
+   build is the person's agreement to skip waiting on their canary verdict. In this
+   mode `next` stops at the review it cannot hold, so run, in order: select →
+   reveals (pick, seen) → render --canary → screen → render --skip-canary → screen →
+   narrate → music → figures --cutouts → figures → build --drafts.
+3. **Screen every take and reject on sight** (docs/directing-films.md › Judging a
+   take is the one list), including a moment where nothing happens
+   (`little-happens`), a camera that moves (`camera-moves`) and a room that
+   rearranges itself. Rewrite the direction and retake, at most twice per film. A
+   film that still fails is cut, and its object goes with it.
 4. **Check every outline, close look and figure.** Read every piece of writing in
    every still and close look; each selection preview holds the named object and
-   only it; each figure's cut-out is the object alone, and you turn
-   every built figure over (front, sides, back, top) in the player.
+   only it; each figure's plate is the object alone and whole, with no table and
+   no writing, and you turn every built figure over (front, sides, back, top,
+   underside) in the player.
 5. **Play the built world as a visitor** at desktop size and at phone size,
    upright and sideways: every label readable and beside its object, every film
    plays and lands, every close look holds and says its line over the place's

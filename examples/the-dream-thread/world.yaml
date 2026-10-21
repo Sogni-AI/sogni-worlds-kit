@@ -8,7 +8,7 @@
 
 # Every film direction below is the shot and soundscape that rendered the film now live in that
 # world (MiniMax H3 FastH3 first-and-last-frame, two-stage, 1344x768 delivered at 2688x1536), with
-# its seed. 11 of the 57 films were written for the kit's prompt format and
+# its seed. 10 of the 57 films were written for the kit's prompt format and
 # `node world render` rebuilds their prompts byte for byte; the rest were directed before the kit
 # existed, under an earlier form of the same recipe (the alignment line rounds differently, the
 # landing sentence is phrased in the direction itself, and 25 of them asked for music), so

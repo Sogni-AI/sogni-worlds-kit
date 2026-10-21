@@ -14,6 +14,7 @@ import { SPEECH_MODELS } from '../lib/audio.js';
 import { musicEstimate } from './music.js';
 import { wantsFigure } from './figures.js';
 import { figureEstimate, figureFiles } from '../lib/figures.js';
+import { EDIT_MODEL } from '../lib/paint.js';
 import { readJson } from '../lib/files.js';
 import { filmId } from '../lib/paths.js';
 
@@ -78,9 +79,21 @@ export async function run(argv) {
     if (figures.length) {
       try {
         const each = await figureEstimate(session);
-        audio.push({ item: `figures: ${figures.length} (Pixal3D + BiRefNet)`, usd: each.usd * figures.length, token: each.token * figures.length });
+        audio.push({ item: `figures: ${figures.length} (plate + Pixal3D + BiRefNet)`, usd: each.usd * figures.length, token: each.token * figures.length });
       } catch (error) {
         audio.push({ item: 'figures', error: error.message });
+      }
+    }
+    // Close looks still to paint: three Qwen Image Edit candidates each.
+    const looks = plan.places.flatMap(place => place.objects.filter(o => !o.goes && o.reveal?.paint && !o.reveal.still));
+    if (looks.length) {
+      try {
+        const canvas = canvasOf(plan);
+        const estimate = await session.client.projects.estimateCost({ network: 'fast', tokenType: session.billing.tokenType, model: EDIT_MODEL, imageCount: 3 * looks.length,
+          stepCount: 20, previewCount: 0, guidance: 4, width: canvas.width, height: canvas.height, billingMode: session.billing.mode });
+        audio.push({ item: `close looks: ${looks.length} (3 candidates each, Qwen Image Edit)`, usd: Number(estimate.usd), token: Number(estimate.token) });
+      } catch (error) {
+        audio.push({ item: 'close looks', error: error.message });
       }
     }
     const audioUsd = audio.reduce((sum, row) => sum + (row.usd || 0), 0);

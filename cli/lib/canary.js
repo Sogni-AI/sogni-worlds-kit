@@ -1,13 +1,14 @@
-// The canary: one crossing and one loop, rendered first and judged by a person
-// before anything else in the world is spent on. `render` refuses the rest
-// until both are approved, and `next` never suggests otherwise.
+// The canary: one crossing, one loop and, in a world with close looks, the
+// first film into one, rendered first and judged by a person before anything
+// else in the world is spent on. `render` refuses the rest until they are
+// approved, and `next` never suggests otherwise.
 import { filmsOf } from './plan.js';
 import { filmState, listTakes, readNotes, readVerdicts } from './takes.js';
 
-/** The first crossing and the first loop in story order (the first film when a world has neither). */
+/** The first crossing, loop and close look in story order (the first film when a world has none of them). */
 export function canaryFilms(plan) {
   const films = filmsOf(plan);
-  const picked = [films.find(film => film.kind === 'crossing'), films.find(film => film.kind === 'loop')].filter(Boolean);
+  const picked = ['crossing', 'loop', 'reveal'].map(kind => films.find(film => film.kind === kind)).filter(Boolean);
   return picked.length ? picked : films.slice(0, 1);
 }
 
@@ -47,7 +48,7 @@ export function canaryGate(status, selectedIds, id) {
   const others = selectedIds.filter(film => !status.ids.includes(film));
   if (!others.length) return null;
   const next = canaryNext(status, id);
-  return `The canary (${status.ids.join(' and ')}) is not approved yet, so the other ${others.length} film${others.length === 1 ? '' : 's'} wait${others.length === 1 ? 's' : ''}: a person judges one crossing and one loop before the rest of the world is spent on.\n`
+  return `The canary (${status.ids.join(' and ')}) is not approved yet, so the other ${others.length} film${others.length === 1 ? '' : 's'} wait${others.length === 1 ? 's' : ''}: a person judges one crossing, one loop and the first close look before the rest of the world is spent on.\n`
     + `  Now: ${next.command}\n  (${next.why})\n`
     + '  Only if the person has agreed to skip the canary: add --skip-canary';
 }

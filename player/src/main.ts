@@ -134,11 +134,19 @@ class Player {
       if (spot.film && spot.reveal) {
         // Picked up: the film lands on the close look and holds there while its line is said and its
         // figure is turned over; only when the visitor is done does the film back put it down.
+        if (figure) void fetch(figure.model).catch(() => undefined); // the 3D model, ready by the time it is held
         await this.stage.playToHold(spot.film, spot.reveal.still);
         this.played.add(`${from.id}/${spot.id}`);
         if (spot.collect) found = this.collect(from, spot);
+        // The hold is idle connection time: fetch the film back and the place's loop it lands on.
+        this.stopFetching = fetchAhead([spot.reveal.back, ...(from.loop ? [from.loop] : [])].map(film => pick(film, this.stage.quality)));
         await this.lookClosely(spot, figure);
-        this.ui.filmPlaying(true); // Skip is offered again for the film back
+        this.stopFetching();
+        this.stopFetching = undefined;
+        // The film back is a film like any other: panels closed, the music under it, Skip offered.
+        this.ui.closePanels();
+        this.ui.filmPlaying(true);
+        this.music.duck(true);
         await this.stage.play(spot.reveal.back, from);
       } else {
         if (spot.film) await this.stage.play(spot.film, landing);

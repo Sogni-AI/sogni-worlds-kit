@@ -1,20 +1,22 @@
 // Finishing: turn an approved take into what a visitor streams. The picture is
 // re-encoded once for the web (H.264, fast start) at its delivered size and at
-// exactly half size; the sound is levelled into one mix: films at the level of
-// the narrator's voice, and every loop well below it, because a loop plays
-// under the narration (rain levelled to the voice's loudness drowns it).
+// exactly half size; the sound is levelled into one mix: every film and loop
+// at one scene level, six below the narrator's voice (rain levelled to the
+// voice's loudness drowns it), so nothing jumps where a film hands over to a loop.
 // Crossings also get a rewind (picture and sound reversed) for the Back
 // button — rendered, because browsers cannot play video backwards.
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { ffmpeg, probe } from './media.js';
 import { FFMPEG } from './media.js';
 import { stderrOf } from './screen.js';
 
-/** Films sit at the narrator's level (narrate.js NARRATION_LUFS), so a voice in a film matches the voice-over. */
-export const FILM_LUFS = -16;
-/** A loop is the room under the voice: 8 LU below it, and the player lowers it further while the narrator speaks. */
-export const LOOP_LUFS = -24;
+/**
+ * Every film and loop: the world's scene sound, 6 LU under the narrator
+ * (narrate.js NARRATION_LUFS, -16), the same on both sides of every handover
+ * between a film and a loop. The player lowers a loop further while the narrator speaks.
+ */
+export const FILM_LUFS = -22;
 export const FILM_TRUE_PEAK = -1.5;
 const VIDEO = ['-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
 const AUDIO = ['-c:a', 'aac', '-b:a', '160k', '-ar', '48000'];
@@ -46,11 +48,13 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS } = {}) 
 }
 
 /**
- * The film backwards, picture and sound, for Back. The picture is reversed in
- * two-second pieces joined in reverse order, so memory stays bounded at 2K;
- * the sound is reversed whole (it is small).
+ * The film backwards, for Back (picture and sound reversed) and for putting a
+ * close look's object back (`sound: 'forward'`: a room's sound and a set-down
+ * read naturally forwards, a reversed creak does not). The picture is
+ * reversed in two-second pieces joined in reverse order, so memory stays
+ * bounded at 2K; the sound is reversed whole (it is small).
  */
-export async function rewindFilm(finished, out, out720, { segmentFrames = 48 } = {}) {
+export async function rewindFilm(finished, out, out720, { segmentFrames = 48, sound = 'reverse' } = {}) {
   const info = await probe(finished);
   const work = join(dirname(out), `.rewind-${basename(out, '.mp4')}`);
   rmSync(work, { recursive: true, force: true });
@@ -67,12 +71,31 @@ export async function rewindFilm(finished, out, out720, { segmentFrames = 48 } =
     writeFileSync(list, pieces.reverse().map(piece => `file '${piece.replace(/'/g, "'\\''")}'`).join('\n'));
     const picture = join(work, 'picture.mp4');
     await ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', picture]);
-    const audio = info.audioChannels ? ['-i', finished, '-map', '0:v', '-map', '1:a', '-af', 'areverse', ...AUDIO] : ['-map', '0:v', '-an'];
-    await ffmpeg(['-i', picture, ...audio, '-c:v', 'copy', '-movflags', '+faststart', '-shortest', out]);
-    await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+    // The sound: reversed, forwards, or another file's (a place's loop: its room carries on under the film).
+    // Another file's sound repeats if it is shorter and is cut at the picture's end: the picture sets the length.
+    const own = sound === 'reverse' || sound === 'forward';
+    const audio = own
+      ? (info.audioChannels ? ['-i', finished, '-map', '0:v', '-map', '1:a', ...(sound === 'reverse' ? ['-af', 'areverse'] : []), ...AUDIO] : ['-map', '0:v', '-an'])
+      : ['-stream_loop', '-1', '-i', sound, '-map', '0:v', '-map', '1:a?', ...AUDIO, '-t', String(info.seconds)];
+    await ffmpeg(['-i', picture, ...audio, '-c:v', 'copy', '-movflags', '+faststart', ...(own ? ['-shortest'] : []), out]);
+    if (out720) await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
+}
+
+/**
+ * Level a finished film's sound again in place, keeping its picture as it is
+ * (a new level is seconds of audio work, not a re-encode of the picture).
+ */
+export async function relevelFilm(file, lufs) {
+  const info = await probe(file);
+  if (!info.audioChannels) return;
+  const level = await loudnormFilter(file, { lufs });
+  if (!level) return;
+  const tmp = `${file}.level.mp4`;
+  await ffmpeg(['-i', file, '-map', '0:v', '-map', '0:a', '-c:v', 'copy', '-af', level, ...AUDIO, '-movflags', '+faststart', tmp]);
+  renameSync(tmp, file);
 }
 
 /** Level an audio file to a loudness and write an MP3. */

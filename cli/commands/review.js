@@ -29,7 +29,7 @@ export const usage = `node world review [world] [--port 4700]
   for the agent to open. Ctrl-C to stop.`;
 
 const TYPES = { '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.wav': 'audio/wav' };
-const SERVABLE = ['renders', 'stills', 'keyframes'];
+const SERVABLE = ['renders', 'stills', 'keyframes', 'reveals'];
 
 export async function run(argv) {
   const { values, world } = parse(argv, { port: { type: 'string', default: '4700' } });
@@ -157,8 +157,8 @@ export function awaitingFilms(plan, paths) {
   const still = id => { const picture = pictureById(plan, id); return picture?.still && existsSync(join(paths.dir, picture.still)) ? media(join(paths.dir, picture.still)) : null; };
   const out = [];
   for (const film of filmsOf(plan)) {
-    const takes = listTakes(paths, film.id, verdicts, notes);
-    const waiting = takes.filter(t => t.journal.status === 'completed' && t.sha && !t.verdict && existsSync(t.files.video));
+    const takes = listTakes(paths, film.id, verdicts, notes, film);
+    const waiting = takes.filter(t => !t.stale && t.journal.status === 'completed' && t.sha && !t.verdict && existsSync(t.files.video));
     if (!waiting.length) continue;
     const approved = takes.filter(t => t.verdict?.verdict === 'approved').at(-1);
     const from = placeById(plan, film.from), to = placeById(plan, film.to);
@@ -188,6 +188,7 @@ export function awaitingFilms(plan, paths) {
         sha: t.sha,
         url: media(t.files.video),
         sheet: existsSync(t.files.sheet) ? media(t.files.sheet) : null,
+        back: existsSync(t.files.back) ? media(t.files.back) : null,
         screened: Boolean(t.screen),
         flags: t.screen?.flags ?? [],
         notes: t.notes,

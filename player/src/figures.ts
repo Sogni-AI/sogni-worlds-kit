@@ -47,6 +47,10 @@ export function inspect(root: HTMLElement, figure: Figure, { done: putDown = 'Pu
     close.type = 'button';
     bar.append(el('span', 'inspector-name', figure.name), el('span', 'inspector-help', 'Drag to turn it over'), close);
     dialog.append(stage, bar);
+    // Modal for real: everything behind it is out of reach (no Tab, no click) until it is put down.
+    const opener = document.activeElement as HTMLElement | null;
+    const behind = [...root.children].filter(child => child !== dialog && !(child as HTMLElement).inert) as HTMLElement[];
+    for (const element of behind) element.inert = true;
     root.append(dialog);
     close.focus();
 
@@ -55,6 +59,8 @@ export function inspect(root: HTMLElement, figure: Figure, { done: putDown = 'Pu
       clearTimeout(timer);
       window.removeEventListener('keydown', escape);
       dialog.remove();
+      for (const element of behind) element.inert = false;
+      opener?.focus?.({ preventScroll: true });
       resolve();
     };
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.stopPropagation(); done(); } };

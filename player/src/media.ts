@@ -6,7 +6,9 @@ type FrameVideo = HTMLVideoElement & {
 
 /**
  * Resolve once the video has put a frame on screen at its current position,
- * or after `timeoutMs` so a slow network never freezes the world.
+ * or fails to load, or after `timeoutMs` (a loop's lap, so a slow network
+ * never freezes a place). With an infinite timeout it waits for the frame:
+ * a browser runs setTimeout(…, Infinity) at once, so no timer is set then.
  */
 export function whenPainted(video: HTMLVideoElement, timeoutMs = 6000): Promise<void> {
   return new Promise(resolve => {
@@ -14,11 +16,13 @@ export function whenPainted(video: HTMLVideoElement, timeoutMs = 6000): Promise<
     const finish = () => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
+      if (timer !== undefined) clearTimeout(timer);
       video.removeEventListener('playing', onPlaying);
+      video.removeEventListener('error', finish);
       resolve();
     };
-    const timer = setTimeout(finish, timeoutMs);
+    const timer = Number.isFinite(timeoutMs) ? setTimeout(finish, timeoutMs) : undefined;
+    video.addEventListener('error', finish);
     const onPlaying = () => ((video as FrameVideo).requestVideoFrameCallback ? undefined : finish());
     video.addEventListener('playing', onPlaying);
     (video as FrameVideo).requestVideoFrameCallback?.(finish);

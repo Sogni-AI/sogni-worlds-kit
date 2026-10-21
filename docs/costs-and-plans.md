@@ -18,7 +18,9 @@ Spark is half a US cent:
 | Longest crossing | 15.1 s (362 frames) | 241 | $1.21 |
 
 Object selection (SAM 3), narration and music cost cents each. A 3D figure for a
-collectible is about 61 Spark ($0.30): Pixal3D 60, the BiRefNet cut-out 1 (as of 2026-10).
+collectible is about 61 Spark ($0.30) plus its plate: Pixal3D 60, the BiRefNet cut-out 1, and one
+Qwen Image Edit picture; a close look is three Qwen Image Edit candidates (`node world quote` prices
+both at today's rates; as of 2026-10).
 
 **A world**: plan on one loop plus one or two crossings or moments per place, so
 about 2.5 films per place and around $2 of first takes per place. Retakes roughly

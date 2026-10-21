@@ -118,20 +118,30 @@ test('a loop whose camera pushes in and back is flagged; a locked one and a brie
   await syntheticVideo(yoyo, { source: `${STILL.replace('SIZE', '384x256')},zoompan=z='1+0.15*sin(PI*on/144)':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=192x128:fps=24`, seconds: 6 });
   const moved = cameraMoves(cameraPath(await greyFrames(yoyo), await greyFrames(yoyo, W * 2, H * 2)));
   assert.deepEqual(moved.flags.map(f => f.code), ['camera-moves']);
-  assert.match(moved.flags[0].message, /pushes in 1[4-6]%/);
+  assert.match(moved.flags[0].message, /pushes in about 1[4-6]%/);
   assert.ok(moved.metrics.cameraZoom >= 0.13);
 
   const locked = join(dir, 'locked.mp4');
   await syntheticVideo(locked, { source: STILL, seconds: 6 });
   assert.deepEqual(cameraMoves(cameraPath(await greyFrames(locked), await greyFrames(locked, W * 2, H * 2))).flags, []);
 
+  // Darkness and a figure crossing close to the lens match nothing well: never read as a push-in or a slide.
+  const dark = join(dir, 'lights-out.mp4');
+  await syntheticVideo(dark, { source: `${STILL.replace('SIZE', '192x128')},geq=lum='if(between(T,2,3.5),12,lum(X,Y))':cb=128:cr=128`, seconds: 6 });
+  const darkPath = cameraPath(await greyFrames(dark), await greyFrames(dark, W * 2, H * 2));
+  assert.ok(darkPath.every(p => p.unsure || (p.zoom === 0 && p.shift === 0)), 'no move measured in the dark');
+  const passer = join(dir, 'passer.mp4');
+  await syntheticVideo(passer, { source: `${STILL.replace('SIZE', '192x128')}[bg];nullsrc=size=150x128:rate=24,geq=lum='60+60*sin(X/3)':cb=128:cr=128[fg];[bg][fg]overlay=x='-150+t*60':y=0`, seconds: 6 });
+  const passed = cameraMoves(cameraPath(await greyFrames(passer), await greyFrames(passer, W * 2, H * 2)));
+  assert.ok(!passed.flags.some(f => /pushes in|pulls back|slides/.test(f.message)), passed.flags.map(f => f.message).join(' | '));
+
   // One sample off (a wobble) is not a move: a move lasts a second.
-  const path = Array.from({ length: 20 }, (_, i) => ({ frame: (i + 1) * 6, zoom: i === 9 ? 0.07 : 0, shift: 0 }));
+  const path = Array.from({ length: 20 }, (_, i) => ({ frame: (i + 1) * 6, zoom: i === 9 ? 0.07 : 0, shift: 0, r: 0.9 }));
   assert.deepEqual(cameraMoves(path).flags, []);
-  // A handheld camera may slide more than a locked one; neither may push in.
-  const slide = path.map(p => ({ ...p, zoom: 0, shift: 0.045 }));
+  // A sweep may pan where a locked camera may not; neither may push in.
+  const slide = path.map(p => ({ ...p, zoom: 0, shift: 0.08 }));
   assert.equal(cameraMoves(slide, 'locked').flags.length, 1);
-  assert.equal(cameraMoves(slide, 'handheld').flags.length, 0);
+  assert.equal(cameraMoves(slide, 'sweep').flags.length, 0);
 });
 
 test('the change strips centre on where a picture turns into another', async () => {

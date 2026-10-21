@@ -35,6 +35,8 @@ export class Ui {
   private readonly skipButton = el('button', 'pill', 'Skip ›');
   /** Held on a close look: the one way back to the place. */
   private readonly doneButton = el('button', 'pill primary');
+  /** When Skip last appeared: a second tap on the button that was just there must not skip the next film. */
+  private skipShownAt = 0;
   private readonly soundButton = el('button', 'icon-button');
   private readonly qualityButton = el('button', 'icon-button text');
   private readonly mapPanel = el('section', 'panel');
@@ -75,7 +77,7 @@ export class Ui {
 
     const bottom = el('footer', 'bar bottom');
     this.backButton.addEventListener('click', actions.back);
-    this.skipButton.addEventListener('click', actions.skip);
+    this.skipButton.addEventListener('click', () => this.skipIfMeant());
     this.nextButton.addEventListener('click', actions.next);
     // Nothing to go back to, skip or go on to until the first place has arrived.
     for (const button of [this.backButton, this.skipButton, this.doneButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
@@ -218,20 +220,32 @@ export class Ui {
         window.removeEventListener('keydown', escape, true);
         resolve();
       };
-      const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.stopPropagation(); finish(); } };
+      // Escape closes an open panel first, as it does everywhere else.
+      const escape = (event: KeyboardEvent) => {
+        if (event.key !== 'Escape' || this.root.querySelector('.panel:not([hidden])')) return;
+        event.stopPropagation();
+        finish();
+      };
       this.doneButton.addEventListener('click', finish);
       window.addEventListener('keydown', escape, true);
     });
   }
 
-  /** Held on a close look: there is no film to skip. */
+  /** Held on a close look: there is no film to skip, and its line is read above anything else on screen. */
   holding() {
     this.skipButton.hidden = true;
+    this.root.classList.add('holding');
+  }
+
+  private skipIfMeant() {
+    if (performance.now() - this.skipShownAt > 600) this.actions.skip();
   }
 
   /** While a film plays only Skip is offered. */
   filmPlaying(on: boolean) {
     this.root.classList.toggle('in-film', on);
+    this.root.classList.remove('holding');
+    if (on && this.skipButton.hidden) this.skipShownAt = performance.now();
     this.skipButton.hidden = !on;
     if (on) {
       this.nextButton.hidden = true;
@@ -360,11 +374,13 @@ export class Ui {
   private keyboard() {
     window.addEventListener('keydown', event => {
       if (event.metaKey || event.ctrlKey || event.altKey || (event.target as HTMLElement)?.tagName === 'INPUT') return;
+      // A figure being turned over is a dialog: the world's keys wait until it is put down.
+      if (this.root.querySelector('.inspector')) return;
       const key = event.key.toLowerCase();
       if (key === 'escape') this.closePanels();
       else if (key === 'n') this.actions.next();
       else if (key === 'b') this.actions.back();
-      else if (key === 's') this.actions.skip();
+      else if (key === 's') this.skipIfMeant();
       else if (key === 'm') this.actions.toggleSound();
       else if (key === 'f' && document.fullscreenEnabled) toggleFullscreen();
     });

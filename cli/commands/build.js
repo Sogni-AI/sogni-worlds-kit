@@ -10,7 +10,7 @@ import { resolveWorldId, shown, filmId, loopId, backId, worldFile } from '../lib
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../lib/takes.js';
 import { canvasByName, delivered } from '../lib/h3.js';
-import { finishFilm, rewindFilm, cleanPartials, FILM_LUFS, LOOP_LUFS } from '../lib/finish.js';
+import { finishFilm, rewindFilm, relevelFilm, cleanPartials, FILM_LUFS } from '../lib/finish.js';
 import { validateWorld, FORMAT } from '../lib/worldjson.js';
 import { figureFiles } from '../lib/figures.js';
 import { wantsFigure } from './figures.js';
@@ -29,8 +29,11 @@ export const usage = `node world build [world] [--force] [--drafts]
             is still done on the review page; build again without --drafts
             for the finished world.`;
 
-// film-v2: loops levelled under the narration, films at the narrator's level.
-const RECIPE = 'film-v2';
+// The picture's recipe. The sound's level is kept beside it (`lufs`): a new level re-levels the
+// sound of the films already finished, in seconds, and never re-encodes a picture.
+const RECIPE = 'film-v1';
+/** What a film finished before levels were recorded was levelled to. */
+const FIRST_LUFS = -14;
 
 export async function run(argv) {
   const { values, world } = parse(argv, { force: { type: 'boolean', default: false }, drafts: { type: 'boolean', default: false } });
@@ -39,7 +42,7 @@ export async function run(argv) {
   const verdicts = readVerdicts(paths);
   const notes = readNotes(paths);
   const usable = takes => approvedTake(takes) ?? (values.drafts ? draftTake(takes) : null);
-  if (!filmsOf(plan).some(film => usable(listTakes(paths, film.id, verdicts, notes)))) {
+  if (!filmsOf(plan).some(film => usable(listTakes(paths, film.id, verdicts, notes, film)))) {
     log.warn('Nothing is playable yet: no film has an approved take, so there is nothing to build.');
     log.next(nextStep(id));
     return 0;
@@ -69,7 +72,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
   const missing = [];
   const unapproved = [];
   for (const film of filmsOf(plan)) {
-    const takes = listTakes(paths, film.id, verdicts, notes);
+    const takes = listTakes(paths, film.id, verdicts, notes, film);
     let take = approvedTake(takes);
     if (!take && drafts) {
       take = draftTake(takes);
@@ -83,8 +86,13 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     let info = manifest[`films/${film.id}.mp4`]?.info;
     if (!fresh(`films/${film.id}.mp4`, take.sha, [main, half]) || !info) {
       say.step(`Finishing ${film.id} (take ${take.take})`);
-      info = await finishFilm(take.files.video, main, half, { lufs: film.kind === 'loop' ? LOOP_LUFS : FILM_LUFS });
-      manifest[`films/${film.id}.mp4`] = { source: take.sha, recipe: RECIPE, info };
+      info = await finishFilm(take.files.video, main, half, { lufs: FILM_LUFS });
+      manifest[`films/${film.id}.mp4`] = { source: take.sha, recipe: RECIPE, info, lufs: FILM_LUFS };
+      writeJson(manifestPath, manifest);
+    } else if ((manifest[`films/${film.id}.mp4`].lufs ?? FIRST_LUFS) !== FILM_LUFS) {
+      say.step(`Levelling ${film.id}'s sound`);
+      for (const file of [main, half]) await relevelFilm(file, FILM_LUFS);
+      manifest[`films/${film.id}.mp4`].lufs = FILM_LUFS;
       writeJson(manifestPath, manifest);
     }
     const entry = { film, take, info, src: rel(out, main), src720: rel(out, half), rewind: null };
@@ -93,7 +101,11 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       if (!fresh(`films/${film.id}-rewind.mp4`, take.sha, [back, back720])) {
         say.step(`Rewinding ${film.id}`);
         await rewindFilm(main, back, back720);
-        manifest[`films/${film.id}-rewind.mp4`] = { source: take.sha, recipe: RECIPE };
+        manifest[`films/${film.id}-rewind.mp4`] = { source: take.sha, recipe: RECIPE, lufs: FILM_LUFS };
+        writeJson(manifestPath, manifest);
+      } else if ((manifest[`films/${film.id}-rewind.mp4`].lufs ?? FIRST_LUFS) !== FILM_LUFS) {
+        for (const file of [back, back720]) await relevelFilm(file, FILM_LUFS);
+        manifest[`films/${film.id}-rewind.mp4`].lufs = FILM_LUFS;
         writeJson(manifestPath, manifest);
       }
       entry.rewind = { src: rel(out, back), src720: rel(out, back720), seconds: info.seconds };
@@ -146,22 +158,41 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     const reveal = !object.goes ? object.reveal : null;
     const key = filmId(place.id, object.id);
     if (!reveal?.still || !films.has(key)) continue;
-    const back = films.get(backId(place.id, object.id));
-    if (!back) { reveals[key] = null; continue; }
+    // The film back: the one the plan wrote, or the film in played backwards (the object lands exactly where it was).
+    let back = films.get(backId(place.id, object.id));
+    if (reveal.back && !back) { reveals[key] = null; continue; }
+    if (!back) {
+      // Its sound is the place's loop (the room carries on, and the loop it hands over to sounds the
+      // same); without a loop, the film in's own sound, forwards (a reversed creak is not a set-down).
+      const entry = films.get(key);
+      const loop = films.get(loopId(place.id));
+      const base = join(out, 'films', backId(place.id, object.id));
+      const [main, half] = [`${base}.mp4`, `${base}-720.mp4`];
+      const source = `${entry.take.sha}+${loop?.take.sha ?? 'own'}`;
+      if (!fresh(`films/${backId(place.id, object.id)}.mp4`, source, [main, half]) || manifest[`films/${backId(place.id, object.id)}.mp4`]?.lufs !== FILM_LUFS) {
+        say.step(`Reversing ${key} to put it back`);
+        await rewindFilm(join(out, entry.src), main, half, { sound: loop ? join(out, loop.src) : 'forward' });
+        manifest[`films/${backId(place.id, object.id)}.mp4`] = { source, recipe: RECIPE, lufs: FILM_LUFS };
+        writeJson(manifestPath, manifest);
+      }
+      back = { src: rel(out, main), src720: rel(out, half), info: entry.info };
+    }
     const source = worldFile(paths, reveal.still, `places.${place.id}.objects.${object.id}.reveal.still`);
     if (!existsSync(source)) throw new Error(`${key}: the reveal still ${reveal.still} is missing. Run: node world reveals`);
-    const target = join(out, 'stills', `${key}.jpg`);
+    // In their own folder: a place may be called what an object's close look is (<place>-<object>).
+    mkdirSync(join(out, 'stills', 'reveals'), { recursive: true });
+    const target = join(out, 'stills', 'reveals', `${key}.jpg`);
     const sha = sha256File(source);
-    if (!fresh(`stills/${key}.jpg`, sha, [target])) {
+    if (!fresh(`stills/reveals/${key}.jpg`, sha, [target])) {
       if (/\.jpe?g$/i.test(extname(source))) copyFileSync(source, target);
       else await sharp(source).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(target);
-      manifest[`stills/${key}.jpg`] = { source: sha, recipe: RECIPE };
+      manifest[`stills/reveals/${key}.jpg`] = { source: sha, recipe: RECIPE };
     }
     let spoken;
     const receiptPath = join(paths.audio, 'narration', 'reveals', `${key}.json`);
     const receipt = reveal.line && existsSync(receiptPath) ? readJson(receiptPath) : null;
     if (receipt?.status === 'completed' && receipt.mp3 && existsSync(join(paths.audio, 'narration', 'reveals', receipt.mp3))) {
-      const audio = join(out, 'audio', `narration-${key}.mp3`);
+      const audio = join(out, 'audio', `narration-reveal-${key}.mp3`);
       mkdirSync(join(out, 'audio'), { recursive: true });
       copyFileSync(join(paths.audio, 'narration', 'reveals', receipt.mp3), audio);
       spoken = { src: rel(out, audio), lines: receipt.lines.map(line => clean({ text: line.text, speaker: line.speaker, start: line.start, end: line.end })) };
@@ -310,7 +341,7 @@ function report({ world, issues, missing, deadEnds, unreachable, films, out, una
 
 const rel = (from, path) => relative(from, path).split('\\').join('/');
 /** For a draft build: the newest finished take that nobody rejected. */
-const draftTake = takes => takes.filter(t => t.journal.status === 'completed' && t.sha && t.verdict?.verdict !== 'rejected').at(-1) ?? null;
+const draftTake = takes => takes.filter(t => !t.stale && t.journal.status === 'completed' && t.sha && t.verdict?.verdict !== 'rejected').at(-1) ?? null;
 const clamp01 = value => Math.min(1, Math.max(0, Number(value)));
 /** Drop undefined fields so the JSON stays tidy (and valid: no stray keys). */
 function clean(object) {

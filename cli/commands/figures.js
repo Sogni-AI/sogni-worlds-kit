@@ -7,25 +7,34 @@ import { readPlan } from '../lib/plan.js';
 import { resolveWorldId, shown, filmId } from '../lib/paths.js';
 import { readJson, writeJson, sha256 } from '../lib/files.js';
 import { connect } from '../lib/sogni.js';
-import { cutoutOf, figureFiles, FIGURE_MODELS, FIGURE_QUALITY, headNoun, matteJob, meshJob, regionOf } from '../lib/figures.js';
+import { cutoutOf, figureFiles, FIGURE_MODELS, FIGURE_QUALITY, headNoun, matteJob, meshJob, plateContext, plateJob, platePrompt } from '../lib/figures.js';
+import { contentFilterOff } from './render.js';
 import { nextStep } from './status.js';
 
 export const summary = 'Stand every collectible up in 3D (Pixal3D), so a visitor can pick it up and turn it over';
 export const usage = `node world figures [world] [--only <place-object> ...] [--cutouts] [--force]
 
   Every object marked collect: true (and any with figure: true) becomes a
-  figure the visitor turns over in 3D when they find it. The object is cut out
-  of its own picture: its SAM 3 outline says where it is, BiRefNet draws its
-  real edge, and Pixal3D reconstructs it as a GLB of about 60,000 triangles
-  with a 2K texture (8–12 MB). Run select first. figure: false on an object
-  keeps it a plain collectible.
+  figure the visitor turns over in 3D when they find it. A thing in a picture
+  is small, lies on something and shows one side, so it is made again first:
+  Qwen Image Edit draws it alone, whole and detailed on a white plate from a
+  crop of its picture (its SAM 3 outline only says where it is) and from its
+  close look when it has one, in the words of figureLook (what it is, with any
+  writing on it named as what it reads). Pixal3D builds the GLB from that
+  plate (about 60,000 triangles, a 2K texture, 8–12 MB); BiRefNet cuts the
+  plate out for the collection's icon. Run select first. figure: false on an
+  object keeps it a plain collectible.
 
-  --cutouts stops after the cut-outs (figures/<place>-<object>.png) so you can
-  look at them first; the next run builds the meshes from those same cut-outs.
+  --cutouts stops after the plates (figures/<place>-<object>.plate.png, beside
+  the crop it was drawn from, .context.png) so you can look at them first: the
+  whole object, every side it shows detailed, nothing else on the plate (no
+  table, hand or stand), its colours and markings as in the picture. The next
+  run builds the meshes from those same plates.
 
-  Writes figures/<place>-<object>.{png,glb,json}. A finished figure is never
-  made again unless you pass --force. Look at every one in the player before
-  you share the world: turn it over, check the back and the face.`;
+  Writes figures/<place>-<object>.{context.png,plate.png,png,glb,json}. A
+  finished figure is never made again unless you pass --force. Turn every one
+  over in the player before you share the world: the back, the underside and
+  any face are where a figure goes wrong.`;
 
 export const wantsFigure = object => object.figure === true || (object.collect === true && object.figure !== false);
 
@@ -60,42 +69,47 @@ export async function run(argv) {
         failed.push(`${key}: a job was being submitted when the last run stopped; check your Sogni history, then run with --force`);
         continue;
       }
-      // The lossless original when there is one: the cut-out is the figure's texture.
+      // The lossless original when there is one: the crop is what the plate is drawn from.
       const photo = place.photo && existsSync(join(paths.dir, place.photo)) ? join(paths.dir, place.photo) : null;
       const source = photo ?? join(paths.dir, place.still);
+      const closeLook = !object.goes && object.reveal?.still && existsSync(join(paths.dir, object.reveal.still)) ? join(paths.dir, object.reveal.still) : null;
       const noun = object.figureNoun ?? headNoun(object.target || object.label);
-      const receipt = { key, place: place.id, object: object.id, label: object.label, noun, source: shown(source), sourceSha256: sha256(readFileSync(source)), maskSha256: sha256(readFileSync(mask)), quality: FIGURE_QUALITY, models: FIGURE_MODELS };
+      const prompt = platePrompt(object.figureLook ?? object.target ?? object.figureName ?? noun, { closeLook: Boolean(closeLook) });
+      const receipt = { key, place: place.id, object: object.id, label: object.label, noun, source: shown(source), sourceSha256: sha256(readFileSync(source)), maskSha256: sha256(readFileSync(mask)),
+        ...(closeLook ? { closeLook: shown(closeLook), closeLookSha256: sha256(readFileSync(closeLook)) } : {}), prompt, quality: FIGURE_QUALITY, models: FIGURE_MODELS };
       let cut = null;
       try {
-        // A cut-out already made from these same inputs (--cutouts, or a mesh that failed) is reused.
-        const reuse = !values.force && ['cut', 'failed'].includes(previous?.status) && previous.cutoutSha256 && existsSync(files.cutout)
-          && previous.sourceSha256 === receipt.sourceSha256 && previous.maskSha256 === receipt.maskSha256 && sha256(readFileSync(files.cutout)) === previous.cutoutSha256;
-        if (reuse) cut = { crop: previous.crop, matteProject: previous.matteProject, cutoutSha256: previous.cutoutSha256, png: readFileSync(files.cutout) };
+        // A plate already made from these same inputs (--cutouts, or a mesh that failed) is reused.
+        const reuse = !values.force && ['cut', 'failed'].includes(previous?.status) && previous.plateSha256 && existsSync(files.plate)
+          && ['sourceSha256', 'maskSha256', 'closeLookSha256', 'prompt'].every(field => previous[field] === receipt[field]) && sha256(readFileSync(files.plate)) === previous.plateSha256;
+        if (reuse) cut = { crop: previous.crop, plateProject: previous.plateProject, matteProject: previous.matteProject, plateSha256: previous.plateSha256, cutoutSha256: previous.cutoutSha256, plate: readFileSync(files.plate) };
         else {
-          log.step(`${key}: cutting out "${noun}"`);
-          const region = await regionOf({ source, mask });
-          writeFileSync(files.region, region.png);
-          writeJson(files.receipt, { ...receipt, crop: region.crop, status: 'submitting', stage: 'matte', at: new Date().toISOString() });
-          const matte = await matteJob(session, region.png);
+          log.step(`${key}: drawing "${noun}" alone on a plate`);
+          const context = await plateContext({ source, mask });
+          writeFileSync(files.context, context.png);
+          writeJson(files.receipt, { ...receipt, crop: context.crop, status: 'submitting', stage: 'plate', at: new Date().toISOString() });
+          const plate = await plateJob(session, { contexts: [...(closeLook ? [readFileSync(closeLook)] : []), context.png], prompt, contentFilter: !contentFilterOff(plan) });
+          writeFileSync(files.plate, plate.png);
+          writeJson(files.receipt, { ...receipt, crop: context.crop, plateProject: plate.projectId, status: 'submitting', stage: 'matte', at: new Date().toISOString() });
+          const matte = await matteJob(session, plate.png);
           writeFileSync(files.matte, matte.png);
-          const cutout = await cutoutOf(region.png, matte.png, region.outline);
+          const cutout = await cutoutOf(plate.png, matte.png);
           writeFileSync(files.cutout, cutout.png);
-          cut = { crop: region.crop, scale: region.scale, matteProject: matte.projectId, cutoutSha256: sha256(cutout.png), png: cutout.png };
-          writeJson(files.receipt, { ...receipt, ...cut, png: undefined, status: 'cut', at: new Date().toISOString() });
+          cut = { crop: context.crop, plateProject: plate.projectId, matteProject: matte.projectId, plateSha256: sha256(plate.png), cutoutSha256: sha256(cutout.png), plate: plate.png };
+          writeJson(files.receipt, { ...receipt, ...cut, plate: undefined, status: 'cut', at: new Date().toISOString() });
         }
-        if (values.cutouts) { log.ok(`${key}: cut out — look at ${shown(files.cutout)}`); made++; continue; }
-        writeJson(files.receipt, { ...receipt, ...cut, png: undefined, status: 'submitting', stage: 'mesh', at: new Date().toISOString() });
-        const cutout = cut;
+        if (values.cutouts) { log.ok(`${key}: plate made — look at ${shown(files.plate)} beside ${shown(files.context)}`); made++; continue; }
+        writeJson(files.receipt, { ...receipt, ...cut, plate: undefined, status: 'submitting', stage: 'mesh', at: new Date().toISOString() });
         log.step(`${key}: building the 3D model`);
         const started = Date.now();
-        const mesh = await meshJob(session, cutout.png, noun);
+        const mesh = await meshJob(session, cut.plate, noun);
         writeFileSync(files.glb, mesh.bytes);
-        writeJson(files.receipt, { ...receipt, ...cut, png: undefined, meshProject: mesh.projectId, glb: mesh.glb,
+        writeJson(files.receipt, { ...receipt, ...cut, plate: undefined, meshProject: mesh.projectId, glb: mesh.glb,
           glbSha256: sha256(mesh.bytes), seconds: Math.round((Date.now() - started) / 1000), status: 'completed', at: new Date().toISOString() });
         log.ok(`${key}: ${(mesh.bytes.length / 1e6).toFixed(1)} MB, ${mesh.glb.triangles.toLocaleString()} triangles, ${mesh.glb.textures} texture(s) — ${shown(files.glb)}`);
         made++;
       } catch (error) {
-        writeJson(files.receipt, { ...receipt, ...(cut ?? {}), png: undefined, status: 'failed', error: String(error.message).slice(0, 300), at: new Date().toISOString() });
+        writeJson(files.receipt, { ...receipt, ...(cut ?? {}), plate: undefined, status: 'failed', error: String(error.message).slice(0, 300), at: new Date().toISOString() });
         failed.push(`${key}: ${error.message}`);
         log.fail(`${key}: ${error.message}`);
       }
@@ -105,7 +119,7 @@ export async function run(argv) {
   }
   log.title(`${made} figure${made === 1 ? '' : 's'} made${failed.length ? `, ${failed.length} not` : ''}`);
   for (const line of failed) log.warn(line);
-  log.info('Turn each one over in the player (node world play) before you share the world: the back and any face are where a figure goes wrong.');
+  log.info('Turn each one over in the player (node world play) before you share the world: the back, the underside and any face are where a figure goes wrong.');
   log.next(nextStep(id));
   return failed.length ? 1 : 0;
 }

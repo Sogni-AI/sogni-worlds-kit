@@ -50,12 +50,13 @@ async function takeFrames(take, cacheDir) {
   // The opening at fixed times (whether the clicked thing leads shows in the first seconds), then the rest spread out.
   const early = [12, 36].map(f => Math.min(total - 1, f));
   const spread = [0, 0.35, 0.7, 1].map(t => Math.min(total - 1, Math.round(t * (total - 1))));
-  const wanted = [...new Set([...flagged.slice(0, 2), ...early, ...spread])].sort((a, b) => a - b).slice(0, 8 - strips.length);
+  // The start and the landing always; then the opening, the flagged frames and the middle, in that order, as room allows.
+  const ends = [0, total - 1];
+  const wanted = [...new Set([...ends, ...early, ...flagged.slice(0, 2), ...spread])].slice(0, 8 - strips.length).sort((a, b) => a - b);
   mkdirSync(cacheDir, { recursive: true });
   const parts = [];
-  for (const [index, strip] of strips.entries()) {
-    const stretch = take.screen.metrics?.changes?.[index];
-    parts.push({ type: 'text', text: `Sixteen consecutive frames where the picture changes fastest${stretch ? ` (around ${stretch.at} s)` : ''}, left to right, top to bottom:` }, await imagePart(strip));
+  for (const strip of strips) {
+    parts.push({ type: 'text', text: 'Sixteen consecutive frames where the picture changes fastest or the screen flagged something, left to right, top to bottom (each is labelled with its time):' }, await imagePart(strip));
   }
   for (const frame of wanted) {
     const path = join(cacheDir, `${take.film}-t${take.take}-f${frame}.jpg`);
@@ -71,7 +72,8 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
   const text = [
     `A ${film.kind} film, take ${take.take} of "${film.id}". It should start on the picture described as: ${fromSeen}`,
     object ? `The visitor clicked: ${object.target || object.label}, labelled "${object.label}"${object.hint ? ` (${object.hint})` : ''}. That thing must lead the film and the film must do what the label promises; "clickedThingLeads" says whether it does, judged from the frames.` : 'It is the place\'s living picture (nothing was clicked).',
-    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera ${film.camera ?? 'locked'} (${film.camera && film.camera !== 'locked' ? 'a small natural motion around one framing, never a push or a pan' : 'the frame does not move at all'}).`,
+    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera ${film.kind === 'loop' && film.camera === 'sweep' ? 'sweeping (a slow pan a little to one side and back, never a push in)' : 'locked (the frame does not move at all)'}.`,
+    film.kind === 'reveal' ? 'It lands on a close look the world holds on; then, unless it has its own film back, it is played backwards to put the object down. Reject it if anything in it would look plainly wrong running backwards (rain or smoke rising, someone walking or speaking backwards, a pour going up).' : null,
     `Its direction: ${film.action}`,
     `Its sound: ${film.sound}`,
     flags.length ? `The automatic screen flagged: ${flags.join(' | ')}` : 'The automatic screen flagged nothing.',
@@ -80,7 +82,7 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
     ...REJECT_ON_SIGHT.map(d => `- ${d}`),
     'Anything else (a slightly different motion, a small detail) is for the person to judge: keep it. Two frames that differ a lot are normal in a crossing that travels.',
     'Reply with JSON {"verdict": "keep" | "reject", "clickedThingLeads": true | false (true for a living picture), "defects": [{"what", "when" (frame numbers or seconds), "cause" (which words of the direction most likely caused it)}], "summary": "one or two sentences for the person: what happens in this take and anything worth checking"}. A film whose clicked thing plays no part is rejected.',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
   return llm.json({
     system: `You screen short generated films for a person who will make the final call. You are careful and literal: you report what the frames show.${mature ? ' The world is an 18+ horror world; gore and frightening imagery are intended, not defects.' : ''}`,
     user: [{ type: 'text', text }, ...await takeFrames(take, cacheDir)],

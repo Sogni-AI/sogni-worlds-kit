@@ -176,20 +176,20 @@ Its film id is `<place>-loop`.
 ```yaml
 loop:
   frames: 192                 # 8 s; defaults to 192
-  camera: locked              # optional: locked (the default), handheld or sway
+  camera: locked              # optional: locked (the default) or sweep (a wide scene only)
   idea: One line for people.
   action: >
-    Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: …
+    Live-action, cinematic, a wide shot holds the position and framing established by Picture 1: …
   sound: >
     …
 ```
 
 `camera` is said by the kit, in fixed words, in front of the action (a loop or a
 moment has to land where it began, so a camera that moves pushes in and back).
-`locked` is a tripod: right for almost every place. `handheld` is the slow breathing
-of someone standing and watching (a found-footage or first-person world); `sway` is
-the frame rocking with the floor (a boat, a train, a gondola). A moment's `film`
-takes the same field. directing-films.md › Loops says how to choose.
+`locked` is a tripod: right for almost every place. `sweep` is a slow pan a little
+to one side and back, as someone takes in a wide scene (a vista, a long room seen
+whole, a square from above): never over a close or medium shot. A moment is always
+locked. directing-films.md › Loops says how to choose.
 
 ## objects
 
@@ -207,6 +207,7 @@ takes the same field. directing-films.md › Loops says how to choose.
 | `details` | A card about the object, shown beside its film until the visitor closes it or moves on: `{ title, text, facts: [[label, value], …] }`. For a world that shows something real (a hotel room, a home, a product): what it is, in a sentence or two, and the facts a visitor would ask for. |
 | `figureName` | What the figure is called in the collection. Default: the label without its verb ("Touch the neon lotus" → "The neon lotus"). |
 | `figureNoun` | The plain noun Pixal3D is told the object is ("telescope"). Default: the head noun of `target` or `label`. |
+| `figureLook` | What the 3D figure's plate is drawn as: the object in its full shape, how it looks, with no writing on it ("a lady's light grey kid glove, its palm stained with dried blood"). `node world figures` draws it alone on white from its picture (and its close look) before Pixal3D makes it 3D. Default: `target`. |
 | `film` | The direction (below). |
 | `reveal` | A close look the film lands on and holds while its line is said or its figure turned over, then a film back (below). Only on an object that stays (no `goes`). |
 
@@ -221,43 +222,44 @@ film's opening with its click.
 
 A close look: the object's `film` carries the visitor from the place into it; the
 world holds there while the narrator says `line` (and a figure, if the object has
-one, is turned over); the visitor presses `done`; then `back` returns to the place.
-Its two films are `<place>-<object>` and `<place>-<object>-back`.
+one, is turned over); the visitor presses `done`; then the film back returns to the
+place. The film back is the film in played backwards (build makes it, with the
+place's loop sound under it) unless you write `back`. Its films are
+`<place>-<object>` and, when written, `<place>-<object>-back`.
 
 ```yaml
 objects:
   - id: glove
     label: Turn the glove over
-    hint: Grey kid leather, one of a pair
+    hint: A down payment, or a signature
+    figureLook: a lady's light grey kid glove, its palm stained with dried blood   # the 3D figure's plate (no writing)
     film:                       # the place → the close look (the camera may move in)
       frames: 158
-      idea: A hand lifts the glove into the lamplight and turns it palm up.
+      idea: A hand turns the top glove over on the desk as the camera moves in on the blood and the tag.
       action: >
         Live-action, cinematic film noir, a wide shot begins in the position and framing established by Picture 1: …
+        … a small white laundry tag inside its cuff reads "T. HALE".
       sound: >
         …
     reveal:
-      paint: >                  # what `node world reveals` paints from the place's still
-        A close view under the green banker's lamp: a man's hand holds the grey kid glove palm up; the palm is
-        stiff with dried brown blood, and a laundry tag inside the cuff reads "T. HALE".
+      paint: >                  # only what changes in the zoomed crop of the place's still
+        The top grey glove now lies turned over in the same place, palm up: dried brown-red blood stains its palm,
+        and a small white laundry tag inside its cuff reads "T. HALE". Everything else stays as it is.
+      zoom: 2                   # optional: how far the close look moves in, 1 to 3 (default: the object fills ~2/5, at most 2x)
       still: reveals/office-glove.jpg   # written by `node world reveals --pick`; never edit the image
       seen: >                   # what is really in the close look, after looking at it at full size
         …
-      line: "Blood, dried along the seam. Tuesday Hale never left the Blue Hour by the front door."
+      line: "Grey kid, a lady's size six. The laundry tag says T. Hale. Tuesday's glove, on her sister's hand."
       done: Set the glove down  # the button that ends the close look (default "Continue", or "Put it down" with a figure)
       voice: narrator           # optional: defaults to the place's narration voice
-      back:                     # the close look → the place
-        frames: 141
-        idea: The hand lays the glove back on the desk and withdraws.
-        action: >
-          Live-action, cinematic film noir, a close shot begins in the position and framing established by Picture 1: …
-        sound: >
-          …
+      # back: { frames, idea, action, sound }   # only when the film in cannot run backwards (a pour, a flame, someone walking or speaking)
 ```
 
 `node world reveals` paints candidates for every reveal with `paint` and no
-`still`; `--pick <place-object> <n>` keeps one. `node world narrate` speaks every
-`line` in the place's voice. Writing in the close look is quoted in `paint`, exactly
+`still`, each scored for how much of the room it kept; `--pick <place-object> <n>`
+keeps one. Then write `seen` and make the film's arrival match it. `node world
+narrate` speaks every `line` in the place's voice. Writing in the close look is
+named in `paint` and in the film's action as what it reads, with the same words
 (directing-films.md › Writing in pictures).
 
 ## film
@@ -288,11 +290,12 @@ explains each one. In short:
 - Open on Picture 1 ("…begins in / holds the position and framing established by Picture 1: …").
 - One continuous shot. Order events with words, never timestamps.
 - Only what is seen and heard, as positive facts: no "no", "not", "without".
-- No words in ALL CAPITALS (proper nouns are fine); put visible lettering in "double quotes".
+- No words in ALL CAPITALS (proper nouns are fine); writing the picture shows is named as what it reads: a sign that reads "EXIT".
+- Anyone who speaks has their words written in the action, `<d>[English] the words</d>`, one short line per speaker.
 - A crossing passes through something physical — a doorway, a cloud, water, a
   reflection, a fogged lens — never a fade, dissolve or morph.
 - Pass bridges and towers far below or far to one side; never fly along them.
-- Loops and moments keep the camera the kit gives them (`camera`, locked unless chosen).
+- Loops and moments keep the camera the kit gives them (a loop's `camera`, locked unless chosen; a moment is locked).
 - Music only when the film is about music (the label, hint or idea says so).
 
 ## Coordinates, frames and canvases

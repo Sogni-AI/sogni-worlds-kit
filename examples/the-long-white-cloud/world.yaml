@@ -2,8 +2,9 @@
 
 # Every film direction below is the exact text that rendered the film now live in that world
 # (MiniMax H3 FastH3 first-and-last-frame, two-stage 2K, 1152x768 canvas delivered at 2304x1536),
-# with the seed it used. `node world lint-examples` checks it; the kit rebuilds each prompt
-# byte for byte from `action` and `sound`.
+# with the seed it used. `node world lint-examples` checks it. The kit rebuilds each crossing's
+# prompt byte for byte from `action` and `sound`; a loop or moment rendered today also gets the
+# kit's camera sentence and "the same photograph" line, which these films were made without.
 
 # What is NOT in this repository:
 #   - the stills: they are Mark’s own photographs. The playable copy of this world

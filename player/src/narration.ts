@@ -19,9 +19,12 @@ export class Narration {
   onSpeaking?: (speaking: boolean) => void;
   /** Resolves the say() in progress. */
   private finished?: () => void;
+  /** Counts stops, so a play() that was still starting when it was stopped does not fall back to reading aloud. */
+  private generation = 0;
 
   constructor(parent: HTMLElement, private readonly world: World) {
     this.box = el('div', 'subtitle');
+    this.box.setAttribute('role', 'status');
     this.box.hidden = true;
     parent.append(this.box);
     this.audio.preload = 'auto';
@@ -44,19 +47,21 @@ export class Narration {
     if (!narration?.lines.length) return Promise.resolve();
     this.lines = narration.lines;
     const done = new Promise<void>(resolve => { this.finished = resolve; });
+    const generation = this.generation;
     this.timers.push(setTimeout(() => {
       if (narration.src && !this.muted) {
         this.audio.src = narration.src;
         this.audio.volume = this.volume;
         this.speaking = true;
         this.onSpeaking?.(true);
-        this.audio.play().catch(() => this.readAloud());
+        this.audio.play().catch(() => { if (generation === this.generation) this.readAloud(); });
       } else this.readAloud();
     }, delayMs));
     return done;
   }
 
   stop() {
+    this.generation++;
     this.speaking = false;
     for (const timer of this.timers) clearTimeout(timer);
     this.timers = [];

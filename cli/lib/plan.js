@@ -12,8 +12,9 @@
 //                           goes: <place id>   (omit for a moment that stays here),
 //                           shortcut: true|false,
 //                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }] },
-//                           reveal: { paint, still, seen, line, done,
-//                                     back: { frames, idea, action, sound } }   (a moment that holds on a close look)
+//                           reveal: { paint, zoom, still, seen, line, done,
+//                                     back: { frames, idea, action, sound } }   (a moment that holds on a close look;
+//                                     back only when the film in cannot simply run backwards)
 //
 // Coordinates are fractions of the still's width and height (0..1).
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
@@ -60,7 +61,8 @@ export const placeById = (plan, id) => plan.places.find(place => place.id === id
  *   moment    something that happens here, caused by an object, ending back on the still
  *   reveal    an object's film into a close look (its reveal still), where the
  *             world holds while the visitor reads, listens or turns a figure over
- *   back      the film from that close look back to the place's still
+ *   back      the film from that close look back to the place's still, when the plan
+ *             writes one (otherwise build makes it by playing the film in backwards)
  */
 export function filmsOf(plan) {
   const films = [];
@@ -82,6 +84,7 @@ export function filmsOf(plan) {
         first: place.still,
         last: object.goes ? stillOf(object.goes) : reveal ? reveal.still : place.still,
       });
+      // Without a written film back, build plays the film in backwards: the object lands exactly where it was.
       if (reveal?.back) {
         films.push({ id: backId(place.id, object.id), kind: 'back', from: place.id, to: place.id, object: object.id, ...reveal.back, first: reveal.still, last: place.still });
       }
@@ -132,7 +135,9 @@ export function revealSpeech(plan) {
     const line = object.reveal?.line;
     if (!line || object.goes) continue;
     const voice = object.reveal.voice ?? place.narration?.voice ?? Object.keys(plan.voices ?? {})[0];
-    out.push({ id: `${place.id}-${object.id}`, reveal: true, narration: { voice, speaker: place.narration?.speaker, lines: [String(line)] } });
+    // Captioned as its own voice when it has one, else as the place's narrator.
+    const speaker = object.reveal.voice ? plan.voices?.[object.reveal.voice]?.label : place.narration?.speaker;
+    out.push({ id: `${place.id}-${object.id}`, reveal: true, narration: { voice, speaker, lines: [String(line)] } });
   }
   return out;
 }

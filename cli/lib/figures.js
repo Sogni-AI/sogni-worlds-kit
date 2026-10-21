@@ -1,19 +1,26 @@
 // Figures: a collectible object stood up in 3D, so the visitor who finds it
-// can pick it up and turn it over. The object is cut out of its own picture
-// (its SAM 3 outline, refined by BiRefNet) and reconstructed by Pixal3D, so
-// what turns in the viewer is the thing that stood in the picture, not a
-// stand-in for it.
+// can pick it up and turn it over. A thing in a picture is small, lies on a
+// table and shows one side, and a mesh built from that cut-out is a blob with
+// the table fused under it. So the object is first made again, alone: Qwen
+// Image Edit draws it whole and detailed on a plain white plate from its
+// picture (and from its close look, when it has one), the recipe the live
+// worlds' figures were rebuilt with. Pixal3D builds the mesh from that plate;
+// BiRefNet cuts it out for the collection's icon. Its outline only says where
+// the object is: it is never used to cut anything out.
 //
-//   figures/<place>-<object>.region.png   the crop around the object (outside its outline whited out)
-//   figures/<place>-<object>.matte.png    BiRefNet's matte of the region
-//   figures/<place>-<object>.png          the cut-out on transparency: what Pixal3D sees, and the icon
+//   figures/<place>-<object>.context.png  the crop around the object in its place's picture
+//   figures/<place>-<object>.plate.png    the object alone on white: what Pixal3D sees
+//   figures/<place>-<object>.matte.png    BiRefNet's matte of the plate
+//   figures/<place>-<object>.png          the plate cut out on transparency: the icon
 //   figures/<place>-<object>.glb          the mesh
 //   figures/<place>-<object>.json         receipt: inputs, jobs, mesh stats (written before anything is paid for)
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { RefusedError, watchRefusals } from './sogni.js';
+import { edit, EDIT_MODEL } from './paint.js';
 
 export const FIGURE_MODELS = Object.freeze({
+  plate: EDIT_MODEL,
   matte: 'birefnet_image_background_removal_fp16',
   mesh: 'pixal3d_int8_i23d',
 });
@@ -28,19 +35,58 @@ export const FIGURE_QUALITY = Object.freeze({ meshTargetFaces: 60_000, textureSi
 
 /** A little air around the object, so nothing is clipped at the frame edge. */
 const MARGIN = 0.04;
-/** Context around the object in the crop BiRefNet sees. */
-const CONTEXT = 0.1;
-/** BiRefNet's limits: no more lopsided than this, and at least 384 px on the short side (met by enlarging, see MIN_REGION). */
-const MAX_RATIO = 1.9;
-/** A cut-out larger than this is scaled down: the mesh weight is set by the budget above, not by the pixels. */
+/** The scene around the object in the crop the plate is drawn from (a quarter of its size on each side). */
+const CONTEXT = 0.25;
+/** The plate's size: square, the long side Pixal3D reads best. */
+export const PLATE = 1024;
+/** A cut-out larger than this is scaled down: the icon is small. */
 const MAX_SIDE = 1024;
-/** A region smaller than this on its long side is enlarged before it is matted (768 / 1.9 clears BiRefNet's 384). */
-const MIN_REGION = 768;
 
 export const figureFiles = (paths, key) => {
   const dir = join(paths.dir, 'figures');
-  return { dir, region: join(dir, `${key}.region.png`), matte: join(dir, `${key}.matte.png`), cutout: join(dir, `${key}.png`), glb: join(dir, `${key}.glb`), receipt: join(dir, `${key}.json`) };
+  return { dir, context: join(dir, `${key}.context.png`), plate: join(dir, `${key}.plate.png`), matte: join(dir, `${key}.matte.png`),
+    cutout: join(dir, `${key}.png`), glb: join(dir, `${key}.glb`), receipt: join(dir, `${key}.json`) };
 };
+
+/**
+ * What Qwen Image Edit is told: the same object, alone, whole and detailed on
+ * white, from its picture (the first reference is the close look when there is
+ * one). `look` is the plan's words for it. A figure carries no writing: Pixal3D
+ * paints its texture from the plate, and small lettering (a tag that read
+ * "T. HALE" on the plate) comes out of the mesh as scribble, so any tag or
+ * label is described plain. The plate itself is described as empty.
+ */
+export function platePrompt(look, { closeLook = false } = {}) {
+  return [
+    `Product photo of the exact same ${String(look).replace(/\s+/g, ' ').trim()} ${closeLook ? 'as in the first reference picture (the second shows it in its place)' : 'from the reference picture'}, shown alone and whole:`,
+    'a front three-quarter view at eye level, centred and filling most of the frame, in its full three-dimensional shape with every side finely detailed,',
+    'on a seamless plain white background under soft even studio light.',
+    'Keep exactly the same shape, proportions, colours, materials and details as the reference; any tag, label or sign on it is plain and blank.',
+    'The entire object is inside the picture with empty white margin on every side, nothing cut off by the frame edge, and nothing else in the picture.',
+  ].join(' ');
+}
+
+/**
+ * The crop of the object's place picture the plate is drawn from: its
+ * outline's box with a quarter of its size around it on each side, enlarged
+ * so its long side is PLATE (an enlarged crop of the real picture, never a mask).
+ */
+export async function plateContext({ source, mask }) {
+  const { width, height } = await sharp(source).metadata();
+  const box = await maskBox(mask, width, height);
+  if (!box) throw new Error('the outline selects nothing');
+  const mx = Math.round(box.width * CONTEXT), my = Math.round(box.height * CONTEXT);
+  const left = Math.max(0, box.x - mx), top = Math.max(0, box.y - my);
+  const crop = { left, top, width: Math.min(width - left, box.width + 2 * mx), height: Math.min(height - top, box.height + 2 * my) };
+  const png = await sharp(source).rotate().extract(crop).resize(PLATE, PLATE, { fit: 'inside', kernel: 'lanczos3' }).png().toBuffer();
+  return { png, crop };
+}
+
+/** The object alone on white, drawn by Qwen Image Edit from its context pictures. */
+export async function plateJob(session, { contexts, prompt, seed, contentFilter = false }) {
+  const { projectId, images } = await edit(session, { prompt, context: contexts, width: PLATE, height: PLATE, seed, count: 1, contentFilter });
+  return { projectId, png: images[0] };
+}
 
 /**
  * What Pixal3D is told the object is. It hands the words to its own SAM 3,
@@ -72,67 +118,36 @@ async function colour(input) {
   return { data, width: info.width, height: info.height };
 }
 
-const grow = (start, span, limit, wanted) => {
-  if (span >= wanted) return [start, span];
-  const width = Math.min(wanted, limit);
-  return [Math.max(0, Math.min(limit - width, start - Math.round((width - span) / 2))), width];
-};
-
-/**
- * The region BiRefNet looks at: the object's box with a margin, grown to
- * BiRefNet's limits, exactly as it stands in the picture (whiting out the
- * surroundings makes BiRefNet take the whole cut shape, sky and all, for the
- * subject). Also returns the outline over the same region, widened a little:
- * BiRefNet draws the real edge, the outline says which thing is meant.
- */
-export async function regionOf({ source, mask }) {
-  const { data: rgb, width, height } = await colour(source);
+/** The box an object's outline covers in a picture of `width` × `height`, or null when it selects nothing. */
+export async function maskBox(mask, width, height) {
   const sized = await grey(mask, width, height);
   let minX = Infinity, maxX = -1, minY = Infinity, maxY = -1;
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
     if (sized[y * width + x] < 128) continue;
     if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
   }
-  if (maxX < 0) throw new Error('the outline selects nothing');
-  // Tight around the object, with some context: BiRefNet takes the most striking thing in its
-  // crop, so a small flower in a wide crop loses to a glowing mushroom beside it.
-  const pad = Math.round(Math.max(maxX - minX, maxY - minY) * CONTEXT) + 2;
-  let [x0, y0] = [Math.max(0, minX - pad), Math.max(0, minY - pad)];
-  let [w, h] = [Math.min(width - 1, maxX + pad) - x0 + 1, Math.min(height - 1, maxY + pad) - y0 + 1];
-  const shortest = Math.ceil(Math.max(w, h) / MAX_RATIO);
-  [x0, w] = grow(x0, w, width, w <= h ? shortest : 0);
-  [y0, h] = grow(y0, h, height, h < w ? shortest : 0);
-  const reach = Math.max(4, Math.round(Math.max(maxX - minX, maxY - minY) * 0.025));
-  const widened = await grey(await sharp(sized, { raw: { width, height, channels: 1 } }).blur(reach).png().toBuffer(), width, height);
-  const extract = { left: x0, top: y0, width: w, height: h };
-  // A small object is enlarged (Lanczos) so BiRefNet and Pixal3D get a usable picture of it.
-  const scale = Math.max(1, MIN_REGION / Math.max(w, h));
-  const size = [Math.round(w * scale), Math.round(h * scale)];
-  const png = await sharp(rgb, { raw: { width, height, channels: 3 } }).extract(extract).resize(...size, { kernel: 'lanczos3' }).png().toBuffer();
-  const outline = await sharp(widened, { raw: { width, height, channels: 1 } }).extract(extract).resize(...size).png().toBuffer();
-  return { png, outline, crop: { x: x0, y: y0, width: w, height: h }, scale: Math.round(scale * 100) / 100, source: { width, height } };
+  return maxX < 0 ? null : { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
 }
 
 /**
- * The region on transparency: BiRefNet's matte, kept only where the widened
- * outline reaches (so a neighbour BiRefNet also liked is dropped), trimmed to
- * the object plus a margin and capped in size.
+ * The plate on transparency: BiRefNet's matte (the plate holds the object
+ * alone, so the whole matte is it), trimmed to the object plus a margin and
+ * capped in size.
  */
-export async function cutoutOf(regionPng, mattePng, outlinePng) {
-  const { data: rgb, width, height } = await colour(regionPng);
+export async function cutoutOf(platePng, mattePng) {
+  const { data: rgb, width, height } = await colour(platePng);
   const matte = await grey(mattePng, width, height);
-  const outline = await grey(outlinePng, width, height);
   let minX = Infinity, maxX = -1, minY = Infinity, maxY = -1, on = 0;
   const rgba = Buffer.alloc(width * height * 4);
   for (let i = 0; i < width * height; i++) {
-    const alpha = Math.round(matte[i] * Math.min(1, outline[i] / 96));
+    const alpha = matte[i];
     rgba[i * 4] = rgb[i * 3]; rgba[i * 4 + 1] = rgb[i * 3 + 1]; rgba[i * 4 + 2] = rgb[i * 3 + 2]; rgba[i * 4 + 3] = alpha;
     if (alpha < 128) continue;
     on++;
     const x = i % width, y = Math.floor(i / width);
     if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
   }
-  if (on < 64) throw new Error('BiRefNet found no object inside the outline');
+  if (on < 64) throw new Error('BiRefNet found no object on the plate');
   const pad = Math.round(Math.max(maxX - minX, maxY - minY) * MARGIN);
   const left = Math.max(0, minX - pad), top = Math.max(0, minY - pad);
   const w = Math.min(width - 1, maxX + pad) - left + 1, h = Math.min(height - 1, maxY + pad) - top + 1;
@@ -169,7 +184,7 @@ async function oneResult(session, params, { minutes, what }) {
   }
 }
 
-/** BiRefNet's matte of a region: greyscale, white is the object. */
+/** BiRefNet's matte of a picture: greyscale, white is the object. */
 export async function matteJob(session, regionPng) {
   const { width, height } = await sharp(regionPng).metadata();
   const { projectId, bytes } = await oneResult(session, {
@@ -180,7 +195,7 @@ export async function matteJob(session, regionPng) {
   return { projectId, png: bytes };
 }
 
-/** Pixal3D's mesh of a cut-out. */
+/** Pixal3D's mesh of the plate (it finds the object on white itself). */
 export async function meshJob(session, cutoutPng, noun, quality = FIGURE_QUALITY) {
   const options = await session.client.projects.getModelOptions?.(FIGURE_MODELS.mesh).catch(() => null);
   const { projectId, bytes } = await oneResult(session, {
@@ -194,10 +209,10 @@ export async function meshJob(session, cutoutPng, noun, quality = FIGURE_QUALITY
   return { projectId, bytes, glb };
 }
 
-/** What one figure costs: the BiRefNet cut-out and the Pixal3D mesh, priced by Sogni. */
+/** What one figure costs: the plate, the BiRefNet cut-out and the Pixal3D mesh, priced by Sogni. */
 export async function figureEstimate(session) {
   let usd = 0, token = 0;
-  for (const [model, size] of [[FIGURE_MODELS.matte, 768], [FIGURE_MODELS.mesh, 1024]]) {
+  for (const [model, size] of [[FIGURE_MODELS.plate, PLATE], [FIGURE_MODELS.matte, PLATE], [FIGURE_MODELS.mesh, PLATE]]) {
     const options = await session.client.projects.getModelOptions(model).catch(() => null);
     const estimate = await session.client.projects.estimateCost({ network: 'fast', tokenType: session.billing.tokenType, model, imageCount: 1,
       stepCount: options?.steps?.default ?? 1, previewCount: 0, guidance: options?.guidance?.default ?? 1, width: size, height: size, billingMode: session.billing.mode });
