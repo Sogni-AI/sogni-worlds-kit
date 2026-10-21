@@ -28,10 +28,14 @@ const VIEWER = {
 };
 const LOAD_TIMEOUT_MS = 30_000;
 
-/** Turn one figure over. Resolves when the visitor closes it. */
-export function inspect(root: HTMLElement, figure: Figure): Promise<void> {
+/**
+ * Turn one figure over. Resolves when the visitor closes it. `done` is the
+ * close button's words; `overStill` lets the held close look show through
+ * behind the figure (the place itself never moves behind it).
+ */
+export function inspect(root: HTMLElement, figure: Figure, { done: putDown = 'Put it down', overStill = false }: { done?: string; overStill?: boolean } = {}): Promise<void> {
   return new Promise(resolve => {
-    const dialog = el('section', 'inspector');
+    const dialog = el('section', overStill ? 'inspector over-still' : 'inspector');
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-label', `${figure.name} in three dimensions`);
@@ -39,7 +43,7 @@ export function inspect(root: HTMLElement, figure: Figure): Promise<void> {
     const state = el('p', 'inspector-state', 'Picking it up…');
     stage.append(state);
     const bar = el('div', 'inspector-bar');
-    const close = el('button', 'pill primary', 'Put it down');
+    const close = el('button', 'pill primary', putDown);
     close.type = 'button';
     bar.append(el('span', 'inspector-name', figure.name), el('span', 'inspector-help', 'Drag to turn it over'), close);
     dialog.append(stage, bar);

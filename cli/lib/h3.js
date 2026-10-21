@@ -72,11 +72,12 @@ export const delivered = canvas => ({ width: canvas.width * 2, height: canvas.he
  * MiniMax's first line for a first-and-last-frame film. With keyframes, every
  * picture is listed at its mark in time order: Picture 1 at 0, the keyframes
  * as Pictures 3, 4, … and Picture 2 at the last frame. Worlds use one shot.
+ * A loop or a moment starts and ends on one still, and the line says so.
  */
-export function alignmentLine(frames, keyframeFrames = []) {
+export function alignmentLine(frames, keyframeFrames = [], { samePicture = false } = {}) {
   const end = secondsOf(frames);
   if (!keyframeFrames.length) {
-    return 'How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; '
+    return `How the reference pictures align with the target video — ${samePicture ? 'Picture 1 and Picture 2 are the same photograph. ' : ''}Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; `
       + `Picture 2 (from Shot 1) aligns with the ${end.toFixed(2)}-second mark of the target video.`;
   }
   const pictures = [
@@ -84,7 +85,7 @@ export function alignmentLine(frames, keyframeFrames = []) {
     ...[...keyframeFrames].sort((a, b) => a - b).map((frame, index) => ({ picture: 3 + index, seconds: frame / FPS })),
     { picture: 2, seconds: end },
   ];
-  return 'How the reference pictures align with the target video — '
+  return `How the reference pictures align with the target video — ${samePicture ? 'Picture 1 and Picture 2 are the same photograph. ' : ''}`
     + pictures.map(({ picture, seconds }) => `Picture ${picture} (from Shot 1) aligns with the ${seconds.toFixed(2)}-second mark of the target video`).join('; ')
     + '.';
 }
@@ -96,17 +97,39 @@ export const LANDING = 'The camera settles into the pose, spacing and compositio
 /** Loops and moments start and end on the same still: the motion settles, not the camera. */
 export const LOOP_LANDING = 'The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot.';
 
+/** Films that start and end on one still: the place's loop and its moments. */
+export const ON_ONE_STILL = new Set(['loop', 'moment']);
+
+/**
+ * What the camera does in a film that starts and ends on one still, said by
+ * the kit rather than by each direction. Any move such a film makes has to be
+ * undone before it lands, so a push-in becomes a push-in and a pull-back: a
+ * slow dolly yo-yo nobody asked for. `locked` is the default. Only motion that
+ * repeats by nature belongs in a loop: a handheld watcher's breathing, or a
+ * deck, carriage or cabin that rocks with the place.
+ */
+export const CAMERA = Object.freeze({
+  locked: 'The camera is locked off on a tripod and holds the exact framing of Picture 1 for the entire shot, at the same distance, height, angle and size; the edges of the frame stay where Picture 1 has them, and only the life inside the picture moves.',
+  handheld: 'The camera is handheld by someone standing still and holds the framing of Picture 1 for the entire shot, at the same distance and size: it breathes with a very small, slow drift of a few pixels around that framing.',
+  sway: 'The camera rides with the place and holds the framing of Picture 1 for the entire shot, at the same distance and size: the frame rocks slowly and gently by a degree or two with the floor beneath it and is level again at the end.',
+});
+export const CAMERAS = Object.keys(CAMERA);
+
 /**
  * The full document sent to H3, assembled from a film's `action` (what the
  * camera and the picture do, as one continuous shot) and `sound` (what is
  * heard). Agents write only those two; the format around them is fixed here.
+ * A loop or a moment also gets its `camera` sentence (locked unless the plan
+ * chose another) in front of the action.
  */
-export function assemblePrompt({ kind, frames, action, sound, keyframes = [] }) {
-  const landing = kind === 'crossing' ? LANDING : LOOP_LANDING;
+export function assemblePrompt({ kind, frames, action, sound, keyframes = [], camera }) {
+  const oneStill = ON_ONE_STILL.has(kind);
+  const landing = oneStill ? LOOP_LANDING : LANDING;
   let body = String(action ?? '').replace(/\s+/g, ' ').trim();
   if (!/established by Picture 2/.test(body)) body = `${body} ${landing}`;
+  if (oneStill) body = `${CAMERA[camera ?? 'locked'] ?? CAMERA.locked} ${body}`;
   return [
-    alignmentLine(frames, keyframes.map(k => k.frame)),
+    alignmentLine(frames, keyframes.map(k => k.frame), { samePicture: oneStill }),
     '',
     `integrated_multimodal_description: [Shot 1] ${body}`,
     '',

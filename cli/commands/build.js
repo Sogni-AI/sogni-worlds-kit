@@ -6,11 +6,11 @@ import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { nextStep } from './status.js';
 import { readPlan, filmsOf, nextPlaceId } from '../lib/plan.js';
-import { resolveWorldId, shown, filmId, loopId, worldFile } from '../lib/paths.js';
+import { resolveWorldId, shown, filmId, loopId, backId, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../lib/takes.js';
 import { canvasByName, delivered } from '../lib/h3.js';
-import { finishFilm, rewindFilm, levelAudio, cleanPartials } from '../lib/finish.js';
+import { finishFilm, rewindFilm, cleanPartials, FILM_LUFS, LOOP_LUFS } from '../lib/finish.js';
 import { validateWorld, FORMAT } from '../lib/worldjson.js';
 import { figureFiles } from '../lib/figures.js';
 import { wantsFigure } from './figures.js';
@@ -29,7 +29,8 @@ export const usage = `node world build [world] [--force] [--drafts]
             is still done on the review page; build again without --drafts
             for the finished world.`;
 
-const RECIPE = 'film-v1';
+// film-v2: loops levelled under the narration, films at the narrator's level.
+const RECIPE = 'film-v2';
 
 export async function run(argv) {
   const { values, world } = parse(argv, { force: { type: 'boolean', default: false }, drafts: { type: 'boolean', default: false } });
@@ -82,7 +83,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     let info = manifest[`films/${film.id}.mp4`]?.info;
     if (!fresh(`films/${film.id}.mp4`, take.sha, [main, half]) || !info) {
       say.step(`Finishing ${film.id} (take ${take.take})`);
-      info = await finishFilm(take.files.video, main, half);
+      info = await finishFilm(take.files.video, main, half, { lufs: film.kind === 'loop' ? LOOP_LUFS : FILM_LUFS });
       manifest[`films/${film.id}.mp4`] = { source: take.sha, recipe: RECIPE, info };
       writeJson(manifestPath, manifest);
     }
@@ -137,6 +138,40 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       missing.push({ film: `narration of ${place.id}`, kind: 'narration', state: 'unrendered' });
     }
   }
+  // Reveals: the close look an object's film lands on, the line said over it, and the film back to
+  // the place. An object whose film back is not ready yet stays out of the world: without it the
+  // visitor would be left in the close look, or cut out of it.
+  const reveals = {};
+  for (const place of plan.places) for (const object of place.objects) {
+    const reveal = !object.goes ? object.reveal : null;
+    const key = filmId(place.id, object.id);
+    if (!reveal?.still || !films.has(key)) continue;
+    const back = films.get(backId(place.id, object.id));
+    if (!back) { reveals[key] = null; continue; }
+    const source = worldFile(paths, reveal.still, `places.${place.id}.objects.${object.id}.reveal.still`);
+    if (!existsSync(source)) throw new Error(`${key}: the reveal still ${reveal.still} is missing. Run: node world reveals`);
+    const target = join(out, 'stills', `${key}.jpg`);
+    const sha = sha256File(source);
+    if (!fresh(`stills/${key}.jpg`, sha, [target])) {
+      if (/\.jpe?g$/i.test(extname(source))) copyFileSync(source, target);
+      else await sharp(source).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(target);
+      manifest[`stills/${key}.jpg`] = { source: sha, recipe: RECIPE };
+    }
+    let spoken;
+    const receiptPath = join(paths.audio, 'narration', 'reveals', `${key}.json`);
+    const receipt = reveal.line && existsSync(receiptPath) ? readJson(receiptPath) : null;
+    if (receipt?.status === 'completed' && receipt.mp3 && existsSync(join(paths.audio, 'narration', 'reveals', receipt.mp3))) {
+      const audio = join(out, 'audio', `narration-${key}.mp3`);
+      mkdirSync(join(out, 'audio'), { recursive: true });
+      copyFileSync(join(paths.audio, 'narration', 'reveals', receipt.mp3), audio);
+      spoken = { src: rel(out, audio), lines: receipt.lines.map(line => clean({ text: line.text, speaker: line.speaker, start: line.start, end: line.end })) };
+    } else if (reveal.line) {
+      spoken = { lines: [{ text: String(reveal.line) }] };
+      missing.push({ film: `the reveal line of ${key}`, kind: 'narration', state: 'unrendered' });
+    }
+    reveals[key] = clean({ still: rel(out, target), narration: spoken, done: reveal.done || undefined, back: { src: back.src, src720: back.src720, seconds: back.info.seconds } });
+  }
+
   // A place's own track (a file the person has the rights to) in place of the world's while they are there.
   const placeMusic = {};
   for (const place of plan.places) {
@@ -189,7 +224,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     const hotspots = [];
     for (const object of place.objects) {
       const entry = films.get(filmId(place.id, object.id));
-      if (!entry) continue;
+      if (!entry || reveals[filmId(place.id, object.id)] === null) continue;
       const selectionPath = join(paths.selections, `${place.id}-${object.id}.json`);
       const selection = existsSync(selectionPath) ? readJson(selectionPath) : null;
       const at = object.at ?? object.select?.positive?.[0] ?? null;
@@ -207,6 +242,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
         figure: figures[filmId(place.id, object.id)],
         details: object.details ? clean({ title: object.details.title, text: object.details.text, facts: object.details.facts }) : undefined,
         film: { src: entry.src, src720: entry.src720, seconds: entry.info.seconds },
+        reveal: reveals[filmId(place.id, object.id)],
         rewind: object.goes ? entry.rewind : undefined,
       }));
     }

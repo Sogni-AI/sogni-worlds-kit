@@ -11,8 +11,10 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 - Writing a direction — the `action` field, with a real example
 - Writing sound — the `sound` field
 - Crossings: how to get from one picture to another
-- Loops: living photographs
+- Loops: living photographs — read before writing a loop's camera
 - Moments and surprises
+- Close looks: reveals — read before writing any moment
+- Writing in pictures
 - Real people and faces
 - Choosing objects and clicks
 - Every click pays off — read before choosing objects
@@ -25,12 +27,15 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 
 | Kind | Starts on | Ends on | Camera | What it is |
 | --- | --- | --- | --- | --- |
-| **loop** | this place's still | the same still | static | The photograph comes alive: water moves, people breathe and shift. Plays whenever you are here. |
+| **loop** | this place's still | the same still | locked (the kit says so) | The photograph comes alive: water moves, people breathe and shift. Plays whenever you are here. |
 | **crossing** | this place's still | the next place's still | moves | A journey caused by something in the picture: a door, a boat, a guitar, a breath on the lens. |
-| **moment** | this place's still | the same still | mostly static | Something happens here (a parrot lands on the car mirror) and the scene returns to rest. |
+| **moment** | this place's still | the same still | locked (the kit says so) | Something happens here (a parrot lands on the car mirror) and the scene returns to rest. |
+| **reveal** | this place's still | the object's close look | moves in | The object is picked up, turned over, opened, or the person turns to answer: the film lands on a close look and the world holds there. |
+| **back** | the close look | this place's still | moves out | When the visitor is done looking, the object is put down and the place resumes. |
 
 A place has one loop, and two to four objects. Each object either **goes**
-somewhere (a crossing) or makes a **moment**.
+somewhere (a crossing), makes a **moment**, or opens a **close look** (a reveal
+and its film back).
 
 ## The recipe
 
@@ -130,9 +135,15 @@ another.
   surface, a waterfall's spray, a reflection in sunglasses, the dark sound hole of
   a guitar, a fogged lens wiped clean. Across open air the model blends the two
   pictures instead: a dissolve.
-- **Never a fade, a dissolve or a morph.** A dark screen isn't a boundary either:
-  "darkness fills the view" becomes a fade to black. Keep the occluding surface and
-  its moving edge visible.
+- **Never a fade, a dissolve, a cut or a morph**, unless the person asks for one (a
+  flashback, a dream). A dark screen isn't a boundary either: "darkness fills the
+  view" becomes a fade to black. Keep the occluding surface and its moving edge
+  visible. When the start picture shows no way out, carry the change with something
+  in it passing close to the lens: a waiter crossing in front of the camera, a
+  curtain drawn across the frame, a door swinging shut, a character stepping past.
+  A route the picture does not show (a stage with no stair in it, "up the stage
+  stair") makes the model invent the stair and crossfade to it in a quarter of a
+  second: the visitor sees a fade.
 - **The clicked object causes it.** The label is a promise. "Duck through the
   round door" must start with the door, and "Follow the lanterns" must have the
   lanterns lead. The first thing that moves after the opening picture is the
@@ -166,9 +177,26 @@ another.
 
 A loop is the photograph breathing. It plays whenever the visitor is at that place.
 
-- **Static camera.** Write "a static wide shot holds the position and framing
-  established by Picture 1". The camera doesn't move; the world inside the picture
-  does.
+- **The camera is the kit's to say.** A loop starts and ends on one still, so any
+  move it makes has to be undone before it lands: a push-in becomes a push-in and a
+  pull-back, a slow dolly yo-yo that reads as a mistake in a noir office, a hotel
+  room or a portrait. The kit puts the camera sentence in front of every loop and
+  moment (`camera`, `locked` unless you choose otherwise) and tells the model the
+  two pictures are one photograph. Write only what moves inside the picture, opening
+  on "a static wide shot holds the position and framing established by Picture 1".
+- **Choose the camera from the place, not from habit.** `locked` (a tripod) is right
+  for almost every place: rooms, streets, landscapes, people. Only two motions repeat
+  by nature, so only they belong in a loop, and only where the place itself moves or
+  the world is seen through someone's eyes:
+  - `handheld`: the small, slow breathing of someone standing still and watching, for
+    a found-footage, documentary or first-person world;
+  - `sway`: the frame rocking a degree or two with the floor, on a boat's deck, in a
+    train carriage, a gondola or a cabin in the wind.
+  A push in, a pull back, a pan or a drift is never a loop: if a place needs one, it is
+  a reveal (the camera moves in to a close look and holds there).
+- **Screening measures it.** `node world screen` maps the first frame onto every
+  quarter second and flags `camera-moves` when a loop or moment zooms 4% or slides for
+  a second or more. Reject such a take on sight; the retake keeps the same camera.
 - **The whole frame is alive**, not one waterfall. Grass combs in the wind, cloud
   shadows slide, people shift their weight, water moves. Too subtle reads as broken.
 - **Everything returns to where it started.** The same still is at both ends, so any
@@ -187,6 +215,13 @@ ends and the camera stays mostly static.
 Plan a few surprises per world, and cause each one with something really in the
 picture. Keep them rare enough to stay surprising.
 
+A moment is for something the place does once and then is again: a kea, a wave, a
+door blown open and swung shut. Anything the visitor picks up, opens, reads or asks
+is a close look instead (next section): a moment has to put everything back inside
+one film, and when the thing was moved, the model gets it back by cheating. A dress
+lifted from a chair vanishes and is thrown back; a glove is pointed at by a hand that
+leaves. Neither tells the visitor anything.
+
 Give a moment an action that lasts, not an instant. A moment directed as a
 lightning flash spends its first second flashing and then freezes for the rest
 (two takes in a row, a clean-room build, 2026-10-09); the same object directed as
@@ -200,8 +235,69 @@ glows for three seconds and goes out is all the visitor gets. Direct something
 that runs its course instead: water pours, swirls and settles; a blanket unrolls
 under someone's hands and is smoothed flat; a person steps into the red light and
 it washes over them. A switch, a glow or a screen waking is never the whole of a
-moment. Keep the camera still: a moment that pushes in to show a small thing has
-to snap back to land.
+moment. The camera stays locked (the kit says so): a moment that pushes in to show
+a small thing has to snap back to land. To show a small thing, use a close look.
+
+## Close looks: reveals
+
+The visitor clicked the glove. They want to see it, and the story wants them to
+find something: the palm is stiff with dried blood, a laundry tag inside the cuff
+reads "T. HALE". A reveal gives them that:
+
+1. The object's `film` carries the visitor from the place into the **close look**:
+   a hand lifts the glove into the lamplight and turns it over (`reveal`; the camera
+   may move in, because it does not have to come back in the same film).
+2. The world **holds** on the close look, perfectly still. The narrator says the
+   object's `line` (what it is, what it means, what it costs someone), with
+   subtitles, and a figure, if the object has one, is turned over in 3D over that
+   picture. The place never moves behind it.
+3. When the visitor presses the `done` button ("Set the glove down"), the **film
+   back** (`reveal.back`) puts it down and the place comes alive again.
+
+The close look is its own still, painted once from the place's still with Krea 2
+Identity Edit (`node world reveals`), so the light, the materials and the people are
+the place's own. Describe it in `reveal.paint` as the picture you want to hold on:
+the object large in the frame, the detail that matters plainly visible.
+
+- **It moves the story.** Before an object goes in the plan, answer: what does the
+  visitor know after this click that they did not know before? The answer is the
+  close look's detail and its line. "Notice the glove on the chaise" with a hand
+  pointing at it answers nothing; "Turn the glove over" with blood on the palm and
+  "She didn't leave the club by the front door" moves a mystery on.
+- **The line is said, not written on the picture.** One or two sentences in the
+  narrator's voice: the clue, a name, what it means. The same voice as the place's
+  narration (`narrate` speaks it). A close look with neither a line nor a figure is
+  a warning: it shows a picture and tells nothing.
+- **A person can be a close look too.** "Ask the cigarette girl": the film moves in to
+  her face as she leans close, the close look is her answering, and her line is what
+  she says (or what the narrator makes of it). That is the push-in a loop must never
+  make, used where it lands somewhere.
+- **The film back is the film in reverse in spirit, not in pixels.** Write it as its
+  own direction: the hand sets the glove back on the chaise and withdraws, ending on
+  the place's still. It is a real film, never a reversed one (rain would fall up).
+- **Collectibles and figures.** A collectible with a reveal joins the collection when
+  the close look arrives; its figure is turned over during the hold, and the collected
+  card follows once it is put down.
+
+## Writing in pictures
+
+A model asked for a lipstick message on a mirror, a note, a sign or a label without
+being told what it says writes letters that spell nothing ("Cpole Ligicac"), and
+nothing breaks a world's spell faster.
+
+- **Writing appears only where the story needs it, and then it is quoted.** Put the
+  exact words in the still's prompt or `reveal.paint`, in double quotes, as short as
+  possible (one to four words: "T. HALE", "ROOM 304", "Midnight"). Anything you would
+  not quote, describe without writing (a lipstick heart on the mirror, a blank
+  envelope, a sign seen edge-on).
+- **Read every still before you use it.** At full size, read every piece of writing
+  in every painted still and close look: signs, mirrors, notes, labels, posters,
+  spines. Letters that do not spell the quoted words, or writing nobody asked for,
+  mean painting it again (or an Identity Edit that replaces it with a plain
+  surface) before any film is rendered from it: every film starts and ends on those
+  pixels.
+- **Films too.** Screening cannot read. Read lettering on the contact sheet and the
+  change strips; writing that drifts into nonsense mid-film is rejected on sight.
 
 ## Real people and faces
 
@@ -297,10 +393,18 @@ move is only a "check" note: look at it for smearing or a hidden cut. Screening
 can't read lettering, so read every sign, patch, logo and number plate on the
 sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "reason"`):
 
-- a dissolve or crossfade between the two pictures, or a fade through black;
+- a dissolve or crossfade between two pictures, or a fade through black: open the
+  change strips (`take-<n>.change-<k>.jpg`), sixteen consecutive frames where the
+  picture changes fastest, because a crossfade often lasts a quarter of a second,
+  less than the gap between two contact-sheet frames;
+- in a loop or a moment, a camera that pushes in and back, pans or drifts (screening
+  says `camera-moves`);
+- an object that vanishes, appears from nowhere, or is thrown back into place so the
+  film can end where it began;
 - a morph (a wall that becomes a sky, a person who becomes another person);
 - a hard cut or a sudden jump in the middle;
-- invented lettering on signs, patches or number plates;
+- writing that is not real words, or not the quoted words: on signs, mirrors, notes,
+  labels, patches or number plates;
 - a real person's face drifting into someone else's;
 - smeared struts from a bridge or tower route;
 - music in the soundtrack when none was asked for;
@@ -343,7 +447,11 @@ person.
   the view";
 - lower-case sentence starts, or a direction too short to carry motion;
 - a route through a bridge or tower;
-- a loop or moment that isn't a static shot;
+- a `camera` other than locked, handheld or sway, or one on a film that is not a loop
+  or a moment (a crossing, a reveal and the film back move as their directions say);
+- a reveal on an object that goes somewhere, without a film back, or with neither a
+  painted still nor a `paint` description;
+- two films with one id;
 - frames off the 124 + 17n grid, or a prompt over 7,000 characters.
 
 It warns (and still lets the plan through) when a loop or moment turns a head away

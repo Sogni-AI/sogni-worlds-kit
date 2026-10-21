@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { parse } from '../index.js';
 import { filmId, listWorlds, shown, worldPaths } from '../lib/paths.js';
-import { filmsOf, readPlan } from '../lib/plan.js';
+import { filmsOf, readPlan, revealSpeech } from '../lib/plan.js';
 import { lintPlan } from '../lib/lint.js';
 import { describeNote, filmState, listTakes, readNotes, readStillNotes, readVerdicts } from '../lib/takes.js';
 import { canaryNext, canaryStatus } from '../lib/canary.js';
@@ -73,7 +73,10 @@ export function gather(id) {
   }
 
   const narrated = plan.places.filter(p => p.narration?.lines?.length);
-  const narrationNeeded = narrated.filter(p => !existsSync(join(paths.audio, 'narration', `${p.id}.json`))).map(p => p.id);
+  const narrationNeeded = [...narrated.filter(p => !existsSync(join(paths.audio, 'narration', `${p.id}.json`))).map(p => p.id),
+    ...revealSpeech(plan).filter(r => !existsSync(join(paths.audio, 'narration', 'reveals', `${r.id}.json`))).map(r => r.id)];
+  // A close look still to paint (node world reveals): its films cannot render without it.
+  const revealsNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(o => !o.goes && o.reveal?.paint && !o.reveal.still).map(o => `${p.id}-${o.id}`));
   const musicNeeded = Boolean(plan.music) && !existsSync(join(paths.audio, 'music', 'music.json'));
   // A collectible with an outline and no 3D figure yet (node world figures).
   const figuresNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(wantsFigure).map(o => `${p.id}-${o.id}`))
@@ -87,7 +90,7 @@ export function gather(id) {
     stillNotes: Object.entries(readStillNotes(paths)).flatMap(([place, list]) => list.map(note => ({ place, ...note }))),
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
-    narrationNeeded, narratedPlaces: narrated.length, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
+    narrationNeeded, narratedPlaces: narrated.length, revealsNeeded, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
   };
 }
 
@@ -113,6 +116,7 @@ export function nextAction(s) {
   }
   if (s.selections.needed.length) return { why: `${s.selections.needed.length} object${s.selections.needed.length === 1 ? ' needs' : 's need'} outlines`, command: `node world select ${id}` };
   if (s.selections.failed.length) return { why: `SAM 3 could not outline ${s.selections.failed.join(', ')}`, command: `change their select clicks in world.yaml (changed clicks are selected again automatically), then: node world select ${id}` };
+  if (s.revealsNeeded?.length) return { why: `${s.revealsNeeded.length} close look${s.revealsNeeded.length === 1 ? ' is' : 's are'} not painted yet (${s.revealsNeeded.join(', ')})`, command: `node world reveals ${id}   — look at every candidate at full size, then: node world reveals ${id} --pick <place-object> <n>, and write reveal.seen` };
   if (!s.takes) return { why: 'nothing rendered yet', command: `node world quote ${id}   — then: node world render ${id} --canary` };
   const canary = s.canary && !['approved', 'none'].includes(s.canary.state) ? canaryNext(s.canary, id) : null;
   if (canary && s.canary.state !== 'unjudged') return canary;
@@ -127,7 +131,7 @@ export function nextAction(s) {
   if (s.byState.failed.length) return { why: `${s.byState.failed.join(', ')} failed to render`, command: `node world render ${id} --only ${s.byState.failed.join(' --only ')}` };
   if (canary) return canary;
   if (s.byState.unrendered.length) return { why: `${s.byState.unrendered.length} film${s.byState.unrendered.length === 1 ? '' : 's'} not rendered yet`, command: `node world quote ${id}   — then: node world render ${id}` };
-  if (s.narrationNeeded.length) return { why: `narration for ${s.narrationNeeded.length} place${s.narrationNeeded.length === 1 ? '' : 's'} not recorded`, command: `node world narrate ${id}` };
+  if (s.narrationNeeded.length) return { why: `narration for ${s.narrationNeeded.length} place${s.narrationNeeded.length === 1 ? '' : 's'} or close look${s.narrationNeeded.length === 1 ? '' : 's'} not recorded`, command: `node world narrate ${id}` };
   if (s.musicNeeded) return { why: 'the music is not made yet', command: `node world music ${id}` };
   if (s.figuresNeeded?.length) return { why: `${s.figuresNeeded.length} collectible${s.figuresNeeded.length === 1 ? ' has' : 's have'} no 3D figure yet`, command: `node world figures ${id} --cutouts   — look at the cut-outs, then: node world figures ${id}` };
   if (!s.built || s.buildStale) return { why: s.built ? 'the build is older than your latest decisions' : 'every film is approved', command: `node world build ${id}` };

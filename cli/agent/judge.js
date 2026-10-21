@@ -2,8 +2,10 @@
 // clearly broken (the reject-on-sight list) and must say why; it never
 // approves one. A rejected film gets a rewritten direction that removes the
 // cause, never just another seed.
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { ROOT } from '../lib/paths.js';
+import { ON_ONE_STILL } from '../lib/h3.js';
 import sharp from 'sharp';
 import { frameImage } from '../lib/screen.js';
 import { clickCauses, lintDirection } from '../lib/lint.js';
@@ -11,10 +13,12 @@ import { imagePart } from '../lib/llm.js';
 import { FRAME_GRID, writerSystem } from './prompts.js';
 
 const REJECT_ON_SIGHT = [
-  'a dissolve or crossfade between the two pictures, or a fade through black',
+  'a dissolve or crossfade between two pictures (both show through each other for a few frames), or a fade through black: look hardest at the strips of consecutive frames where the picture changes fastest',
+  'in a loop or a moment, a camera that pushes in, pulls back, pans or drifts and then returns to the starting framing',
   'a morph (a wall that becomes a sky, a person who becomes another person)',
   'a hard cut or a sudden jump in the middle',
-  'invented lettering on signs, patches or number plates',
+  'writing that is not real words, or not the words the direction quotes: on signs, mirrors, notes, labels, patches or number plates',
+  'an object that vanishes, appears from nowhere, or is thrown back into place so the film can end where it started',
   'a real person\'s face drifting into someone else\'s',
   'smeared struts from a bridge or tower route',
   'a frozen tail (the last seconds don\'t move) or a flash at a loop\'s seam',
@@ -34,16 +38,25 @@ const JUDGE_SCHEMA = {
   },
 };
 
-/** Up to eight frames of the take: flagged ones, the opening at fixed times, then the rest spread out. */
+/**
+ * Up to eight pictures of the take: the screen's strips of where the picture
+ * changes fastest (frame by frame, where a dissolve hides), flagged frames,
+ * the opening at fixed times, then the rest spread out.
+ */
 async function takeFrames(take, cacheDir) {
   const total = take.screen?.probe?.frames ?? take.journal.frames;
+  const strips = (take.screen?.changes ?? []).map(path => resolve(ROOT, path)).filter(existsSync).slice(0, 2);
   const flagged = (take.screen?.flags ?? []).filter(f => Number.isInteger(f.frame)).map(f => f.frame);
   // The opening at fixed times (whether the clicked thing leads shows in the first seconds), then the rest spread out.
   const early = [12, 36].map(f => Math.min(total - 1, f));
   const spread = [0, 0.35, 0.7, 1].map(t => Math.min(total - 1, Math.round(t * (total - 1))));
-  const wanted = [...new Set([...flagged.slice(0, 2), ...early, ...spread])].sort((a, b) => a - b).slice(0, 8);
+  const wanted = [...new Set([...flagged.slice(0, 2), ...early, ...spread])].sort((a, b) => a - b).slice(0, 8 - strips.length);
   mkdirSync(cacheDir, { recursive: true });
   const parts = [];
+  for (const [index, strip] of strips.entries()) {
+    const stretch = take.screen.metrics?.changes?.[index];
+    parts.push({ type: 'text', text: `Sixteen consecutive frames where the picture changes fastest${stretch ? ` (around ${stretch.at} s)` : ''}, left to right, top to bottom:` }, await imagePart(strip));
+  }
   for (const frame of wanted) {
     const path = join(cacheDir, `${take.film}-t${take.take}-f${frame}.jpg`);
     writeFileSync(path, await sharp(await frameImage(take.files.video, frame)).resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer());
@@ -58,7 +71,7 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
   const text = [
     `A ${film.kind} film, take ${take.take} of "${film.id}". It should start on the picture described as: ${fromSeen}`,
     object ? `The visitor clicked: ${object.target || object.label}, labelled "${object.label}"${object.hint ? ` (${object.hint})` : ''}. That thing must lead the film and the film must do what the label promises; "clickedThingLeads" says whether it does, judged from the frames.` : 'It is the place\'s living picture (nothing was clicked).',
-    film.kind === 'crossing' ? `and end on the picture described as: ${toSeen}` : 'and end back on the same picture.',
+    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera ${film.camera ?? 'locked'} (${film.camera && film.camera !== 'locked' ? 'a small natural motion around one framing, never a push or a pan' : 'the frame does not move at all'}).`,
     `Its direction: ${film.action}`,
     `Its sound: ${film.sound}`,
     flags.length ? `The automatic screen flagged: ${flags.join(' | ')}` : 'The automatic screen flagged nothing.',
@@ -101,13 +114,13 @@ export async function rewriteFilm(llm, { film, label, hint, target = '', objectI
     drawn.length ? `The person drew a red box on ${drawn.length === 1 ? 'a frame' : `${drawn.length} frames`} of the rejected take to show exactly where (each picture below comes with their words). Fix what is inside the box and keep what was right outside it.` : null,
     label ? `What the visitor clicked: "${label}" (${hint ?? ''}). That object must still cause the film and lead it: keep the route through it, and change how it happens, never what it is.` : 'It is the place\'s loop.',
     `Start picture (seen): ${fromSeen}`,
-    kind === 'crossing' ? `End picture (seen): ${toSeen}` : 'It ends back on the start picture.',
+    ON_ONE_STILL.has(kind) ? 'It ends back on the start picture, and its camera stays where it is.' : `End picture (seen): ${toSeen}`,
     `The rejected direction: ${JSON.stringify({ frames: film.frames, idea: film.idea, action: film.action, sound: film.sound })}`,
     `Reply with JSON {"diagnosis": "which words caused the defect and what you changed", "film": {"frames", "idea", "action", "sound"}}.${kind === 'loop' ? ' A loop is always 192 frames.' : ''}`,
   ].filter(Boolean).join('\n');
   const drift = answer => (label ? clickCauses({ label, target, id: objectId }, answer.film) : null);
   const check = answer => lintDirection({ ...answer.film, kind }, `${label ?? ''} ${hint ?? ''} ${answer.film.idea}`)
-    .filter(f => f.level === 'error' || ['face-turn', 'dark-screen', 'static'].includes(f.rule))
+    .filter(f => f.level === 'error' || ['face-turn', 'dark-screen'].includes(f.rule))
     .map(f => `${f.level === 'error' ? '' : '(warning) '}film ${f.field}: ${f.message}`)
     // A retake changes how the clicked thing does it, never what was clicked: drifting off it is an error here.
     .concat(drift(answer) ? [`film action: ${drift(answer)}. Keep the route through ${target || label}`] : [])
@@ -119,7 +132,7 @@ export async function rewriteFilm(llm, { film, label, hint, target = '', objectI
     user: [
       { type: 'text', text },
       { type: 'text', text: 'The start picture:' }, await imagePart(fromStill),
-      ...(kind === 'crossing' ? [{ type: 'text', text: 'The end picture:' }, await imagePart(toStill)] : []),
+      ...(ON_ONE_STILL.has(kind) ? [] : [{ type: 'text', text: 'The end picture:' }, await imagePart(toStill)]),
       ...(await Promise.all(drawn.map(async m => [{ type: 'text', text: `Take ${m.take}${m.time != null ? ` at ${Number(m.time).toFixed(1)} s` : ''}, the red box: "${m.text}"` }, await imagePart(m.image)]))).flat(),
     ],
     schema: RETAKE_SCHEMA,

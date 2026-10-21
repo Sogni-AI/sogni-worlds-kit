@@ -120,6 +120,13 @@ No photos? Paint the places from the concept, then ingest them like photographs:
   size (1344×768 for 16:9, 1152×768 for 3:2). Save them into `photos/` in story
   order.
 
+Whichever way they are painted, **read every piece of writing in every painted
+place at full size before ingesting it**: signs, mirrors, notes, posters, labels.
+Writing appears only where the story needs it, with its exact words in double
+quotes in the prompt; letters that spell nothing ("Cpole Ligicac" in lipstick on a
+mirror) mean painting it again. A still is fixed once ingested, and every film
+starts and ends on it (docs/directing-films.md › Writing in pictures).
+
 Fatal choices and collectibles are plain `world.yaml` fields (`ending`, `collect`,
 `intro`; docs/world-yaml.md), whichever way the pictures were made.
 
@@ -130,14 +137,21 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 
 - `seen`: what is really in the picture, from looking at it at full size.
 - `title`, `chapter`, `caption`, from what the person told you.
-- `loop`: a living photograph (static camera, the whole frame gently alive, Foley).
+- `loop`: a living photograph (the whole frame gently alive, Foley). The kit locks
+  its camera; choose `camera: handheld` or `sway` only where the place itself moves
+  or the world is seen through someone's eyes (docs/directing-films.md › Loops).
 - `objects`: two to four things to click. In a linear story, exactly one of them
   `goes` to the next place. Give each one a `label` (an action: "Duck through the
   round door"), a `hint`, an `at` point for the label (in open space beside the
   object, never on it), and `select` clicks. Every object must pass the payoff
-  question in docs/directing-films.md › Every click pays off: halfway through its
-  film, what can the visitor see that the still did not show them?
-- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`.
+  question in docs/directing-films.md › Every click pays off: what does the visitor
+  know after this click that they did not know before? Anything picked up, opened,
+  read or asked is a **close look** (`reveal`): the film lands on a painted close-up
+  that shows the clue, the narrator says its `line`, and a film back puts it down
+  (docs/directing-films.md › Close looks). A moment that only points at a thing, or
+  makes it vanish and come back, tells the visitor nothing.
+- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`; and
+  for a close look, `reveal: { paint, line, done, back }` (docs/world-yaml.md › reveal).
 - `narration.lines` if there is a voice: short, spoken sentences in the person's own words.
 
 Then run `node world lint` and fix every error. A finding names the film, the field
@@ -161,6 +175,12 @@ grabbed) and run `node world select` again: an object whose clicks changed is
 outlined again by itself. `select --only <place>-<object>` redoes one outline even
 when its clicks didn't change.
 
+Then paint the close looks: `node world reveals` paints candidates for each
+`reveal.paint` from the place's own still (Krea 2 Identity Edit). Look at every
+candidate at full size (the object and people as in the place, any writing exactly
+the quoted words), keep one with `node world reveals --pick <place-object> <n>`,
+and write its `reveal.seen`.
+
 ### 6. Quote, then render the canary
 
 ```bash
@@ -182,7 +202,10 @@ node world screen
 For every new take, open its contact sheet (`renders/<film>/take-<n>.sheet.jpg`)
 and every flagged moment. For a crossing or moment, also open its opening strip
 (`take-<n>.opening.jpg`, the first 2.7 s): the clicked thing has to move, or be
-moved, first. A "check" note (a fast camera move) is not a defect: look
+moved, first. For every film between two pictures (a crossing, a reveal, the film
+back), open its change strips (`take-<n>.change-<k>.jpg`): sixteen consecutive
+frames where the picture changes fastest. Two pictures showing through each other
+there is a crossfade the visitor sees as a fade, however short. A "check" note (a fast camera move) is not a defect: look
 at it at full size for smearing or a hidden cut. **Screening can't read lettering.**
 Look at every sign, patch, logo and number plate on the contact sheet and the
 flagged frames yourself: invented or garbled letters are a rejection the numbers
@@ -197,8 +220,9 @@ The form is `<verb> [world] <film> <take> "text"`: the film id, the take number,
 then the words in quotes. The world id can be left out only when `worlds/` holds a
 single world (`node world reject harbour-ferry 1 "…"`).
 
-Reject on sight: dissolves or fades, morphs, hard cuts, invented lettering, a real
-person's face changing, smeared bridge or tower struts, music nobody asked for, a
+Reject on sight: dissolves or fades, morphs, hard cuts, writing that is not real
+words, a loop or moment whose camera pushes in and back (`camera-moves`), an object
+that vanishes and comes back, a real person's face changing, smeared bridge or tower struts, music nobody asked for, a
 frozen tail, and a film that ignores what was clicked (the clicked thing must lead
 the film and do what its label says; a retake changes the route, never the cause).
 The last one is the fault people find most often by hand, so check it with a
@@ -234,7 +258,7 @@ moments can wait.
 ### 9. Narration, music and figures (optional)
 
 ```bash
-node world narrate     # a take per place, in the planned voice; the person listens on review
+node world narrate     # a take per place and per close look's line, in the planned voice; the person listens on review
 node world music       # MiniMax Music 3
 node world figures --cutouts   # collectibles only: look at each cut-out, then
 node world figures             # build the 3D figures the visitor turns over
@@ -273,8 +297,10 @@ judging anything along the way. The bar stays the same, and you are the first
 reviewer: nothing you could have caught should reach them.
 
 1. **Critique the plan before you spend.** Answer the payoff question for every
-   object, find any beat used twice, and check every crossing leaves through a way
-   out its start picture shows. Then read all the world's words in one pass, in
+   object (what the visitor learns, and the line that says it), find any beat used
+   twice, check every crossing leaves through a way out its start picture shows (or
+   is carried by something passing the lens: never a fade or a cut), and check every
+   loop's camera fits its place. Then read all the world's words in one pass, in
    story order (captions, labels, hints, narration, ending texts): every name and
    fact stays the same from first mention to last, the mystery or argument can be
    followed, and no line or phrase is said twice. Cut or rewrite what fails. A product, a home or a
@@ -287,12 +313,14 @@ reviewer: nothing you could have caught should reach them.
    happens (`little-happens`) and a room that rearranges itself. Rewrite the
    direction and retake, at most twice per film. A film that still fails is cut,
    and its object goes with it.
-4. **Check every outline and figure.** Each selection preview holds the named
-   object and only it; each figure's cut-out is the object alone, and you turn
+4. **Check every outline, close look and figure.** Read every piece of writing in
+   every still and close look; each selection preview holds the named object and
+   only it; each figure's cut-out is the object alone, and you turn
    every built figure over (front, sides, back, top) in the player.
 5. **Play the built world as a visitor** at desktop size and at phone size,
    upright and sideways: every label readable and beside its object, every film
-   plays and lands, every ending reachable, nothing said twice.
+   plays and lands, every close look holds and says its line over the place's
+   sound, every ending reachable, nothing said twice.
 6. **Hand over honestly.** The world stays a draft (`build --drafts`) until the
    person approves its films on `node world review`. Tell them what you rejected
    and why, what you cut, and what you could not fix, and give them the review
@@ -327,6 +355,6 @@ Run `sogni-agent --help`; its own SKILL.md covers these.
 
 Watch the example world before building, and read
 docs/case-study-the-long-white-cloud.md. Every place is quietly alive. Every click
-does something caused by the thing you clicked. Every journey passes through a
-door, a cloud, a waterfall or a lens instead of dissolving. The sound is rich and
+does something caused by the thing you clicked, and tells you something. Every
+journey passes through a door, a cloud, a waterfall or a lens instead of dissolving. The sound is rich and
 the music sits under it. And a person watched every film that shipped.

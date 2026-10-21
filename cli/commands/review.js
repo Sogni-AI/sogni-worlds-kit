@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { extname, join, relative, resolve, sep } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
-import { readPlan, filmsOf, placeById } from '../lib/plan.js';
+import { endPictures, filmsOf, pictureById, placeById, readPlan } from '../lib/plan.js';
 import { resolveWorldId } from '../lib/paths.js';
 import { addNote, addStillNote, listTakes, marksDir, normalBox, recordVerdict, readVerdicts, readNotes, readStillNotes, VERDICTS } from '../lib/takes.js';
 import { ffmpeg } from '../lib/media.js';
@@ -121,7 +121,7 @@ export async function applyMark(plan, paths, { sha, still, time, box, text }) {
   if (!words) return 'Say what you see in the area';
   mkdirSync(marksDir(paths), { recursive: true });
   if (still) {
-    const place = placeById(plan, still);
+    const place = pictureById(plan, still);
     if (!place?.still || !existsSync(join(paths.dir, place.still))) return 'That picture is not in this world';
     const n = (readStillNotes(paths)[place.id] ?? []).filter(note => note.box).length + 1;
     const image = await drawMark(join(paths.dir, place.still), null, area, join(marksDir(paths), `${place.id}-still-${n}.jpg`));
@@ -154,7 +154,7 @@ export function awaitingFilms(plan, paths) {
   const notes = readNotes(paths);
   const stillNotes = readStillNotes(paths);
   const media = path => `/media/${relative(paths.dir, path).split(sep).map(encodeURIComponent).join('/')}`;
-  const still = placeId => { const place = placeById(plan, placeId); return place?.still && existsSync(join(paths.dir, place.still)) ? media(join(paths.dir, place.still)) : null; };
+  const still = id => { const picture = pictureById(plan, id); return picture?.still && existsSync(join(paths.dir, picture.still)) ? media(join(paths.dir, picture.still)) : null; };
   const out = [];
   for (const film of filmsOf(plan)) {
     const takes = listTakes(paths, film.id, verdicts, notes);
@@ -163,8 +163,13 @@ export function awaitingFilms(plan, paths) {
     const approved = takes.filter(t => t.verdict?.verdict === 'approved').at(-1);
     const from = placeById(plan, film.from), to = placeById(plan, film.to);
     const object = from?.objects?.find(o => o.id === film.object);
-    const kindText = film.kind === 'crossing' ? `crossing from ${from?.title || film.from} to ${to?.title || film.to}`
-      : film.kind === 'moment' ? `moment at ${from?.title || film.from}` : `living photograph of ${from?.title || film.from}`;
+    const ends = endPictures(film);
+    const kindText = {
+      crossing: `crossing from ${from?.title || film.from} to ${to?.title || film.to}`,
+      moment: `moment at ${from?.title || film.from}`,
+      reveal: `into the close look at ${from?.title || film.from}`,
+      back: `from the close look back to ${from?.title || film.from}`,
+    }[film.kind] ?? `living photograph of ${from?.title || film.from}`;
     out.push({
       id: film.id,
       kind: film.kind,
@@ -172,11 +177,11 @@ export function awaitingFilms(plan, paths) {
       label: object?.label ?? (film.kind === 'loop' ? `${from?.title || film.from}, alive` : film.id),
       idea: film.idea ?? '',
       prompt: waiting.at(-1).journal.prompt ?? '',
-      fromStill: still(film.from),
-      toStill: still(film.to),
-      fromPlace: film.from,
-      toPlace: film.to,
-      stillNotes: { [film.from]: stillNotes[film.from] ?? [], ...(film.to ? { [film.to]: stillNotes[film.to] ?? [] } : {}) },
+      fromStill: still(ends.from),
+      toStill: still(ends.to),
+      fromPlace: ends.from,
+      toPlace: ends.to,
+      stillNotes: { [ends.from]: stillNotes[ends.from] ?? [], ...(ends.to ? { [ends.to]: stillNotes[ends.to] ?? [] } : {}) },
       ref: approved && existsSync(approved.files.video) ? { take: approved.take, url: media(approved.files.video) } : null,
       takes: waiting.map(t => ({
         take: t.take,

@@ -11,13 +11,20 @@ type FrameVideo = HTMLVideoElement & {
 
 /** Start the next lap this many seconds before the current one ends. */
 const LEAD = 2 / 24;
+/** How far the place's sound steps back under the narrator (about 8 dB), and how long the step takes. */
+const UNDER_VOICE = 0.4;
+const GLIDE_MS = 450;
 
 export class LoopDeck {
   readonly videos: [FrameVideo, FrameVideo];
   private current = 0;
   private running = false;
   private swapping = false;
+  private paused = false;
   private src = '';
+  private volume = 1;
+  private level = 1; // 1, or UNDER_VOICE while the narrator speaks
+  private glide = 0;
   /** Told whenever a different element becomes the visible one. */
   onShow?: (video: HTMLVideoElement) => void;
 
@@ -64,17 +71,47 @@ export class LoopDeck {
   stop() {
     this.running = false;
     this.swapping = false;
+    this.paused = false;
     for (const video of this.videos) {
       video.pause();
       video.classList.remove('on');
     }
   }
 
+  /** Hold the lap on screen where it is; resume() carries on from there. */
+  pause() {
+    if (!this.running) return;
+    this.paused = true;
+    for (const video of this.videos) video.pause();
+  }
+
+  resume() {
+    if (!this.running || !this.paused) return;
+    this.paused = false;
+    void playWithSound(this.videos[this.current]);
+  }
+
   setVolume(volume: number, muted: boolean) {
+    this.volume = volume;
     for (const video of this.videos) {
-      video.volume = volume;
+      video.volume = volume * this.level;
       video.muted = muted; // only ever true because the visitor turned sound off
     }
+  }
+
+  /** Step the place's sound back under the narrator, and forward again, over a moment so it never clicks. */
+  duck(on: boolean) {
+    const target = on ? UNDER_VOICE : 1;
+    if (target === this.level) return;
+    cancelAnimationFrame(this.glide);
+    const from = this.level, began = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, Math.max(0, (now - began) / GLIDE_MS));
+      this.level = from + (target - from) * t;
+      for (const video of this.videos) video.volume = Math.min(1, Math.max(0, this.volume * this.level));
+      if (t < 1) this.glide = requestAnimationFrame(step);
+    };
+    this.glide = requestAnimationFrame(step);
   }
 
   private show(index: number) {
@@ -102,7 +139,7 @@ export class LoopDeck {
 
   private check(ended = false) {
     const video = this.videos[this.current];
-    if (!this.running || this.swapping || !Number.isFinite(video.duration)) return;
+    if (!this.running || this.paused || this.swapping || !Number.isFinite(video.duration)) return;
     if (!ended && video.duration - video.currentTime > LEAD) return;
     this.swapping = true;
     const next = 1 - this.current;
@@ -110,7 +147,10 @@ export class LoopDeck {
     standby.currentTime = 0;
     void playWithSound(standby);
     void whenPainted(standby, 3000).then(() => {
-      if (this.running) this.show(next);
+      if (!this.running) return;
+      this.show(next);
+      // Paused while the next lap was starting: it holds on its first frame (the same picture).
+      if (this.paused) standby.pause();
     });
   }
 }

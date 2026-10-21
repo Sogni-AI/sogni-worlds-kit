@@ -13,7 +13,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const COMMANDS = [
   ['Set up', ['setup', 'doctor']],
   ['Plan', ['new', 'ingest', 'lint', 'plan', 'quote']],
-  ['Make', ['select', 'render', 'figures', 'narrate', 'music']],
+  ['Make', ['select', 'reveals', 'render', 'figures', 'narrate', 'music']],
   ['Judge', ['screen', 'audit-clicks', 'note', 'reject', 'review']],
   ['Finish', ['build', 'play', 'export', 'submit']],
   ['Where am I?', ['status', 'next']],

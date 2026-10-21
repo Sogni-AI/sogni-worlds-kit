@@ -107,28 +107,13 @@ export function validateWorld(world) {
     if (!isString(place.still)) issues.push(`${where}.still: required`);
     for (const key of ['chapter', 'caption']) if (place[key] !== undefined && typeof place[key] !== 'string') issues.push(`${where}.${key}: must be text`);
     if (place.loop !== undefined) film(place.loop, `${where}.loop`, issues, { nullable: true });
-    if (place.narration !== undefined && place.narration !== null) {
-      const narration = place.narration;
-      if (!isObject(narration)) issues.push(`${where}.narration: an object or null`);
-      else {
-        extra(narration, ['src', 'lines'], `${where}.narration`, issues);
-        if (narration.src !== undefined && !isString(narration.src)) issues.push(`${where}.narration.src: must be a path`);
-        if (!Array.isArray(narration.lines)) issues.push(`${where}.narration.lines: required`);
-        else for (const [i, line] of narration.lines.entries()) {
-          if (!isObject(line) || !isString(line.text)) { issues.push(`${where}.narration.lines[${i}]: needs text`); continue; }
-          extra(line, ['text', 'speaker', 'start', 'end'], `${where}.narration.lines[${i}]`, issues);
-          if ((line.start !== undefined || line.end !== undefined) && !(line.start >= 0 && line.end > line.start)) {
-            issues.push(`${where}.narration.lines[${i}]: end must come after start`);
-          }
-        }
-      }
-    }
+    if (place.narration !== undefined && place.narration !== null) narrationIssues(place.narration, `${where}.narration`, issues);
     if (!Array.isArray(place.hotspots)) { issues.push(`${where}.hotspots: required (may be empty)`); continue; }
     const hotspotIds = new Set();
     for (const [i, hotspot] of place.hotspots.entries()) {
       const at = `${where}.hotspots[${isObject(hotspot) && hotspot.id ? hotspot.id : i}]`;
       if (!isObject(hotspot)) { issues.push(`${at}: must be an object`); continue; }
-      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'details', 'film', 'rewind'], at, issues);
+      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'details', 'film', 'reveal', 'rewind'], at, issues);
       if (!isString(hotspot.id)) issues.push(`${at}.id: required`);
       else if (hotspotIds.has(hotspot.id)) issues.push(`${at}: id appears twice in this place`);
       hotspotIds.add(hotspot.id);
@@ -155,9 +140,38 @@ export function validateWorld(world) {
       // A collectible with a figure may have no film: it is picked up straight from the picture.
       if (hotspot.film !== undefined || !(hotspot.collect && hotspot.figure)) film(hotspot.film, `${at}.film`, issues);
       if (hotspot.rewind !== undefined) film(hotspot.rewind, `${at}.rewind`, issues, { nullable: true });
+      if (hotspot.reveal !== undefined && hotspot.reveal !== null) {
+        // The close look the film lands on, held while its line is said or its figure turned over, then the film back.
+        const reveal = hotspot.reveal;
+        if (!isObject(reveal)) issues.push(`${at}.reveal: { still, back, narration?, done? }`);
+        else {
+          extra(reveal, ['still', 'narration', 'done', 'back'], `${at}.reveal`, issues);
+          if (!isString(reveal.still)) issues.push(`${at}.reveal.still: required`);
+          film(reveal.back, `${at}.reveal.back`, issues);
+          if (reveal.done !== undefined && !isString(reveal.done)) issues.push(`${at}.reveal.done: must be text`);
+          if (reveal.narration !== undefined && reveal.narration !== null) narrationIssues(reveal.narration, `${at}.reveal.narration`, issues);
+          if (hotspot.to) issues.push(`${at}.reveal: a crossing leaves; only a moment holds on a close look`);
+          if (!hotspot.film) issues.push(`${at}.reveal: needs the film into it (film)`);
+        }
+      }
     }
   }
   return issues;
+}
+
+/** A narration: its audio (optional: without it the lines show at reading pace) and its timed lines. */
+function narrationIssues(narration, where, issues) {
+  if (!isObject(narration)) { issues.push(`${where}: an object or null`); return; }
+  extra(narration, ['src', 'lines'], where, issues);
+  if (narration.src !== undefined && !isString(narration.src)) issues.push(`${where}.src: must be a path`);
+  if (!Array.isArray(narration.lines)) issues.push(`${where}.lines: required`);
+  else for (const [i, line] of narration.lines.entries()) {
+    if (!isObject(line) || !isString(line.text)) { issues.push(`${where}.lines[${i}]: needs text`); continue; }
+    extra(line, ['text', 'speaker', 'start', 'end'], `${where}.lines[${i}]`, issues);
+    if ((line.start !== undefined || line.end !== undefined) && !(line.start >= 0 && line.end > line.start)) {
+      issues.push(`${where}.lines[${i}]: end must come after start`);
+    }
+  }
 }
 
 /** Every media path a world refers to (relative ones are files to ship with it). */
@@ -172,7 +186,10 @@ export function mediaRefs(world) {
     addFilm(place.loop);
     add(place.narration?.src);
     add(place.music?.src);
-    for (const hotspot of place.hotspots ?? []) { addFilm(hotspot.film); addFilm(hotspot.rewind); add(hotspot.figure?.model); add(hotspot.figure?.icon); }
+    for (const hotspot of place.hotspots ?? []) {
+      addFilm(hotspot.film); addFilm(hotspot.rewind); add(hotspot.figure?.model); add(hotspot.figure?.icon);
+      add(hotspot.reveal?.still); add(hotspot.reveal?.narration?.src); addFilm(hotspot.reveal?.back);
+    }
   }
   return [...refs];
 }

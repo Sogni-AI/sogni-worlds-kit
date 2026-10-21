@@ -52,7 +52,10 @@ class Player {
     this.narration = new Narration(root, world);
     this.music = new Music(world.music, world);
     this.stage.onStall = (stalled, loaded) => this.ui.slow(stalled ? { loaded, quality: this.stage.quality } : null);
-    this.narration.onSpeaking = speaking => this.music.duck(speaking || this.stage.playingFilm);
+    this.narration.onSpeaking = speaking => {
+      this.music.duck(speaking || this.stage.playingFilm);
+      this.stage.duckLoop(speaking);
+    };
     this.ui = new Ui(root, world, {
       next: () => { const spot = nextStop(this.place); if (spot) void this.go(spot); },
       back: () => void this.back(),
@@ -122,15 +125,27 @@ class Player {
     this.busy = true;
     const from = this.place;
     const landing = spot.to ? placeOf(this.world, spot.to) : from;
+    const figure = this.figures.find(f => f.key === `${from.id}/${spot.id}`);
     this.beforeFilm();
     if (spot.details) this.ui.showDetails(spot.details);
     else this.ui.hideDetails();
     let found = false;
     try {
-      if (spot.film) await this.stage.play(spot.film, landing);
-      this.played.add(`${from.id}/${spot.id}`);
-      if (spot.to) this.history.push({ from: from.id, spot });
-      if (spot.collect) found = this.collect(from, spot);
+      if (spot.film && spot.reveal) {
+        // Picked up: the film lands on the close look and holds there while its line is said and its
+        // figure is turned over; only when the visitor is done does the film back put it down.
+        await this.stage.playToHold(spot.film, spot.reveal.still);
+        this.played.add(`${from.id}/${spot.id}`);
+        if (spot.collect) found = this.collect(from, spot);
+        await this.lookClosely(spot, figure);
+        this.ui.filmPlaying(true); // Skip is offered again for the film back
+        await this.stage.play(spot.reveal.back, from);
+      } else {
+        if (spot.film) await this.stage.play(spot.film, landing);
+        this.played.add(`${from.id}/${spot.id}`);
+        if (spot.to) this.history.push({ from: from.id, spot });
+        if (spot.collect) found = this.collect(from, spot);
+      }
     } catch (error) {
       console.error('The film could not play', error);
       await this.stage.show(landing);
@@ -140,18 +155,41 @@ class Player {
     // A card belongs to the place its object is in.
     if (spot.to) this.ui.hideDetails();
     await this.arrive(landing, spot.to ? NARRATION_MS : null, false);
-    // A figure is picked up and turned over first; the collection card waits until it is put down.
+    // Without a close look, a figure is picked up and turned over after its film, over the place held still.
     // A figure that is not a collectible (an object to look at from every side) is only turned over.
-    const figure = this.figures.find(f => f.key === `${from.id}/${spot.id}`);
-    if (figure) {
+    if (figure && !spot.reveal) await this.turnOver(figure);
+    // The collection card waits until the figure is put down.
+    if (figure && found) foundCard(this.root, figure, this.collection.size, this.collectibles, () => this.showCollection());
+  }
+
+  /**
+   * Held on a close look: the narrator says its line (the clue, the name, what
+   * it means) while the visitor looks, or turns the figure over; then they put
+   * it down. The narration stops when they do.
+   */
+  private async lookClosely(spot: Hotspot, figure: Figure | undefined) {
+    const reveal = spot.reveal!;
+    this.ui.holding();
+    const speaking = this.narration.say(reveal.narration, NARRATION_MS);
+    if (figure) await inspect(this.root, figure, { done: reveal.done ?? 'Put it down', overStill: true });
+    else await this.ui.waitForDone(reveal.done ?? 'Continue');
+    this.narration.stop();
+    await speaking;
+  }
+
+  /** A figure turned over in front of the place: the place holds still behind it. */
+  private async turnOver(figure: Figure) {
+    this.stage.freeze(true);
+    try {
       await inspect(this.root, figure);
-      if (found) foundCard(this.root, figure, this.collection.size, this.collectibles, () => this.showCollection());
+    } finally {
+      this.stage.freeze(false);
     }
   }
 
   private showCollection() {
     const collectibles = this.figures.filter(figure => figure.spot.collect);
-    this.ui.showCollection(collectionCard(collectibles, this.collection, figure => void inspect(this.root, figure)));
+    this.ui.showCollection(collectionCard(collectibles, this.collection, figure => void this.turnOver(figure)));
   }
 
   /** Back the way you came: the crossing played in reverse when there is one. */

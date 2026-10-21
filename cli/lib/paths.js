@@ -17,6 +17,7 @@ export function worldPaths(id) {
     photos: join(dir, 'photos'),         // your originals, never modified
     stills: join(dir, 'stills'),         // canonical stills made once by `ingest`, immutable
     keyframes: join(dir, 'keyframes'),   // optional extra stills pinned inside a film
+    reveals: join(dir, 'reveals'),       // the close look an object's film lands on, painted from its place's still
     voices: join(dir, 'voices'),         // optional voice recordings you own, for cloning
     music: join(dir, 'music'),           // optional music you own
     selections: join(dir, 'selections'), // SAM 3 masks and traced outlines
@@ -82,3 +83,5 @@ export function worldFile(paths, relativePath, what = 'a file') {
 /** The id of a film, derived from where it starts and what causes it. */
 export const filmId = (placeId, objectId) => `${placeId}-${objectId}`;
 export const loopId = placeId => `${placeId}-loop`;
+/** The film that leaves a reveal and lands back on the place. */
+export const backId = (placeId, objectId) => `${placeId}-${objectId}-back`;

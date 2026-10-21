@@ -3,9 +3,12 @@
 // carry you between places.
 //
 // Layers inside the frame, bottom to top: the still (a fallback and the poster),
-// the two loop elements, the film. A place is shown with video frames whenever
-// it has a loop, because a JPEG and a video decode to slightly different colours
-// and the films start and end on video frames.
+// the two loop elements, the two film elements. A place is shown with video
+// frames whenever it has a loop, because a JPEG and a video decode to slightly
+// different colours and the films start and end on video frames. Films take
+// turns on two elements for the same reason: a close look is held on its
+// film's last frame, and the film back from it replaces that frame only once
+// its own first frame (the same picture) is on screen.
 import { LoopDeck } from './loop-deck';
 import { bufferedFraction, playWithSound, setSource, watchStall, whenEnded, whenPainted } from './media';
 import { localOrRemote } from './video-cache';
@@ -16,7 +19,8 @@ export class Stage {
   readonly overlay: HTMLElement;
   private readonly still: HTMLImageElement;
   private readonly deck: LoopDeck;
-  private readonly film: HTMLVideoElement;
+  private readonly films: [HTMLVideoElement, HTMLVideoElement];
+  private filmIndex = 0;
   private readonly backdropVideo: HTMLVideoElement;
   private readonly backdropStill: HTMLImageElement;
   private following: HTMLVideoElement | null = null;
@@ -51,10 +55,14 @@ export class Stage {
     this.frame.append(this.still);
     this.deck = new LoopDeck(this.frame);
     this.deck.onShow = video => this.follow(video);
-    this.film = el('video', 'layer film') as HTMLVideoElement;
-    this.film.playsInline = true;
-    this.film.preload = 'auto';
-    this.frame.append(this.film);
+    const film = () => {
+      const video = el('video', 'layer film') as HTMLVideoElement;
+      video.playsInline = true;
+      video.preload = 'auto';
+      this.frame.append(video);
+      return video;
+    };
+    this.films = [film(), film()];
     this.overlay = el('div', 'overlay');
     this.frame.append(this.overlay);
 
@@ -62,9 +70,14 @@ export class Stage {
     setInterval(() => this.sync(), 500);
   }
 
+  /** The film element in use: the one playing, or holding a close look. */
+  private get film(): HTMLVideoElement {
+    return this.films[this.filmIndex];
+  }
+
   /** Every media element the stage plays, for the Begin tap to unlock. */
   get mediaElements(): HTMLMediaElement[] {
-    return [...this.deck.videos, this.film, this.backdropVideo];
+    return [...this.deck.videos, ...this.films, this.backdropVideo];
   }
 
   /** Show a place at once: its still, then its living loop from the first frame. */
@@ -84,36 +97,76 @@ export class Stage {
    * loop is a straight cut between identical frames.
    */
   async play(film: Film, landing: Place) {
-    this.playing = film;
-    setSource(this.film, localOrRemote(pick(film, this.quality)));
-    this.film.currentTime = 0;
-    this.applyVolume();
-    // A slow connection never skips the film: the place stays on screen until
-    // the first frame has arrived, the visitor is told while it is starved, and
-    // it plays through. Skip stays theirs to press.
-    const report = (value: boolean) => { this.film.classList.toggle('stalled', value); this.onStall?.(value, bufferedFraction(this.film)); };
-    const stop = watchStall(this.film, report);
-    const loaded = () => { if (this.film.classList.contains('stalled')) this.onStall?.(true, bufferedFraction(this.film)); };
-    this.film.addEventListener('progress', loaded);
-    void playWithSound(this.film);
-    await whenPainted(this.film, Infinity);
-    this.film.classList.add('on');
-    this.deck.stop();
-    this.follow(this.film);
     // Get the landing ready while the film plays (in the quality it ends in).
     const landingLoop = () => (landing.loop ? localOrRemote(pick(landing.loop, this.quality)) : null);
-    if (landingLoop()) this.deck.load(landingLoop()!);
-    await this.untilEnded();
-    stop();
-    this.film.removeEventListener('progress', loaded);
-    this.film.classList.remove('stalled');
-    this.onStall?.(false, null);
-    this.playing = null;
+    await this.roll(film, () => { if (landingLoop()) this.deck.load(landingLoop()!); });
     this.setStill(landing);
     const loopSrc = landingLoop();
     if (loopSrc) await this.deck.start(loopSrc);
     else this.follow(null);
     this.hideFilm();
+  }
+
+  /**
+   * Play a film into a close look and stay there: its last frame (the reveal
+   * still) holds on screen, still, until the next film replaces it. Nothing
+   * moves behind a figure being turned over or a line being said.
+   */
+  async playToHold(film: Film, still: string) {
+    await this.roll(film);
+    this.setStill({ still });
+    this.follow(this.film);
+  }
+
+  /**
+   * Run one film on the film element not in use, and make it the one on screen
+   * once its first frame is painted (the place, or the held close look, stays
+   * until then). Resolves on its last frame, which stays on screen.
+   */
+  private async roll(film: Film, whilePlaying?: () => void) {
+    const previous = this.film;
+    this.filmIndex = 1 - this.filmIndex;
+    const video = this.film;
+    this.playing = film;
+    setSource(video, localOrRemote(pick(film, this.quality)));
+    video.currentTime = 0;
+    this.applyVolume();
+    // A slow connection never skips the film: the place stays on screen until
+    // the first frame has arrived, the visitor is told while it is starved, and
+    // it plays through. Skip stays theirs to press.
+    const report = (value: boolean) => { video.classList.toggle('stalled', value); this.onStall?.(value, bufferedFraction(video)); };
+    const stop = watchStall(video, report);
+    const loaded = () => { if (video.classList.contains('stalled')) this.onStall?.(true, bufferedFraction(video)); };
+    video.addEventListener('progress', loaded);
+    void playWithSound(video);
+    await whenPainted(video, Infinity);
+    video.classList.add('on');
+    previous.classList.remove('on');
+    previous.pause();
+    this.deck.stop();
+    this.follow(video);
+    whilePlaying?.();
+    await this.untilEnded();
+    stop();
+    video.removeEventListener('progress', loaded);
+    video.classList.remove('stalled');
+    this.onStall?.(false, null);
+    this.playing = null;
+  }
+
+  /**
+   * Hold the place still (and its sound with it) while something covers it, a
+   * figure being turned over: a living picture moving behind a dialog reads as
+   * chaos. `false` lets it live again from where it stopped.
+   */
+  freeze(on: boolean) {
+    if (on) this.deck.pause();
+    else this.deck.resume();
+  }
+
+  /** The place's own sound steps back while the narrator speaks (where the browser lets a page set a volume). */
+  duckLoop(on: boolean) {
+    this.deck.duck(on);
   }
 
   /**
@@ -141,8 +194,9 @@ export class Stage {
     }
   }
 
+  /** A film is running (not a close look held on its last frame). */
   get playingFilm() {
-    return this.film.classList.contains('on');
+    return this.playing !== null;
   }
 
   /**
@@ -169,19 +223,23 @@ export class Stage {
   }
 
   private applyVolume() {
-    this.film.volume = this.volume;
-    this.film.muted = this.muted; // only true when the visitor turned sound off
+    for (const video of this.films) {
+      video.volume = this.volume;
+      video.muted = this.muted; // only true when the visitor turned sound off
+    }
     this.deck.setVolume(this.volume, this.muted);
   }
 
-  private setStill(place: Place) {
+  private setStill(place: { still: string }) {
     if (this.still.getAttribute('src') !== place.still) this.still.src = place.still;
     if (this.backdropStill.getAttribute('src') !== place.still) this.backdropStill.src = place.still;
   }
 
   private hideFilm() {
-    this.film.classList.remove('on');
-    this.film.pause();
+    for (const video of this.films) {
+      video.classList.remove('on');
+      video.pause();
+    }
   }
 
   /** The backdrop plays whatever the frame plays, a little behind it at most. */

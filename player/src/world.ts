@@ -21,10 +21,14 @@ export type Hotspot = {
   details?: Details | null;
   /** Absent only on a collectible with a figure, which is picked up straight from the picture. */
   film?: Film;
+  /** The close look the film lands on: held while its line is said or its figure turned over, then `back` returns to the place. */
+  reveal?: Reveal | null;
   rewind?: Film | null;
 };
 export type Details = { title?: string; text: string; facts?: [string, string][] };
 export type Line = { text: string; speaker?: string; start?: number; end?: number };
+export type Spoken = { src?: string; lines: Line[] };
+export type Reveal = { still: string; narration?: Spoken | null; done?: string; back: Film };
 export type Place = {
   id: string;
   title: string;
@@ -32,7 +36,7 @@ export type Place = {
   caption?: string;
   still: string;
   loop?: Film | null;
-  narration?: { src?: string; lines: Line[] } | null;
+  narration?: Spoken | null;
   /** Arriving here ends the story: a death (rewind to choose again) or an ending. */
   ending?: { kind: 'death' | 'end'; title: string; text?: string } | null;
   /** The track under this place, in place of the world's while you are here; null for silence here. */
@@ -87,6 +91,11 @@ export async function loadWorld(url: string): Promise<World> {
       if (spot.film) spot.film = film(spot.film);
       else if (!(spot.collect && spot.figure)) throw new Error(`${place.id}/${spot.id} has no film.`);
       if (spot.rewind) spot.rewind = film(spot.rewind);
+      if (spot.reveal) {
+        if (!spot.film) throw new Error(`${place.id}/${spot.id} has a close look but no film into it.`);
+        spot.reveal = { ...spot.reveal, still: at(spot.reveal.still), back: film(spot.reveal.back),
+          ...(spot.reveal.narration?.src ? { narration: { ...spot.reveal.narration, src: at(spot.reveal.narration.src) } } : {}) };
+      }
       if (spot.figure) spot.figure = { ...spot.figure, model: at(spot.figure.model), ...(spot.figure.icon ? { icon: at(spot.figure.icon) } : {}) };
     }
   }

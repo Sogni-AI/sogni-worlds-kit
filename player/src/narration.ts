@@ -1,8 +1,9 @@
 // A place tells itself as you arrive: its audio, one subtitle line at a time,
 // each line timed by its start and end. Without audio (or with sound off) the
-// lines show at reading pace. A film starting ends the narration.
+// lines show at reading pace. A film starting ends the narration. A close look
+// is told the same way, by the same voice, while the world holds on it.
 import { el } from './stage';
-import type { Line, Place, World } from './world';
+import type { Line, Place, Spoken, World } from './world';
 
 export class Narration {
   private readonly box: HTMLElement;
@@ -16,6 +17,8 @@ export class Narration {
   private speaking = false;
   /** Told when speaking starts and stops, so the music can step back. */
   onSpeaking?: (speaking: boolean) => void;
+  /** Resolves the say() in progress. */
+  private finished?: () => void;
 
   constructor(parent: HTMLElement, private readonly world: World) {
     this.box = el('div', 'subtitle');
@@ -32,10 +35,15 @@ export class Narration {
   }
 
   start(place: Place, delayMs: number) {
+    void this.say(place.narration, delayMs);
+  }
+
+  /** Speak these lines after `delayMs`; resolves when they have been said, or are stopped. */
+  say(narration: Spoken | null | undefined, delayMs = 0): Promise<void> {
     this.stop();
-    const narration = place.narration;
-    if (!narration?.lines.length) return;
+    if (!narration?.lines.length) return Promise.resolve();
     this.lines = narration.lines;
+    const done = new Promise<void>(resolve => { this.finished = resolve; });
     this.timers.push(setTimeout(() => {
       if (narration.src && !this.muted) {
         this.audio.src = narration.src;
@@ -45,6 +53,7 @@ export class Narration {
         this.audio.play().catch(() => this.readAloud());
       } else this.readAloud();
     }, delayMs));
+    return done;
   }
 
   stop() {
@@ -55,6 +64,9 @@ export class Narration {
     this.shown = -1;
     this.box.hidden = true;
     this.onSpeaking?.(false);
+    const finished = this.finished;
+    this.finished = undefined;
+    finished?.();
   }
 
   setSound(volume: number, muted: boolean) {

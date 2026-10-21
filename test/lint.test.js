@@ -42,8 +42,13 @@ test('bridge and tower routes are errors unless the structure is passed far off;
   assert.ok(rules(lintDirection({ ...good, allow: ['no-such-rule'] })).includes('allow'));
 });
 
-test('a loop must keep a static camera; frames must be on the grid', () => {
-  assert.ok(rules(lintDirection({ ...good, kind: 'loop' })).includes('static'));
+test('the camera of a loop or moment is a choice the kit knows; a crossing has none; frames must be on the grid', () => {
+  // The kit writes the camera sentence itself, so a loop's direction no longer has to say "static".
+  assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop' })), []);
+  for (const camera of ['locked', 'handheld', 'sway']) assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera })), [], camera);
+  assert.ok(rules(lintDirection({ ...good, kind: 'moment', camera: 'dolly' })).includes('camera'));
+  assert.ok(rules(lintDirection({ ...good, camera: 'locked' })).includes('camera'), 'a crossing moves as its direction says');
+  assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', allow: ['static'] })), [], 'an old plan that allowed the retired rule still lints');
   assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
 });
 
@@ -141,4 +146,28 @@ test('a crossing between two stills of one view is warned about; one between pla
   const findings = await lintViews(plan, { dir });
   assert.deepEqual(findings.map(f => f.where), ['films.day-blind']);
   assert.equal(findings[0].level, 'warn');
+});
+
+test('a reveal: only on a moment, painted or described, with a film back; a close look says or shows something', () => {
+  const base = {
+    id: 'w', title: 'W', canvas: '1344x768', order: 'free', voices: { narrator: { design: 'a low voice' } },
+    places: [{ id: 'office', still: 'stills/office.jpg', title: 'Office', seen: 'An office.', narration: { voice: 'narrator', lines: ['Rain.'] }, objects: [] }],
+  };
+  const film = { frames: 141, action: good.action, sound: good.sound };
+  const withObject = object => ({ ...base, places: [{ ...base.places[0], objects: [{ id: 'glove', label: 'Turn the glove over', at: [0.5, 0.8], film, ...object }] }] });
+  const findings = plan => lintPlan(plan, { dir: '/nowhere' }, { checkFiles: false });
+  const at = (list, level) => list.filter(f => f.level === level && f.where.includes('reveal')).map(f => f.message);
+
+  const ok = findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', seen: 'A hand holds the glove palm up; blood on the palm.', line: 'Blood on the palm.', back: film } }));
+  assert.deepEqual(at(ok, 'error'), []);
+  assert.deepEqual(at(ok, 'warn'), []);
+  assert.ok(findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', line: 'x', back: film } })).some(f => f.where.includes('reveal') && /write `seen`/.test(f.message)));
+  assert.ok(at(findings(withObject({ reveal: { paint: 'A hand turns the glove over.', line: 'x', back: film } })), 'warn').some(m => /not painted yet/.test(m)));
+  assert.ok(at(findings(withObject({ reveal: { line: 'x', back: film } })), 'error').some(m => /paint/.test(m)));
+  assert.ok(at(findings(withObject({ reveal: { still: 'reveals/office-glove.jpg', seen: 's', line: 'x' } })), 'error').some(m => /needs `back`/.test(m)));
+  assert.ok(at(findings(withObject({ goes: 'office', reveal: { still: 'r.jpg', seen: 's', back: film } })), 'error').some(m => /only a moment/.test(m)));
+  assert.ok(at(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', back: film } })), 'warn').some(m => /give it a `line`/.test(m)), 'a silent close look is a warning');
+  assert.ok(at(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', back: film, line: 'x', voice: 'stranger' } })), 'error').some(m => /not defined/.test(m)));
+  // The film back is linted like every film.
+  assert.ok(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', line: 'x', back: { ...film, frames: 200 } } })).some(f => f.where === 'films.office-glove-back.frames'));
 });

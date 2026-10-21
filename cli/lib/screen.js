@@ -10,7 +10,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { FFMPEG, run, probe } from './media.js';
-import { FPS } from './h3.js';
+import { FPS, ON_ONE_STILL } from './h3.js';
 
 export const W = 96;
 /** Below this whole-film reach (mean grey change from the first frame, 0–255) a loop barely moves. */
@@ -209,10 +209,10 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
       if (changing >= 3 && blended >= 6) blends.push({ from: a, to: a + span });
     }
   }
-  // Two-picture blend (crossings): middle frames that are a mix of the first and
+  // Two-picture blend (crossings, and a reveal and the film back from it): middle frames that are a mix of the first and
   // last stills, the mix sliding from one to the other.
   const stillBlend = [];
-  if (kind === 'crossing' && from && to && mad(from, to) > 12) {
+  if (!ON_ONE_STILL.has(kind) && from && to && mad(from, to) > 12) {
     let run = [];
     for (let i = Math.floor(n * 0.1); i < Math.ceil(n * 0.9); i++) {
       const f = frames[i];
@@ -275,7 +275,7 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
   const seam = [...dl.slice(0, edge).map((d, i) => [d, i + 1]), ...dl.slice(-edge).map((d, i) => [d, dl.length - edge + i + 1])];
   const [worst, at] = seam.reduce((best, x) => (x[0] > best[0] ? x : best), [0, 0]);
   metrics.seamBrightnessJump = +worst.toFixed(2);
-  if (kind !== 'crossing' && worst > Math.max(3, 5 * typical)) {
+  if (ON_ONE_STILL.has(kind) && worst > Math.max(3, 5 * typical)) {
     flags.push({ code: 'seam-flash', severity: 'warn', frame: at, at: time(at),
       message: `Brightness jumps by ${worst.toFixed(1)} at frame ${at}, near the loop's seam: it will flicker every time it loops` });
   }
@@ -294,6 +294,129 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
       message: `The last frame matches its still at ${c.toFixed(2)} (expect > 0.9)` });
   }
   return { flags, metrics };
+}
+
+/**
+ * How far a film that starts and ends on one still may zoom (a fraction of its
+ * size) and slide (a fraction of the frame), for longer than a moment, by the
+ * camera its plan chose. A zoom is never right there: whatever pushes in has
+ * to pull back out to land, and that yo-yo is what gets such a film rejected.
+ * Measured on real takes: the push-ins people rejected held 8–26% for 2 s or
+ * more; 22 approved loops never held more than 3% past a single sample.
+ */
+export const CAMERA_LIMITS = Object.freeze({ locked: { zoom: 0.04, shift: 0.03 }, handheld: { zoom: 0.04, shift: 0.06 }, sway: { zoom: 0.04, shift: 0.08 } });
+/** Frames between camera samples, and how many samples in a row make a move rather than a wobble (1 s). */
+const CAMERA_STEP = 6, CAMERA_HOLD = 4;
+
+const edgesOf = (frame, width, height) => {
+  const out = new Float32Array(width * height);
+  for (let y = 1; y < height - 1; y++) for (let x = 1; x < width - 1; x++) {
+    const i = y * width + x;
+    out[i] = Math.hypot(frame[i + 1] - frame[i - 1], frame[i + width] - frame[i - width]);
+  }
+  return out;
+};
+
+/** Correlation of `b` with `a` zoomed by `s` about the centre and slid by (dx, dy) pixels, over the middle of the frame. */
+function warpedCorrelation(a, b, width, height, s, dx, dy) {
+  const cx = (width - 1) / 2, cy = (height - 1) / 2;
+  const x0 = Math.floor(width * 0.15), x1 = Math.ceil(width * 0.85), y0 = Math.floor(height * 0.15), y1 = Math.ceil(height * 0.85);
+  let n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+  for (let y = y0; y < y1; y++) {
+    const sy = (y - cy - dy) / s + cy, iy = Math.floor(sy), fy = sy - iy;
+    if (iy < 0 || iy >= height - 1) continue;
+    for (let x = x0; x < x1; x++) {
+      const sx = (x - cx - dx) / s + cx, ix = Math.floor(sx), fx = sx - ix;
+      if (ix < 0 || ix >= width - 1) continue;
+      const i = iy * width + ix;
+      const p = (a[i] * (1 - fx) + a[i + 1] * fx) * (1 - fy) + (a[i + width] * (1 - fx) + a[i + width + 1] * fx) * fy;
+      const q = b[y * width + x];
+      n++; sa += p; sb += q; saa += p * p; sbb += q * q; sab += p * q;
+    }
+  }
+  const va = saa - sa * sa / n, vb = sbb - sb * sb / n;
+  return va > 0 && vb > 0 ? (sab - sa * sb / n) / Math.sqrt(va * vb) : -1;
+}
+
+function bestWarp(a, b, width, height, scales, xs, ys) {
+  let best = { r: -2, s: 1, dx: 0, dy: 0 };
+  for (const s of scales) for (const dx of xs) for (const dy of ys) {
+    const r = warpedCorrelation(a, b, width, height, s, dx, dy);
+    if (r > best.r) best = { r, s, dx, dy };
+  }
+  return best;
+}
+const steps = (from, to, by) => Array.from({ length: Math.round((to - from) / by) + 1 }, (_, i) => +(from + i * by).toFixed(4));
+
+/**
+ * Where the camera is through the film: every quarter second, the zoom and
+ * slide that best map the first frame's edges onto that frame's (edges, so a
+ * lamp coming up or fog rolling in does not read as a move). Coarse on the
+ * small frames, refined on the large ones. `small` is W×H, `large` 2W×2H.
+ */
+export function cameraPath(small, large) {
+  const [w, h] = [W, H], [W2, H2] = [W * 2, H * 2];
+  const s0 = edgesOf(small[0], w, h), l0 = edgesOf(large[0], W2, H2);
+  const path = [];
+  for (let t = CAMERA_STEP; t < Math.min(small.length, large.length) - 2; t += CAMERA_STEP) {
+    const coarse = bestWarp(s0, edgesOf(small[t], w, h), w, h, steps(0.84, 1.24, 0.02), steps(-6, 6, 1), steps(-6, 6, 1));
+    const fine = bestWarp(l0, edgesOf(large[t], W2, H2), W2, H2, steps(coarse.s - 0.02, coarse.s + 0.02, 0.005),
+      steps(2 * coarse.dx - 2, 2 * coarse.dx + 2, 1), steps(2 * coarse.dy - 2, 2 * coarse.dy + 2, 1));
+    path.push({ frame: t, zoom: +(fine.s - 1).toFixed(3), shift: +Math.hypot(fine.dx / W2, fine.dy / H2).toFixed(3) });
+  }
+  return path;
+}
+
+/**
+ * A loop or a moment whose camera moves when its plan chose a locked one (or
+ * pushes in at all): a move must last a second to count, so a wobble at one
+ * sample is not one. Returns flags and the largest zoom and slide held.
+ */
+export function cameraMoves(path, camera = 'locked') {
+  const limit = CAMERA_LIMITS[camera] ?? CAMERA_LIMITS.locked;
+  // The longest run of samples in a row that pass the test.
+  const held = test => {
+    let longest = [], current = [];
+    for (const sample of path) {
+      current = test(sample) ? [...current, sample] : [];
+      if (current.length > longest.length) longest = current;
+    }
+    return longest;
+  };
+  const zoomRun = held(p => Math.abs(p.zoom) >= limit.zoom);
+  const shiftRun = held(p => p.shift >= limit.shift);
+  const metrics = { cameraZoom: Math.max(0, ...path.map(p => Math.abs(p.zoom))), cameraShift: Math.max(0, ...path.map(p => p.shift)) };
+  const flags = [];
+  if (zoomRun.length >= CAMERA_HOLD) {
+    const peak = zoomRun.reduce((a, b) => (Math.abs(b.zoom) > Math.abs(a.zoom) ? b : a));
+    const word = peak.zoom > 0 ? 'pushes in' : 'pulls back';
+    flags.push({ code: 'camera-moves', severity: 'warn', frame: peak.frame, at: time(peak.frame),
+      message: `The camera ${word} ${Math.round(Math.abs(peak.zoom) * 100)}% from ${time(zoomRun[0].frame)} s to ${time(zoomRun.at(-1).frame)} s, then has to return to land on the same still: the dolly yo-yo that gets a ${camera} film rejected. Reject it; a retake keeps the camera where it is (docs/directing-films.md › Loops)` });
+  }
+  if (shiftRun.length >= CAMERA_HOLD) {
+    const peak = shiftRun.reduce((a, b) => (b.shift > a.shift ? b : a));
+    flags.push({ code: 'camera-moves', severity: 'warn', frame: peak.frame, at: time(peak.frame),
+      message: `The frame slides ${Math.round(peak.shift * 100)}% from ${time(shiftRun[0].frame)} s to ${time(shiftRun.at(-1).frame)} s and back, more than a ${camera} camera does: look at it, and reject it if the camera pans or drifts away and returns` });
+  }
+  return { flags, metrics };
+}
+
+/**
+ * The stretches where the picture changes fastest (the structure of the frame
+ * four frames before against four frames after), at least a second apart. A
+ * dissolve, a fade or a hidden cut sits in one of these, often shorter than
+ * the gap between contact-sheet frames: the screen shows them frame by frame.
+ */
+export function changeStretches(frames, count = 2) {
+  const thumbs = frames.map(thumb);
+  const score = frames.map((_, i) => (i < 4 || i + 4 >= frames.length ? -1 : 1 - correlation(thumbs[i - 4], thumbs[i + 4])));
+  const picked = [];
+  const order = score.map((value, frame) => ({ value, frame })).filter(x => x.value > 0.25).sort((a, b) => b.value - a.value);
+  for (const candidate of order) {
+    if (picked.length >= count) break;
+    if (picked.every(p => Math.abs(p.frame - candidate.frame) >= FPS)) picked.push(candidate);
+  }
+  return picked.sort((a, b) => a.frame - b.frame).map(p => ({ frame: p.frame, at: time(p.frame), change: +p.value.toFixed(2) }));
 }
 
 function mergeRanges(ranges) {
@@ -331,11 +454,12 @@ export function stderrOf(command, args) {
   });
 }
 
-/** A 4×2 contact sheet of 8 frames with their times (spread over the take, or the frames given), for looking at a take quickly. */
+/** A contact sheet with each frame's time: 8 frames, 4×2, spread over the take or the frames given (up to 16, 4×4, for a stretch shown frame by frame). */
 export async function contactSheet(video, out, { frames, tileWidth = 480, at = null } = {}) {
   const info = await probe(video);
   const count = frames ?? info.frames;
-  const picks = (at ?? Array.from({ length: 8 }, (_, i) => Math.round(i * (count - 1) / 7))).slice(0, 8).map(frame => Math.min(count - 1, Math.max(0, frame)));
+  const picks = (at ?? Array.from({ length: 8 }, (_, i) => Math.round(i * (count - 1) / 7))).slice(0, 16).map(frame => Math.min(count - 1, Math.max(0, frame)));
+  const rows = Math.ceil(picks.length / 4);
   const tileHeight = Math.round(tileWidth * info.height / Math.max(1, info.width) / 2) * 2;
   const images = await Promise.all(picks.map(frame => frameImage(video, frame, tileWidth, tileHeight)));
   const label = (text) => Buffer.from(`<svg width="${tileWidth}" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="black" fill-opacity="0.6"/><text x="8" y="20" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="white">${text}</text></svg>`);
@@ -346,10 +470,10 @@ export async function contactSheet(video, out, { frames, tileWidth = 480, at = n
     composite.push({ input: label(`${time(picks[i]).toFixed(2)} s · frame ${picks[i]}`), left, top });
   });
   try {
-    await sharp({ create: { width: tileWidth * 4, height: tileHeight * 2, channels: 3, background: '#000' } }).composite(composite).jpeg({ quality: 85 }).toFile(out);
+    await sharp({ create: { width: tileWidth * 4, height: tileHeight * rows, channels: 3, background: '#000' } }).composite(composite).jpeg({ quality: 85 }).toFile(out);
   } catch {
     // Text needs a font; without one, the sheet still shows the frames.
-    await sharp({ create: { width: tileWidth * 4, height: tileHeight * 2, channels: 3, background: '#000' } })
+    await sharp({ create: { width: tileWidth * 4, height: tileHeight * rows, channels: 3, background: '#000' } })
       .composite(composite.filter((_, i) => i % 2 === 0)).jpeg({ quality: 85 }).toFile(out);
   }
   return picks;
@@ -384,12 +508,19 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
   const to = toStill ? await greyStill(toStill) : null;
   const motion = analyseFrames(frames, { kind: journal.kind, from, to });
   flags.push(...motion.flags);
+  // A film on one still: does its camera stay where its plan put it? (Takes from before the
+  // kit recorded a camera were asked for a static one.)
+  if (ON_ONE_STILL.has(journal.kind)) {
+    const camera = cameraMoves(cameraPath(frames, await greyFrames(video, W * 2, H * 2)), journal.camera ?? 'locked');
+    flags.push(...camera.flags);
+    Object.assign(motion.metrics, camera.metrics, { camera: journal.camera ?? 'locked' });
+  } else motion.metrics.changes = changeStretches(frames);
 
   const audio = info.audioChannels ? await loudness(video) : { lufs: null, truePeak: null };
   if (info.audioChannels && (audio.lufs === null || audio.lufs < -50)) {
     flags.push({ code: 'silent', severity: 'error', message: `The sound track is silent (${audio.lufs} LUFS)` });
   } else if (audio.lufs !== null && audio.lufs < QUIET_LUFS) {
-    flags.push({ code: 'quiet', severity: 'warn', message: `Very quiet (${audio.lufs} LUFS; a world's films sit near −14 after build): listen for whether the sound is really there, or the direction's sound needs more to happen` });
+    flags.push({ code: 'quiet', severity: 'warn', message: `Very quiet (${audio.lufs} LUFS; after build a world's films sit near −16 and its loops near −24): listen for whether the sound is really there, or the direction's sound needs more to happen` });
   } else if (audio.lufs !== null && audio.lufs > -9) {
     flags.push({ code: 'loud', severity: 'warn', message: `Very loud (${audio.lufs} LUFS); build levels it, but listen for distortion` });
   }

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { filmsOf, placeById, readPlan } from '../lib/plan.js';
-import { assemblePrompt, canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, secondsOf, STEPS } from '../lib/h3.js';
+import { assemblePrompt, canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS } from '../lib/h3.js';
 import { lintPlan } from '../lib/lint.js';
 import { filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
 import { canaryFilms, canaryGate, canaryStatus } from '../lib/canary.js';
@@ -73,11 +73,10 @@ export function filmsToRender(plan, paths, { only = [], canary = false } = {}) {
 /** Everything sent for one new take, except the image bytes. */
 export function takeSpec(plan, paths, film, take, { seed } = {}) {
   const canvas = canvasOf(plan);
-  const from = placeById(plan, film.from);
-  const to = placeById(plan, film.to);
+  // A film's own stills: a place's, or (for an object's reveal and the film back from it) its reveal still.
   const refs = [
-    { role: 'first', path: from.still },
-    { role: 'last', path: to.still },
+    { role: 'first', path: film.first ?? placeById(plan, film.from)?.still },
+    { role: 'last', path: film.last ?? placeById(plan, film.to)?.still },
     ...(film.keyframes ?? []).map(keyframe => ({ role: 'keyframe', path: keyframe.image, frame: keyframe.frame })),
   ].map(ref => {
     const path = ref.path ? worldFile(paths, ref.path, `${film.id}: ${ref.role === 'keyframe' ? 'keyframe image' : 'still'}`) : null;
@@ -92,6 +91,7 @@ export function takeSpec(plan, paths, film, take, { seed } = {}) {
     refs,
     journal: {
       film: film.id, take, kind: film.kind, from: film.from, to: film.to, object: film.object,
+      ...(ON_ONE_STILL.has(film.kind) ? { camera: film.camera ?? 'locked' } : {}),
       model: MODEL, width: canvas.width, height: canvas.height, delivered: delivered(canvas),
       frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)), steps: STEPS, fps: FPS, seed: chosenSeed,
       prompt, promptSha256: sha256(prompt),

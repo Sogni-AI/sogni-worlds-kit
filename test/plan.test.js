@@ -42,3 +42,18 @@ test('the Markdown plan shows every word of the story and each idea, pipes escap
   assert.ok(markdown.includes('The sand was warm. '.repeat(10).trim()));
   assert.ok(!markdown.includes('…'));
 });
+
+test('a reveal is two films: into the close look, and back to the place, each with its own stills', () => {
+  const films = filmsOf({ places: [
+    { id: 'office', still: 'stills/office.jpg', objects: [
+      { id: 'glove', film: { frames: 141, action: 'in', sound: 's' }, reveal: { still: 'reveals/office-glove.jpg', back: { frames: 124, action: 'out', sound: 's' } } },
+      { id: 'coat', goes: 'street', film: { frames: 243, action: 'x', sound: 'y' }, reveal: { still: 'ignored.jpg' } },
+    ] },
+    { id: 'street', still: 'stills/street.jpg', objects: [] },
+  ] });
+  assert.deepEqual(films.map(f => [f.id, f.kind, f.first, f.last, f.frames]), [
+    ['office-glove', 'reveal', 'stills/office.jpg', 'reveals/office-glove.jpg', 141],
+    ['office-glove-back', 'back', 'reveals/office-glove.jpg', 'stills/office.jpg', 124],
+    ['office-coat', 'crossing', 'stills/office.jpg', 'stills/street.jpg', 243],
+  ]);
+});

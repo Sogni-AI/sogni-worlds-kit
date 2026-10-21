@@ -65,3 +65,20 @@ test('an object may carry a details card: { title?, text, facts? }', () => {
   assert.match(issues, /details\.facts/);
   assert.match(issues, /unknown field "colour"/);
 });
+
+test('a close look: a still, a film back, an optional spoken line; never on a crossing; its media ship with the world', async () => {
+  const { mediaRefs } = await import('../cli/lib/worldjson.js');
+  const reveal = { still: 'stills/a-glove.jpg', back: { src: 'films/a-glove-back.mp4', src720: 'films/a-glove-back-720.mp4' },
+    narration: { src: 'audio/narration-a-glove.mp3', lines: [{ text: 'Blood on the palm.', start: 0.2, end: 1.4 }] }, done: 'Set it down' };
+  const world = good();
+  world.places[0].hotspots.push({ id: 'glove', label: 'Turn the glove over', at: [0.5, 0.8], film: { src: 'films/a-glove.mp4' }, reveal });
+  assert.deepEqual(validateWorld(world), []);
+  for (const ref of ['stills/a-glove.jpg', 'films/a-glove-back.mp4', 'films/a-glove-back-720.mp4', 'audio/narration-a-glove.mp3']) assert.ok(mediaRefs(world).includes(ref), ref);
+  const broken = structuredClone(world);
+  const glove = broken.places[0].hotspots.at(-1);
+  delete glove.reveal.back;
+  glove.to = 'beach';
+  glove.reveal.extra = true;
+  const issues = validateWorld(broken).join(' | ');
+  for (const words of ['reveal.back', 'a crossing leaves', 'extra']) assert.ok(issues.includes(words), `${words}: ${issues}`);
+});

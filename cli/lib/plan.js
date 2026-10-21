@@ -11,12 +11,14 @@
 //                           select: { positive: [[x, y]], negative: [[x, y]], box: [x0, y0, x1, y1] },
 //                           goes: <place id>   (omit for a moment that stays here),
 //                           shortcut: true|false,
-//                           film: { frames, idea, action, sound, keyframes: [{ image, frame }] }
+//                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }] },
+//                           reveal: { paint, still, seen, line, done,
+//                                     back: { frames, idea, action, sound } }   (a moment that holds on a close look)
 //
 // Coordinates are fractions of the still's width and height (0..1).
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { parseDocument, stringify } from 'yaml';
-import { worldPaths, filmId, loopId } from './paths.js';
+import { worldPaths, filmId, loopId, backId } from './paths.js';
 import { LOOP_FRAMES } from './h3.js';
 
 export function readPlan(id) {
@@ -51,30 +53,88 @@ function normalize(plan) {
 export const placeById = (plan, id) => plan.places.find(place => place.id === id);
 
 /**
- * Every film the plan asks for, in story order:
- *   loop      a living photograph: the place's still at both ends, static camera
+ * Every film the plan asks for, in story order, each with the stills it
+ * starts and ends on (`first`, `last`: paths inside the world's folder):
+ *   loop      a living photograph: the place's still at both ends, a locked camera
  *   crossing  a journey from one place's still to another's, caused by an object
  *   moment    something that happens here, caused by an object, ending back on the still
+ *   reveal    an object's film into a close look (its reveal still), where the
+ *             world holds while the visitor reads, listens or turns a figure over
+ *   back      the film from that close look back to the place's still
  */
 export function filmsOf(plan) {
   const films = [];
+  const stillOf = id => placeById(plan, id)?.still;
   for (const place of plan.places) {
     if (place.loop) {
-      films.push({ id: loopId(place.id), kind: 'loop', from: place.id, to: place.id, object: null, ...place.loop, frames: place.loop.frames ?? LOOP_FRAMES });
+      films.push({ id: loopId(place.id), kind: 'loop', from: place.id, to: place.id, object: null, ...place.loop, frames: place.loop.frames ?? LOOP_FRAMES, first: place.still, last: place.still });
     }
     for (const object of place.objects) {
       if (!object.film) continue;
+      const reveal = !object.goes && object.reveal ? object.reveal : null;
       films.push({
         id: filmId(place.id, object.id),
-        kind: object.goes ? 'crossing' : 'moment',
+        kind: object.goes ? 'crossing' : reveal ? 'reveal' : 'moment',
         from: place.id,
         to: object.goes ?? place.id,
         object: object.id,
         ...object.film,
+        first: place.still,
+        last: object.goes ? stillOf(object.goes) : reveal ? reveal.still : place.still,
       });
+      if (reveal?.back) {
+        films.push({ id: backId(place.id, object.id), kind: 'back', from: place.id, to: place.id, object: object.id, ...reveal.back, first: reveal.still, last: place.still });
+      }
     }
   }
   return films;
+}
+
+/**
+ * A picture a person can look at and mark: a place's still (by place id), or
+ * an object's close look (by <place>-<object>). Returns { id, still } or null.
+ */
+export function pictureById(plan, id) {
+  const place = placeById(plan, id);
+  if (place) return { id: place.id, still: place.still };
+  for (const p of plan.places) for (const object of p.objects ?? []) {
+    if (object.reveal?.still && `${p.id}-${object.id}` === id) return { id, still: object.reveal.still };
+  }
+  return null;
+}
+
+/** The picture id of a film's first and last stills (see pictureById). */
+export function endPictures(film) {
+  const close = `${film.from}-${film.object}`;
+  if (film.kind === 'reveal') return { from: film.from, to: close };
+  if (film.kind === 'back') return { from: close, to: film.from };
+  return { from: film.from, to: film.to };
+}
+
+/** What a film's first and last stills show (their `seen`), to write and judge it against. */
+export function endsSeen(plan, film) {
+  const place = placeById(plan, film.from);
+  const reveal = film.object ? place?.objects.find(object => object.id === film.object)?.reveal : null;
+  const close = reveal?.seen || reveal?.paint || '';
+  if (film.kind === 'reveal') return { fromSeen: place?.seen ?? '', toSeen: close };
+  if (film.kind === 'back') return { fromSeen: close, toSeen: place?.seen ?? '' };
+  return { fromSeen: place?.seen ?? '', toSeen: placeById(plan, film.to)?.seen ?? '' };
+}
+
+/**
+ * Every object's reveal line, as something to speak: `<place>-<object>`, in the
+ * reveal's own voice, else its place's narrator, else the world's first voice,
+ * so the clue is said by the voice that tells the rest of the story.
+ */
+export function revealSpeech(plan) {
+  const out = [];
+  for (const place of plan.places) for (const object of place.objects ?? []) {
+    const line = object.reveal?.line;
+    if (!line || object.goes) continue;
+    const voice = object.reveal.voice ?? place.narration?.voice ?? Object.keys(plan.voices ?? {})[0];
+    out.push({ id: `${place.id}-${object.id}`, reveal: true, narration: { voice, speaker: place.narration?.speaker, lines: [String(line)] } });
+  }
+  return out;
 }
 
 /** The place after this one in a linear story (the last returns to the first). */

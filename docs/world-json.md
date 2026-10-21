@@ -79,6 +79,7 @@ and the films start and end on video frames.
 | `figure` | | A 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the film the visitor turns the figure over (`@google/model-viewer`, loaded only then). A collectible's figure also joins the collection panel, which shows found figures and silhouettes of hidden ones; a figure without `collect` is only turned over. |
 | `details` | | A card about the object, `{ title?, text, facts? }` (`facts` is a list of `[label, value]` pairs), shown beside its film until the visitor closes it or moves on. |
 | `film` | yes* | The film. See below. *A collectible with a `figure` may leave it out. |
+| `reveal` | | A close look, never with `to`: `{ still, back, narration?, done? }`. The `film` lands on `still` (its last frame) and the player holds there: the place does not move, `narration` (`{ src?, lines }`, as a place's) is spoken with subtitles, a `figure` is turned over over the held picture, and one button (`done`, default "Continue", or "Put it down" with a figure) plays `back`, a film from `still` to the place's still. |
 | `rewind` | | The same film reversed, played by Back after you took this crossing. Without it, Back jumps straight to the previous place. |
 
 ### A film
@@ -91,7 +92,9 @@ and the films start and end on video frames.
 
 A crossing's first frame is its place's still and its last frame is the landing
 place's still. The player cuts straight from the film's last frame to the landing
-place's loop (the same picture), so there is never a fade.
+place's loop (the same picture), so there is never a fade. A reveal's film ends on
+its close look and holds there; the film back starts on that same picture and
+replaces it only once its first frame is on screen.
 
 ## Minimal example
 

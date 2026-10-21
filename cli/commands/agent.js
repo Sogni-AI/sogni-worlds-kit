@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { shown, worldPaths, filmId, loopId } from '../lib/paths.js';
-import { filmsOf, readPlan, writePlan } from '../lib/plan.js';
+import { endsSeen, filmsOf, readPlan, writePlan } from '../lib/plan.js';
 import { lintPlan, lintViews } from '../lib/lint.js';
 import { readJson, writeJson } from '../lib/files.js';
 import { filmState, listTakes, personsMarks, readNotes, readVerdicts, addNote, recordVerdict } from '../lib/takes.js';
@@ -182,7 +182,7 @@ export async function run(argv) {
       if (extra.ending) doc.setIn(['places', i, 'ending'], doc.createNode({ kind: extra.ending.kind, title: extra.ending.title, text: extra.ending.text }));
       // An ending's card covers its picture, so it needs no loop of its own.
       if (extra.ending) doc.deleteIn(['places', i, 'loop']);
-      else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, action: a.loop.action, sound: a.loop.sound }));
+      else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, ...(a.loop.camera && a.loop.camera !== 'locked' ? { camera: a.loop.camera } : {}), action: a.loop.action, sound: a.loop.sound }));
       const existing = place.objects ?? [];
       doc.setIn(['places', i, 'objects'], doc.createNode(a.objects.map(o => {
         const before = existing.find(e => e.id === o.id);
@@ -349,9 +349,8 @@ async function judgeNewTakes({ llm, plan, paths, state, mature }) {
   }
   await Promise.all(jobs.map(async ({ film, take }) => {
     const from = plan.places.find(p => p.id === film.from);
-    const to = plan.places.find(p => p.id === film.to);
     const object = film.object ? from.objects.find(o => o.id === film.object) : null;
-    const result = await judgeTake(llm, { take, film, object, fromSeen: from.seen, toSeen: to.seen, cacheDir: join(paths.cache, 'judge'), mature });
+    const result = await judgeTake(llm, { take, film, object, ...endsSeen(plan, film), cacheDir: join(paths.cache, 'judge'), mature });
     if (object && result.clickedThingLeads === false && result.verdict !== 'reject') {
       result.verdict = 'reject';
       result.defects = [...result.defects, { what: `the film ignores what was clicked ("${object.label}")`, when: 'throughout', cause: 'the route does not start with the clicked thing' }];
@@ -393,13 +392,13 @@ async function retake({ llm, id, paths, film, state, mature }) {
   const marks = rejected.flatMap(personsMarks);
   const pi = plan.places.findIndex(p => p.id === film.from);
   const place = plan.places[pi];
-  const to = plan.places.find(p => p.id === film.to);
   const object = film.object ? place.objects.find(o => o.id === film.object) : null;
   const { diagnosis, film: next } = await rewriteFilm(llm, {
     film, label: object?.label, hint: object?.hint, target: object?.target ?? '', objectId: object?.id ?? '', reasons, marks,
-    fromStill: join(paths.dir, place.still), toStill: join(paths.dir, to.still), fromSeen: place.seen, toSeen: to.seen, mature,
+    fromStill: join(paths.dir, film.first), toStill: join(paths.dir, film.last), ...endsSeen(plan, film), mature,
   });
-  const at = film.kind === 'loop' ? ['places', pi, 'loop'] : ['places', pi, 'objects', place.objects.indexOf(object), 'film'];
+  const at = film.kind === 'loop' ? ['places', pi, 'loop']
+    : ['places', pi, 'objects', place.objects.indexOf(object), ...(film.kind === 'back' ? ['reveal', 'back'] : ['film'])];
   doc.setIn([...at, 'frames'], film.kind === 'loop' ? 192 : next.frames);
   doc.setIn([...at, 'idea'], next.idea);
   doc.setIn([...at, 'action'], next.action);

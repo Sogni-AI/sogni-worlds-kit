@@ -1,15 +1,20 @@
 // Finishing: turn an approved take into what a visitor streams. The picture is
 // re-encoded once for the web (H.264, fast start) at its delivered size and at
-// exactly half size; the sound is levelled so every film in a world plays at
-// the same loudness; crossings also get a rewind (picture and sound reversed)
-// for the Back button — rendered, because browsers cannot play video backwards.
+// exactly half size; the sound is levelled into one mix: films at the level of
+// the narrator's voice, and every loop well below it, because a loop plays
+// under the narration (rain levelled to the voice's loudness drowns it).
+// Crossings also get a rewind (picture and sound reversed) for the Back
+// button — rendered, because browsers cannot play video backwards.
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { ffmpeg, probe } from './media.js';
 import { FFMPEG } from './media.js';
 import { stderrOf } from './screen.js';
 
-export const FILM_LUFS = -14;
+/** Films sit at the narrator's level (narrate.js NARRATION_LUFS), so a voice in a film matches the voice-over. */
+export const FILM_LUFS = -16;
+/** A loop is the room under the voice: 8 LU below it, and the player lowers it further while the narrator speaks. */
+export const LOOP_LUFS = -24;
 export const FILM_TRUE_PEAK = -1.5;
 const VIDEO = ['-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
 const AUDIO = ['-c:a', 'aac', '-b:a', '160k', '-ar', '48000'];
@@ -29,11 +34,11 @@ export async function loudnormFilter(input, { lufs, truePeak = FILM_TRUE_PEAK, l
     + `:measured_LRA=${json.input_lra}:measured_thresh=${json.input_thresh}:offset=${json.target_offset}:linear=true`;
 }
 
-/** Encode an approved take for the web: full size and exactly half size. */
-export async function finishFilm(input, out, out720) {
+/** Encode an approved take for the web: full size and exactly half size, its sound at `lufs`. */
+export async function finishFilm(input, out, out720, { lufs = FILM_LUFS } = {}) {
   const info = await probe(input);
   mkdirSync(dirname(out), { recursive: true });
-  const level = info.audioChannels ? await loudnormFilter(input, { lufs: FILM_LUFS }) : null;
+  const level = info.audioChannels ? await loudnormFilter(input, { lufs }) : null;
   const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
   await ffmpeg(['-i', input, ...VIDEO, ...audio, out]);
   await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);

@@ -12,6 +12,9 @@ dist/
 worlds/*/photos/
 worlds/*/stills/
 worlds/*/keyframes/
+# Close looks are painted from your stills; keep only their receipts
+worlds/*/reveals/**/*.png
+worlds/*/reveals/**/*.jpg
 worlds/*/voices/
 worlds/*/music/
 worlds/*/renders/**/*.mp4

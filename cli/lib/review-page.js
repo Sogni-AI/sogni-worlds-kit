@@ -292,8 +292,9 @@ const PAGE = `
     section.className = 'cmp';
     section.dataset.film = film.id;
     const pic = (url, place, which) => '<img src="' + esc(url) + '" alt="" data-place="' + esc(place) + '" title="Mark an area on the ' + which + ' picture">';
-    const ends = (film.fromStill ? pic(film.fromStill, film.fromPlace, film.kind === 'crossing' ? 'start' : 'place') : '')
-      + (film.kind === 'crossing' ? '→' + (film.toStill ? pic(film.toStill, film.toPlace, 'end') : '') : '');
+    const between = film.fromPlace !== film.toPlace;
+    const ends = (film.fromStill ? pic(film.fromStill, film.fromPlace, between ? 'start' : 'place') : '')
+      + (between ? '→' + (film.toStill ? pic(film.toStill, film.toPlace, 'end') : '') : '');
     section.innerHTML = '<div class="film-head"><div class="ends">' + ends + '</div><div class="what">'
       + '<h2>' + esc(film.label || film.id) + '</h2>'
       + '<div class="kind">' + esc(film.id) + ' · ' + esc(film.kindText) + '</div>'

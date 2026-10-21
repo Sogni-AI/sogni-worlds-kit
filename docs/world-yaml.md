@@ -17,6 +17,7 @@ rendered each film.
 - places
 - loop (the living photograph)
 - objects (what you can click)
+- reveal (a close look the film lands on and holds)
 - film (the direction for a crossing or moment) — read this before writing one
 - Coordinates, frames and canvases
 - Recording an exception: `allow`
@@ -168,19 +169,27 @@ One entry per photograph, in story order. `ingest` adds `id`, `photo` and
 
 ## loop
 
-The place, gently alive: a **static camera**, the whole frame moving a little
-(breath, water, cloud, grass), starting and ending on the still. Its film id is
-`<place>-loop`.
+The place, gently alive: the camera where the still has it, the whole frame
+moving a little (breath, water, cloud, grass), starting and ending on the still.
+Its film id is `<place>-loop`.
 
 ```yaml
 loop:
   frames: 192                 # 8 s; defaults to 192
+  camera: locked              # optional: locked (the default), handheld or sway
   idea: One line for people.
   action: >
     Live-action, cinematic, a static wide shot holds the position and framing established by Picture 1: …
   sound: >
     …
 ```
+
+`camera` is said by the kit, in fixed words, in front of the action (a loop or a
+moment has to land where it began, so a camera that moves pushes in and back).
+`locked` is a tripod: right for almost every place. `handheld` is the slow breathing
+of someone standing and watching (a found-footage or first-person world); `sway` is
+the frame rocking with the floor (a boat, a train, a gondola). A moment's `film`
+takes the same field. directing-films.md › Loops says how to choose.
 
 ## objects
 
@@ -199,6 +208,7 @@ loop:
 | `figureName` | What the figure is called in the collection. Default: the label without its verb ("Touch the neon lotus" → "The neon lotus"). |
 | `figureNoun` | The plain noun Pixal3D is told the object is ("telescope"). Default: the head noun of `target` or `label`. |
 | `film` | The direction (below). |
+| `reveal` | A close look the film lands on and holds while its line is said or its figure turned over, then a film back (below). Only on an object that stays (no `goes`). |
 
 The object you click must be the thing that carries the film: the door you
 duck through, the cloud you fly into, the guitar whose sound hole you enter.
@@ -206,6 +216,49 @@ The label is a promise: the film's first motion is that thing doing what the
 label says. `lint` warns (`cause`) when the first sentences of the motion never
 name it, and `node world audit-clicks` has a vision model compare each rendered
 film's opening with its click.
+
+## reveal
+
+A close look: the object's `film` carries the visitor from the place into it; the
+world holds there while the narrator says `line` (and a figure, if the object has
+one, is turned over); the visitor presses `done`; then `back` returns to the place.
+Its two films are `<place>-<object>` and `<place>-<object>-back`.
+
+```yaml
+objects:
+  - id: glove
+    label: Turn the glove over
+    hint: Grey kid leather, one of a pair
+    film:                       # the place → the close look (the camera may move in)
+      frames: 158
+      idea: A hand lifts the glove into the lamplight and turns it palm up.
+      action: >
+        Live-action, cinematic film noir, a wide shot begins in the position and framing established by Picture 1: …
+      sound: >
+        …
+    reveal:
+      paint: >                  # what `node world reveals` paints from the place's still
+        A close view under the green banker's lamp: a man's hand holds the grey kid glove palm up; the palm is
+        stiff with dried brown blood, and a laundry tag inside the cuff reads "T. HALE".
+      still: reveals/office-glove.jpg   # written by `node world reveals --pick`; never edit the image
+      seen: >                   # what is really in the close look, after looking at it at full size
+        …
+      line: "Blood, dried along the seam. Tuesday Hale never left the Blue Hour by the front door."
+      done: Set the glove down  # the button that ends the close look (default "Continue", or "Put it down" with a figure)
+      voice: narrator           # optional: defaults to the place's narration voice
+      back:                     # the close look → the place
+        frames: 141
+        idea: The hand lays the glove back on the desk and withdraws.
+        action: >
+          Live-action, cinematic film noir, a close shot begins in the position and framing established by Picture 1: …
+        sound: >
+          …
+```
+
+`node world reveals` paints candidates for every reveal with `paint` and no
+`still`; `--pick <place-object> <n>` keeps one. `node world narrate` speaks every
+`line` in the place's voice. Writing in the close look is quoted in `paint`, exactly
+(directing-films.md › Writing in pictures).
 
 ## film
 
@@ -239,7 +292,7 @@ explains each one. In short:
 - A crossing passes through something physical — a doorway, a cloud, water, a
   reflection, a fogged lens — never a fade, dissolve or morph.
 - Pass bridges and towers far below or far to one side; never fly along them.
-- Loops keep a static camera. Moments should too.
+- Loops and moments keep the camera the kit gives them (`camera`, locked unless chosen).
 - Music only when the film is about music (the label, hint or idea says so).
 
 ## Coordinates, frames and canvases

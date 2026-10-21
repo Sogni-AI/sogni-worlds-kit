@@ -3,6 +3,7 @@
 // with the same linter `node world lint` runs, inside the model's own retry
 // loop, and then reviewed once against the craft rules the linter can't see.
 import { join } from 'node:path';
+import { CAMERAS } from '../lib/h3.js';
 import { clickCauses, lintDirection } from '../lib/lint.js';
 import { imagePart, MODELS, studyParts } from '../lib/llm.js';
 import { examplePlace, FRAME_GRID, writerSystem } from './prompts.js';
@@ -45,7 +46,7 @@ const FILM = strict({
   action: str(150, 4500),
   sound: str(20, 700),
 });
-const LOOP = strict({ idea: str(10, 300), action: str(150, 3000), sound: str(20, 500) });
+const LOOP = strict({ idea: str(10, 300), camera: { type: 'string', enum: CAMERAS }, action: str(150, 3000), sound: str(20, 500) });
 
 function placeSchema({ minObjects, maxObjects }) {
   return strict({
@@ -120,21 +121,21 @@ function placeBrief({ place, index, context, required }) {
     const others = places.filter(p => p.id !== place.id && !required.some(r => r.to === p.id) && !p.ending);
     if (context.order === 'linear' && others.length) lines.push(`- Optional: at most one shortcut ("shortcut": true) to another place in the story: ${others.map(p => `${p.id} ("${p.title ?? p.id}")`).join(', ')}. Only if a clickable thing here really suggests it.`);
     if (context.order === 'linear' && index === places.length - 1 && places.length > 1 && !place.ending) lines.push(`- This is the last place in the story: one object should lead back to the start ("goes": "${places[0].id}") so the journey can begin again.`);
-    lines.push('- Every other object is a moment: "goes": "" — a small, surprising event with a clear cause and a payoff, caused by that object (a kea lands on the mirror and tugs its rubber seal; a lantern\'s flame leans toward the visitor), and the picture returns to rest. Never a moment in which someone only breathes, shifts or sways: the loop already does that. Never a device switched on: the moment ends on its start picture, so the device is off again by the end and the visitor saw a light come and go.');
+    lines.push('- Every other object is a moment: "goes": "" — a small, surprising event with a clear cause and a payoff, caused by that object (a kea lands on the mirror and tugs its rubber seal; a lantern\'s flame leans toward the visitor), and the picture returns to rest. It moves the story: after it the visitor knows or feels something new about this world. Never a moment in which someone only breathes, shifts or sways: the loop already does that. Never a device switched on: the moment ends on its start picture, so the device is off again by the end and the visitor saw a light come and go. Never a hand that only points at a thing, and never a thing lifted away that vanishes and is thrown back: the film must end where it began, so choose an event that runs its course in place.');
     if (context.mechanics?.collectibles && place.collectible) lines.push(`- Collectible: one object must be "${place.collectible}", with "collect": true and "goes": "" — finding it adds a figure to the visitor's collection. Its moment film shows it coming to life briefly and returning to rest. Its label names it ("${place.collectible}") and its hint teases it.`);
     else lines.push('- Set "collect": false on every object.');
   }
 
   lines.push('', '# What to write', [
     'Reply with JSON only:',
-    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" } } ] }',
+    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "camera", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" } } ] }',
     `- ${place.ending ? 'No objects.' : `${required.length > 1 ? required.length : 2} to 4 objects, each a distinct thing really in the picture, each causing its own film.`}`,
     '- "id": a short lower-case id with dashes ("door", "red-lantern").',
     '- "target": the exact thing to click, described so someone could point at it in the picture ("the open red round door behind the couple"). It must be a single object, not a group or a region.',
     '- "label": what happens, as a short action ("Duck through the round door"). "hint": a short tease. "chapter": a short location line.',
     '- "frames": on the grid 124 + 17n. Loops are always 192 (not written: the loop has no frames field). Moments 141–243; a short hop 158–209; a long journey through a boundary 243–362.',
     '- Every "action" starts with the medium and "… begins in the position and framing established by Picture 1: …" (crossings and moments) or "… a static … shot holds the position and framing established by Picture 1: …" (loops), then describes the opening picture using the seen, then the motion in order, then (crossings) the arrival described exactly as the destination\'s seen shows it. Use the real framing words from "Framing" above.',
-    '- Loops and moments: a static camera; everything returns to where it started.',
+    '- Loops and moments: the kit writes the camera in fixed words, so the action says only what moves inside the picture, and everything returns to where it started. The loop\'s "camera" is "locked" (a tripod) for almost every place; "handheld" only where the whole world is seen through someone\'s eyes (found footage, a first-person story); "sway" only where the floor itself moves (a boat\'s deck, a train carriage, a gondola). Never a push in, pull back, pan or drift: a film that starts and ends on one picture has to undo any move, and the camera yo-yos.',
     '- Crossings must pass through a physical boundary the camera moves through when the places are far apart, and each crossing in the world uses a different trick.',
     '- "sound": one to four sentences of ambience and physical sounds. Never music unless the object is about music. Never spoken words.',
     '- Real people\'s faces: in crossings keep them turned away, small or out of focus mid-film; in loops and moments only small motion and the head stays where it is.',
@@ -164,7 +165,7 @@ export function placeProblems(answer, { place, context, required }) {
     if (cause) problems.push(`object "${object.id}" film action: ${cause}. Its first motion after the opening description must be ${object.target || object.label} doing what the label promises`);
     for (const f of lintDirection({ ...object.film, kind }, `${object.label} ${object.hint} ${object.film?.idea}`)) {
       if (f.level === 'error') problems.push(`object "${object.id}" film ${f.field}: ${f.message}`);
-      else if (['face-turn', 'dark-screen', 'static'].includes(f.rule)) problems.push(`(warning) object "${object.id}" film ${f.field}: ${f.message}`);
+      else if (['face-turn', 'dark-screen'].includes(f.rule)) problems.push(`(warning) object "${object.id}" film ${f.field}: ${f.message}`);
     }
   }
   for (const route of required) {
@@ -175,7 +176,7 @@ export function placeProblems(answer, { place, context, required }) {
   const words = text => String(text ?? '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2 && w !== 'the');
   if (answer.chapter && words(answer.chapter).length && words(answer.chapter).every(w => words(answer.title).includes(w))) problems.push(`the chapter "${answer.chapter}" only repeats the title; make it the where or when (for example "Hobbiton · Matamata" or "Night one"), or leave it ""`);
   if (context.mechanics?.collectibles && place.collectible && !place.ending && !answer.objects?.some(o => o.collect)) problems.push(`one object must be the collectible "${place.collectible}" with "collect": true`);
-  for (const f of lintDirection({ ...answer.loop, frames: 192, kind: 'loop' }, answer.loop?.idea ?? '')) {
+  for (const f of lintDirection({ ...answer.loop, frames: 192, kind: 'loop', camera: answer.loop?.camera ?? 'locked' }, answer.loop?.idea ?? '')) {
     if (f.level === 'error') problems.push(`loop ${f.field}: ${f.message}`);
     else if (['face-turn', 'dark-screen'].includes(f.rule)) problems.push(`(warning) loop ${f.field}: ${f.message}`);
   }
@@ -195,13 +196,14 @@ const REVIEW_CHECKLIST = [
   'Does each crossing\'s arrival describe the destination exactly as its seen describes it, with the same people in the same places?',
   'Does every action describe the opening picture with its real framing, consistent with the seen (no "medium shot" for a full-length picture)?',
   'Are there props, people or objects that appear mid-film but are not in the start picture?',
-  'Do loops keep a static camera with the whole frame gently alive, and does everything return to where it started?',
+  'Is each loop\'s "camera" right for its place ("locked" unless the floor itself moves or the world is seen through someone\'s eyes), does no loop or moment ask the camera to push in, pull back, pan or drift, is the whole frame gently alive, and does everything return to where it started?',
   'Are real people\'s faces kept turned away, small or out of focus in crossings, and kept still (small motion only) in loops and moments?',
   'Are there notes to the model, mood or genre labels, or anything that cannot be seen or heard?',
   'Is each film\'s length right for what happens (a long journey 243–362 frames, a moment 141–243)?',
   'Does every label describe what really happens in its film and fit what the picture shows (nothing asks to light what is already lit, open what is already open)?',
   'Is every moment a small surprising event with a payoff, caused by its object, rather than someone breathing, shifting or swaying (which the loop already shows)? Are the objects things someone would want to click?',
-  'Halfway through each moment, what can the visitor see that the still did not show them? A light, glow or screen that comes on and goes off again is not a payoff, nor is an effect nobody can see (clean air, warmth, cold, a signal).',
+  'Halfway through each moment, what can the visitor see that the still did not show them, and what do they know afterwards that they did not before? A light, glow or screen that comes on and goes off again is not a payoff, nor is an effect nobody can see (clean air, warmth, cold, a signal), nor a hand that only points at something, nor a thing that vanishes and is thrown back into place.',
+  'Does any direction ask for writing (a sign, a note, words on a mirror)? Then its exact words are quoted in double quotes, and they are as short as possible.',
   'Is the way out of each crossing (the door, stairs or window it leaves by) visible in this picture, and does each crossing move to another view rather than turning this picture into another version of itself (another hour, other furniture)?',
   'Does any object here repeat a beat another place already uses (listed under "What the other places already do")?',
 ];

@@ -1,6 +1,6 @@
 import { parse } from '../index.js';
 import { resolveWorldId } from '../lib/paths.js';
-import { filmsOf, readPlan } from '../lib/plan.js';
+import { filmsOf, readPlan, revealSpeech } from '../lib/plan.js';
 import { MODEL, secondsOf } from '../lib/h3.js';
 import { connect, describeBilling, LINKS, quoteFilm } from '../lib/sogni.js';
 import { log, usd } from '../lib/log.js';
@@ -28,7 +28,11 @@ export async function run(argv) {
   const entries = values.all
     ? filmsOf(plan).map(film => ({ film, state: 'all' }))
     : filmsToRender(plan, paths).filter(entry => entry.state !== 'rendering');
-  const narrate = plan.places.filter(p => p.narration?.lines?.length && (values.all || !existsSync(join(paths.audio, 'narration', `${p.id}.json`))));
+  const narrate = [
+    ...plan.places.filter(p => p.narration?.lines?.length && (values.all || !existsSync(join(paths.audio, 'narration', `${p.id}.json`)))),
+    // A close look's line, spoken by the place's narrator.
+    ...revealSpeech(plan).filter(r => values.all || !existsSync(join(paths.audio, 'narration', 'reveals', `${r.id}.json`))),
+  ];
   const music = plan.music?.prompt && (values.all || !existsSync(join(paths.audio, 'music', 'music.json'))) ? plan.music : null;
   const figures = plan.places.flatMap(place => place.objects.filter(wantsFigure).map(object => filmId(place.id, object.id)))
     .filter(key => values.all || readJson(figureFiles(paths, key).receipt, null)?.status !== 'completed');

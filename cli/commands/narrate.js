@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { nextStep } from './status.js';
-import { readPlan } from '../lib/plan.js';
+import { readPlan, revealSpeech } from '../lib/plan.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256, sha256File } from '../lib/files.js';
 import { probe } from '../lib/media.js';
@@ -21,7 +21,10 @@ export const usage = `node world narrate [world] [--only <place> ...] [--retake 
   For every place with narration lines: renders all its lines as one take in
   the place's voice (world.yaml voices:), checks the ending is not clipped,
   times every line from the pauses, levels it to ${NARRATION_LUFS} LUFS and saves
-  audio/narration/<place>.mp3 with its receipt. Places already spoken are
+  audio/narration/<place>.mp3 with its receipt. An object's reveal line (what
+  the narrator says over the close look) is spoken the same way, in that
+  place's voice, as audio/narration/reveals/<place>-<object>.mp3; name it as
+  <place>-<object> for --only and --retake. Places already spoken are
   skipped; --retake renders a place again (the old take is kept beside it).
 
   Voices in world.yaml:
@@ -75,14 +78,16 @@ export async function run(argv) {
   const { values, world } = parse(argv, { only: { type: 'string', multiple: true }, retake: { type: 'string', multiple: true } });
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
-  const dir = join(paths.audio, 'narration');
-  mkdirSync(dir, { recursive: true });
+  const base = join(paths.audio, 'narration');
+  mkdirSync(base, { recursive: true });
   const wanted = new Set([...(values.only ?? []), ...(values.retake ?? [])]);
-  const places = plan.places.filter(p => (p.narration?.lines ?? []).length && (!wanted.size || wanted.has(p.id)));
-  for (const name of wanted) if (!places.some(p => p.id === name)) throw new Error(`"${name}" is not a place with narration lines`);
+  const spoken = [...plan.places.filter(p => (p.narration?.lines ?? []).length), ...revealSpeech(plan)];
+  const places = spoken.filter(p => !wanted.size || wanted.has(p.id));
+  for (const name of wanted) if (!places.some(p => p.id === name)) throw new Error(`"${name}" is not a place with narration lines, or an object with a reveal line`);
 
   const todo = [];
   for (const place of places) {
+    const dir = place.reveal ? join(base, 'reveals') : base;
     const journalPath = join(dir, `${place.id}.json`);
     if (values.retake?.includes(place.id) && existsSync(journalPath)) {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -113,6 +118,8 @@ export async function run(argv) {
     for (const place of todo) voiceRequest(plan, paths, place); // check every voice before paying for any
     for (const place of todo) {
       try {
+        const dir = place.reveal ? join(base, 'reveals') : base;
+        mkdirSync(dir, { recursive: true });
         await narratePlace({ session, plan, paths, place, dir });
       } catch (error) {
         failures++;

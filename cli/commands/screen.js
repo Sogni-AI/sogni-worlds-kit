@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
 import { nextStep } from './status.js';
-import { readPlan, filmsOf, placeById } from '../lib/plan.js';
+import { readPlan, filmsOf } from '../lib/plan.js';
 import { resolveWorldId, shown } from '../lib/paths.js';
 import { writeJson, sha256File } from '../lib/files.js';
 import { listTakes } from '../lib/takes.js';
@@ -20,10 +20,11 @@ export const usage = `node world screen [world] [--only <film> ...] [--force]
   and sound, whether it starts on its first still and lands on its last, and
   looks for the defects that get a film rejected on sight (a dissolve or
   crossfade, a hard cut, a structure break, a frozen tail, a flash at a loop's
-  seam). A fast camera move is a "check" note, not a flag. Writes
-  take-<n>.screen.json, a contact sheet take-<n>.sheet.jpg and a full-size
-  frame for every flagged or noted moment. Then LOOK at them: screening cannot
-  read lettering.`;
+  seam, a loop or moment whose camera pushes in and back). A fast camera move
+  is a "check" note, not a flag. Writes take-<n>.screen.json, a contact sheet
+  take-<n>.sheet.jpg, the stretches where the picture changes fastest frame by
+  frame (take-<n>.change-<k>.jpg) and a full-size frame for every flagged or
+  noted moment. Then LOOK at them: screening cannot read lettering.`;
 
 export async function run(argv) {
   const { values, world } = parse(argv, { only: { type: 'string', multiple: true }, force: { type: 'boolean', default: false } });
@@ -40,8 +41,8 @@ export async function run(argv) {
       if (take.journal.status !== 'completed' || !existsSync(take.files.video)) continue;
       if (existsSync(take.files.screen) && !values.force) continue;
       if (take.verdict && !values.force) continue;
-      const fromStill = stillOf(paths, plan, film.from);
-      const toStill = stillOf(paths, plan, film.to);
+      const fromStill = stillAt(paths, film.first);
+      const toStill = stillAt(paths, film.last);
       log.step(`Screening ${film.id} take ${take.take}`);
       const result = await screenTake({
         video: take.files.video,
@@ -53,12 +54,21 @@ export async function run(argv) {
       // A crossing or moment has to start with what was clicked: its first seconds, densely, for looking at that.
       const opening = film.object ? join(paths.renders, film.id, `take-${take.take}.opening.jpg`) : null;
       if (opening) await contactSheet(take.files.video, opening, { frames: result.probe?.frames, at: OPENING_SECONDS.map(s => Math.round(s * (result.probe?.fps || 24))) });
+      // Where the picture changes fastest, every frame: a dissolve or a fade often lasts a quarter of a
+      // second, shorter than the gap between two frames of the contact sheet.
+      const changes = [];
+      for (const [index, stretch] of (result.metrics.changes ?? []).entries()) {
+        const strip = join(paths.renders, film.id, `take-${take.take}.change-${index + 1}.jpg`);
+        await contactSheet(take.files.video, strip, { frames: result.probe?.frames, at: Array.from({ length: 16 }, (_, i) => stretch.frame - 8 + i) });
+        changes.push(strip);
+      }
       const sha = sha256File(take.files.video);
       if (take.journal.sha256 && sha !== take.journal.sha256) {
         result.flags.unshift({ code: 'changed', severity: 'error', message: 'The file no longer matches its render receipt (SHA-256)' });
       }
       writeJson(take.files.screen, { sha256: sha, screenedAt: new Date().toISOString(), probe: result.probe, flags: result.flags,
-        metrics: result.metrics, sheet: `take-${take.take}.sheet.jpg`, frames: result.flaggedFrames.map(path => shown(path)) });
+        metrics: result.metrics, sheet: `take-${take.take}.sheet.jpg`, frames: result.flaggedFrames.map(path => shown(path)),
+        changes: changes.map(path => shown(path)) });
       screened++;
       const errors = result.flags.filter(f => f.severity === 'error');
       const warns = result.flags.filter(f => f.severity === 'warn');
@@ -69,7 +79,7 @@ export async function run(argv) {
         (errors.length ? log.fail : log.warn)(`${film.id} take ${take.take}: ${errors.length + warns.length} flag(s)`);
       }
       for (const flag of [...errors, ...warns, ...notes]) log.info(`${{ error: 'ERROR', warn: 'look ', note: 'check' }[flag.severity]} ${flag.message}`);
-      log.dim(`sheet ${shown(take.files.sheet)}${opening ? ` · opening ${shown(opening)}` : ''}${result.flaggedFrames.length ? ` · frames ${shown(join(paths.renders, film.id, `take-${take.take}.frames`))}/` : ''}`);
+      log.dim(`sheet ${shown(take.files.sheet)}${opening ? ` · opening ${shown(opening)}` : ''}${changes.length ? ` · fastest change ${changes.map(shown).join(', ')}` : ''}${result.flaggedFrames.length ? ` · frames ${shown(join(paths.renders, film.id, `take-${take.take}.frames`))}/` : ''}`);
       toLook.push(`${film.id} ${take.take}`);
     }
   }
@@ -82,6 +92,8 @@ export async function run(argv) {
   log.title(`${screened} take(s) screened, ${flagged} with something to look at`);
   log.info('Now look at every contact sheet, and every flagged frame at full size. Numbers only say where to look.');
   log.info('For a crossing or moment, the opening strip (take-<n>.opening.jpg, its first 2.7 s) shows whether the clicked thing moves first.');
+  log.info('For a film between two pictures, the change strips (take-<n>.change-<k>.jpg) show, frame by frame, where the picture');
+  log.info('changes fastest: two pictures showing through each other there is a dissolve, and a darkening one is a fade.');
   log.info('Reject on sight: a dissolve or crossfade, a morph, a hard cut, invented text or signs, a face that');
   log.info('changes, a camera that leaves the picture it should land on. Everything else goes to the review page.');
   log.info('Screening cannot read lettering: check every sign, patch, logo and number plate on the sheets yourself.');
@@ -91,9 +103,8 @@ export async function run(argv) {
   return 0;
 }
 
-function stillOf(paths, plan, placeId) {
-  const place = placeById(plan, placeId);
-  if (!place?.still) return null;
-  const path = join(paths.dir, place.still);
+function stillAt(paths, relative) {
+  if (!relative) return null;
+  const path = join(paths.dir, relative);
   return existsSync(path) ? path : null;
 }

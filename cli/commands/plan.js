@@ -40,7 +40,9 @@ export function planRows(plan) {
       click: film.kind === 'loop' ? '(the living photograph)' : object?.label ?? film.object,
       happens: film.kind === 'crossing'
         ? `goes to ${titles[film.to]}${object?.shortcut ? ' (shortcut)' : ''}${plan.places.find(p => p.id === film.to)?.ending ? ` (an ending: ${plan.places.find(p => p.id === film.to).ending.kind})` : ''}`
-        : film.kind === 'moment' ? (object?.collect ? 'a collectible, stays here' : 'a moment, stays here') : 'loops',
+        : film.kind === 'moment' ? (object?.collect ? 'a collectible, stays here' : 'a moment, stays here')
+        : film.kind === 'reveal' ? `into a close look${object?.reveal?.line ? `: "${object.reveal.line}"` : ''}${object?.collect ? ' (a collectible)' : ''}`
+        : film.kind === 'back' ? 'puts it back, stays here' : 'loops',
       idea: film.idea ?? '',
       seconds: Number.isFinite(film.frames) ? secondsOf(film.frames) : null,
       canary: canary.has(film.id),

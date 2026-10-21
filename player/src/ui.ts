@@ -33,6 +33,8 @@ export class Ui {
   private readonly nextButton = el('button', 'pill primary');
   private readonly backButton = el('button', 'pill', '← Back');
   private readonly skipButton = el('button', 'pill', 'Skip ›');
+  /** Held on a close look: the one way back to the place. */
+  private readonly doneButton = el('button', 'pill primary');
   private readonly soundButton = el('button', 'icon-button');
   private readonly qualityButton = el('button', 'icon-button text');
   private readonly mapPanel = el('section', 'panel');
@@ -76,8 +78,8 @@ export class Ui {
     this.skipButton.addEventListener('click', actions.skip);
     this.nextButton.addEventListener('click', actions.next);
     // Nothing to go back to, skip or go on to until the first place has arrived.
-    for (const button of [this.backButton, this.skipButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
-    bottom.append(this.backButton, this.skipButton, this.nextButton);
+    for (const button of [this.backButton, this.skipButton, this.doneButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
+    bottom.append(this.backButton, this.skipButton, this.doneButton, this.nextButton);
 
     this.buildAbout(musicCredit);
     for (const panel of [this.mapPanel, this.aboutPanel, this.collectionPanel]) {
@@ -197,6 +199,34 @@ export class Ui {
     this.caption.textContent = place.caption ?? '';
     this.caption.hidden = !place.caption;
     this.captionTimer = setTimeout(() => { this.caption.hidden = true; }, 9000);
+  }
+
+  /**
+   * Held on a close look while its line is said: one button (the plan's words,
+   * "Set the glove down") takes the visitor back to the place, as does Escape.
+   * Nothing moves on by itself; the visitor looks as long as they like.
+   */
+  waitForDone(label: string): Promise<void> {
+    this.holding();
+    this.doneButton.textContent = label;
+    this.doneButton.hidden = false;
+    this.doneButton.focus({ preventScroll: true });
+    return new Promise(resolve => {
+      const finish = () => {
+        this.doneButton.hidden = true;
+        this.doneButton.removeEventListener('click', finish);
+        window.removeEventListener('keydown', escape, true);
+        resolve();
+      };
+      const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.stopPropagation(); finish(); } };
+      this.doneButton.addEventListener('click', finish);
+      window.addEventListener('keydown', escape, true);
+    });
+  }
+
+  /** Held on a close look: there is no film to skip. */
+  holding() {
+    this.skipButton.hidden = true;
   }
 
   /** While a film plays only Skip is offered. */

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { greyFrames, analyseFrames, screenTake } from '../cli/lib/screen.js';
+import { greyFrames, analyseFrames, screenTake, cameraPath, cameraMoves, changeStretches, W, H } from '../cli/lib/screen.js';
 import { ffmpeg } from '../cli/lib/media.js';
 import { tempDir, syntheticVideo } from './helpers.js';
 
@@ -107,4 +107,39 @@ test('a nearly inaudible take is flagged "quiet" (a silent one stays "silent")',
   assert.ok(codes(quiet).includes('quiet'), `${codes(quiet)} at ${quiet.metrics.loudness?.lufs} LUFS`);
   assert.ok(codes(await clip('silent', '-45dB')).includes('silent'));
   assert.ok(!codes(await clip('normal', '0dB')).some(code => ['quiet', 'silent'].includes(code)));
+});
+
+// A textured still and the same still zoomed in about its centre and back out again (the
+// dolly yo-yo of a loop that must land where it began), against one that never moves.
+const STILL = `nullsrc=size=SIZE:rate=24,geq=lum='${TEXTURE_A}':cb=128:cr=128`;
+test('a loop whose camera pushes in and back is flagged; a locked one and a brief wobble are not', async () => {
+  const yoyo = join(dir, 'yoyo.mp4');
+  // Zoom up to 15% and back over 6 s.
+  await syntheticVideo(yoyo, { source: `${STILL.replace('SIZE', '384x256')},zoompan=z='1+0.15*sin(PI*on/144)':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=192x128:fps=24`, seconds: 6 });
+  const moved = cameraMoves(cameraPath(await greyFrames(yoyo), await greyFrames(yoyo, W * 2, H * 2)));
+  assert.deepEqual(moved.flags.map(f => f.code), ['camera-moves']);
+  assert.match(moved.flags[0].message, /pushes in 1[4-6]%/);
+  assert.ok(moved.metrics.cameraZoom >= 0.13);
+
+  const locked = join(dir, 'locked.mp4');
+  await syntheticVideo(locked, { source: STILL, seconds: 6 });
+  assert.deepEqual(cameraMoves(cameraPath(await greyFrames(locked), await greyFrames(locked, W * 2, H * 2))).flags, []);
+
+  // One sample off (a wobble) is not a move: a move lasts a second.
+  const path = Array.from({ length: 20 }, (_, i) => ({ frame: (i + 1) * 6, zoom: i === 9 ? 0.07 : 0, shift: 0 }));
+  assert.deepEqual(cameraMoves(path).flags, []);
+  // A handheld camera may slide more than a locked one; neither may push in.
+  const slide = path.map(p => ({ ...p, zoom: 0, shift: 0.045 }));
+  assert.equal(cameraMoves(slide, 'locked').flags.length, 1);
+  assert.equal(cameraMoves(slide, 'handheld').flags.length, 0);
+});
+
+test('the change strips centre on where a picture turns into another', async () => {
+  const video = join(dir, 'turn.mp4');
+  // Three seconds of one texture, then a half-second crossfade into another.
+  await ffmpeg(['-f', 'lavfi', '-i', strip(TEXTURE_A, 0), '-f', 'lavfi', '-i', strip(TEXTURE_B, 0), '-f', 'lavfi', '-i', 'sine=f=440:sample_rate=48000',
+    '-filter_complex', '[0:v]trim=0:3.5,setpts=PTS-STARTPTS[a];[1:v]trim=0:3,setpts=PTS-STARTPTS[b];[a][b]xfade=transition=fade:duration=0.5:offset=3[v]',
+    '-map', '[v]', '-map', '2:a', '-t', '6', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-c:a', 'aac', video]);
+  const [first] = changeStretches(await greyFrames(video));
+  assert.ok(first && first.frame >= 70 && first.frame <= 86, `centred on the crossfade (frame ${first?.frame})`);
 });

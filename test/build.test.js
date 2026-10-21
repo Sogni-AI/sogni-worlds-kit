@@ -96,3 +96,53 @@ test('build assembles a playable world from approved takes only', async () => {
   await buildWorld({ paths, plan, say: { ...quiet, step: text => steps.push(text) } });
   assert.deepEqual(steps, []);
 });
+
+test('build: a close look ships its still, its line and its film back; a loop sits under the narrator, a film at the voice', async () => {
+  const { loudness } = await import('../cli/lib/screen.js');
+  const { FILM_LUFS, LOOP_LUFS } = await import('../cli/lib/finish.js');
+  const paths = pathsAt(tempDir('build-reveal'), 'look');
+  mkdirSync(paths.stills, { recursive: true });
+  mkdirSync(paths.reveals, { recursive: true });
+  await sharp({ create: { width: 192, height: 128, channels: 3, background: '#335577' } }).jpeg().toFile(join(paths.stills, 'a.jpg'));
+  await sharp({ create: { width: 192, height: 128, channels: 3, background: '#774433' } }).jpeg().toFile(join(paths.reveals, 'a-glove.jpg'));
+  const plan = {
+    id: 'look', title: 'Look', order: 'free', voices: { narrator: { design: 'a low voice' } }, music: null,
+    places: [{ id: 'a', title: 'Place A', still: 'stills/a.jpg', loop: { frames: 124, action: 'x', sound: 'y' }, objects: [
+      { id: 'glove', label: 'Turn the glove over', at: [0.5, 0.8], film: { frames: 124 },
+        reveal: { still: 'reveals/a-glove.jpg', line: 'Blood on the palm.', done: 'Set it down', back: { frames: 124 } } },
+      { id: 'coat', label: 'Lift the coat', at: [0.8, 0.3], film: { frames: 124 }, reveal: { still: 'reveals/a-glove.jpg', back: { frames: 124 } } },
+    ] }],
+  };
+  const still = 'testsrc2=size=SIZE:rate=24';
+  await take(paths, 'a-loop', 1, { kind: 'loop', seconds: 2, source: still, verdict: 'approved', tone: 300 });
+  await take(paths, 'a-glove', 1, { kind: 'reveal', seconds: 2, source: still, verdict: 'approved', tone: 500 });
+  await take(paths, 'a-glove-back', 1, { kind: 'back', seconds: 2, source: still, verdict: 'approved', tone: 700 });
+  // The coat's film into its close look is approved, its film back is not: the coat stays out.
+  await take(paths, 'a-coat', 1, { kind: 'reveal', seconds: 2, source: still, verdict: 'approved', tone: 800 });
+  const spoken = join(paths.audio, 'narration', 'reveals');
+  mkdirSync(spoken, { recursive: true });
+  await ffmpeg(['-f', 'lavfi', '-i', 'sine=f=220:sample_rate=24000', '-t', '2', join(spoken, 'a-glove.mp3')]);
+  writeJson(join(spoken, 'a-glove.json'), { status: 'completed', mp3: 'a-glove.mp3', lines: [{ text: 'Blood on the palm.', start: 0.1, end: 1.8 }] });
+
+  const result = await buildWorld({ paths, plan, say: quiet });
+  assert.deepEqual(result.issues, []);
+  const world = JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8'));
+  assert.deepEqual(validateWorld(world), []);
+  const [place] = world.places;
+  assert.deepEqual(place.hotspots.map(h => h.id), ['glove'], 'a close look without its film back stays out of the world');
+  assert.ok(result.missing.some(m => m.film === 'a-coat-back'));
+  const { reveal } = place.hotspots[0];
+  assert.equal(reveal.still, 'stills/a-glove.jpg');
+  assert.ok(existsSync(join(paths.build, reveal.still)));
+  assert.equal(reveal.done, 'Set it down');
+  assert.equal(reveal.narration.src, 'audio/narration-a-glove.mp3');
+  assert.equal(reveal.narration.lines[0].text, 'Blood on the palm.');
+  assert.ok(existsSync(join(paths.build, reveal.back.src)) && existsSync(join(paths.build, reveal.back.src720)));
+  assert.equal(place.hotspots[0].rewind, undefined, 'a close look is not a crossing: nothing to rewind');
+
+  // One mix: the narrator's level for films, eight below it for the room.
+  const loop = await loudness(join(paths.build, place.loop.src));
+  const film = await loudness(join(paths.build, place.hotspots[0].film.src));
+  assert.ok(Math.abs(loop.lufs - LOOP_LUFS) <= 1.5, `loop at ${loop.lufs} LUFS`);
+  assert.ok(Math.abs(film.lufs - FILM_LUFS) <= 1.5, `film at ${film.lufs} LUFS`);
+});
