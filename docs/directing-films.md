@@ -193,10 +193,13 @@ A loop is the photograph breathing. It plays whenever the visitor is at that pla
   established by Picture 1".
 - **Every loop and moment is locked.** A push in, a pull back, a pan or a drift
   is never a loop: if a place needs one, it is a close look (the camera moves in
-  and holds there). A slow look across a wide scene was tried: worded gently the
-  model held the camera still, worded firmly it swung a third of the frame and
-  invented the street beyond the picture. A sweep needs picture beyond the frame,
-  so it is not offered.
+  and holds there). A slow look across a wide scene was tried on thirteen takes of
+  one street. Timed words ("out until 4 seconds, back by 8, easing in and out")
+  made it ease well, but any pan shows street the still does not have, so the
+  model painted it, and every gentle pan gave the new shopfronts signs in made-up
+  letters; saying the signs were plain made the camera swing a quarter to a third
+  of the frame to show them. A sweep needs real picture beyond the frame, so it is
+  not offered.
 - **Screening measures it.** `node world screen` maps the first frame onto every
   quarter second and flags `camera-moves` when a loop or moment zooms 4%, or slides
   3%, for a second; or when the picture stops matching

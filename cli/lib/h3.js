@@ -105,9 +105,9 @@ export const ON_ONE_STILL = new Set(['loop', 'moment']);
  * the kit rather than by each direction: nothing. Any move such a film makes
  * has to be undone before it lands, so a push-in becomes a push-in and a
  * pull-back, a slow dolly yo-yo nobody asked for. A pan across a wide scene
- * was tried as a choice and either did not move (gentle wording) or swung a
- * third of the frame and invented the street beyond the still (firm wording),
- * so every loop and moment is locked.
+ * was tried as a choice (thirteen takes): timed words made it ease out and back,
+ * but whatever it panned onto was painted past the still's edge, signs in
+ * made-up letters included, so every loop and moment is locked.
  */
 export const LOCKED_CAMERA = 'The camera is locked off on a tripod and holds the exact framing of Picture 1 for the entire shot, at the same distance, height, angle and size; the edges of the frame stay where Picture 1 has them, and only the life inside the picture moves.';
 
