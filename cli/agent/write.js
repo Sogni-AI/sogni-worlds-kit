@@ -3,7 +3,6 @@
 // with the same linter `node world lint` runs, inside the model's own retry
 // loop, and then reviewed once against the craft rules the linter can't see.
 import { join } from 'node:path';
-import { CAMERAS } from '../lib/h3.js';
 import { clickCauses, lintDirection } from '../lib/lint.js';
 import { imagePart, MODELS, studyParts } from '../lib/llm.js';
 import { examplePlace, FRAME_GRID, writerSystem } from './prompts.js';
@@ -46,7 +45,7 @@ const FILM = strict({
   action: str(150, 4500),
   sound: str(20, 700),
 });
-const LOOP = strict({ idea: str(10, 300), camera: { type: 'string', enum: CAMERAS }, action: str(150, 3000), sound: str(20, 500) });
+const LOOP = strict({ idea: str(10, 300), action: str(150, 3000), sound: str(20, 500) });
 
 function placeSchema({ minObjects, maxObjects }) {
   return strict({
@@ -131,7 +130,7 @@ function placeBrief({ place, index, context, required }) {
 
   lines.push('', '# What to write', [
     'Reply with JSON only:',
-    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "camera", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" }, "reveal": { "paint", "line", "done" } } ] }',
+    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" }, "reveal": { "paint", "line", "done" } } ] }',
     `- ${place.ending ? 'No objects.' : `${required.length > 1 ? required.length : 2} to 4 objects, each a distinct thing really in the picture, each causing its own film.`}`,
     '- "id": a short lower-case id with dashes ("door", "red-lantern").',
     '- "target": the exact thing to click, described so someone could point at it in the picture ("the open red round door behind the couple"). It must be a single object, not a group or a region.',
@@ -139,7 +138,7 @@ function placeBrief({ place, index, context, required }) {
     '- "frames": on the grid 124 + 17n. Loops are always 192 (not written: the loop has no frames field). Moments 141–243; a short hop 158–209; a long journey through a boundary 243–362.',
     '- Every "action" starts with the medium and "… begins in the position and framing established by Picture 1: …" (crossings and moments) or "… a wide shot holds the position and framing established by Picture 1: …" (loops), then describes the opening picture using the seen, then the motion in order, then (crossings) the arrival described exactly as the destination\'s seen shows it. Use the real framing words from "Framing" above.',
     '- Words are written, never left to the model: a video model spells only the words it is given and turns unworded speech into gibberish. Any writing a film shows (a sign, a note, a label, words on a mirror) is named in its action as what it reads, with the same words its picture shows. Anyone in a film who speaks has their exact words in the action as <d>[English] the words</d>, one short line per speaker, named by who they are, people taking turns; a crowd\'s murmur stays a sound. Real people in photographs get no invented words.',
-    '- Loops and moments: the kit writes the camera in fixed words, so the action says only what moves inside the picture, and everything returns to where it started. A moment\'s camera is always locked. The loop\'s "camera" is "locked" (a tripod) for almost every place; "sweep" (a slow look a little to one side and back) only when the place is a wide scene the eye travels across (a vista, a long room seen whole, a square from above), never a close or medium shot. Never a push in, pull back or drift: a film that starts and ends on one picture has to undo any move, and the camera yo-yos.',
+    '- Loops and moments: the kit locks the camera in fixed words, so the action says only what moves inside the picture, and everything returns to where it started. Never a push in, pull back, pan or drift: a film that starts and ends on one picture has to undo any move, and the camera yo-yos.',
     '- Crossings must pass through a physical boundary the camera moves through when the places are far apart, and each crossing in the world uses a different trick.',
     '- "sound": one to four sentences of ambience and physical sounds. Never music unless the object is about music. Spoken words go in the action, never in the sound.',
     '- Real people\'s faces: in crossings keep them turned away, small or out of focus mid-film; in loops and moments only small motion and the head stays where it is.',
@@ -181,7 +180,7 @@ export function placeProblems(answer, { place, context, required }) {
   const words = text => String(text ?? '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2 && w !== 'the');
   if (answer.chapter && words(answer.chapter).length && words(answer.chapter).every(w => words(answer.title).includes(w))) problems.push(`the chapter "${answer.chapter}" only repeats the title; make it the where or when (for example "Hobbiton · Matamata" or "Night one"), or leave it ""`);
   if (context.mechanics?.collectibles && place.collectible && !place.ending && !answer.objects?.some(o => o.collect)) problems.push(`one object must be the collectible "${place.collectible}" with "collect": true`);
-  for (const f of lintDirection({ ...answer.loop, frames: 192, kind: 'loop', camera: answer.loop?.camera ?? 'locked' }, answer.loop?.idea ?? '')) {
+  for (const f of lintDirection({ ...answer.loop, frames: 192, kind: 'loop' }, answer.loop?.idea ?? '')) {
     if (f.level === 'error') problems.push(`loop ${f.field}: ${f.message}`);
     else if (['face-turn', 'dark-screen'].includes(f.rule)) problems.push(`(warning) loop ${f.field}: ${f.message}`);
   }
@@ -201,7 +200,7 @@ const REVIEW_CHECKLIST = [
   'Does each crossing\'s arrival describe the destination exactly as its seen describes it, with the same people in the same places?',
   'Does every action describe the opening picture with its real framing, consistent with the seen (no "medium shot" for a full-length picture)?',
   'Are there props, people or objects that appear mid-film but are not in the start picture?',
-  'Is each loop\'s "camera" right for its place ("locked" unless the floor itself moves or the world is seen through someone\'s eyes), does no loop or moment ask the camera to push in, pull back, pan or drift, is the whole frame gently alive, and does everything return to where it started?',
+  'Does no loop or moment ask the camera to push in, pull back, pan or drift, is the whole frame gently alive, and does everything return to where it started?',
   'Are real people\'s faces kept turned away, small or out of focus in crossings, and kept still (small motion only) in loops and moments?',
   'Are there notes to the model, mood or genre labels, or anything that cannot be seen or heard?',
   'Is each film\'s length right for what happens (a long journey 243–362 frames, a moment 141–243)?',

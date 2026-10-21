@@ -191,17 +191,15 @@ A loop is the photograph breathing. It plays whenever the visitor is at that pla
   moment and tells the model the two pictures are one photograph. Write only what
   moves inside the picture, opening on "a wide shot holds the position and framing
   established by Picture 1".
-- **Choose the camera from the place.** A moment is always `locked` (a tripod). A
-  loop is `locked` too, unless the place is a wide scene the eye would travel across,
-  a vista from a ridge, a long room seen whole, a square or a crowd from above: then
-  `camera: sweep` pans slowly a little to one side, as someone takes it in, and back.
-  Never a sweep over a close or medium shot, or across a face near the camera: a
-  sweep shows edges of the scene the still does not, and the model has to invent
-  them. A push in, a pull back or a drift is never a loop: if a place needs one, it
-  is a close look (the camera moves in and holds there).
+- **Every loop and moment is locked.** A push in, a pull back, a pan or a drift
+  is never a loop: if a place needs one, it is a close look (the camera moves in
+  and holds there). A slow look across a wide scene was tried: worded gently the
+  model held the camera still, worded firmly it swung a third of the frame and
+  invented the street beyond the picture. A sweep needs picture beyond the frame,
+  so it is not offered.
 - **Screening measures it.** `node world screen` maps the first frame onto every
   quarter second and flags `camera-moves` when a loop or moment zooms 4%, or slides
-  further than its camera allows, for a second; or when the picture stops matching
+  3%, for a second; or when the picture stops matching
   its first frame at all for longer than that (a push-in that doubles the picture).
   Look at the frames it names; a yo-yo is rejected, and the retake keeps the camera.
 - **The whole frame is alive**, not one waterfall. Grass combs in the wind, cloud
@@ -440,8 +438,8 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
   change strips (`take-<n>.change-<k>.jpg`), sixteen consecutive frames where the
   picture changes fastest, because a crossfade often lasts a quarter of a second,
   less than the gap between two contact-sheet frames;
-- in a loop or a moment, a camera that pushes in and back, pans or drifts beyond its
-  plan's camera (screening says `camera-moves`; look at the frames it names);
+- in a loop or a moment, a camera that pushes in and back, pans or drifts
+  (screening says `camera-moves`; look at the frames it names);
 - in a close look's film, anything that would look wrong running backwards (rain or
   smoke rising, someone walking or speaking backwards), unless it has its own back;
 - an object that vanishes, appears from nowhere, or is thrown back into place so the
@@ -493,9 +491,7 @@ person.
   the view";
 - lower-case sentence starts, or a direction too short to carry motion;
 - a route through a bridge or tower;
-- a `camera` other than locked or sweep, or one on a film that is not a loop (a
-  moment is locked; a crossing, a close look and a film back move as their
-  directions say);
+- a `camera` other than locked (the kit locks every loop and moment);
 - a reveal on an object that goes somewhere, with neither a painted still nor a
   `paint` description, a `zoom` outside 1–3, or a place named like the close look
   (`<place>-<object>`);

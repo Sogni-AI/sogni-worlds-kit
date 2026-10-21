@@ -55,7 +55,6 @@ places: []
 #        - "We got in just after sunrise."
 #    loop:                              # the living photograph: still at both ends, the kit locks its camera
 #      frames: 192
-#      camera: locked                   # or sweep: a slow look across a wide scene and back
 #      idea: "Gulls wheel, rigging taps, the water glitters."
 #      action: >
 #        Live-action, cinematic, a wide shot holds the position and framing established by Picture 1: ...

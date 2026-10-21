@@ -102,32 +102,27 @@ export const ON_ONE_STILL = new Set(['loop', 'moment']);
 
 /**
  * What the camera does in a film that starts and ends on one still, said by
- * the kit rather than by each direction. Any move such a film makes has to be
- * undone before it lands, so a push-in becomes a push-in and a pull-back: a
- * slow dolly yo-yo nobody asked for. Every moment and almost every loop is
- * `locked`. A loop of a wide scene (a vista, a long room seen whole, a crowd
- * from above) may `sweep`: an unhurried look across it and back, the one move
- * that reads as natural going out and coming back.
+ * the kit rather than by each direction: nothing. Any move such a film makes
+ * has to be undone before it lands, so a push-in becomes a push-in and a
+ * pull-back, a slow dolly yo-yo nobody asked for. A pan across a wide scene
+ * was tried as a choice and either did not move (gentle wording) or swung a
+ * third of the frame and invented the street beyond the still (firm wording),
+ * so every loop and moment is locked.
  */
-export const CAMERA = Object.freeze({
-  locked: 'The camera is locked off on a tripod and holds the exact framing of Picture 1 for the entire shot, at the same distance, height, angle and size; the edges of the frame stay where Picture 1 has them, and only the life inside the picture moves.',
-  sweep: 'The camera stands on a tripod at the same distance and size as Picture 1 and pans slowly and gently a little to one side across the wide scene, as someone takes it in, then back again, coming to rest exactly on the framing of Picture 1 at the end.',
-});
-export const CAMERAS = Object.keys(CAMERA);
+export const LOCKED_CAMERA = 'The camera is locked off on a tripod and holds the exact framing of Picture 1 for the entire shot, at the same distance, height, angle and size; the edges of the frame stay where Picture 1 has them, and only the life inside the picture moves.';
 
 /**
  * The full document sent to H3, assembled from a film's `action` (what the
  * camera and the picture do, as one continuous shot) and `sound` (what is
  * heard). Agents write only those two; the format around them is fixed here.
- * A loop or a moment also gets its camera sentence in front of the action:
- * a moment's is locked, a loop's is its plan's `camera` (locked unless chosen).
+ * A loop or a moment also gets the locked camera sentence in front of the action.
  */
-export function assemblePrompt({ kind, frames, action, sound, keyframes = [], camera }) {
+export function assemblePrompt({ kind, frames, action, sound, keyframes = [] }) {
   const oneStill = ON_ONE_STILL.has(kind);
   const landing = oneStill ? LOOP_LANDING : LANDING;
   let body = String(action ?? '').replace(/\s+/g, ' ').trim();
   if (!/established by Picture 2/.test(body)) body = `${body} ${landing}`;
-  if (oneStill) body = `${kind === 'loop' ? CAMERA[camera ?? 'locked'] ?? CAMERA.locked : CAMERA.locked} ${body}`;
+  if (oneStill) body = `${LOCKED_CAMERA} ${body}`;
   return [
     alignmentLine(frames, keyframes.map(k => k.frame), { samePicture: oneStill }),
     '',

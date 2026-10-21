@@ -72,7 +72,7 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
   const text = [
     `A ${film.kind} film, take ${take.take} of "${film.id}". It should start on the picture described as: ${fromSeen}`,
     object ? `The visitor clicked: ${object.target || object.label}, labelled "${object.label}"${object.hint ? ` (${object.hint})` : ''}. That thing must lead the film and the film must do what the label promises; "clickedThingLeads" says whether it does, judged from the frames.` : 'It is the place\'s living picture (nothing was clicked).',
-    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera ${film.kind === 'loop' && film.camera === 'sweep' ? 'sweeping (a slow pan a little to one side and back, never a push in)' : 'locked (the frame does not move at all)'}.`,
+    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera locked (the frame does not move at all).`,
     film.kind === 'reveal' ? 'It lands on a close look the world holds on; then, unless it has its own film back, it is played backwards to put the object down. Reject it if anything in it would look plainly wrong running backwards (rain or smoke rising, someone walking or speaking backwards, a pour going up).' : null,
     `Its direction: ${film.action}`,
     `Its sound: ${film.sound}`,

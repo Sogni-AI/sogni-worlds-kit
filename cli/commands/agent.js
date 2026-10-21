@@ -183,7 +183,7 @@ export async function run(argv) {
       if (extra.ending) doc.setIn(['places', i, 'ending'], doc.createNode({ kind: extra.ending.kind, title: extra.ending.title, text: extra.ending.text }));
       // An ending's card covers its picture, so it needs no loop of its own.
       if (extra.ending) doc.deleteIn(['places', i, 'loop']);
-      else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, ...(a.loop.camera && a.loop.camera !== 'locked' ? { camera: a.loop.camera } : {}), action: a.loop.action, sound: a.loop.sound }));
+      else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, action: a.loop.action, sound: a.loop.sound }));
       const existing = place.objects ?? [];
       doc.setIn(['places', i, 'objects'], doc.createNode(a.objects.map(o => {
         const before = existing.find(e => e.id === o.id);

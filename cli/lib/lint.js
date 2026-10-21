@@ -6,7 +6,7 @@
 // defects that got real takes rejected (docs/directing-films.md explains each).
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { assemblePrompt, CAMERAS, CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
+import { assemblePrompt, CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
 import { filmsOf, placeById } from './plan.js';
 import { isInsideWorld } from './paths.js';
 import { correlation, layoutOf, SAME_VIEW } from './screen.js';
@@ -63,7 +63,7 @@ export const RULES = {
   materialize: 'no materializing props',
   lattice: 'no routes through bridges or towers',
   'dark-screen': 'no dark-screen crossings',
-  camera: 'a camera choice the kit knows',
+  camera: 'the kit locks the camera of loops and moments',
   static: 'retired: the kit now writes the camera of loops and moments (see camera)',
   'face-turn': 'faces stay put in loops and moments',
   cause: 'the clicked object starts the film',
@@ -184,11 +184,8 @@ export function lintDirection(film, concept = '') {
   for (const sentence of throughLattice(action)) error('lattice', 'action', `"${sentence.slice(0, 90)}…" — route the camera far below, far to one side or around the structure; flying along or through a bridge or tower smears its struts`);
   const dark = DARK_SCREEN.exec(spoken(action));
   if (dark) warn('dark-screen', 'action', `${quote(dark[0])} — a dark screen is not a physical crossing: keep the occluding surface and its moving edge visible`);
-  // The kit writes the camera of a film on one still: a moment's is locked, a loop's is its plan's choice.
-  if (film.camera !== undefined && film.camera !== null) {
-    if (film.kind !== 'loop') error('camera', 'camera', `only a loop has a camera choice; a ${film.kind === 'moment' ? 'moment keeps a locked camera' : `${film.kind} moves the way its direction says`}`);
-    else if (!CAMERAS.includes(film.camera)) error('camera', 'camera', `camera is one of ${CAMERAS.join(', ')} (got ${JSON.stringify(film.camera)}); leave it out for locked`);
-  }
+  // The kit locks the camera of every loop and moment; there is no other choice to make.
+  if (film.camera !== undefined && film.camera !== null && film.camera !== 'locked') error('camera', 'camera', `the kit locks the camera of loops and moments; remove camera (got ${JSON.stringify(film.camera)})`);
   const faceTurn = ON_ONE_STILL.has(film.kind) ? FACE_TURN.exec(spoken(action)) : null;
   if (faceTurn) warn('face-turn', 'action', `${quote(faceTurn[0])} — a ${film.kind} starts and ends on the photograph, so a face seen there is seen at both ends; turning a head away and back is where a real face drifts. Keep the head where it is and animate small things (breathing, a blink, hair in the wind, a slight smile), or keep the person still`);
   const keyframes = film.keyframes ?? [];

@@ -176,7 +176,6 @@ Its film id is `<place>-loop`.
 ```yaml
 loop:
   frames: 192                 # 8 s; defaults to 192
-  camera: locked              # optional: locked (the default) or sweep (a wide scene only)
   idea: One line for people.
   action: >
     Live-action, cinematic, a wide shot holds the position and framing established by Picture 1: …
@@ -184,12 +183,9 @@ loop:
     …
 ```
 
-`camera` is said by the kit, in fixed words, in front of the action (a loop or a
-moment has to land where it began, so a camera that moves pushes in and back).
-`locked` is a tripod: right for almost every place. `sweep` is a slow pan a little
-to one side and back, as someone takes in a wide scene (a vista, a long room seen
-whole, a square from above): never over a close or medium shot. A moment is always
-locked. directing-films.md › Loops says how to choose.
+The camera is said by the kit, in fixed words, in front of the action: locked, for
+every loop and moment (one that has to land where it began and moves pushes in and
+back). directing-films.md › Loops says why.
 
 ## objects
 
@@ -295,7 +291,7 @@ explains each one. In short:
 - A crossing passes through something physical — a doorway, a cloud, water, a
   reflection, a fogged lens — never a fade, dissolve or morph.
 - Pass bridges and towers far below or far to one side; never fly along them.
-- Loops and moments keep the camera the kit gives them (a loop's `camera`, locked unless chosen; a moment is locked).
+- Loops and moments keep the locked camera the kit gives them.
 - Music only when the film is about music (the label, hint or idea says so).
 
 ## Coordinates, frames and canvases

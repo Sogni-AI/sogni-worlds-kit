@@ -141,8 +141,7 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 - `seen`: what is really in the picture, from looking at it at full size.
 - `title`, `chapter`, `caption`, from what the person told you.
 - `loop`: a living photograph (the whole frame gently alive, Foley). The kit locks
-  its camera; give a loop `camera: sweep` (a slow look across and back) only when
-  the place is a wide scene the eye travels across (docs/directing-films.md › Loops).
+  its camera; write only what moves inside the picture (docs/directing-films.md › Loops).
 - `objects`: two to four things to click. In a linear story, exactly one of them
   `goes` to the next place. Give each one a `label` (an action: "Duck through the
   round door"), a `hint`, an `at` point for the label (in open space just above the

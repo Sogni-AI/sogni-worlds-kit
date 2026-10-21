@@ -93,7 +93,7 @@ export function takeSpec(plan, paths, film, take, { seed } = {}) {
     refs,
     journal: {
       film: film.id, take, kind: film.kind, from: film.from, to: film.to, object: film.object,
-      ...(ON_ONE_STILL.has(film.kind) ? { camera: film.kind === 'loop' ? film.camera ?? 'locked' : 'locked' } : {}),
+      ...(ON_ONE_STILL.has(film.kind) ? { camera: 'locked' } : {}),
       model: MODEL, width: canvas.width, height: canvas.height, delivered: delivered(canvas),
       frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)), steps: STEPS, fps: FPS, seed: chosenSeed,
       prompt, promptSha256: sha256(prompt),

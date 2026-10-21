@@ -42,13 +42,11 @@ test('bridge and tower routes are errors unless the structure is passed far off;
   assert.ok(rules(lintDirection({ ...good, allow: ['no-such-rule'] })).includes('allow'));
 });
 
-test('the camera of a loop or moment is a choice the kit knows; a crossing has none; frames must be on the grid', () => {
+test('the kit locks the camera of loops and moments: no other camera is accepted; frames must be on the grid', () => {
   // The kit writes the camera sentence itself, so a loop's direction no longer has to say "static".
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop' })), []);
-  for (const camera of ['locked', 'sweep']) assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera })), [], camera);
-  assert.ok(rules(lintDirection({ ...good, kind: 'loop', camera: 'dolly' })).includes('camera'));
-  assert.ok(rules(lintDirection({ ...good, kind: 'moment', camera: 'sweep' })).includes('camera'), 'a moment keeps a locked camera');
-  assert.ok(rules(lintDirection({ ...good, camera: 'locked' })).includes('camera'), 'a crossing moves as its direction says');
+  assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera: 'locked' })), []);
+  assert.ok(rules(lintDirection({ ...good, kind: 'loop', camera: 'sweep' })).includes('camera'));
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', allow: ['static'] })), [], 'an old plan that allowed the retired rule still lints');
   assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
 });

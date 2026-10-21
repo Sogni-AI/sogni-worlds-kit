@@ -138,10 +138,9 @@ test('a loop whose camera pushes in and back is flagged; a locked one and a brie
   // One sample off (a wobble) is not a move: a move lasts a second.
   const path = Array.from({ length: 20 }, (_, i) => ({ frame: (i + 1) * 6, zoom: i === 9 ? 0.07 : 0, shift: 0, r: 0.9 }));
   assert.deepEqual(cameraMoves(path).flags, []);
-  // A sweep may pan where a locked camera may not; neither may push in.
+  // A slide held for a second is a move too.
   const slide = path.map(p => ({ ...p, zoom: 0, shift: 0.08 }));
-  assert.equal(cameraMoves(slide, 'locked').flags.length, 1);
-  assert.equal(cameraMoves(slide, 'sweep').flags.length, 0);
+  assert.equal(cameraMoves(slide).flags.length, 1);
 });
 
 test('the change strips centre on where a picture turns into another', async () => {

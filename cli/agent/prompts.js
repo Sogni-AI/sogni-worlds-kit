@@ -30,7 +30,7 @@ export function examplePlace() {
       chapter: place.chapter,
       caption: place.caption,
       narration: place.narration.lines.map(line => (typeof line === 'string' ? line : line.text)),
-      loop: { idea: place.loop.idea, camera: place.loop.camera ?? 'locked', action: place.loop.action, sound: place.loop.sound },
+      loop: { idea: place.loop.idea, action: place.loop.action, sound: place.loop.sound },
       objects: place.objects.map(o => ({
         id: o.id,
         target: { camera: 'the camera the woman holds up to her eye', car: 'the red car at the right edge', mirror: 'the red car’s wing mirror' }[o.id],

@@ -305,7 +305,7 @@ export function analyseFrames(frames, { kind = 'crossing', from = null, to = nul
  * Measured on real takes: the push-ins people rejected held 8–26% for 2 s or
  * more; 22 approved loops never held more than 3% past a single sample.
  */
-export const CAMERA_LIMITS = Object.freeze({ locked: { zoom: 0.04, shift: 0.03 }, sweep: { zoom: 0.04, shift: 0.15 } });
+export const CAMERA_LIMIT = Object.freeze({ zoom: 0.04, shift: 0.03 });
 /** Frames between camera samples, and how many reliable samples in a row make a move rather than a wobble (a second). */
 const CAMERA_STEP = 6, CAMERA_HOLD = 5;
 /**
@@ -364,13 +364,13 @@ const steps = (from, to, by) => Array.from({ length: Math.round((to - from) / by
  * lamp coming up or fog rolling in does not read as a move). Each sample's
  * search starts from the last one's answer, so a long move is followed past
  * the grid's reach; coarse on the small frames, refined on the large ones.
- * `small` is W×H, `large` 2W×2H; `reach` is how far a slide is searched
- * around that start, in small-frame pixels. A move that matches no better
+ * `small` is W×H, `large` 2W×2H. A move that matches no better
  * than standing still counts as no move; a sample nothing matches well
  * (darkness, someone filling the lens, a camera gone far from its framing) is
  * marked `unsure`.
  */
-export function cameraPath(small, large, { reach = 6 } = {}) {
+export function cameraPath(small, large) {
+  const reach = 6; // small-frame pixels searched around the last answer
   const count = Math.min(small.length, large.length);
   if (count < 2) return [];
   const [w, h] = [W, H], [W2, H2] = [W * 2, H * 2];
@@ -397,13 +397,12 @@ export function cameraPath(small, large, { reach = 6 } = {}) {
 }
 
 /**
- * A loop or a moment whose camera moves more than its plan's camera does:
- * a zoom of 4% or a slide past the limit, held for a second of samples the
+ * A loop or a moment whose locked camera moves: a zoom of 4% or a slide of 3%, held for a second of samples the
  * measurement trusts (unsure ones neither count nor break a run). One flag
  * says what was measured and where to look; the eyes decide.
  */
-export function cameraMoves(path, camera = 'locked') {
-  const limit = CAMERA_LIMITS[camera] ?? CAMERA_LIMITS.locked;
+export function cameraMoves(path) {
+  const limit = CAMERA_LIMIT;
   const sure = path.filter(p => !p.unsure);
   // The longest run of trusted samples in a row that pass the test.
   const held = test => {
@@ -430,7 +429,7 @@ export function cameraMoves(path, camera = 'locked') {
     if (lost.length < CAMERA_LOST) return { flags: [], metrics };
     return {
       flags: [{ code: 'camera-moves', severity: 'warn', frame: lost[Math.floor(lost.length / 2)].frame, at: time(lost[Math.floor(lost.length / 2)].frame),
-        message: `From ${time(lost[0].frame)} s to ${time(lost.at(-1).frame)} s the picture matches its first frame at no small zoom or slide: the camera has gone far from its framing (a big push-in), or something fills the view. Look at it at full size; a ${camera} camera keeps the frame of the still` }],
+        message: `From ${time(lost[0].frame)} s to ${time(lost.at(-1).frame)} s the picture matches its first frame at no small zoom or slide: the camera has gone far from its framing (a big push-in), or something fills the view. Look at it at full size; a locked camera keeps the frame of the still` }],
       metrics,
     };
   }
@@ -440,7 +439,7 @@ export function cameraMoves(path, camera = 'locked') {
     slid || peak.shift >= limit.shift ? `slides about ${Math.round(peak.shift * 100)}% of the frame` : null].filter(Boolean).join(' and ');
   return {
     flags: [{ code: 'camera-moves', severity: 'warn', frame: peak.frame, at: time(peak.frame),
-      message: `The camera ${what} between ${time(run[0].frame)} s and ${time(run.at(-1).frame)} s and has to come back to land on the same still; its plan's camera is ${camera}. Compare frame 0 with frame ${peak.frame} at full size: if the edges of the picture moved, it is the yo-yo a ${camera} camera must not make (docs/directing-films.md › Loops)` }],
+      message: `The camera ${what} between ${time(run[0].frame)} s and ${time(run.at(-1).frame)} s and has to come back to land on the same still. Compare frame 0 with frame ${peak.frame} at full size: if the edges of the picture moved, it is the yo-yo a locked camera must not make (docs/directing-films.md › Loops)` }],
     metrics,
   };
 }
@@ -572,9 +571,9 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
   // A film on one still: does its camera stay where its plan put it? (Takes from before the
   // kit recorded a camera were asked for a static one.)
   if (ON_ONE_STILL.has(journal.kind)) {
-    const camera = cameraMoves(cameraPath(frames, await greyFrames(video, W * 2, H * 2), { reach: journal.camera === 'sweep' ? 18 : 6 }), journal.camera ?? 'locked');
+    const camera = cameraMoves(cameraPath(frames, await greyFrames(video, W * 2, H * 2)));
     flags.push(...camera.flags);
-    Object.assign(motion.metrics, camera.metrics, { camera: journal.camera ?? 'locked' });
+    Object.assign(motion.metrics, camera.metrics);
   } else motion.metrics.changes = changeStretches(frames);
 
   const audio = info.audioChannels ? await loudness(video) : { lufs: null, truePeak: null };
