@@ -13,6 +13,7 @@ rendered each film.
 
 - A short complete example
 - The world (top-level fields)
+- plot (the story of a made-up world)
 - voices and music
 - places
 - loop (the living photograph)
@@ -115,6 +116,36 @@ places:
 | `contentFilter` | `on` or `off` (default `off`: new worlds start with it off): Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
 | `intro` | Optional words for the Begin card: `{ eyebrow, tagline, warning, begin }`. |
 | `map` | `false` hides the Places panel (no spoilers, no teleporting). |
+| `plot` | A made-up world's story, which visitors never see (below). |
+
+## plot
+
+A world you make up gets its story first (docs/writing-the-story.md). Visitors
+never see it; the pictures, films, lines and `node world story` all follow it. A
+world of your own photographs leaves it out.
+
+```yaml
+plot:
+  promise: A film-noir murder mystery in the rain: a client with a secret, a reveal that turns the case over.
+  truth: >                    # what really happened, start to finish
+    Vera Lane drowned her sister Eleanor on Sunday night, then hired a detective to be seen looking for her.
+  cast:                       # one name per person, used everywhere
+    - name: Vera Lane
+      who: the client in grey; the killer
+  beats:                      # every place: what the visitor learns, or what turns there
+    office: The hook. Vera hires you to find her sister; her stained glove stays on.
+    pier: The turn. The sister's coat comes out of the water with Vera's lighter in it.
+  twists:
+    - twist: The client is the killer.
+      at: pier                # where it lands
+      clues:                  # at least two, in places the visitor meets before it
+        - { at: office, clue: "Vera's left glove is stained at the palm, and she keeps it on." }
+        - { at: club, clue: "The bartender says the sisters fought on Sunday, and Vera was there." }
+```
+
+`lint` checks its shape: every place it names exists, no two people share a name,
+every place has a beat, every twist has at least two clues, and in a story told in
+order every clue comes before its twist. `node world story` checks the rest.
 
 ## voices and music
 

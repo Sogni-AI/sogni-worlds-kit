@@ -97,7 +97,8 @@ function placeBrief({ place, index, context, required }) {
   lines.push(`Places, in order: ${places.map(p => `${p.id}${p.ending ? ` (an ending: ${p.ending.kind})` : ''}`).join(', ')}`);
   const narration = brief.narration ?? { voice: 'none' };
   if (narration.voice === 'none') lines.push('Narration: none. Reply with "narration": [].');
-  else lines.push(`Narration: 1 to 3 short spoken lines for this place, ${narration.style ?? 'spoken by a narrator who tells the story'}, in plain spoken English, each line under 20 words. Use only facts the person gave or that are visible. ${narration.notes ?? ''}`.trim());
+  else lines.push(`Narration: 1 to 3 short spoken lines for this place, ${narration.style ?? 'spoken by a narrator who tells the story'}, in plain spoken English, each line under 20 words. Use only facts the person gave${context.plot ? ', the plot gives' : ''} or that are visible. ${narration.notes ?? ''}`.trim());
+  if (context.plot) lines.push(...plotBrief(context.plot, place, places));
 
   const done = places.filter(p => p.id !== place.id && p.beats?.length);
   if (done.length) lines.push('', '# What the other places already do', 'Each beat happens once in a world: give this place\'s objects their own actions, never another switch-on, encounter or trick already listed here.', ...done.map(p => `- ${p.id}: ${p.beats.join(' | ')}`));
@@ -193,6 +194,28 @@ const REVIEW_SCHEMA = strict({
   problems: { type: 'array', items: strict({ film: str(2), rule: str(3), fix: str(5) }) },
 });
 
+/** What the plot asks of one place: its beat, the clues it plants, what it must not give away. */
+function plotBrief(plot, place, places) {
+  const order = places.filter(p => !p.ending).map(p => p.id);
+  const before = order.slice(0, Math.max(0, order.indexOf(place.id)));
+  const lines = ['', '# The plot (visitors never see it; every word you write serves it)', `Promise: ${plot.promise}`, `What really happened: ${plot.truth}`];
+  if (plot.cast.length) lines.push(`Cast, with the one name each person goes by everywhere: ${plot.cast.map(p => `${p.name}: ${p.who}`).join('; ')}`);
+  const known = plot.beats.filter(b => before.includes(b.place));
+  if (known.length) lines.push(`What the visitor already knows, place by place: ${known.map(b => `${b.place}: ${b.beat}`).join(' | ')}`);
+  const beat = plot.beats.find(b => b.place === place.id);
+  if (beat) lines.push(`This place's beat, which its narration and objects deliver: ${beat.beat}`);
+  const clues = plot.twists.flatMap(t => t.clues.filter(c => c.at === place.id).map(c => c.clue));
+  if (clues.length) lines.push(`Clues to plant here, plainly but with an innocent reason to be there (seen through a close look or a moment, or said in a narrated line): ${clues.join(' | ')}`);
+  const lands = plot.twists.filter(t => t.at === place.id);
+  if (lands.length) lines.push(`The twist that lands here, revealed by a close look or the narration: ${lands.map(t => t.twist).join(' | ')}`);
+  const later = plot.twists.filter(t => t.at !== place.id && !before.includes(t.at));
+  if (later.length) lines.push(`Twists still to come, which nothing here may give away (no label, hint or line that names them): ${later.map(t => t.twist).join(' | ')}`);
+  return lines;
+}
+
+/** Asked of a place in a world with a plot. */
+const STORY_CHECK = 'Does this place deliver its plot beat and plant its clues (seen in the picture, a close look or a moment, or said in a line), call every person by exactly the name the cast gives them, and give no later twist away in a label, hint or line? Does every object move the story (a clue, a caught lie, a cost, who someone really is, or the way on)?';
+
 /** The craft rules a linter can't see, checked by the model against its own answer. */
 const REVIEW_CHECKLIST = [
   'Does each crossing begin with the clicked object causing the motion (the label and the film agree)?',
@@ -236,7 +259,7 @@ export async function writePlace(llm, { place, index, context, stillPath, destin
   const review = await llm.json({
     system,
     user: [
-      { type: 'text', text: `${text}\n\n# Your answer\n${JSON.stringify(answer)}\n\n# Review it\nFirst, in "clicks", for EVERY object: copy the first sentence of its film that comes after the opening description ("firstMotion"), then say whether that sentence starts with the clicked thing (its target) causing the motion ("startsWithClicked") and whether the film does what the label promises ("doesWhatLabelSays"). A visitor who clicks "Follow the lanterns" must see the lanterns lead; a film that starts with something else feels broken. Then check your answer against each numbered question below, looking at the picture again. In "checks", answer each question in one short sentence (what you found). Then list in "problems" only the real problems, each with the film ("loop" or an object id), the rule it breaks and the concrete fix. A label that contradicts the picture or its film counts. Reply with "problems": [] if there are none.\n${REVIEW_CHECKLIST.map((q, i) => `${i + 1}. ${q}`).join('\n')}` },
+      { type: 'text', text: `${text}\n\n# Your answer\n${JSON.stringify(answer)}\n\n# Review it\nFirst, in "clicks", for EVERY object: copy the first sentence of its film that comes after the opening description ("firstMotion"), then say whether that sentence starts with the clicked thing (its target) causing the motion ("startsWithClicked") and whether the film does what the label promises ("doesWhatLabelSays"). A visitor who clicks "Follow the lanterns" must see the lanterns lead; a film that starts with something else feels broken. Then check your answer against each numbered question below, looking at the picture again. In "checks", answer each question in one short sentence (what you found). Then list in "problems" only the real problems, each with the film ("loop" or an object id), the rule it breaks and the concrete fix. A label that contradicts the picture or its film counts. Reply with "problems": [] if there are none.\n${(context.plot ? [...REVIEW_CHECKLIST, STORY_CHECK] : REVIEW_CHECKLIST).map((q, i) => `${i + 1}. ${q}`).join('\n')}` },
       await imagePart(stillPath),
     ],
     schema: REVIEW_SCHEMA,
@@ -251,26 +274,38 @@ export async function writePlace(llm, { place, index, context, stillPath, destin
     if (!object || review.problems.some(p => p.film === click.object && /click|label|cause/i.test(p.rule))) continue;
     review.problems.push({ film: click.object, rule: 'the clicked object causes the film', fix: `Rewrite the film so it opens with ${object.target} doing what "${object.label}" promises (now it opens: "${click.firstMotion}"), or rewrite the label and hint to promise what ${object.target} really does in it` });
   }
-  if (review.problems.length) {
-    answer = await llm.json({
-      system,
-      user: [
-        { type: 'text', text: `${text}\n\n# Your answer\n${JSON.stringify(answer)}\n\n# Fix these problems found in review, and change nothing else\n${review.problems.map(p => `- ${p.film} (${p.rule}): ${p.fix}`).join('\n')}\n\nReply with the whole corrected JSON object.` },
-        await imagePart(stillPath),
-        ...(await Promise.all(required.map(async route => [
-          { type: 'text', text: `The picture of "${route.to}":` },
-          await imagePart(destinationStills[route.to]),
-        ]))).flat(),
-      ],
-      schema,
-      check,
-      rounds: 4,
-      purpose: `revise-${place.id}`,
-      maxTokens: 12000,
-      temperature: 0.5,
-    });
-  }
+  if (review.problems.length) answer = await revise(llm, { text, answer, problems: review.problems, stillPath, required, destinationStills, schema, check, system, purpose: `revise-${place.id}` });
   return { answer, review: review.problems };
+}
+
+/** Rewrite an answer for the problems found in it, changing nothing else. */
+async function revise(llm, { text, answer, problems, stillPath, required, destinationStills, schema, check, system, purpose }) {
+  return llm.json({
+    system,
+    user: [
+      { type: 'text', text: `${text}\n\n# Your answer\n${JSON.stringify(answer)}\n\n# Fix these problems found in review, and change nothing else\n${problems.map(p => `- ${p.film} (${p.rule}): ${p.fix}`).join('\n')}\n\nReply with the whole corrected JSON object.` },
+      await imagePart(stillPath),
+      ...(await Promise.all(required.map(async route => [
+        { type: 'text', text: `The picture of "${route.to}":` },
+        await imagePart(destinationStills[route.to]),
+      ]))).flat(),
+    ],
+    schema,
+    check,
+    rounds: 4,
+    purpose,
+    maxTokens: 12000,
+    temperature: 0.5,
+  });
+}
+
+/** Rewrite one written place for problems found later (the story editor's), changing nothing else. */
+export async function revisePlace(llm, { place, index, context, stillPath, destinationStills, answer, problems }) {
+  const required = place.ending ? [] : routesFor(place.id, context);
+  const schema = placeSchema({ minObjects: place.ending ? 0 : Math.max(required.length, 2), maxObjects: place.ending ? 0 : 4 });
+  const text = placeBrief({ place, index, context, required });
+  const check = candidate => placeProblems(candidate, { place, context, required });
+  return revise(llm, { text, answer, problems, stillPath, required, destinationStills, schema, check, system: writerSystem({ mature: context.mature }), purpose: `story-revise-${place.id}` });
 }
 
 // ─── the world's own fields ─────────────────────────────────────────────────

@@ -17,7 +17,8 @@ import { Llm, MODELS } from '../lib/llm.js';
 import { log, usd } from '../lib/log.js';
 import { confirm, interview, loadBriefFile, missingAnswers, placePhotos, readBrief, writeBrief } from '../agent/brief.js';
 import { writeBible, paintPlaces } from '../agent/concept.js';
-import { lookAt, writePlace, writeWorld } from '../agent/write.js';
+import { lookAt, revisePlace, writePlace, writeWorld } from '../agent/write.js';
+import { critiqueStory, storyWords } from '../agent/story.js';
 import { checkOutline, locate, selectionResult } from '../agent/point.js';
 import { judgeTake, rewriteFilm } from '../agent/judge.js';
 import { pickCloseLook } from '../agent/reveal.js';
@@ -133,6 +134,11 @@ export async function run(argv) {
     doc.set('title', state.world.title);
     doc.set('subtitle', state.world.subtitle);
     doc.set('story', state.world.story);
+    // A painted world's plot, as world.yaml keeps it (docs/world-yaml.md › plot).
+    if (state.bible?.plot) {
+      const { promise, truth, cast, beats, twists } = state.bible.plot;
+      doc.set('plot', doc.createNode({ promise, truth, cast, beats: Object.fromEntries(beats.map(b => [b.place, b.beat])), twists }));
+    }
     doc.set('contentFilter', 'off');
     doc.set('order', brief.order ?? (brief.paint ? 'free' : 'linear'));
     if (brief.narration?.voice === 'design' && state.world.narrator) doc.set('voices', doc.createNode({ narrator: { design: state.world.narrator } }));
@@ -145,7 +151,7 @@ export async function run(argv) {
     ({ doc, plan } = readPlan(id));
     const bibleOf = place => state.bible?.places.find(p => p.id === place.id) ?? null;
     const context = {
-      brief, mature, title: state.world.title, story: state.world.story, style: state.bible?.style ?? null,
+      brief, mature, title: state.world.title, story: state.world.story, style: state.bible?.style ?? null, plot: state.bible?.plot ?? null,
       order: plan.order ?? 'linear',
       mechanics: brief.mechanics ?? {},
       links: (state.bible?.links ?? []).map(l => ({ from: l.from, to: l.to, via: `the ${l.via}`, why: 'a route in the world\'s plan' })),
@@ -172,33 +178,63 @@ export async function run(argv) {
       context.places[index].beats = beatsOf(answer);
       if (review.length) log.dim(`${place.id}: its own review fixed ${review.length} thing${review.length === 1 ? '' : 's'}: ${review.map(r => `${r.film} (${r.rule})`).join(', ')}`);
     }
-    ({ doc, plan } = readPlan(id));
-    plan.places.forEach((place, i) => {
-      const a = state.places[place.id].answer;
-      const extra = context.places[i];
-      doc.setIn(['places', i, 'title'], a.title);
-      if (a.chapter) doc.setIn(['places', i, 'chapter'], a.chapter);
-      doc.setIn(['places', i, 'caption'], a.caption);
-      if (a.narration.length && brief.narration?.voice !== 'none') doc.setIn(['places', i, 'narration'], doc.createNode({ voice: 'narrator', lines: a.narration }));
-      if (extra.ending) doc.setIn(['places', i, 'ending'], doc.createNode({ kind: extra.ending.kind, title: extra.ending.title, text: extra.ending.text }));
-      // An ending's card covers its picture, so it needs no loop of its own.
-      if (extra.ending) doc.deleteIn(['places', i, 'loop']);
-      else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, action: a.loop.action, sound: a.loop.sound }));
-      const existing = place.objects ?? [];
-      doc.setIn(['places', i, 'objects'], doc.createNode(a.objects.map(o => {
-        const before = existing.find(e => e.id === o.id);
-        return clean({
-          id: o.id, label: o.label, hint: o.hint, target: o.target,
-          at: before?.at, select: before?.select,
-          goes: o.goes || undefined, shortcut: o.goes && o.shortcut ? true : undefined, collect: o.collect ? true : undefined,
-          film: { frames: o.film.frames, idea: o.film.idea, action: o.film.action, sound: o.film.sound },
-          reveal: !o.goes && o.reveal?.paint ? clean({ paint: o.reveal.paint, line: o.reveal.line || undefined, done: o.reveal.done || undefined,
-            // A close look painted on an earlier run is kept, with what was seen in it.
-            still: before?.reveal?.still, seen: before?.reveal?.seen }) : undefined,
-        });
-      })));
-    });
-    writePlan(id, doc);
+    // The written places, into world.yaml.
+    const writePlaces = () => {
+      ({ doc, plan } = readPlan(id));
+      plan.places.forEach((place, i) => {
+        const a = state.places[place.id].answer;
+        const extra = context.places[i];
+        doc.setIn(['places', i, 'title'], a.title);
+        if (a.chapter) doc.setIn(['places', i, 'chapter'], a.chapter);
+        doc.setIn(['places', i, 'caption'], a.caption);
+        if (a.narration.length && brief.narration?.voice !== 'none') doc.setIn(['places', i, 'narration'], doc.createNode({ voice: 'narrator', lines: a.narration }));
+        if (extra.ending) doc.setIn(['places', i, 'ending'], doc.createNode({ kind: extra.ending.kind, title: extra.ending.title, text: extra.ending.text }));
+        // An ending's card covers its picture, so it needs no loop of its own.
+        if (extra.ending) doc.deleteIn(['places', i, 'loop']);
+        else doc.setIn(['places', i, 'loop'], doc.createNode({ frames: 192, idea: a.loop.idea, action: a.loop.action, sound: a.loop.sound }));
+        const existing = place.objects ?? [];
+        doc.setIn(['places', i, 'objects'], doc.createNode(a.objects.map(o => {
+          const before = existing.find(e => e.id === o.id);
+          return clean({
+            id: o.id, label: o.label, hint: o.hint, target: o.target,
+            at: before?.at, select: before?.select,
+            goes: o.goes || undefined, shortcut: o.goes && o.shortcut ? true : undefined, collect: o.collect ? true : undefined,
+            film: { frames: o.film.frames, idea: o.film.idea, action: o.film.action, sound: o.film.sound },
+            reveal: !o.goes && o.reveal?.paint ? clean({ paint: o.reveal.paint, line: o.reveal.line || undefined, done: o.reveal.done || undefined,
+              // A close look painted on an earlier run is kept, with what was seen in it.
+              still: before?.reveal?.still, seen: before?.reveal?.seen }) : undefined,
+          });
+        })));
+      });
+      writePlan(id, doc);
+    };
+    writePlaces();
+
+    // 6b. A painted world's story, read whole by an editor; a place it faults is rewritten once.
+    if (context.plot && !state.story) {
+      ({ plan } = readPlan(id));
+      log.step('Reading the whole story as an editor');
+      const critique = await critiqueStory(llm, { plan, about: brief.about ?? brief.paint?.concept ?? null, purpose: 'story-edit' });
+      const fixes = critique.findings.filter(f => f.severity === 'fix');
+      const revised = [];
+      // A finding names a place or one of its films ("place-object").
+      const of = place => new Set([place.id, ...state.places[place.id].answer.objects.map(o => filmId(place.id, o.id))]);
+      for (const [index, place] of context.places.entries()) {
+        const mine = fixes.filter(f => of(place).has(f.where));
+        if (!mine.length) continue;
+        const answer = await revisePlace(llm, { place, index, context, stillPath: stills[place.id], destinationStills: stills, answer: state.places[place.id].answer,
+          problems: mine.map(f => ({ film: f.where, rule: 'the story', fix: `${f.problem} ${f.fix}` })) });
+        state.places[place.id].answer = answer;
+        revised.push(place.id);
+      }
+      state.story = { ...critique, words: storyWords(plan), revised };
+      save();
+      writeJson(join(paths.review, 'story.json'), { at: new Date().toISOString(), model: MODELS.writer, ...state.story });
+      (critique.verdict === 'strong' ? log.ok : log.warn)(`The story: ${critique.verdict}. ${critique.summary}`);
+      if (revised.length) log.dim(`Rewrote ${revised.join(', ')} for the editor's findings.`);
+      for (const f of fixes.filter(f => !context.places.some(place => revised.includes(place.id) && of(place).has(f.where)))) log.warn(`${f.where}: ${f.problem} Fix: ${f.fix}`);
+      if (revised.length) writePlaces();
+    }
     ({ plan } = readPlan(id));
     const errors = lintPlan(plan, paths).filter(f => f.level === 'error');
     for (const f of [...lintPlan(plan, paths), ...await lintViews(plan, paths)]) (f.level === 'error' ? log.fail : log.warn)(`${f.where}: ${f.message}`);

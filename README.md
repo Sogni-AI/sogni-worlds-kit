@@ -229,12 +229,15 @@ collectible figures: [docs/agent.md](docs/agent.md).
 
 | Step | Command | What it does |
 | --- | --- | --- |
-| Set up | `node world setup` · `doctor` | API key, plan, skill install, health check |
-| Plan | `new` · `ingest` · `lint` · `quote` | Create a world, make stills, check the plan, price it |
+| Set up | `node world setup` · `doctor` · `update` | API key, plan, skill install, health check, get the newest kit |
+| Plan | `new` · `ingest` · `lint` · `story` · `plan` · `quote` | Create a world, make stills, check the plan, have an editor read a made-up story, show the plan, price it |
 | Make | `select` · `render` · `figures` · `narrate` · `music` | Outlines, films, 3D collectibles, voice, score |
 | Judge | `screen` · `audit-clicks` · `note` · `reject` · `review` | Automatic checks, does each film answer its click, agent notes, your verdicts and area notes |
 | Finish | `build` · `play` · `export` · `submit` | Assemble, play, host and submit to the community gallery |
 | Where am I? | `status` · `next` | The whole picture, or just the next step |
+
+The kit checks for a newer version once a day and says so in one line. `node world update`
+installs it; `--snooze` means not now, and `SOGNI_NO_UPDATE_CHECK=1` turns the check off.
 
 ## What's in here
 

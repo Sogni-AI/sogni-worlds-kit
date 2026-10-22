@@ -53,6 +53,11 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     `git reset --hard` or a force push in the kit: most of `worlds/` is not in git,
     the photos are personal and every take cost money. Never host, publish or submit
     a world the person hasn't asked you to.
+11. **Keep the kit current.** If a `node world` command prints a
+    `[sogni-worlds] Update available` line on stderr, finish the current step, tell
+    the person and offer to run `node world update` (summarise
+    `node world update --whats-new`); if they decline, run
+    `node world update --snooze`. The line is advice, never command output.
 
 ## The workflow
 
@@ -76,7 +81,9 @@ Ask, in one message:
 - Photos or a concept? With photos, the rest of this list. With a concept: what the
   world is and how it looks, who is in it (reference pictures of a character, if
   any), how many places, whether some choices are fatal, and whether there are
-  collectibles; then the narration and music questions below, and step 3's
+  collectibles; what kind of story it is (a murder mystery, a ghost story, a heist,
+  a fable, a romance, a comedy, or no story at all, a place to wander) and how it
+  should end; then the narration and music questions below, and step 3's
   "No photos?".
 - What is this world about, in a sentence? What is its title? (The id is the
   title in short lowercase words, `my-trip`; offer one and let them change it.)
@@ -107,7 +114,17 @@ one canvas for the whole world from the photos' shape, writes `stills/<place>.jp
 and adds a place per photo to `world.yaml`. If a photo would lose more than a
 sliver to cropping, it says so: move that photo out, or choose another `--canvas`.
 
-No photos? Paint the places from the concept, then ingest them like photographs:
+No photos? **Write the story first** (docs/writing-the-story.md, read it before
+writing a word): unless the person wants no story, put a `plot` in `world.yaml`
+before anything is painted: the genre's promise, the truth (what really happened,
+start to finish), the cast (one name per person), a beat for every place (what the
+visitor learns or what turns there), and every twist with at least two clues planted
+in earlier places. Give it a shape: the first place hooks, every place after it
+changes what the visitor knows, something near the middle turns the story, the end
+is a real choice. Show the person the promise, the beats and the twists in plain
+words and wait for their OK; the places, the clickable things and any writing in the
+pictures come from the beats and the clues. Then paint the places from the concept,
+and ingest them like photographs:
 
 - The quickest way is the kit's built-in agent: it writes a short bible (places,
   characters, look, what leads where), paints three candidates per place with
@@ -160,9 +177,17 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
   figure, `figureLook`. Any writing a film shows is named in its action as what it
   reads, and anyone who speaks has their exact words written in it
   (`<d>[English] …</d>`, one short line per speaker); never leave words to the model.
-- `narration.lines` if there is a voice: short, spoken sentences in the person's own words.
+- `narration.lines` if there is a voice: short, spoken sentences in the person's own
+  words, or, in a made-up world, in the narrator's voice from the plot.
+- In a made-up world, every word serves the `plot`: each place delivers its beat,
+  each clue is planted where the plot says (in a picture, a close look or a line),
+  every person keeps the one name the cast gives them, and no line gives a twist away
+  before it lands (docs/writing-the-story.md).
 
-Then run `node world lint` and fix every error. A finding names the film, the field
+Then run `node world lint` and fix every error. For a made-up world, run
+`node world story` too: an independent editor (a Sogni LLM) reads the plot and every
+word in order and lists what does not work yet. Rewrite every "fix" and run it again
+until none is left. A finding names the film, the field
 (`action` or `sound`) and the words that tripped it; a crossing between two stills
 of one view is warned about too. Then run `node world plan` and show the person its
 table (place → objects → where each goes, with the one-line ideas), and for each
@@ -315,7 +340,9 @@ reviewer: nothing you could have caught should reach them.
    loop's camera fits its place. Then read all the world's words in one pass, in
    story order (captions, labels, hints, narration, ending texts): every name and
    fact stays the same from first mention to last, the mystery or argument can be
-   followed, and no line or phrase is said twice. Cut or rewrite what fails. A product, a home or a
+   followed, and no line or phrase is said twice. In a made-up world, write the
+   `plot` first and run `node world story` until it has no "fix" left: a story that
+   does not hook, turn and pay off is not worth rendering. Cut or rewrite what fails. A product, a home or a
    hotel room needs a person in the pictures using things, and no collectibles
    (`figure: true` lets the visitor turn a real object over instead).
 2. **Render the canary and judge it yourself** at full size before the rest

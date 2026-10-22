@@ -151,6 +151,12 @@ Install it once:
 | Codex | `mkdir -p ~/.codex/skills && cp -r skills/sogni-worlds ~/.codex/skills/` |
 | Hermes | add this repo's `skills/` folder to `skills.external_dirs` in `~/.hermes/config.yaml` |
 
+The kit checks for a newer version once a day and, when there is one, prints a
+single line. `node world update` pulls it, runs `npm install` if the dependencies
+changed and refreshes the skill copies above (start a new agent session to load
+them). `node world update --snooze` means not now; `SOGNI_NO_UPDATE_CHECK=1` turns
+the check off.
+
 ## What to say to your agent
 
 > Build a Sogni World from the photos in worlds/my-trip.

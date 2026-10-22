@@ -78,3 +78,9 @@ test('one canary film finished while the other still renders: pick it up, not re
   const command = next({ canary, unjudged: ['b take 1'], byState: { ...done.byState, rendering: ['a'], unjudged: ['b'] } });
   assert.match(command, /^node world render trip --canary/);
 });
+
+test('a made-up story is read by the editor before anything is spent, and again whenever its words change', () => {
+  assert.match(next({ takes: 0, storyUnread: true, selections: { needed: ['a-door'], done: 0, failed: [] } }), /^node world story trip/);
+  assert.match(next({ storyUnread: true, errors: [{}] }), /^node world lint/, 'a plan that does not lint comes first');
+  assert.match(next({ storyUnread: true }), /^node world play/, 'once films exist, a later edit does not stop the world');
+});

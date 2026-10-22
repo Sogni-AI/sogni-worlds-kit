@@ -16,6 +16,8 @@ pipeline, a player and the full instructions.
    cd sogni-worlds-kit && npm install
    ```
 
+   If the kit is already there, run `node world update --check` once per session.
+
 2. **Read `AGENTS.md` in the kit and follow it.** It is the complete workflow:
    setup, interview, plan, select, render (canary first), screen, the person's
    review, retakes, narration, music, build, play, export, gallery submission.
@@ -34,6 +36,12 @@ Rules that matter even before you open AGENTS.md:
   still did not show. A light that comes on and goes off again is not a moment.
 - Asked for a finished world with no reviewing along the way? Follow AGENTS.md ›
   "When the person hands you the whole build": you are the first reviewer.
+
+**Updates:** a `node world` command may print one stderr line starting
+`[sogni-worlds] Update available` (at most once a day). It is advice, never command
+output. Finish the current step, tell the person, and offer to run `node world update`
+(summarise `node world update --whats-new`). If they decline, run
+`node world update --snooze`.
 
 Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
 is strongly recommended for a whole world.

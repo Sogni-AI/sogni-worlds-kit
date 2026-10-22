@@ -3,6 +3,7 @@ import { extname, join } from 'node:path';
 import { parse } from '../index.js';
 import { filmId, listWorlds, shown, worldPaths } from '../lib/paths.js';
 import { filmsOf, readPlan, revealSpeech } from '../lib/plan.js';
+import { storyWords } from '../agent/story.js';
 import { lintPlan } from '../lib/lint.js';
 import { describeNote, filmState, listTakes, readNotes, readStillNotes, readVerdicts } from '../lib/takes.js';
 import { canaryNext, canaryStatus } from '../lib/canary.js';
@@ -85,6 +86,8 @@ export function gather(id) {
   // A collectible with an outline and no 3D figure yet (node world figures).
   const figuresNeeded = plan.places.flatMap(p => (p.objects ?? []).filter(wantsFigure).map(o => `${p.id}-${o.id}`))
     .filter(key => existsSync(join(paths.selections, `${key}.png`)) && readJson(figureFiles(paths, key).receipt, null)?.status !== 'completed');
+  // A made-up world's story, read by the editor (node world story) since its words last changed.
+  const storyUnread = Boolean(plan.plot) && readJson(join(paths.review, 'story.json'), null)?.words !== storyWords(plan);
   const builtAt = mtime(join(paths.build, 'world.json'));
   const inputsAt = Math.max(mtime(paths.plan), mtime(join(paths.review, 'verdicts.json')));
   return {
@@ -94,7 +97,7 @@ export function gather(id) {
     stillNotes: Object.entries(readStillNotes(paths)).flatMap(([place, list]) => list.map(note => ({ place, ...note }))),
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
-    narrationNeeded, narratedPlaces: narrated.length, revealLines: revealSpeech(plan).length, revealsNeeded, revealsToPick, revealsUnseen, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
+    storyUnread, narrationNeeded, narratedPlaces: narrated.length, revealLines: revealSpeech(plan).length, revealsNeeded, revealsToPick, revealsUnseen, hasMusic: Boolean(plan.music), musicNeeded, figuresNeeded, built: builtAt > 0, buildStale: builtAt > 0 && builtAt < inputsAt,
   };
 }
 
@@ -106,6 +109,7 @@ export function nextAction(s) {
   if (s.photosNotIngested || s.stillsMissing.length) return { why: 'photos are waiting to become stills', command: `node world ingest ${id}` };
   if (!s.planWritten) return { why: 'the plan is not written yet', command: `look at every still in worlds/${id}/stills/ at full size, then write the plan in worlds/${id}/world.yaml — seen, title, loop and objects with films for each place (AGENTS.md › 4. Write the plan). Check it with: node world lint ${id}` };
   if (s.errors.length) return { why: `world.yaml has ${s.errors.length} error${s.errors.length === 1 ? '' : 's'}`, command: `node world lint ${id}   — fix each ✗, then run it again` };
+  if (s.storyUnread && !s.takes) return { why: 'the story has changed since the story editor last read it', command: `node world story ${id}   — rewrite every "fix" it lists in world.yaml, then run it again` };
   if (s.renderLock) {
     const canaryOpen = s.canary && !['approved', 'none'].includes(s.canary.state);
     const meanwhile = s.unscreened.length ? `; meanwhile, screen the takes that have finished: node world screen ${id}` : '';

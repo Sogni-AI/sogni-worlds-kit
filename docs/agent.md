@@ -113,11 +113,20 @@ paint:
       who: Simon, the pink sloth
 ```
 
-The agent writes a short bible (places, characters, look, and which thing in
-each place leads where), paints three candidates per place with Krea 2 (Identity
+The agent writes the story first: a plot with what really happened, a cast with
+one name each, a beat for every place and twists planted with clues in earlier
+places (docs/writing-the-story.md). A story editor (the same LLM, reading as a
+demanding editor) reads that outline and the story is rewritten once for anything
+that breaks it, before a single picture is planned. Then it writes a short bible
+(places, characters, look, and which thing in each place leads where) from the
+story, paints three candidates per place with Krea 2 (Identity
 Edit keeps your character from the reference; 18+ worlds use the Dark Beast
 models), looks at them, and keeps the best or repaints with a corrected prompt.
 The kept pictures become the world's stills exactly as photographs would.
+Once every place is written, the editor reads the whole story again, now with
+every line and click, and each place it faults is rewritten once; what it could not
+fix is listed for you (and kept in `review/story.json`). With fatal choices the
+story always has a way to win as well (an `end`).
 
 ## Fatal choices, endings and collectibles
 

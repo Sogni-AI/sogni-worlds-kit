@@ -6,13 +6,14 @@ import { parseArgs } from 'node:util';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from './lib/env.js';
+import { CHECK_FLAG, checkForUpdate, updateNotice } from './lib/update-check.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** In the order you use them. */
 export const COMMANDS = [
-  ['Set up', ['setup', 'doctor']],
-  ['Plan', ['new', 'ingest', 'lint', 'plan', 'quote']],
+  ['Set up', ['setup', 'doctor', 'update']],
+  ['Plan', ['new', 'ingest', 'lint', 'story', 'plan', 'quote']],
   ['Make', ['select', 'reveals', 'render', 'figures', 'narrate', 'music']],
   ['Judge', ['screen', 'audit-clicks', 'note', 'reject', 'review']],
   ['Finish', ['build', 'play', 'export', 'submit']],
@@ -22,7 +23,14 @@ export const COMMANDS = [
 
 export async function main(argv) {
   loadEnv();
-  const [name, ...rest] = argv;
+  if (argv[0] === CHECK_FLAG) {
+    checkForUpdate(); // the daily update check, in its own detached process
+    return 0;
+  }
+  // A newer kit? One line on stderr, at most once a day; stdout stays the command's.
+  const notice = argv[0] === 'update' ? null : updateNotice({ argv });
+  if (notice) console.error(notice);
+  const [name, ...rest] = argv.filter(arg => arg !== '--no-update-check');
   if (!name || name === 'help' || name === '--help' || name === '-h') return help(rest[0]);
   const file = join(HERE, 'commands', `${name}.js`);
   if (!existsSync(file)) {

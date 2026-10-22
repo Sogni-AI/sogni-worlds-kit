@@ -19,6 +19,8 @@ test('negations, capitals, timestamps, extra shots and fades are errors', () => 
   assert.ok(rules(lintDirection({ ...good, sound: 'Nothing but wind.' })).includes('negation'));
   assert.ok(rules(lintDirection({ ...good, action: `${good.action} A sign reads EXIT.` })).includes('capitals'));
   assert.ok(!rules(lintDirection({ ...good, action: `${good.action} A sign reads "EXIT".` })).includes('capitals'), 'lettering in quotes is fine');
+  const single = lintDirection({ ...good, action: `${good.action} A headline reads 'SINGER STRANGLED'.` }).find(i => i.rule === 'capitals');
+  assert.match(single.message, /double quotation marks, never single ones: … that reads "SINGER STRANGLED"/, 'single quotes are named as the fix');
   assert.ok(rules(lintDirection({ ...good, action: `${good.action} At 00:04.000 it turns.` })).includes('timestamps'));
   assert.ok(rules(lintDirection({ ...good, action: `${good.action} [Shot 2] A second shot.` })).includes('one-shot'));
   assert.ok(rules(lintDirection({ ...good, action: `${good.action} The clearing dissolves into the sea.` })).includes('transition'));

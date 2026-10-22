@@ -163,7 +163,10 @@ export function lintDirection(film, concept = '') {
     const negation = NEGATION.exec(plain);
     if (negation) error('negation', field, `${quote(negation[0])} — state only what is there; a negation names the thing you do not want`);
     const capitals = /\b[A-Z]{3,}\b/.exec(plain.replace(/\[English\]/g, ''));
-    if (capitals) error('capitals', field, `${quote(capitals[0])} — no words in capitals; writing the picture shows is named as what it reads: a sign that reads "EXIT"`);
+    // Lettering in single quotes is the usual slip of a writer avoiding quotation marks inside JSON: say so.
+    const single = capitals && new RegExp(`'[^'\\n]*\\b${capitals[0]}\\b[^'\\n]*'`).exec(plain);
+    if (single) error('capitals', field, `${quote(single[0])} — lettering goes in double quotation marks, never single ones: … that reads "${single[0].slice(1, -1)}"`);
+    else if (capitals) error('capitals', field, `${quote(capitals[0])} — no words in capitals; writing the picture shows is named as what it reads: a sign that reads "EXIT"`);
     const lowerStart = /[.!?]\s+[a-z][\w’'-]*/.exec(plain);
     if (lowerStart) error('sentences', field, `${quote(lowerStart[0].replace(/^[.!?]\s+/, ''))} — start every sentence with a capital letter`);
     const musical = spoken(text).replace(BIRDSONG, '');
@@ -411,5 +414,59 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       });
     }
   }
+  return [...findings, ...lintPlot(plan)];
+}
+
+const PLOT_FIELDS = ['promise', 'truth', 'cast', 'beats', 'twists'];
+
+/**
+ * A fictional world's `plot`: the story every picture, film and line serves
+ * (docs/writing-the-story.md). Only its shape is checked here: the places it
+ * names exist, each person has one name, and every twist is planted before it
+ * lands. Whether the story is any good is `node world story`'s question.
+ */
+export function lintPlot(plan) {
+  const findings = [];
+  const add = (level, where, message) => findings.push({ level, where, message });
+  const plot = plan.plot;
+  if (plot === undefined || plot === null) return findings;
+  if (typeof plot !== 'object' || Array.isArray(plot)) return [{ level: 'error', where: 'plot', message: `plot is { ${PLOT_FIELDS.join(', ')} }` }];
+  for (const key of Object.keys(plot)) if (!PLOT_FIELDS.includes(key)) add('error', 'plot', `unknown field "${key}" (${PLOT_FIELDS.join(', ')})`);
+  for (const key of ['promise', 'truth']) {
+    if (plot[key] === undefined) add('warn', `plot.${key}`, key === 'truth' ? 'write what really happened, start to finish: the secret the visitor pieces together' : 'say what kind of story it is and what the visitor will feel');
+    else if (typeof plot[key] !== 'string') add('error', `plot.${key}`, 'must be text');
+  }
+  const names = new Set();
+  for (const [i, person] of (Array.isArray(plot.cast) ? plot.cast : []).entries()) {
+    if (typeof person?.name !== 'string' || typeof person?.who !== 'string') { add('error', `plot.cast[${i}]`, 'each person is { name, who }'); continue; }
+    if (names.has(person.name)) add('error', `plot.cast[${i}]`, `two people are called "${person.name}"`);
+    names.add(person.name);
+  }
+  if (plot.cast !== undefined && !Array.isArray(plot.cast)) add('error', 'plot.cast', 'cast is a list of { name, who }');
+  // The order a visitor meets the places: the plan's order for a linear story; none for a free one.
+  const order = plan.order === 'linear' ? plan.places.filter(p => !p.ending).map(p => p.id) : null;
+  const known = new Set(plan.places.map(p => p.id));
+  const beats = plot.beats ?? {};
+  if (typeof beats !== 'object' || Array.isArray(beats)) add('error', 'plot.beats', 'beats maps each place id to what the visitor learns or what turns there');
+  else {
+    for (const [id, beat] of Object.entries(beats)) {
+      if (!known.has(id)) add('error', `plot.beats.${id}`, 'no place has this id');
+      else if (typeof beat !== 'string') add('error', `plot.beats.${id}`, 'must be text');
+    }
+    for (const place of plan.places) if (!place.ending && plot.beats !== undefined && !(place.id in beats)) add('warn', `plot.beats`, `"${place.id}" has no beat: every place changes what the visitor knows or wants`);
+  }
+  for (const [i, twist] of (Array.isArray(plot.twists) ? plot.twists : []).entries()) {
+    const where = `plot.twists[${i}]`;
+    if (typeof twist?.twist !== 'string' || typeof twist?.at !== 'string') { add('error', where, 'each twist is { twist, at, clues: [{ at, clue }] }'); continue; }
+    if (!known.has(twist.at)) { add('error', `${where}.at`, `no place has the id "${twist.at}"`); continue; }
+    const clues = Array.isArray(twist.clues) ? twist.clues : [];
+    if (clues.length < 2) add('warn', `${where}.clues`, 'plant at least two clues, seen or said, before the twist lands: one clue makes it a cheat, none makes it a coincidence');
+    for (const [k, clue] of clues.entries()) {
+      if (typeof clue?.at !== 'string' || typeof clue?.clue !== 'string') { add('error', `${where}.clues[${k}]`, 'each clue is { at, clue }'); continue; }
+      if (!known.has(clue.at)) add('error', `${where}.clues[${k}]`, `no place has the id "${clue.at}"`);
+      else if (order && order.includes(twist.at) && order.indexOf(clue.at) >= order.indexOf(twist.at)) add('error', `${where}.clues[${k}]`, `"${clue.at}" comes ${clue.at === twist.at ? 'at' : 'after'} "${twist.at}", where the twist lands: a clue is planted before`);
+    }
+  }
+  if (plot.twists !== undefined && !Array.isArray(plot.twists)) add('error', 'plot.twists', 'twists is a list of { twist, at, clues }');
   return findings;
 }
