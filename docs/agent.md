@@ -113,6 +113,11 @@ paint:
       who: Simon, the pink sloth
 ```
 
+A character sheet makes a fuller reference than one picture: the character full
+body in a front, three-quarter, side and back view on plain grey
+(writing-the-story.md › People, names and voices). One picture shows one side of
+them; a sheet shows every side a place may need.
+
 The agent writes the story first: a plot with what really happened, a cast with
 one name each, a beat for every place and twists planted with clues in earlier
 places (docs/writing-the-story.md). A story editor (the same LLM, reading as a

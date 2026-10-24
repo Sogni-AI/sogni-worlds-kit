@@ -18,6 +18,7 @@ how to check it before anything is spent.
 - Twists that are fair
 - Every click moves the story
 - People, names and voices
+- A world that plays like a game — read when the person asks for a world like a trailer or a game
 - Endings
 - The plot in world.yaml
 - Check it: `node world story`
@@ -117,6 +118,43 @@ the same picture, so make it a close look that reveals something, or cut it.
 - Writing the visitor sees (a note, a tag, lipstick on a mirror) is named in the
   picture's prompt and in the film's direction as what it reads, and it is part of
   the plot: a clue can be a word.
+- **A name does not keep a face.** Before painting any place, make one character
+  sheet for each person or creature who comes back: the same character, full body, in
+  a front, a three-quarter, a side and a back view on a plain light grey background
+  (Sogni Krea 2 Identity Edit from their reference picture, or Krea 2 Turbo from their
+  description). Look at it at full size, then give that sheet as a context picture for
+  every place they appear in, with the prompt naming "the same character, one of
+  them". (Tried with Identity Edit: a place painted from a four-view sheet showed
+  the character once, not four times, and seen from behind as the sheet's back
+  view has them.)
+- **A voice is designed once.** Give each speaking character a voice under `voices`
+  with a `label` (their name). The kit designs it once and clones it for every line,
+  so the same person speaks throughout.
+
+## A world that plays like a game
+
+Someone who has seen a game trailer may ask for a world like it: a city to roam, a
+cast that talks, calls that tell you what is going on, a choice that kills you. The
+kit makes that shape from what it already has:
+
+- **Exposition is a call or an exchange, never a wall of text.** A place's narration
+  can switch voices line by line (`{ voice: hero, text: … }`): a mentor's call, a
+  rival's threat, the hero's one-line answer, each line captioned with its speaker.
+  Keep lines short and spoken; nothing the visitor has to read at length.
+- **Characters who talk to each other on screen** are a film. Write their exact words
+  in the direction; when two or more people speak or something happens fast, in
+  order, that film can use Seedance 2.5 (directing-films.md › Seedance 2.5).
+- **A city to roam** is a map place: a bird's-eye picture whose districts are
+  objects, each a crossing that dives into its district (directing-films.md › A map,
+  and diving into it).
+- **Every click shows what it caused.** The phone rings: clicking it is a film of the
+  hero picking it up. A place the call happens in is a still of the hero with the
+  phone at their ear, painted from the place before it so the room stays the same.
+- **Stakes are endings.** A fatal choice is a `death` ending the visitor rewinds;
+  the way through is an `end`. Collectibles are the thing to find in each district.
+
+The player has no timers, meters or scores, so a world never promises them: the
+game is the choices, the films and what the voices tell.
 
 ## Endings
 

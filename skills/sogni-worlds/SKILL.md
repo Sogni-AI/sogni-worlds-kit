@@ -36,6 +36,11 @@ Rules that matter even before you open AGENTS.md:
   still did not show. A light that comes on and goes off again is not a moment.
 - Asked for a finished world with no reviewing along the way? Follow AGENTS.md ›
   "When the person hands you the whole build": you are the first reviewer.
+- A world like a game or a trailer: voices tell it (a call can switch speakers
+  line by line), never walls of text; every recurring character gets a character
+  sheet before any place is painted. A film MiniMax H3 can't carry (people talking,
+  fast action in order) may opt into Seedance 2.5: premium, not covered by
+  Unlimited, quoted first, one take per film.
 
 **Updates:** a `node world` command may print one stderr line starting
 `[sogni-worlds] Update available` (at most once a day). It is advice, never command

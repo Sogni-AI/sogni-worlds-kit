@@ -97,6 +97,11 @@ Ask, in one message:
   `voices/` and give you the exact transcript), or a designed voice? Close looks are
   told by the narrator: with no narration, a close look can only show a figure.
 - Music: none, generated (describe the mood), or a track they own the rights to?
+- Want it to play like a game or a trailer they saw (a cast that talks, calls, a
+  city to roam)? Read docs/writing-the-story.md › A world that plays like a game,
+  then tell them what the kit makes of it (calls in two voices, talking scenes, a
+  map that dives into districts, fatal choices) and what it has not (timers,
+  meters, scores).
 
 ### 3. Create the world and bring in the pictures, in story order
 
@@ -138,6 +143,14 @@ and ingest them like photographs:
   size (1344×768 for 16:9, 1152×768 for 3:2). Save them into `photos/` in story
   order.
 
+Before painting any place, make **one character sheet per recurring character**
+(the same character, full body, front, three-quarter, side and back views on plain
+light grey; Identity Edit from their reference picture), look at it at full size,
+and give that sheet as a context picture for every place they appear in: a name
+alone doesn't keep a face. Two places that show one space must agree on everything
+both show: paint the second from the first one's pixels with an edit that changes
+only what the story moved, or the crossing between them morphs the props.
+
 Whichever way they are painted, **you write the words of any writing a place
 shows**: a model spells only the words its prompt gives it. A mirror the story
 marks in lipstick gets lipstick that reads "MIDNIGHT, PIER 9", a sign gets its
@@ -178,7 +191,14 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
   reads, and anyone who speaks has their exact words written in it
   (`<d>[English] …</d>`, one short line per speaker); never leave words to the model.
 - `narration.lines` if there is a voice: short, spoken sentences in the person's own
-  words, or, in a made-up world, in the narrator's voice from the plot.
+  words, or, in a made-up world, in the narrator's voice from the plot. Lines can
+  change voice (`{ voice: hero, text: … }`): a call or an exchange, each line spoken
+  in its own designed voice and captioned with its `label`. Never a wall of text.
+- A film H3 can't carry (people talking to each other, fast action where one thing
+  causes the next) may opt into Seedance 2.5 with `model: seedance-2-5`: premium,
+  not covered by Unlimited, one take per film (docs/directing-films.md › Seedance 2.5).
+  A crossing that leaves through a small part of its picture (a district on a map)
+  starts with a `pushIn` on that point.
 - In a made-up world, every word serves the `plot`: each place delivers its beat,
   each clue is planted where the plot says (in a picture, a close look or a line),
   every person keeps the one name the cast gives them, and no line gives a twist away
@@ -224,8 +244,9 @@ node world quote
 node world render --canary
 ```
 
-Tell the person the quote first. A 2K film takes a few minutes to around fifteen
-to render. `render` records every take before paying for it and never submits the same
+Tell the person the quote first, and say the Seedance line on its own: those films
+are paid from their token balance even on an Unlimited plan. A 2K film takes a few
+minutes to around fifteen to render. `render` records every take before paying for it and never submits the same
 take twice. If it's interrupted, run it again and it resumes. While a render runs,
 `node world next` says so (with its pid): wait for it rather than starting another.
 
@@ -256,7 +277,9 @@ The form is `<verb> [world] <film> <take> "text"`: the film id, the take number,
 then the words in quotes. The world id can be left out only when `worlds/` holds a
 single world (`node world reject harbour-ferry 1 "…"`).
 
-Reject on sight (the full list is docs/directing-films.md › Judging a take):
+A `stretch-step` on a Seedance take means the picture jumps in shape at its start or
+end: compare the two frames it names. Reject on sight (the full list is
+docs/directing-films.md › Judging a take):
 dissolves or fades, morphs, hard cuts, writing that is not real words, a loop or
 moment whose camera pushes in and back (`camera-moves`), an object that vanishes
 and comes back, a real person's face changing, smeared bridge or tower struts, music nobody asked for, a
@@ -394,7 +417,8 @@ uses the same API key and plan. Useful here:
   images
 - a quick single test film, a sound effect, background removal, a 3D collectible
 
-Run `sogni-agent --help`; its own SKILL.md covers these.
+Run `sogni-agent --help`; its own SKILL.md covers these. A trailer for a finished
+world is cut from its approved films with ffmpeg: docs/trailers.md.
 
 ## What good looks like
 
