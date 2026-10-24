@@ -10,7 +10,7 @@
 // film's last frame, and the film back from it replaces that frame only once
 // its own first frame (the same picture) is on screen.
 import { LoopDeck } from './loop-deck';
-import { bufferedFraction, playWithSound, setSource, watchStall, whenEnded, whenPainted } from './media';
+import { bufferedFraction, playWithSound, release, setSource, watchStall, whenEnded, whenPainted } from './media';
 import { localOrRemote } from './video-cache';
 import { pick, type Film, type Place, type Quality, type World } from './world';
 
@@ -156,7 +156,7 @@ export class Stage {
       this.follow(video);
       whilePlaying?.();
       await Promise.race([this.untilEnded(), abandoned]);
-    } else video.pause();
+    } else release(video); // and stop fetching it: the place it was skipped to needs the connection
     this.abandon = undefined;
     stop();
     video.removeEventListener('progress', loaded);

@@ -30,6 +30,17 @@ export function whenPainted(video: HTMLVideoElement, timeoutMs = 6000): Promise<
 }
 
 /**
+ * Let a film go. A paused element that still holds its source goes on
+ * downloading it: a 21 MB film given up a moment after its click was still
+ * arriving 40 s later on a 5 Mbps link, sharing it with the place's loop.
+ */
+export function release(video: HTMLVideoElement) {
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+}
+
+/**
  * Resolve when the video reaches its last frame (it stays on screen, paused
  * there), or fails to load, so a broken file never strands the visitor.
  */
