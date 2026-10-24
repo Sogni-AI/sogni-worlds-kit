@@ -31,6 +31,8 @@ export class Stage {
   private playing: Film | null = null;
   /** Ends the film that is playing where it is (Skip pressed before it could even start). */
   private abandon?: () => void;
+  /** Counts films and places put up, so a landed film waiting for its still is not hidden over something newer. */
+  private handovers = 0;
   /** Told when the playing film is starved of bytes (and when it flows again), with how much of it has arrived. */
   onStall?: (stalled: boolean, loaded: number | null) => void;
 
@@ -84,6 +86,7 @@ export class Stage {
 
   /** Show a place at once: its still, then its living loop from the first frame. */
   async show(place: Place) {
+    this.handovers++;
     this.setStill(place);
     this.hideFilm();
     if (place.loop) await this.deck.start(localOrRemote(pick(place.loop, this.quality)));
@@ -104,9 +107,26 @@ export class Stage {
     await this.roll(film, () => { if (landingLoop()) this.deck.load(landingLoop()!); });
     this.setStill(landing);
     const loopSrc = landingLoop();
-    if (loopSrc) await this.deck.start(loopSrc);
-    else this.follow(null);
-    this.hideFilm();
+    this.handOver(loopSrc ? await this.deck.start(loopSrc) : false);
+  }
+
+  /**
+   * Take a landed film down once what replaces it can be drawn: the loop's
+   * first frame, or else the still, decoded. The film's last frame is that
+   * same picture, so it stays up until then. A still put up before its pixels
+   * arrive shows the place just left (the <img> keeps its old picture while
+   * the new one loads): 0.6 s from Sogni's CDN, and the whole wait on a slow
+   * link. The place's objects come up meanwhile, over the same picture.
+   */
+  private handOver(loopPainted: boolean) {
+    const turn = ++this.handovers;
+    const down = () => {
+      if (turn !== this.handovers) return;
+      if (!this.deck.visible) this.follow(null);
+      this.hideFilm();
+    };
+    if (loopPainted) down();
+    else void this.still.decode().catch(() => undefined).then(down);
   }
 
   /**
@@ -120,7 +140,10 @@ export class Stage {
     // Held on the film's last frame; if it never played, on the close look's own picture.
     this.deck.stop();
     if (this.film.classList.contains('on')) this.follow(this.film);
-    else this.follow(null);
+    else {
+      this.hideFilm(); // a landed film still waiting for its place's still
+      this.follow(null);
+    }
   }
 
   /**
@@ -129,6 +152,7 @@ export class Stage {
    * until then). Resolves on its last frame, which stays on screen.
    */
   private async roll(film: Film, whilePlaying?: () => void) {
+    this.handovers++; // a landed film still up is replaced by this one's first frame
     const previous = this.film;
     this.filmIndex = 1 - this.filmIndex;
     const video = this.film;

@@ -5,27 +5,29 @@ type FrameVideo = HTMLVideoElement & {
 };
 
 /**
- * Resolve once the video has put a frame on screen at its current position,
- * or fails to load, or after `timeoutMs` (a loop's lap, so a slow network
- * never freezes a place). With an infinite timeout it waits for the frame:
- * a browser runs setTimeout(…, Infinity) at once, so no timer is set then.
+ * Resolve once the video has put a frame on screen at its current position
+ * (true), or fails to load, or after `timeoutMs` (false: a loop's lap, so a
+ * slow network never freezes a place). With an infinite timeout it waits for
+ * the frame: a browser runs setTimeout(…, Infinity) at once, so no timer is
+ * set then.
  */
-export function whenPainted(video: HTMLVideoElement, timeoutMs = 6000): Promise<void> {
+export function whenPainted(video: HTMLVideoElement, timeoutMs = 6000): Promise<boolean> {
   return new Promise(resolve => {
     let done = false;
-    const finish = () => {
+    const finish = (painted: boolean) => {
       if (done) return;
       done = true;
       if (timer !== undefined) clearTimeout(timer);
       video.removeEventListener('playing', onPlaying);
-      video.removeEventListener('error', finish);
-      resolve();
+      video.removeEventListener('error', failed);
+      resolve(painted);
     };
-    const timer = Number.isFinite(timeoutMs) ? setTimeout(finish, timeoutMs) : undefined;
-    video.addEventListener('error', finish);
-    const onPlaying = () => ((video as FrameVideo).requestVideoFrameCallback ? undefined : finish());
+    const failed = () => finish(false);
+    const timer = Number.isFinite(timeoutMs) ? setTimeout(failed, timeoutMs) : undefined;
+    video.addEventListener('error', failed);
+    const onPlaying = () => ((video as FrameVideo).requestVideoFrameCallback ? undefined : finish(true));
     video.addEventListener('playing', onPlaying);
-    (video as FrameVideo).requestVideoFrameCallback?.(finish);
+    (video as FrameVideo).requestVideoFrameCallback?.(() => finish(true));
   });
 }
 
