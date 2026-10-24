@@ -60,9 +60,9 @@ export async function run(argv) {
       // first, then where the picture changes fastest; two centres closer than 16 frames are one stretch.
       const dir = join(paths.renders, film.id);
       for (const name of readdirSync(dir)) if (name.startsWith(`take-${take.take}.change-`)) rmSync(join(dir, name));
-      const flagged = result.flags.filter(f => ['dissolve', 'hard-cut', 'structure-break'].includes(f.code) && Number.isInteger(f.frame)).map(f => f.frame);
+      const suspects = result.flags.filter(f => ['dissolve', 'hard-cut', 'structure-break'].includes(f.code) && Number.isInteger(f.frame)).map(f => f.frame);
       const centres = [];
-      for (const frame of [...flagged, ...(result.metrics.changes ?? []).map(c => c.frame)]) {
+      for (const frame of [...suspects, ...(result.metrics.changes ?? []).map(c => c.frame)]) {
         if (centres.length < 2 && centres.every(c => Math.abs(c - frame) >= 16)) centres.push(frame);
       }
       const changes = [];
