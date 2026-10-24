@@ -328,9 +328,12 @@ export class Ui {
       const button = el('button', `trip-stop${id === current ? ' current' : ''}${visited.has(id) ? ' visited' : ''}`);
       button.type = 'button';
       const picture = el('img') as HTMLImageElement;
+      // Lazy before its source, or Chrome fetches it anyway: the panel is drawn again at every arrival,
+      // and at the second one every place's picture was fetched at once (35 MB in The Dream Thread), with
+      // the panel closed, on the connection the next films and the landing's own still were waiting for.
+      picture.loading = 'lazy';
       picture.src = place.still;
       picture.alt = '';
-      picture.loading = 'lazy';
       button.append(picture, el('span', 'title', place.title));
       if (place.chapter) button.append(el('span', 'chapter', place.chapter));
       button.addEventListener('click', () => {

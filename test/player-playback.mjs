@@ -11,6 +11,9 @@
 //               its landing; Skip lands it too.
 //  3. give-up   A film given up before its first frame (Skip pressed at once)
 //               stops downloading (1.5 Mbps).
+//  4. panel     Arriving does not fetch the Places panel's pictures while it
+//               is closed (found while checking 1 and 2: The Dream Thread
+//               fetched all 23, 35 MB, at its second arrival).
 //
 //   npm run check:player                 builds the player and runs every check
 //   node test/player-playback.mjs --player <dir> [--only join,pause]
@@ -330,6 +333,20 @@ const CHECKS = {
       const after = page.bytes('yard-roof.mp4', skipped + 1000, skipped + 7000);
       const ok = after < 64 * 1024;
       return { ok, detail: ok ? `given up, the film stopped downloading (${after} bytes 1-7 s after Skip)` : `given up, the film went on downloading: ${(after / 1e6).toFixed(2)} MB 1-7 s after Skip` };
+    } finally { await page.close(); }
+  },
+
+  /** Arriving does not fetch the Places panel's pictures while it is closed. */
+  async panel(devtools, url) {
+    const page = await openPage(devtools);
+    try {
+      await begin(page, url);
+      await page.spot('Into the hall');
+      await until(page, s => atRest(s) && s.place === 'Hall', 30_000, 'the hall');
+      await sleep(1500);
+      const roof = page.bytes('roof.png');
+      return { ok: roof === 0, detail: roof === 0 ? 'two arrivals, and the roof\'s picture waits until someone heads there or opens Places'
+        : `with the Places panel closed, two arrivals fetched the roof's picture (${(roof / 1e6).toFixed(2)} MB) before anyone headed there` };
     } finally { await page.close(); }
   },
 };
