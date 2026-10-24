@@ -85,7 +85,14 @@ async function launch(chrome) {
   const [port, path] = readFileSync(portFile, 'utf8').trim().split('\n');
   const devtools = new Devtools(`ws://127.0.0.1:${port}${path}`);
   await devtools.opened();
-  return { devtools, close: () => { try { devtools.socket.close(); } catch { /* closed */ } child.kill(); } };
+  const exited = new Promise(done => child.once('exit', done));
+  /** Chrome writes its profile as it quits: wait for it before the folder is removed. */
+  const close = async () => {
+    try { devtools.socket.close(); } catch { /* closed */ }
+    child.kill();
+    await Promise.race([exited, sleep(5000)]);
+  };
+  return { devtools, close };
 }
 
 /**
@@ -369,10 +376,10 @@ async function main() {
     }
     return failed ? 1 : 0;
   } finally {
-    browser?.close();
+    await browser?.close();
     server?.close();
     if (values.keep) console.log(`Kept ${root}`);
-    else rmSync(root, { recursive: true, force: true });
+    else rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 }
 
