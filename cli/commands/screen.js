@@ -42,7 +42,8 @@ export async function run(argv) {
       if (take.journal.status !== 'completed' || !existsSync(take.files.video)) continue;
       if (existsSync(take.files.screen) && !values.force) continue;
       if (take.verdict && !values.force) continue;
-      const fromStill = stillAt(paths, film.first);
+      // A crossing that starts with a push-in was rendered from the crop it lands on (build adds the push-in).
+      const fromStill = take.journal.pushIn && existsSync(take.files.start) ? take.files.start : stillAt(paths, film.first);
       const toStill = stillAt(paths, film.last);
       log.step(`Screening ${film.id} take ${take.take}`);
       const result = await screenTake({

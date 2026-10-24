@@ -24,7 +24,8 @@ export const VERDICTS = ['approved', 'rejected', 'passed'];
 export const takeFiles = (paths, film, take) => {
   const base = join(paths.renders, film, `take-${take}`);
   // back: a close look's film played backwards (what puts the object down), made by screen for the review.
-  return { journal: `${base}.json`, video: `${base}.mp4`, screen: `${base}.screen.json`, sheet: `${base}.sheet.jpg`, back: `${base}.back.mp4` };
+  // start: the crop a push-in lands on, as sent: the take's first picture (docs/world-yaml.md › pushIn).
+  return { journal: `${base}.json`, video: `${base}.mp4`, screen: `${base}.screen.json`, sheet: `${base}.sheet.jpg`, back: `${base}.back.mp4`, start: `${base}.start.jpg` };
 };
 
 export const verdictsFile = paths => join(paths.review, 'verdicts.json');

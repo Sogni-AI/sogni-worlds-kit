@@ -10,6 +10,7 @@ import { resolveWorldId, shown, filmId, loopId, backId, worldFile } from '../lib
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../lib/takes.js';
 import { canvasByName, delivered } from '../lib/h3.js';
+import { isSeedance } from '../lib/seedance.js';
 import { finishFilm, rewindFilm, relevelFilm, cleanPartials, FILM_LUFS } from '../lib/finish.js';
 import { validateWorld, FORMAT } from '../lib/worldjson.js';
 import { figureFiles } from '../lib/figures.js';
@@ -83,11 +84,13 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (sha256File(take.files.video) !== take.sha) throw new Error(`${film.id} take ${take.take} no longer matches the file that was rendered (SHA-256 changed)`);
     const base = join(out, 'films', film.id);
     const main = `${base}.mp4`, half = `${base}-720.mp4`;
+    // A Seedance take is sized onto the canvas; a take rendered from a push-in's crop gets its push-in in front.
+    const { finishing, source } = finishingOf(paths, plan, film, take);
     let info = manifest[`films/${film.id}.mp4`]?.info;
-    if (!fresh(`films/${film.id}.mp4`, take.sha, [main, half]) || !info) {
+    if (!fresh(`films/${film.id}.mp4`, source, [main, half]) || !info) {
       say.step(`Finishing ${film.id} (take ${take.take})`);
-      info = await finishFilm(take.files.video, main, half, { lufs: FILM_LUFS });
-      manifest[`films/${film.id}.mp4`] = { source: take.sha, recipe: RECIPE, info, lufs: FILM_LUFS };
+      info = await finishFilm(take.files.video, main, half, { lufs: FILM_LUFS, ...finishing });
+      manifest[`films/${film.id}.mp4`] = { source, recipe: RECIPE, info, lufs: FILM_LUFS };
       writeJson(manifestPath, manifest);
     } else if ((manifest[`films/${film.id}.mp4`].lufs ?? FIRST_LUFS) !== FILM_LUFS) {
       say.step(`Levelling ${film.id}'s sound`);
@@ -98,10 +101,10 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     const entry = { film, take, info, src: rel(out, main), src720: rel(out, half), rewind: null };
     if (film.kind === 'crossing') {
       const back = `${base}-rewind.mp4`, back720 = `${base}-rewind-720.mp4`;
-      if (!fresh(`films/${film.id}-rewind.mp4`, take.sha, [back, back720])) {
+      if (!fresh(`films/${film.id}-rewind.mp4`, source, [back, back720])) {
         say.step(`Rewinding ${film.id}`);
         await rewindFilm(main, back, back720);
-        manifest[`films/${film.id}-rewind.mp4`] = { source: take.sha, recipe: RECIPE, lufs: FILM_LUFS };
+        manifest[`films/${film.id}-rewind.mp4`] = { source, recipe: RECIPE, lufs: FILM_LUFS };
         writeJson(manifestPath, manifest);
       } else if ((manifest[`films/${film.id}-rewind.mp4`].lufs ?? FIRST_LUFS) !== FILM_LUFS) {
         for (const file of [back, back720]) await relevelFilm(file, FILM_LUFS);
@@ -337,6 +340,22 @@ function report({ world, issues, missing, deadEnds, unreachable, films, out, una
   if (deadEnds.length) log.warn(`No way on from: ${deadEnds.join(', ')}`);
   if (unreachable.length) log.warn(`Nothing leads to: ${unreachable.join(', ')}`);
   log.next(nextStep(id));
+}
+
+/**
+ * How a take is finished beyond the usual encode, and the manifest's key for
+ * it: the take's hash alone for an H3 take as rendered (so worlds built before
+ * stay as they are), with what was added for the rest. The push-in is the one
+ * the take was rendered from (its receipt), never the plan's, which may have
+ * changed since.
+ */
+export function finishingOf(paths, plan, film, take) {
+  const finishing = {};
+  if (isSeedance(take.journal.model) && plan.canvas) finishing.size = delivered(canvasByName(String(plan.canvas)));
+  const pushIn = film.kind === 'crossing' ? take.journal.pushIn : null;
+  if (pushIn) finishing.pushIn = { ...pushIn, still: worldFile(paths, film.first, `places.${film.from}.still`) };
+  const extra = [finishing.size ? `fit ${finishing.size.width}x${finishing.size.height}` : null, pushIn ? `push-in ${JSON.stringify(pushIn)}` : null].filter(Boolean);
+  return { finishing, source: extra.length ? `${take.sha}+${extra.join('+')}` : take.sha };
 }
 
 const rel = (from, path) => relative(from, path).split('\\').join('/');

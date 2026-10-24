@@ -6,7 +6,9 @@
 // defects that got real takes rejected (docs/directing-films.md explains each).
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { assemblePrompt, CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
+import { CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
+import { filmPrompt, FILM_MODELS, isSeedance, isSeedanceFrames, SEEDANCE_FRAMES, shapeFor } from './seedance.js';
+import { pushInIssues } from './pushin.js';
 import { filmsOf, placeById } from './plan.js';
 import { isInsideWorld } from './paths.js';
 import { correlation, layoutOf, SAME_VIEW } from './screen.js';
@@ -70,6 +72,7 @@ export const RULES = {
   unfinished: 'the text ends a sentence',
   keyframes: 'valid keyframes',
   'prompt-length': 'prompt within 7000 characters',
+  model: 'a film model the kit renders',
 };
 
 /** Words too common to tell one clicked thing from another. */
@@ -146,7 +149,10 @@ export function lintDirection(film, concept = '') {
   const fields = { action, sound };
   const quote = match => `"${String(match).slice(0, 60)}"`;
 
-  if (!isValidFrames(film.frames)) error('frames', 'frames', `frames must be one of ${VALID_FRAMES.join(', ')} (got ${film.frames})`);
+  const seedance = isSeedance(film.model);
+  if (film.model !== undefined && film.model !== null && !FILM_MODELS.includes(film.model)) error('model', 'model', `model is one of ${FILM_MODELS.join(', ')}; leave it out for MiniMax H3 (got ${JSON.stringify(film.model)})`);
+  if (seedance && !isSeedanceFrames(film.frames)) error('frames', 'frames', `a Seedance film lasts whole seconds: frames is seconds × 24 + 1, from ${SEEDANCE_FRAMES[0]} (4 s) to ${SEEDANCE_FRAMES.at(-1)} (30 s), such as 121 (5 s) or 145 (6 s) (got ${film.frames})`);
+  else if (!seedance && !isValidFrames(film.frames)) error('frames', 'frames', `frames must be one of ${VALID_FRAMES.join(', ')} (got ${film.frames})`);
   if (action.length < 120) error('length', 'action', 'describe the motion in more detail (under 120 characters)');
   // A direction cut off mid-sentence (a writer's inner quote closed the string early) renders as half a film.
   for (const [field, text] of [['action', action], ['sound', sound]]) {
@@ -192,14 +198,15 @@ export function lintDirection(film, concept = '') {
   const faceTurn = ON_ONE_STILL.has(film.kind) ? FACE_TURN.exec(spoken(action)) : null;
   if (faceTurn) warn('face-turn', 'action', `${quote(faceTurn[0])} — a ${film.kind} starts and ends on the photograph, so a face seen there is seen at both ends; turning a head away and back is where a real face drifts. Keep the head where it is and animate small things (breathing, a blink, hair in the wind, a slight smile), or keep the person still`);
   const keyframes = film.keyframes ?? [];
+  if (seedance && keyframes.length) error('keyframes', 'keyframes', 'Seedance pins only the first and last frames; keyframes are a MiniMax H3 feature');
   if (keyframes.length > 8) error('keyframes', 'keyframes', 'at most 8 keyframes');
   for (const keyframe of keyframes) {
     if (!Number.isInteger(keyframe?.frame) || keyframe.frame < 1 || keyframe.frame > film.frames - 2) error('keyframes', 'keyframes', `keyframe frame must be a whole number from 1 to ${film.frames - 2} (got ${keyframe?.frame})`);
     if (!keyframe?.image) error('keyframes', 'keyframes', 'each keyframe needs an image');
   }
   if (!issues.some(issue => issue.level === 'error')) {
-    const prompt = assemblePrompt(film);
-    if (prompt.length > PROMPT_LIMIT) error('prompt-length', 'action', `the assembled prompt is ${prompt.length} characters; H3 reads ${PROMPT_LIMIT}`);
+    const prompt = filmPrompt(film);
+    if (prompt.length > PROMPT_LIMIT) error('prompt-length', 'action', `the assembled prompt is ${prompt.length} characters; keep it within ${PROMPT_LIMIT}`);
   }
   for (const rule of allowed) if (!RULES[rule]) issues.push({ level: 'error', rule: 'allow', field: 'allow', message: `allow names an unknown rule "${rule}" (rules: ${Object.keys(RULES).join(', ')})` });
   return issues;
@@ -381,6 +388,10 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
     for (const keyframe of film.keyframes ?? []) {
       if (keyframe?.image && contained(`films.${film.id}.keyframes`, 'keyframe image', keyframe.image) && checkFiles && !existsSync(file(keyframe.image))) add('error', `films.${film.id}.keyframes`, `keyframe ${keyframe.image} is missing`);
     }
+    // Seedance renders a few fixed shapes; a still is squeezed onto the nearest by at most 2%, never cropped.
+    const canvas = CANVASES.find(c => `${c.width}x${c.height}` === plan.canvas || c.name === plan.canvas);
+    if (isSeedance(film.model) && canvas && !shapeFor(canvas)) add('error', `films.${film.id}.model`, `Seedance renders 16:9, 4:3, 1:1, 3:4 and 9:16; this world's ${canvas.name} canvas is more than 2% from all of them, so its stills would be stretched. Leave this film on MiniMax H3 (remove model), or give the world a canvas Seedance fits when it is ingested`);
+    if (film.pushIn !== undefined && film.pushIn !== null) for (const issue of pushInIssues(film.pushIn, film.kind)) add('error', `films.${film.id}.pushIn`, issue);
   }
 
   for (const [name, voice] of Object.entries(plan.voices)) {

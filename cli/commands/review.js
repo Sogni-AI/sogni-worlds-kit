@@ -201,7 +201,11 @@ export function awaitingFilms(plan, paths) {
 
 function describe(journal) {
   const parts = [];
-  if (journal.width && journal.height) parts.push(`${journal.width * 2}×${journal.height * 2}`);
+  // A Seedance take arrives at its own size (build sizes it onto the canvas); an H3 take at twice its canvas.
+  if (journal.delivered) parts.push(`${journal.delivered.width}×${journal.delivered.height}`);
+  else if (journal.width && journal.height) parts.push(`${journal.width * 2}×${journal.height * 2}`);
+  if (/^seedance-/.test(journal.model ?? '')) parts.push(journal.model);
+  if (journal.pushIn) parts.push(`starts from a ${journal.pushIn.zoom}× crop; build adds the push-in onto it`);
   if (journal.frames) parts.push(`${(journal.frames / 24).toFixed(2)} s`);
   if (journal.seed !== undefined && journal.seed !== null) parts.push(`seed ${journal.seed}`);
   if (journal.elapsedSeconds) parts.push(`made in ${(journal.elapsedSeconds / 60).toFixed(1)} min`);

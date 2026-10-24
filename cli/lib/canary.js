@@ -3,12 +3,20 @@
 // else in the world is spent on. `render` refuses the rest until they are
 // approved, and `next` never suggests otherwise.
 import { filmsOf } from './plan.js';
+import { isSeedance } from './seedance.js';
 import { filmState, listTakes, readNotes, readVerdicts } from './takes.js';
 
-/** The first crossing, loop and close look in story order (the first film when a world has none of them). */
+/**
+ * The first crossing, loop and close look in story order (the first film when a
+ * world has none of them), and in a world that renders some films with
+ * Seedance, the first of those too: they are written and paid for differently,
+ * so one is judged before the others are spent on.
+ */
 export function canaryFilms(plan) {
   const films = filmsOf(plan);
   const picked = ['crossing', 'loop', 'reveal'].map(kind => films.find(film => film.kind === kind)).filter(Boolean);
+  const premium = films.find(film => isSeedance(film.model));
+  if (premium && !picked.includes(premium)) picked.push(premium);
   return picked.length ? picked : films.slice(0, 1);
 }
 

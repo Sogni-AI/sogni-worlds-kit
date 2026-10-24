@@ -23,6 +23,8 @@ export const REFUSALS = {
   4089: 'your Unlimited plan’s monthly fair-use capacity on the Fast network is used up. It resets on your billing date; Premium Spark keeps the Fast lane open meanwhile',
   4088: 'this model needs Premium Spark, an Unlimited plan or SOGNI; free Spark cannot pay for it',
   4100: 'no worker serving this model can pin keyframes yet; render without keyframes or try again later',
+  4103: 'Seedance 2.5 Uncensored needs its one-time likeness and consent agreement accepted on this account first: open Seedance 2.5 Uncensored once in a Sogni app (app.sogni.ai), accept it, then render again',
+  5061: 'the video provider’s content policy refused this film, and nothing was charged. If the film is what the person asked for, render it on seedance-2-5-uncensored with the same words, never with softened ones; a real face the provider refuses on both models cannot be filmed with Seedance (docs/directing-films.md › Seedance 2.5)',
 };
 
 export function sdkVersion() {
@@ -361,9 +363,11 @@ export async function downloadResult(client, result, { contentType = 'video/mp4'
 
 /** Quote one film before it is submitted. */
 export async function quoteFilm(client, { model, width, height, frames, keyframes = 0, tokenType, billingMode }) {
+  // Seedance renders whole seconds (frames = seconds × 24 + 1); H3 counts frames on its own grid.
+  const seedance = /^seedance-/.test(model);
   const quote = await client.projects.estimateVideoCost({
-    model, tokenType, width, height, duration: frames / 24, fps: 24, steps: 4, numberOfMedia: 1,
-    referenceImageCount: 2, keyframeCount: keyframes, network: 'fast', billingMode,
+    model, tokenType, width, height, duration: seedance ? (frames - 1) / 24 : frames / 24, fps: 24, numberOfMedia: 1,
+    ...(seedance ? { referenceImageCount: 0 } : { steps: 4, referenceImageCount: 2, keyframeCount: keyframes }), network: 'fast', billingMode,
   });
   return {
     spark: Number(quote.spark),

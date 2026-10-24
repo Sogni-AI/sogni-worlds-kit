@@ -156,6 +156,7 @@ voices:
     transcript: "Exactly what is said."
   guide:
     design: "A warm, unhurried woman in her forties, close to the microphone."
+    label: The guide                    # optional: the name shown with this voice's lines
 music:
   prompt: "…"                           # generated on Sogni with MiniMax Music 3: put tempo, key and mood here
   seconds: 120                          # 10–300; a ceiling, it may end on a resolution a little sooner
@@ -192,7 +193,7 @@ One entry per photograph, in story order. `ingest` adds `id`, `photo` and
 | `still` | The canonical still `ingest` made. **Never edit or replace it**: every film that starts or ends here is pinned to its exact pixels. |
 | `title`, `chapter`, `caption` | Shown on arrival. |
 | `seen` | What is really in the picture, written after viewing it at full size: who, wearing what, where things are. Every direction that starts or ends here is written from it. |
-| `narration` | `{ voice, lines }`. Each line is `"text"` (in `voice`) or `{ voice: other, text }` for a second speaker. |
+| `narration` | `{ voice, lines }`. Each line is `"text"` (in `voice`) or `{ voice: other, text }` for a second speaker. Lines that change voice are a conversation (a call, an exchange): `narrate` speaks each speaker's lines in their own voice and captions each line with that voice's `label`. |
 | `loop` | The living photograph (below). |
 | `ending` | Optional: `{ kind: death \| end, title, text }`. Arriving here ends the story; a death offers Rewind to choose again. An ending needs no objects and no loop. |
 | `music` | Optional: `{ file, volume, underFilms, credit }`, a track you have the rights to, under this place instead of the world's `music` while the visitor is here (the player fades between them); `null` keeps this place silent. `node world music` generates only the world's track. |
@@ -303,8 +304,19 @@ film:
     (ambience, physical sounds, non-verbal human sounds)
   keyframes:                  # optional: extra stills pinned inside the film
     - { image: keyframes/closer.jpg, frame: 48 }
+  pushIn: { at: [0.72, 0.31], zoom: 2 }   # optional, a crossing only: it starts by moving onto this point
+  model: seedance-2-5         # optional: Seedance 2.5 for this film (frames 121 = 5 s); leave it out for H3
   allow: {}                   # optional: see below
 ```
+
+`pushIn` makes a crossing start with a frame-exact digital push-in from the whole
+still onto a crop centred on `at` (`zoom` 1.25 to 3; `frames` 6 to 48, default 18):
+the film is rendered from that crop and build puts the push-in in front of it, so a
+dive into a map lands where its district is (directing-films.md › A map, and diving
+into it). `model` is `seedance-2-5` or `seedance-2-5-uncensored`, for the shots H3
+can't carry: premium, paid in tokens even on an Unlimited plan, whole seconds
+(`frames` = seconds × 24 + 1), no keyframes, and only on a 16:9, 4:3, 1:1, 3:4 or
+9:16 canvas (directing-films.md › Seedance 2.5).
 
 You write only `action` and `sound`. The kit wraps them in the exact document
 MiniMax H3 expects: the alignment line that pins Picture 1 to the first frame
@@ -330,7 +342,8 @@ explains each one. In short:
 - Points and boxes are fractions of the still's width and height, 0 to 1,
   measured from the top-left.
 - Frames are at 24 fps on the H3 grid: 124 (5.17 s) to 362 (15.08 s) in steps
-  of 17. A keyframe's `frame` is 1 to frames − 2.
+  of 17. A keyframe's `frame` is 1 to frames − 2. A Seedance film is whole
+  seconds: 97 (4 s), 121 (5 s), 145 (6 s) … 721 (30 s); its loop defaults to 121.
 - Canvases (the film arrives at twice each side): 3:2 `1152x768`, 16:9
   `1344x768`, 4:3 `1152x864`, 1:1 `992x992`, 3:4 `864x1152`, 2:3 `768x1152`,
   9:16 `768x1344`.
@@ -349,4 +362,4 @@ An allowed finding still prints, as a warning marked "allowed". Rule ids:
 `frames`, `length`, `opening`, `one-shot`, `negation`, `capitals`,
 `timestamps`, `sound`, `dialogue`, `sentences`, `music`, `transition`,
 `materialize`, `lattice`, `dark-screen`, `static`, `keyframes`,
-`prompt-length`, `cause`, `unfinished`.
+`prompt-length`, `cause`, `unfinished`, `model`.

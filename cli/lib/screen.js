@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import { FFMPEG, run, probe } from './media.js';
 import { FPS, ON_ONE_STILL } from './h3.js';
 import { FILM_LUFS } from './finish.js';
+import { isSeedance } from './seedance.js';
 
 export const W = 96;
 /** Below this whole-film reach (mean grey change from the first frame, 0–255) a loop barely moves. */
@@ -473,6 +474,68 @@ function mergeRanges(ranges) {
   return out;
 }
 
+/**
+ * A first-and-last-frame Seedance film can draw everything between its pinned
+ * ends a little wider than they are (about 1.3%): the picture then jumps in
+ * shape right after its first frame and again just before its last, and a loop
+ * breathes at every wrap. Its sign is a change of width that its height does not
+ * share, which a camera move never makes. Measured on the frames next to each
+ * end: four such takes stepped 0.8% to 1.2%; twenty clean Seedance takes and
+ * sixty-four H3 takes stayed at or under 0.31%.
+ */
+export const STRETCH_STEP = 0.005;
+const SW = 384, SH = 256;
+const gradientOf = p => p.map((_, i) => (i === 0 ? p[1] - p[0] : i === p.length - 1 ? p[i] - p[i - 1] : (p[i + 1] - p[i - 1]) / 2));
+
+/** The sub-pixel shift (−8 to 8 px, in 0.05 px steps) that best carries profile `a` onto `b`, by the correlation of their gradients. */
+export function profileShift(a, b) {
+  const ga = gradientOf(a), gb = gradientOf(b), n = ga.length;
+  let best = -2, at = 0;
+  for (let k = -160; k <= 160; k++) {
+    const s = k / 20;
+    let count = 0, sp = 0, sq = 0, spp = 0, sqq = 0, spq = 0;
+    for (let x = 0; x < n; x++) {
+      const src = x - s;
+      if (src < 0 || src > n - 1) continue;
+      const i = Math.min(n - 2, Math.floor(src)), f = src - i;
+      const p = ga[i] * (1 - f) + ga[i + 1] * f, q = gb[x];
+      count++; sp += p; sq += q; spp += p * p; sqq += q * q; spq += p * q;
+    }
+    if (count < n * 0.6) continue;
+    const vp = spp - sp * sp / count, vq = sqq - sq * sq / count;
+    const r = vp > 0 && vq > 0 ? (spq - sp * sq / count) / Math.sqrt(vp * vq) : -1;
+    if (r > best) { best = r; at = s; }
+  }
+  return at;
+}
+
+/**
+ * How much wider and taller frame `b` is than frame `a` (1 = the same), read
+ * from where the edges in the left and right (top and bottom) quarters moved.
+ * Each is read in two halves that must agree, so something moving in one part
+ * of the picture is not taken for a change of size.
+ */
+export function frameScale(a, b, width = SW, height = SH) {
+  const q = Math.floor(width / 4), qh = Math.floor(height / 4);
+  const columns = (f, y0, y1, x0, x1) => { const out = new Array(x1 - x0).fill(0); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) out[x - x0] += f[y * width + x]; return out; };
+  const rows = (f, x0, x1, y0, y1) => { const out = new Array(y1 - y0).fill(0); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) out[y - y0] += f[y * width + x]; return out; };
+  const across = (y0, y1) => 1 + (profileShift(columns(a, y0, y1, width - q, width), columns(b, y0, y1, width - q, width)) - profileShift(columns(a, y0, y1, 0, q), columns(b, y0, y1, 0, q))) / (width - q);
+  const down = (x0, x1) => 1 + (profileShift(rows(a, x0, x1, height - qh, height), rows(b, x0, x1, height - qh, height)) - profileShift(rows(a, x0, x1, 0, qh), rows(b, x0, x1, 0, qh))) / (height - qh);
+  const agree = (p, r) => ((p - 1) * (r - 1) <= 0 ? 1 : Math.abs(p - 1) < Math.abs(r - 1) ? p : r);
+  return { wider: agree(across(0, height / 2), across(height / 2, height)), taller: agree(down(0, width / 2), down(width / 2, width)) };
+}
+
+/** The change of shape between neighbouring frames at a film's two ends: the first two steps and the last six. */
+export function edgeStretch(frames, width = SW, height = SH) {
+  const n = frames.length;
+  const pairs = [[0, 1], [1, 2], ...Array.from({ length: 6 }, (_, k) => [n - 7 + k, n - 6 + k])].filter(([i]) => i >= 0);
+  const steps = pairs.map(([i, j]) => {
+    const { wider, taller } = frameScale(frames[i], frames[j], width, height);
+    return { frame: j, wider: +(wider - 1).toFixed(4), taller: +(taller - 1).toFixed(4), stretch: +Math.abs(wider - taller).toFixed(4) };
+  });
+  return { steps, worst: steps.reduce((most, step) => (step.stretch > most.stretch ? step : most), { stretch: 0 }) };
+}
+
 /** Below this a take's sound is nearly inaudible even after build levels it: worth a listen. */
 export const QUIET_LUFS = -40;
 
@@ -553,14 +616,19 @@ export async function frameImage(video, frame, width, height) {
 export async function screenTake({ video, journal, fromStill, toStill, sheetPath, framesDir }) {
   const flags = [];
   const info = await probe(video);
-  const expected = journal.width && journal.height ? { width: journal.width * 2, height: journal.height * 2 } : null;
+  const seedance = isSeedance(journal.model);
+  const expected = seedance ? null : journal.width && journal.height ? { width: journal.width * 2, height: journal.height * 2 } : null;
   if (expected && (info.width !== expected.width || info.height !== expected.height)) {
     flags.push({ code: 'size', severity: 'error', message: `The film is ${info.width}×${info.height}; a two-stage render of a ${journal.width}×${journal.height} canvas arrives as ${expected.width}×${expected.height}` });
+  }
+  // A Seedance film is sized onto the canvas by build, so only its shape has to be the one asked for.
+  if (seedance && journal.width && journal.height && Math.abs(Math.log((info.width / info.height) / (journal.width / journal.height))) > 0.01) {
+    flags.push({ code: 'size', severity: 'error', message: `The film is ${info.width}×${info.height}, another shape than the ${journal.width}×${journal.height} it was asked for: build would stretch it` });
   }
   if (journal.frames && Math.abs(info.frames - journal.frames) > 1) {
     flags.push({ code: 'frames', severity: 'error', message: `${info.frames} frames; ${journal.frames} were asked for` });
   }
-  if (Math.abs(info.fps - FPS) > 0.05) flags.push({ code: 'fps', severity: 'error', message: `${info.fps.toFixed(2)} fps; H3 renders at 24` });
+  if (Math.abs(info.fps - FPS) > 0.05) flags.push({ code: 'fps', severity: 'error', message: `${info.fps.toFixed(2)} fps; films render at 24` });
   if (!info.audioChannels) flags.push({ code: 'no-audio', severity: 'error', message: 'The film has no sound track' });
 
   const frames = await greyFrames(video);
@@ -575,6 +643,15 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
     flags.push(...camera.flags);
     Object.assign(motion.metrics, camera.metrics);
   } else motion.metrics.changes = changeStretches(frames);
+  if (seedance) {
+    const { worst } = edgeStretch(await greyFrames(video, SW, SH));
+    motion.metrics.edgeStretch = +(worst.stretch * 100).toFixed(2);
+    if (worst.stretch >= STRETCH_STEP) {
+      const end = worst.frame <= 2 ? 'start' : 'end';
+      flags.push({ code: 'stretch-step', severity: 'warn', frame: worst.frame, at: time(worst.frame),
+        message: `The picture ${worst.wider > worst.taller ? 'widens' : 'narrows'} by ${(worst.stretch * 100).toFixed(1)}% against its height between frames ${worst.frame - 1} and ${worst.frame}, at the film's ${end}: Seedance drew the film between its pinned stills at another width, so the picture jumps in shape there${ON_ONE_STILL.has(journal.kind) ? ' and breathes at every wrap of the loop' : ''}. Compare the two frames at full size. The words did not cause it, so a retake keeps them (render --only <film> --same-direction), once, if the person rejects it` });
+    }
+  }
 
   const audio = info.audioChannels ? await loudness(video) : { lufs: null, truePeak: null };
   if (info.audioChannels && (audio.lufs === null || audio.lufs < -50)) {

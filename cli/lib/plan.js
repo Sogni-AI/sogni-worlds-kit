@@ -11,7 +11,9 @@
 //                           select: { positive: [[x, y]], negative: [[x, y]], box: [x0, y0, x1, y1] },
 //                           goes: <place id>   (omit for a moment that stays here),
 //                           shortcut: true|false,
-//                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }] },
+//                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }],
+//                                   model (seedance-2-5 | seedance-2-5-uncensored; default MiniMax H3),
+//                                   pushIn: { at: [x, y], zoom, frames } (a crossing only) },
 //                           reveal: { paint, zoom, still, seen, line, done,
 //                                     back: { frames, idea, action, sound } }   (a moment that holds on a close look;
 //                                     back only when the film in cannot simply run backwards)
@@ -21,6 +23,7 @@ import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { parseDocument, stringify } from 'yaml';
 import { worldPaths, filmId, loopId, backId } from './paths.js';
 import { LOOP_FRAMES } from './h3.js';
+import { isSeedance, SEEDANCE_LOOP_FRAMES } from './seedance.js';
 
 export function readPlan(id) {
   const paths = worldPaths(id);
@@ -69,7 +72,8 @@ export function filmsOf(plan) {
   const stillOf = id => placeById(plan, id)?.still;
   for (const place of plan.places) {
     if (place.loop) {
-      films.push({ id: loopId(place.id), kind: 'loop', from: place.id, to: place.id, object: null, ...place.loop, frames: place.loop.frames ?? LOOP_FRAMES, first: place.still, last: place.still });
+      const frames = place.loop.frames ?? (isSeedance(place.loop.model) ? SEEDANCE_LOOP_FRAMES : LOOP_FRAMES);
+      films.push({ id: loopId(place.id), kind: 'loop', from: place.id, to: place.id, object: null, ...place.loop, frames, first: place.still, last: place.still });
     }
     for (const object of place.objects) {
       if (!object.film) continue;

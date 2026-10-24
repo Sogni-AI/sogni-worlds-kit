@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { filmsOf, readPlan } from '../lib/plan.js';
-import { assemblePrompt, canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS } from '../lib/h3.js';
+import { canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS } from '../lib/h3.js';
+import { filmPrompt, fitStill, isSeedance, seedanceSeconds, shapeFor } from '../lib/seedance.js';
+import { pushInStart } from '../lib/pushin.js';
 import { lintPlan } from '../lib/lint.js';
 import { filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
 import { canaryFilms, canaryGate, canaryStatus } from '../lib/canary.js';
@@ -15,16 +17,17 @@ import { log, usd } from '../lib/log.js';
 import { acquireRenderLock, readRenderLock } from '../lib/renderlock.js';
 import { nextStep } from './status.js';
 
-export const summary = 'Render films (first-and-last-frame MiniMax H3, 2K): a canary first, then the rest; resumable';
+export const summary = 'Render films (first-and-last-frame MiniMax H3 at 2K, or Seedance 2.5 where a film asks for it): a canary first, then the rest; resumable';
 export const usage = `node world render [world] [options]
 
   Renders the films that need a take (never one that is approved, waiting for
   a verdict or already rendering), records each take before paying for it, and
   picks up where an interrupted run stopped. Nothing is ever submitted twice.
 
-  --canary            render only the canary: the first crossing and the first
-                      loop in story order. The rest of the world waits until a
-                      person approves both on the review page.
+  --canary            render only the canary: the first crossing, the first
+                      loop, the first close look and the first Seedance film in
+                      story order. The rest of the world waits until a person
+                      approves them on the review page.
   --only <film>       render just this film (repeat for more); also retakes an
                       approved or unjudged film.
   --dry-run           quote and print the exact requests; nothing is sent.
@@ -71,9 +74,26 @@ export function filmsToRender(plan, paths, { only = [], canary = false } = {}) {
   return all.filter(entry => (entry.film.first && entry.film.last) && ['unrendered', 'failed', 'rejected', 'rendering'].includes(entry.state));
 }
 
+/**
+ * What a film is rendered with: its model, the size it is rendered at and the
+ * size it arrives at. MiniMax H3 (the default) renders the canvas and delivers
+ * twice it; Seedance renders its own shape nearest the canvas, and build sizes
+ * it onto the canvas.
+ */
+export function filmRender(film, canvas) {
+  if (!isSeedance(film.model)) return { model: MODEL, width: canvas.width, height: canvas.height, output: delivered(canvas) };
+  const shape = shapeFor(canvas);
+  if (!shape) throw new Error(`${film.id}: Seedance renders 16:9, 4:3, 1:1, 3:4 and 9:16; this world's ${canvas.width}x${canvas.height} canvas is none of them, so this film stays on MiniMax H3`);
+  return { model: film.model, width: shape.width, height: shape.height, output: { width: shape.width, height: shape.height }, ratio: shape.ratio };
+}
+
+/** Seedance is never covered by an Unlimited plan: its takes always pay in tokens. */
+export const filmBilling = (film, billing) => (isSeedance(film.model) && billing.mode !== 'tokens' ? { ...billing, mode: 'tokens' } : billing);
+
 /** Everything sent for one new take, except the image bytes. */
-export function takeSpec(plan, paths, film, take, { seed } = {}) {
+export async function takeSpec(plan, paths, film, take, { seed } = {}) {
   const canvas = canvasOf(plan);
+  const render = filmRender(film, canvas);
   // A film's own stills: a place's, or (for an object's reveal and the film back from it) its close look.
   if (!film.first || !film.last) throw new Error(`${film.id}: its close look is not painted yet (node world reveals, then --pick one)`);
   const refs = [
@@ -84,20 +104,35 @@ export function takeSpec(plan, paths, film, take, { seed } = {}) {
     const path = ref.path ? worldFile(paths, ref.path, `${film.id}: ${ref.role === 'keyframe' ? 'keyframe image' : 'still'}`) : null;
     if (!path || !existsSync(path)) throw new Error(`${film.id}: ${ref.path ?? 'a still'} is missing`);
     const bytes = readFileSync(path);
-    return { ...ref, bytes, sha256: sha256(bytes) };
+    return { ...ref, file: path, bytes, sha256: sha256(bytes) };
   });
-  const prompt = assemblePrompt(film);
+  // A crossing that leaves through a small part of its picture starts from a crop of it (build adds the push-in).
+  const pushIn = film.kind === 'crossing' && film.pushIn ? { at: film.pushIn.at, zoom: film.pushIn.zoom, ...(film.pushIn.frames ? { frames: film.pushIn.frames } : {}) } : null;
+  const start = pushIn ? await pushInStart(refs[0].file, pushIn, delivered(canvas)) : null;
+  // What is sent: the stills themselves, or for Seedance each resized (never cropped) to its shape.
+  for (const ref of refs) {
+    const picture = ref.role === 'first' && start ? start : ref.bytes;
+    ref.send = render.ratio ? await fitStill(picture, render) : picture;
+  }
+  const prompt = filmPrompt(film);
   const chosenSeed = seed ?? (take === 1 && Number.isInteger(film.seed) ? film.seed : randomInt(1, 2 ** 31 - 1));
   return {
     canvas,
     refs,
+    start,
     journal: {
       film: film.id, take, kind: film.kind, from: film.from, to: film.to, object: film.object,
       ...(ON_ONE_STILL.has(film.kind) ? { camera: 'locked' } : {}),
-      model: MODEL, width: canvas.width, height: canvas.height, delivered: delivered(canvas),
-      frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)), steps: STEPS, fps: FPS, seed: chosenSeed,
+      model: render.model, width: render.width, height: render.height, delivered: render.output,
+      ...(render.ratio ? { fitsCanvas: delivered(canvas) } : {}),
+      frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)),
+      ...(render.ratio ? {} : { steps: STEPS }), fps: FPS, seed: chosenSeed,
       prompt, promptSha256: sha256(prompt),
-      references: refs.map(({ role, path, sha256: hash, frame }) => ({ role, path, sha256: hash, ...(frame !== undefined ? { frame } : {}) })),
+      references: [
+        ...refs.map(({ role, path, sha256: hash, frame }) => ({ role, path, sha256: hash, ...(frame !== undefined ? { frame } : {}) })),
+        ...(start ? [{ role: 'push-in', path: `renders/${film.id}/take-${take}.start.jpg`, sha256: sha256(start) }] : []),
+      ],
+      ...(pushIn ? { pushIn } : {}),
       contentFilter: contentFilterOff(plan) ? 'off' : 'on',
     },
   };
@@ -106,16 +141,26 @@ export function takeSpec(plan, paths, film, take, { seed } = {}) {
 /** The exact projects.create request for a take. */
 export function createRequest(spec, billing) {
   const { journal, refs } = spec;
-  const keyframes = refs.filter(ref => ref.role === 'keyframe');
-  return {
+  const first = refs.find(ref => ref.role === 'first').send;
+  const last = refs.find(ref => ref.role === 'last').send;
+  const common = {
     type: 'video', modelId: journal.model, positivePrompt: journal.prompt,
     network: NETWORK, tokenType: billing.tokenType, billingMode: billing.mode,
-    disableNSFWFilter: journal.contentFilter === 'off', numberOfMedia: 1, numberOfPreviews: 0,
+    disableNSFWFilter: journal.contentFilter === 'off', numberOfMedia: 1, seed: journal.seed, fps: FPS,
+  };
+  // Seedance: first-and-last-frame (no task type, no loose references), its own sound, whole seconds.
+  if (isSeedance(journal.model)) {
+    return { ...common, width: journal.width, height: journal.height, duration: seedanceSeconds(journal.frames), generateAudio: true,
+      outputFormat: 'mp4', referenceImage: first, referenceImageEnd: last };
+  }
+  const keyframes = refs.filter(ref => ref.role === 'keyframe');
+  return {
+    ...common, numberOfPreviews: 0,
     sizePreset: 'custom', width: journal.width, height: journal.height,
-    steps: STEPS, guidance: GUIDANCE, seed: journal.seed, frames: journal.frames, fps: FPS,
-    referenceImage: refs.find(ref => ref.role === 'first').bytes,
-    referenceImageEnd: refs.find(ref => ref.role === 'last').bytes,
-    ...(keyframes.length ? { keyframes: keyframes.map(ref => ({ image: ref.bytes, frameIndex: ref.frame })) } : {}),
+    steps: STEPS, guidance: GUIDANCE, frames: journal.frames,
+    referenceImage: first,
+    referenceImageEnd: last,
+    ...(keyframes.length ? { keyframes: keyframes.map(ref => ({ image: ref.send, frameIndex: ref.frame })) } : {}),
   };
 }
 
@@ -204,7 +249,10 @@ export async function run(argv) {
     if (['approved', 'unjudged'].includes(entry.state) && !values.only) continue;
     if (entry.state === 'rejected' && !values['same-direction']) {
       const last = entry.takes.filter(t => t.journal.status === 'completed').at(-1);
-      if (last && last.journal.prompt === assemblePrompt(entry.film)) {
+      // A changed push-in is a changed direction too: the film starts from another crop.
+      const samePushIn = JSON.stringify(last?.journal.pushIn?.at ?? null) === JSON.stringify(entry.film.kind === 'crossing' ? entry.film.pushIn?.at ?? null : null)
+        && (last?.journal.pushIn?.zoom ?? null) === (entry.film.kind === 'crossing' ? entry.film.pushIn?.zoom ?? null : null);
+      if (last && last.journal.prompt === filmPrompt(entry.film) && samePushIn) {
         throw new Error(`${entry.film.id}: its last take was rejected${last.verdict?.note ? ` ("${last.verdict.note}")` : ''} and the direction has not changed. A new seed rarely fixes a defect: rewrite the film's action or sound for what went wrong, or pass --same-direction`);
       }
     }
@@ -213,7 +261,8 @@ export async function run(argv) {
 
   const seed = values.seed !== undefined ? Number(values.seed) : undefined;
   if (seed !== undefined && (!Number.isInteger(seed) || seed < 0)) throw new Error('--seed is a whole number');
-  const specs = new Map(work.filter(w => !w.resume).map(w => [w.film.id, takeSpec(plan, paths, w.film, w.take, { seed })]));
+  const specs = new Map();
+  for (const w of work.filter(w => !w.resume)) specs.set(w.film.id, await takeSpec(plan, paths, w.film, w.take, { seed }));
 
   const session = await connect();
   const { client, billing } = session;
@@ -224,25 +273,31 @@ export async function run(argv) {
     // Quote every new take before anything is submitted.
     let totalSpark = 0;
     let totalUsd = 0;
+    // What the plan cannot cover (every Seedance film, or everything without a plan) is paid in tokens.
+    let paidSpark = 0;
     let fairUse = null;
     for (const w of work.filter(w => !w.resume)) {
       const spec = specs.get(w.film.id);
-      const quote = await quoteFilm(client, { model: MODEL, width: spec.canvas.width, height: spec.canvas.height, frames: w.film.frames,
-        keyframes: spec.refs.filter(r => r.role === 'keyframe').length, tokenType: billing.tokenType, billingMode: billing.mode });
+      const paying = filmBilling(w.film, billing);
+      const quote = await quoteFilm(client, { model: spec.journal.model, width: spec.journal.width, height: spec.journal.height, frames: w.film.frames,
+        keyframes: spec.refs.filter(r => r.role === 'keyframe').length, tokenType: paying.tokenType, billingMode: paying.mode });
       spec.journal.quote = quote;
       totalSpark += quote.spark;
       totalUsd += quote.usd;
+      if (paying.mode !== 'subscription') paidSpark += quote.spark;
       fairUse = quote.dailyFairUsePct ?? fairUse;
-      log.info(`${w.film.id.padEnd(32)} take ${w.take}  ${w.film.frames} frames (${secondsOf(w.film.frames).toFixed(2)} s)  ${quote.spark.toFixed(0)} Spark (${usd(quote.usd)})`);
+      const premium = isSeedance(spec.journal.model) ? `  ${spec.journal.model}, paid in tokens` : '';
+      log.info(`${w.film.id.padEnd(32)} take ${w.take}  ${w.film.frames} frames (${secondsOf(w.film.frames).toFixed(2)} s)  ${quote.spark.toFixed(0)} Spark (${usd(quote.usd)})${premium}`);
     }
     for (const w of work.filter(w => w.resume)) log.info(`${w.film.id.padEnd(32)} take ${w.resume.take}  resuming ${w.resume.journal.projectId}`);
     const newCount = work.filter(w => !w.resume).length;
     if (newCount) {
-      const covered = billing.mode === 'subscription';
-      log.step(`${newCount} new take${newCount === 1 ? '' : 's'}: ${totalSpark.toFixed(0)} Spark (${usd(totalUsd)}) at pay-as-you-go prices${covered ? ' — covered by your plan, nothing is charged' : ''}${fairUse !== null ? `; about ${fairUse}% of today’s fair-use capacity` : ''}`);
+      const covered = billing.mode === 'subscription' && paidSpark === 0;
+      const partly = billing.mode === 'subscription' && paidSpark > 0;
+      log.step(`${newCount} new take${newCount === 1 ? '' : 's'}: ${totalSpark.toFixed(0)} Spark (${usd(totalUsd)}) at pay-as-you-go prices${covered ? ' — covered by your plan, nothing is charged' : ''}${partly ? ` — your plan covers the H3 films; ${paidSpark.toFixed(0)} Spark of Seedance is paid from your balance` : ''}${fairUse !== null ? `; about ${fairUse}% of today’s fair-use capacity` : ''}`);
       const limit = Number(process.env.SOGNI_MAX_SPARK || 2000);
-      if (!covered && totalSpark > limit && !values.yes && !values['dry-run']) {
-        throw new Error(`This run would spend ${totalSpark.toFixed(0)} Spark, above SOGNI_MAX_SPARK (${limit}). Show the quote to whoever pays, then run again with --yes`);
+      if (paidSpark > limit && !values.yes && !values['dry-run']) {
+        throw new Error(`This run would spend ${paidSpark.toFixed(0)} Spark, above SOGNI_MAX_SPARK (${limit}). Show the quote to whoever pays, then run again with --yes`);
       }
     }
 
@@ -250,7 +305,7 @@ export async function run(argv) {
       for (const w of work.filter(w => !w.resume)) {
         const spec = specs.get(w.film.id);
         log.title(`${w.film.id} take ${w.take} — request (not sent)`);
-        console.log(JSON.stringify(printable(createRequest(spec, billing)), null, 2));
+        console.log(JSON.stringify(printable(createRequest(spec, filmBilling(w.film, billing))), null, 2));
       }
       log.ok('Dry run: nothing was submitted');
       return 0;
@@ -276,11 +331,14 @@ export async function run(argv) {
           } else {
             files = takeFiles(paths, w.film.id, w.take);
             const spec = specs.get(w.film.id);
-            journal = { ...spec.journal, billing: { mode: billing.mode, tokenType: billing.tokenType, tier: session.tier }, username: session.username,
+            const paying = filmBilling(w.film, billing);
+            journal = { ...spec.journal, billing: { mode: paying.mode, tokenType: paying.tokenType, tier: session.tier }, username: session.username,
               appId: session.appId, pid: process.pid, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
             // Reserve the take before paying: a second run can never submit it twice.
             writeJson(files.journal, journal, { exclusive: true });
-            const request = createRequest(spec, billing);
+            // The crop a push-in lands on, exactly as sent: screen compares the film's first frame with it.
+            if (spec.start) writeFileSync(files.start, spec.start);
+            const request = createRequest(spec, paying);
             // Creates run one at a time so an early refusal is attributed to the right take.
             const created = createLock.then(() => submitTake({ create: async () => (project = await refusals.creating(() => client.projects.create(request))), refusals, journal, journalPath: files.journal }));
             createLock = created.catch(() => {});

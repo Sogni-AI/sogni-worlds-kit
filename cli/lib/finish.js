@@ -10,6 +10,7 @@ import { basename, dirname, join } from 'node:path';
 import { ffmpeg, probe } from './media.js';
 import { FFMPEG } from './media.js';
 import { stderrOf } from './screen.js';
+import { pushInFrames } from './pushin.js';
 
 /**
  * Every film and loop: the world's scene sound, 6 LU under the narrator
@@ -36,15 +37,50 @@ export async function loudnormFilter(input, { lufs, truePeak = FILM_TRUE_PEAK, l
     + `:measured_LRA=${json.input_lra}:measured_thresh=${json.input_thresh}:offset=${json.target_offset}:linear=true`;
 }
 
-/** Encode an approved take for the web: full size and exactly half size, its sound at `lufs`. */
-export async function finishFilm(input, out, out720, { lufs = FILM_LUFS } = {}) {
+/**
+ * Encode an approved take for the web: full size and exactly half size, its
+ * sound at `lufs`. `size` sizes a film rendered at another size (Seedance's
+ * own shape) onto the world's canvas, so it lines up with the stills exactly.
+ * `pushIn` ({ still, at, zoom, frames }) puts a crossing's push-in in front of
+ * the film: from the whole still onto the crop the film was rendered from, its
+ * sound starting with the film.
+ */
+export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = null, pushIn = null } = {}) {
   const info = await probe(input);
   mkdirSync(dirname(out), { recursive: true });
   const level = info.audioChannels ? await loudnormFilter(input, { lufs }) : null;
-  const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
-  await ffmpeg(['-i', input, ...VIDEO, ...audio, out]);
-  await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
-  return { width: info.width, height: info.height, seconds: +info.seconds.toFixed(3), frames: info.frames };
+  const target = size ?? { width: info.width, height: info.height };
+  const resize = target.width !== info.width || target.height !== info.height;
+  if (!resize && !pushIn) {
+    const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
+    await ffmpeg(['-i', input, ...VIDEO, ...audio, out]);
+    await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+    return { width: info.width, height: info.height, seconds: +info.seconds.toFixed(3), frames: info.frames };
+  }
+  const fit = `scale=${target.width}:${target.height}:flags=lanczos`;
+  if (!pushIn) {
+    const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
+    await ffmpeg(['-i', input, '-vf', `${fit},setsar=1`, ...VIDEO, ...audio, out]);
+  } else {
+    const work = join(dirname(out), `.pushin-${basename(out, '.mp4')}`);
+    rmSync(work, { recursive: true, force: true });
+    mkdirSync(work, { recursive: true });
+    try {
+      const count = await pushInFrames(pushIn.still, pushIn, target, (k, png) => writeFileSync(join(work, `${String(k).padStart(3, '0')}.png`), png));
+      const lead = Math.round(count / 24 * 1000);
+      // One colour space on both sides of the join (a still's RGB as BT.709 limited range, the film's own), or the push-in shifts colour where the film takes over.
+      const tags = 'setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709';
+      const graph = [`[0:v]scale=out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1,${tags}[a]`, `[1:v]${fit}:out_range=tv,setsar=1,format=yuv420p,${tags}[b]`, `[a][b]concat=n=2:v=1:a=0[v]`];
+      if (info.audioChannels) graph.push(`[1:a]adelay=${lead}:all=1,apad${level ? `,${level}` : ''}[aud]`);
+      await ffmpeg(['-framerate', '24', '-i', join(work, '%03d.png'), '-i', input, '-filter_complex', graph.join(';'), '-map', '[v]',
+        ...(info.audioChannels ? ['-map', '[aud]', '-shortest', ...AUDIO] : ['-an']), ...VIDEO, out]);
+    } finally {
+      rmSync(work, { recursive: true, force: true });
+    }
+  }
+  await ffmpeg(['-i', out, '-vf', `scale=${target.width / 2}:${target.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+  const done = await probe(out);
+  return { width: done.width, height: done.height, seconds: +done.seconds.toFixed(3), frames: done.frames };
 }
 
 /**
@@ -109,6 +145,6 @@ export async function levelAudio(input, out, { lufs, truePeak = -1.5, bitrate = 
 /** Remove stray partial rewind folders from an interrupted build. */
 export function cleanPartials(dir) {
   try {
-    for (const name of readdirSync(dir)) if (name.startsWith('.rewind-')) rmSync(join(dir, name), { recursive: true, force: true });
+    for (const name of readdirSync(dir)) if (name.startsWith('.rewind-') || name.startsWith('.pushin-')) rmSync(join(dir, name), { recursive: true, force: true });
   } catch { /* nothing to clean */ }
 }

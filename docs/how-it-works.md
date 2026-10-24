@@ -21,7 +21,7 @@ agent) what comes next.
 | 3 | *(your agent)* | its own vision | `world.yaml`: story, objects, film directions |
 | 4 | `lint` · `quote` | the SDK's cost estimate | nothing: problems and a price |
 | 5 | `select` | Segment Anything 3 (`sam3_image_segment_bf16`) | `selections/<place>-<object>.{json,png,preview.jpg}` |
-| 6 | `render` | MiniMax H3 FastH3 FLF two-stage (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`) | `renders/<film>/take-<n>.{json,mp4}` |
+| 6 | `render` | MiniMax H3 FastH3 FLF two-stage (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`); Seedance 2.5 first-and-last-frame for a film that asks for it | `renders/<film>/take-<n>.{json,mp4}` |
 | 7 | `screen` · `note` · `reject` | ffmpeg | `take-<n>.screen.json`, `take-<n>.sheet.jpg`, notes |
 | 8 | `review` | a local page | `review/verdicts.json` (your decisions), `notes.json` and `still-notes.json` (your area notes), `marks/` (the frames you drew on) |
 | 9 | `narrate` · `music` | Qwen3-TTS · MiniMax Music 3 | `audio/narration/<place>.*`, `audio/music/*` |
@@ -106,8 +106,14 @@ running it again finds that journal and follows the same job rather than paying 
 a second one. The returned file is checked against its SHA-256 and kept exactly as
 delivered.
 
-`--canary` renders just the first crossing and the first loop, so you judge the
-quality before paying for the rest.
+A film with `model: seedance-2-5` is sent to Seedance 2.5 instead, in the same
+first-and-last-frame mode: each still resized (never cropped) to the Seedance shape
+nearest the canvas, the direction with its spoken lines as quoted speech, whole
+seconds, its own sound, paid in tokens. A crossing with a `pushIn` is rendered from
+a crop of its first still around that point.
+
+`--canary` renders just the first crossing, the first loop, the first close look and
+the first Seedance film, so you judge the quality before paying for the rest.
 
 ### 7–8. Judging
 
@@ -145,7 +151,8 @@ normalises a file you own.
 
 `build` takes the newest approved take of every film and:
 
-- normalises its sound to −14 LUFS
+- levels its sound to the world's one scene level (−22 LUFS, six under the narrator)
+- sizes a Seedance film onto the canvas, and puts a crossing's push-in in front of it
 - encodes a 2K file and an exact half-size copy for phones
 - renders a reversed copy of every crossing, so Back plays the journey in reverse
 - copies the stills, narration and music

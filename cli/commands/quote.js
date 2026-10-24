@@ -1,10 +1,11 @@
 import { parse } from '../index.js';
 import { resolveWorldId } from '../lib/paths.js';
 import { filmsOf, readPlan, revealSpeech } from '../lib/plan.js';
-import { MODEL, secondsOf } from '../lib/h3.js';
+import { secondsOf } from '../lib/h3.js';
+import { isSeedance } from '../lib/seedance.js';
 import { connect, describeBilling, LINKS, quoteFilm } from '../lib/sogni.js';
 import { log, usd } from '../lib/log.js';
-import { canvasOf, filmsToRender } from './render.js';
+import { canvasOf, filmBilling, filmRender, filmsToRender } from './render.js';
 import { canaryStatus } from '../lib/canary.js';
 import { gather, nextAction, nextStep } from './status.js';
 import { existsSync } from 'node:fs';
@@ -47,11 +48,17 @@ export async function run(argv) {
   try {
     const rows = [];
     for (const { film, state } of entries) {
-      const quote = await quoteFilm(session.client, { model: MODEL, width: canvas.width, height: canvas.height, frames: film.frames,
-        keyframes: film.keyframes?.length ?? 0, tokenType: session.billing.tokenType, billingMode: session.billing.mode });
-      rows.push({ film: film.id, kind: film.kind, state, frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(2)), ...quote });
+      const render = filmRender(film, canvas);
+      const paying = filmBilling(film, session.billing);
+      const quote = await quoteFilm(session.client, { model: render.model, width: render.width, height: render.height, frames: film.frames,
+        keyframes: film.keyframes?.length ?? 0, tokenType: paying.tokenType, billingMode: paying.mode });
+      rows.push({ film: film.id, kind: film.kind, state, model: render.model, frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(2)),
+        ...quote, ...(isSeedance(render.model) ? { paidInTokens: true } : {}) });
     }
     const total = rows.reduce((sum, row) => ({ spark: sum.spark + row.spark, usd: sum.usd + row.usd, seconds: sum.seconds + row.seconds }), { spark: 0, usd: 0, seconds: 0 });
+    // Seedance is a premium model an Unlimited plan does not cover: those rows are paid in tokens whatever the plan.
+    const premium = rows.filter(row => row.paidInTokens);
+    const premiumTotal = { spark: premium.reduce((sum, row) => sum + row.spark, 0), usd: premium.reduce((sum, row) => sum + row.usd, 0) };
     const covered = session.billing.mode === 'subscription';
 
     // Narration (one take per place) and music, priced by Sogni's own estimates.
@@ -108,11 +115,11 @@ export async function run(argv) {
       const canary = canaryStatus(plan, paths);
       const canaryRows = rows.filter(row => canary.ids.includes(row.film));
       const canaryTotal = { spark: canaryRows.reduce((sum, row) => sum + row.spark, 0), usd: canaryRows.reduce((sum, row) => sum + row.usd, 0) };
-      console.log(JSON.stringify({ billing: session.billing, covered, rows, total, audio, audioUsd, canary: { ...canary, total: canaryTotal } }, null, 2));
+      console.log(JSON.stringify({ billing: session.billing, covered, rows, total, ...(premium.length ? { paidInTokens: premiumTotal } : {}), audio, audioUsd, canary: { ...canary, total: canaryTotal } }, null, 2));
       return 0;
     }
     log.title(`Quote for ${id} — ${canvas.width}×${canvas.height} canvas, delivered at ${canvas.width * 2}×${canvas.height * 2}`);
-    for (const row of rows) log.info(`${row.film.padEnd(34)} ${row.kind.padEnd(8)} ${row.seconds.toFixed(2).padStart(6)} s  ${row.spark.toFixed(0).padStart(5)} Spark  ${usd(row.usd).padStart(7)}`);
+    for (const row of rows) log.info(`${row.film.padEnd(34)} ${row.kind.padEnd(8)} ${row.seconds.toFixed(2).padStart(6)} s  ${row.spark.toFixed(0).padStart(5)} Spark  ${usd(row.usd).padStart(7)}${row.paidInTokens ? `  ${row.model}, paid in tokens` : ''}`);
     if (rows.length) log.step(`${rows.length} film${rows.length === 1 ? '' : 's'}, ${(total.seconds / 60).toFixed(1)} minutes of 2K film: ${total.spark.toFixed(0)} Spark (${usd(total.usd)}) at pay-as-you-go prices`);
     for (const row of audio) log.info(`${row.item.padEnd(34)} ${row.error ? `could not quote: ${row.error}` : `$${row.usd.toFixed(3)}`}`);
     if (audio.length) log.step(`Narration, music and figures: about $${audioUsd.toFixed(2)} at pay-as-you-go prices${rows.length ? `; everything together about ${usd(total.usd + audioUsd)}` : ''}`);
@@ -124,7 +131,8 @@ export async function run(argv) {
       log.step(`The canary, rendered first (${canaryRows.map(row => row.film).join(' + ')}): ${spark.toFixed(0)} Spark (${usd(cost)}). The rest waits until the person approves it.`);
     }
     log.info(`Account: ${session.username} · Billing: ${describeBilling(session.billing)}`);
-    if (covered) log.ok('Your Unlimited plan covers these renders: nothing is charged (fair-use limits apply).');
+    if (premium.length) log.step(`${premium.length} Seedance film${premium.length === 1 ? '' : 's'}: ${premiumTotal.spark.toFixed(0)} Spark (${usd(premiumTotal.usd)}), paid from your token balance${covered ? ' (no Unlimited plan covers Seedance)' : ''}. Each take costs this again, so it is one take per film, and a retake only after its cause is fixed.`);
+    if (covered) log.ok(premium.length ? 'Your Unlimited plan covers the MiniMax H3 renders: nothing is charged for them (fair-use limits apply).' : 'Your Unlimited plan covers these renders: nothing is charged (fair-use limits apply).');
     else log.info(`Retakes add to this. An Unlimited plan covers every film instead: ${LINKS.plans}`);
     // After a quote, `next` (quote, then render) moves on to its render step.
     const next = nextAction(gather(id));

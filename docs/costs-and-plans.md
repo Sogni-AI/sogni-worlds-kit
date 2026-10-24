@@ -22,6 +22,15 @@ collectible is about 61 Spark ($0.30) plus its plate: Pixal3D 60, the BiRefNet c
 Qwen Image Edit picture; a close look is three Qwen Image Edit candidates (`node world quote` prices
 both at today's rates; as of 2026-10).
 
+**Seedance 2.5**, the premium model a film can opt into for dialogue and fast
+action (directing-films.md › Seedance 2.5), costs about **148 Spark per second**
+(about $0.74; Seedance 2.5 Uncensored about 171, $0.85) at 1080p: a 5-second film is
+739 Spark, about $3.70 (as of 2026-10; an Unlimited Pro account was charged about
+10% less on the kit's own test take). **No Unlimited plan covers it**: those films
+are paid from the token balance even when the plan pays for everything else, and
+`node world quote` lists them on their own line. One take per film, and a retake
+only after its cause is fixed.
+
 **A world**: plan on one loop plus one or two crossings or moments per place, so
 about 2.5 films per place and around $2 of first takes per place. Retakes roughly
 double that: the first version of *The Long White Cloud* rendered 120 takes for

@@ -10,7 +10,7 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 - The recipe (why first-and-last-frame, why two-stage)
 - Writing a direction — the `action` field, with a real example
 - Writing sound — the `sound` field
-- Crossings: how to get from one picture to another
+- Crossings: how to get from one picture to another (and diving into a map)
 - Loops: living photographs — read before writing a loop's camera
 - Moments and surprises
 - Close looks: reveals — read before writing any moment
@@ -18,6 +18,7 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 - Real people and faces
 - Choosing objects and clicks
 - Every click pays off — read before choosing objects
+- Seedance 2.5: the films H3 can't carry — read before giving a film a `model`
 - Lengths
 - Judging a take — what to reject on sight
 - Retakes
@@ -39,9 +40,11 @@ and its film back).
 
 ## The recipe
 
-Every film uses one model and one mode: **MiniMax H3, FastH3 first-and-last-frame,
-two-stage** (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`). The kit sets this
-for you, and there is no switch for it, on purpose.
+Every film uses one model and one mode unless it asks for another: **MiniMax H3,
+FastH3 first-and-last-frame, two-stage** (`minimax-h3-fastvideo-int8_flf2v_turbo_2stage`).
+The kit sets this for you. A film H3 can't carry may opt into Seedance 2.5, in the
+same first-and-last-frame mode (below, › Seedance 2.5); no other model or mode is
+offered, on purpose.
 
 - **First-and-last-frame (FLF)** pins frame 0 to the start picture and the final
   frame to the end picture. It is the only mode that guarantees a crossing starts
@@ -176,9 +179,32 @@ another.
   blind dropping and rising again on the morning. Otherwise show the change as a
   moment, or paint the second place from another viewpoint. `lint` warns when a
   crossing's two stills share a view.
+- **Two stills of one space agree.** A crossing between two stills that disagree
+  on what both show (a picture on the wall, a lamp, who is in the room) morphs it on
+  the way: a frame changes, a person appears. When a crossing stays in one space,
+  paint the second still from the first one's pixels, with an edit that changes only
+  what the story moved, so everything both show is the same. Two different rooms
+  need a designed passage between them (a door, something passing the lens, a screen
+  switched off and on again), never a blend.
 - **Give it personality.** Aim for "quirky and fun, or super cool, or cheeky", not
   "the camera walks forward". Build a small setup, escalation and payoff around the
   object. Make sure two crossings in one world don't use the same trick.
+
+### A map, and diving into it
+
+A map place is a bird's-eye picture of the world (a city at night, an island, a
+floor plan) whose objects are its districts, each a crossing that dives into one.
+The dive has to land where the visitor clicked, and words can't put it there: told
+to dive into "the upper left", a film goes where it likes (measured on one city
+map, the dives missed their districts by 5% to 44% of the map). Give each such
+crossing a `pushIn` on its district (`pushIn: { at: [0.72, 0.31], zoom: 2 }`). The
+film is rendered from a crop of the map centred on that point, and build puts a
+frame-exact digital push-in in front of it, so the finished film starts on the whole
+map, moves onto the district in three quarters of a second and dives from there.
+Put the object's `at` beside the same point. The film's end still is the district
+from above or from a high angle; going on down to street level is a second crossing
+from there. A map place suits `order: free`, and the player's Places panel stays as
+it is.
 
 ## Loops
 
@@ -415,6 +441,50 @@ where it goes; a moment and a close look by what they show and tell.
   running backwards: never a moment that lifts it and sets it down before the
   figure appears.
 
+## Seedance 2.5: the films H3 can't carry
+
+Seedance 2.5 is a premium model a film can opt into with `model: seedance-2-5`. It
+renders in first-and-last-frame mode too, so the film starts and lands on the same
+stills as any other, and it makes its own dialogue and sound.
+
+- **Use it for what H3 does poorly:** people talking to each other, fast physical
+  action where one thing causes the next, several named characters in one shot.
+  Keep loops, quiet crossings and the rest on H3: it renders native 2K, an Unlimited
+  plan covers it, and Seedance renders 1080p at about nine times the price per second
+  (as of 2026-10: 148 Spark a second, about $0.74; Uncensored 171, about $0.85; no
+  Unlimited plan covers either, so they are paid from the token balance).
+- **Its fields.** The same `action` and `sound`, checked by the same rules. Its
+  `frames` are whole seconds, seconds × 24 + 1: 121 is 5 s, 145 is 6 s (4 to 30 s).
+  It takes no keyframes. The world's canvas must be within 2% of a shape Seedance
+  renders (16:9, 4:3, 1:1, 3:4, 9:16), so a 3:2 or 2:3 world can't use it. The kit
+  resizes each still to that shape (for a 16:9 world, a squeeze of 1.6%, never a
+  crop) and build sizes the film back onto the canvas: on the kit's own test take the
+  film's first and last frames lined up with their stills to within 0.03%.
+- **Spell out the order and the cause.** Write events in the order they happen and
+  say what causes what: "She says…, then the glass slips from his hand", "Only after
+  he speaks, the lantern drifts down". Seedance swaps events left unordered (a line
+  said after the action it should start). Short time ranges ("0–2 s: …, 2–4 s: …")
+  hold the order too. Spoken lines use the dialogue form; the kit hands them to
+  Seedance as quoted speech.
+- **One take per film.** Every take costs its full price. Render one, judge it, and
+  retake only after changing the words, the stills or whatever caused the failure.
+  The canary includes the world's first Seedance film, so one is judged before the
+  rest are paid for.
+- **Refusals.** The provider's content policy refuses some real faces and some
+  content (code 5061, nothing charged), and standard Seedance's own check refuses
+  some prompts. If the film is what the person asked for, render it on
+  `seedance-2-5-uncensored` with the same words, never with softened ones. That
+  model needs its one-time likeness and consent agreement accepted in a Sogni app
+  first (code 4103). A face refused on both models can't be filmed with Seedance:
+  keep that film on H3 or cut it. The rules for real people (below) still apply.
+- **The stretch step.** Now and then Seedance draws everything between the pinned
+  ends about 1% wider than they are: the picture jumps in shape just after the first
+  frame and just before the last, and a loop breathes at every wrap. `screen` measures
+  it (`stretch-step`, from 0.5%; four such takes measured 0.8% to 1.2%, twenty clean
+  Seedance takes and sixty-four H3 takes stayed at or under 0.31%). The words don't
+  cause it, so if the person rejects it, the one retake keeps them
+  (`render --only <film> --same-direction`).
+
 ## Lengths
 
 Frames sit on H3's grid, 124 + 17n: **124** (5.2 s) up to **362** (15.1 s).
@@ -458,7 +528,10 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
 - a moment in which nothing happens: a light, a glow or a screen comes on and
   goes off again, or the picture barely changes (screening says `little-happens`);
 - a room that rearranges itself on the way (a wall, a door or furniture that
-  appears, vanishes or swaps);
+  appears, vanishes or swaps), or a prop that changes in the middle of a film that
+  lands cleanly on both of its stills: look inside the film, not only at its ends;
+- a Seedance take whose picture jumps in shape at its start or end (screening says
+  `stretch-step`; compare the two frames it names at full size);
 - a film that ignores what was clicked: the clicked thing plays no part, or the
   film does something other than its label promises.
 
@@ -499,7 +572,10 @@ person.
   `paint` description, a `zoom` outside 1–3, or a place named like the close look
   (`<place>-<object>`);
 - two films with one id;
-- frames off the 124 + 17n grid, or a prompt over 7,000 characters.
+- frames off the 124 + 17n grid (a Seedance film: whole seconds, seconds × 24 + 1),
+  or a prompt over 7,000 characters;
+- a `model` the kit does not render, a Seedance film with keyframes or on a canvas
+  Seedance has no shape for, or a `pushIn` on anything but a crossing.
 
 It warns (and still lets the plan through) when a loop or moment turns a head away
 ("turns her head", "looks away", "glances over his shoulder"), and when a film's
