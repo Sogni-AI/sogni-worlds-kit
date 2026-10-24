@@ -20,6 +20,8 @@ export type Actions = {
   next: () => void;
   back: () => void;
   skip: () => void;
+  /** Play on after something outside the world paused the film. */
+  resume: () => void;
   jump: (placeId: string) => void;
   toggleSound: () => void;
   setMusicLevel: (level: number) => void;
@@ -33,6 +35,8 @@ export class Ui {
   private readonly nextButton = el('button', 'pill primary');
   private readonly backButton = el('button', 'pill', '← Back');
   private readonly skipButton = el('button', 'pill', 'Skip ›');
+  /** A film paused from outside the world (a media key, AirPods taken out): one tap plays on. */
+  private readonly playButton = el('button', 'pill primary', '▶ Play');
   /** Held on a close look: the one way back to the place. */
   private readonly doneButton = el('button', 'pill primary');
   /** When Skip last appeared: a second tap on the button that was just there must not skip the next film. */
@@ -78,10 +82,11 @@ export class Ui {
     const bottom = el('footer', 'bar bottom');
     this.backButton.addEventListener('click', actions.back);
     this.skipButton.addEventListener('click', () => this.skipIfMeant());
+    this.playButton.addEventListener('click', actions.resume);
     this.nextButton.addEventListener('click', actions.next);
     // Nothing to go back to, skip or go on to until the first place has arrived.
-    for (const button of [this.backButton, this.skipButton, this.doneButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
-    bottom.append(this.backButton, this.skipButton, this.doneButton, this.nextButton);
+    for (const button of [this.backButton, this.playButton, this.skipButton, this.doneButton, this.nextButton]) { button.type = 'button'; button.hidden = true; }
+    bottom.append(this.backButton, this.playButton, this.skipButton, this.doneButton, this.nextButton);
 
     this.buildAbout(musicCredit);
     for (const panel of [this.mapPanel, this.aboutPanel, this.collectionPanel]) {
@@ -112,6 +117,12 @@ export class Ui {
     const here = state.loaded !== null ? `: ${Math.round(state.loaded * 100)}% of the film is here` : '';
     this.slowText.textContent = `Slow connection${here}. It plays through; nothing is skipped.`;
     this.slowButton.hidden = state.quality !== '2k';
+  }
+
+  /** The film was paused by something outside the world, or plays again. */
+  interrupted(on: boolean) {
+    this.playButton.hidden = !on;
+    if (on) this.playButton.focus({ preventScroll: true });
   }
 
   /** The visitor's collection: found / total, shown once the world has collectibles. */
@@ -247,6 +258,7 @@ export class Ui {
     this.root.classList.remove('holding');
     if (on && this.skipButton.hidden) this.skipShownAt = performance.now();
     this.skipButton.hidden = !on;
+    if (!on) this.playButton.hidden = true;
     if (on) {
       this.nextButton.hidden = true;
       this.backButton.hidden = true;

@@ -52,6 +52,7 @@ class Player {
     this.narration = new Narration(root, world);
     this.music = new Music(world.music, world);
     this.stage.onStall = (stalled, loaded) => this.ui.slow(stalled ? { loaded, quality: this.stage.quality } : null);
+    this.stage.onInterrupted = interrupted => this.ui.interrupted(interrupted);
     this.narration.onSpeaking = speaking => {
       this.music.duck(speaking || this.stage.playingFilm);
       this.stage.duckLoop(speaking);
@@ -60,6 +61,7 @@ class Player {
       next: () => { const spot = nextStop(this.place); if (spot) void this.go(spot); },
       back: () => void this.back(),
       skip: () => this.stage.skip(),
+      resume: () => this.stage.resume(),
       jump: id => void this.jump(id),
       toggleSound: () => this.setSound(!this.soundOn),
       setMusicLevel: level => this.music.setLevel(level),

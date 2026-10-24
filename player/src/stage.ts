@@ -35,6 +35,13 @@ export class Stage {
   private handovers = 0;
   /** Told when the playing film is starved of bytes (and when it flows again), with how much of it has arrived. */
   onStall?: (stalled: boolean, loaded: number | null) => void;
+  /**
+   * Told when something outside the world pauses the playing film (a media
+   * key, a headset button, AirPods taken out, the browser itself), and when it
+   * plays again. Nothing in the world would play it on: it would wait for an
+   * end it never reaches.
+   */
+  onInterrupted?: (interrupted: boolean) => void;
 
   constructor(root: HTMLElement, world: World) {
     const backdrop = el('div', 'backdrop');
@@ -179,7 +186,15 @@ export class Stage {
       this.deck.stop();
       this.follow(video);
       whilePlaying?.();
+      // The player never pauses a film that is playing; its own last frame pauses it as `ended`.
+      const paused = () => { if (!video.ended) this.onInterrupted?.(true); };
+      const resumed = () => this.onInterrupted?.(false);
+      video.addEventListener('pause', paused);
+      video.addEventListener('playing', resumed);
       await Promise.race([this.untilEnded(), abandoned]);
+      video.removeEventListener('pause', paused);
+      video.removeEventListener('playing', resumed);
+      this.onInterrupted?.(false);
     } else release(video); // and stop fetching it: the place it was skipped to needs the connection
     this.abandon = undefined;
     stop();
@@ -230,8 +245,16 @@ export class Stage {
    */
   skip() {
     if (!this.playing) return;
-    if (Number.isFinite(this.film.duration)) this.film.currentTime = Math.max(0, this.film.duration - 0.05);
-    else this.abandon?.();
+    if (Number.isFinite(this.film.duration)) {
+      this.film.currentTime = Math.max(0, this.film.duration - 0.05);
+      // Paused from outside, it would sit just short of its end: Skip plays it there.
+      if (this.film.paused) void playWithSound(this.film);
+    } else this.abandon?.();
+  }
+
+  /** Play on after a pause from outside the world (the visitor's ▶). */
+  resume() {
+    if (this.playing && this.film.paused && !this.film.ended) void playWithSound(this.film);
   }
 
   /** A film is running (not a close look held on its last frame). */
