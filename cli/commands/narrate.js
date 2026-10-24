@@ -1,5 +1,5 @@
 // narrate: each place's lines, spoken, with a time for every subtitle.
-import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
@@ -7,7 +7,7 @@ import { nextStep } from './status.js';
 import { readPlan, revealSpeech } from '../lib/plan.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256, sha256File } from '../lib/files.js';
-import { probe } from '../lib/media.js';
+import { ffmpeg, probe } from '../lib/media.js';
 import { connect, describeBilling } from '../lib/sogni.js';
 import { levelAudio } from '../lib/finish.js';
 import { loudness } from '../lib/screen.js';
@@ -26,6 +26,9 @@ export const usage = `node world narrate [world] [--only <place> ...] [--retake 
   place's voice, as audio/narration/reveals/<place>-<object>.mp3; name it as
   <place>-<object> for --only and --retake. Places already spoken are
   skipped; --retake renders a place again (the old take is kept beside it).
+  A place whose lines change voice ({ voice: other, text }: a phone call, an
+  exchange) is spoken one take per speaker, joined with a short pause, each
+  line captioned with its speaker's label.
 
   Voices in world.yaml:
     narrator: { clone: voices/me.m4a, transcript: "exactly what the recording says" }
@@ -91,9 +94,11 @@ export async function run(argv) {
     const journalPath = join(dir, `${place.id}.json`);
     if (values.retake?.includes(place.id) && existsSync(journalPath)) {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      for (const ext of ['json', 'raw.wav', 'mp3']) {
-        const file = join(dir, `${place.id}.${ext}`);
-        if (existsSync(file)) renameSync(file, join(dir, `${place.id}.${stamp}.${ext === 'json' ? 'json.old' : ext}`));
+      // A conversation's parts (one take per speaker) are taken again with it.
+      const parts = readdirSync(dir).map(name => /^(.+\.part-\d+)\.json$/.exec(name)?.[1]).filter(stem => stem?.startsWith(`${place.id}.part-`));
+      for (const stem of [place.id, ...parts]) for (const ext of ['json', 'raw.wav', 'mp3']) {
+        const file = join(dir, `${stem}.${ext}`);
+        if (existsSync(file)) renameSync(file, join(dir, `${stem}.${stamp}.${ext === 'json' ? 'json.old' : ext}`));
       }
     }
     const journal = existsSync(journalPath) ? readJson(journalPath) : null;
@@ -110,12 +115,12 @@ export async function run(argv) {
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);
     // A designed voice is designed once, then cloned in every place: the same narrator throughout.
-    const designed = [...new Set(todo.map(p => p.narration.voice).filter(name => plan.voices?.[name]?.design))];
+    const designed = [...new Set(todo.flatMap(p => voiceRuns(p).map(run => run.voice)).filter(name => plan.voices?.[name]?.design))];
     for (const name of designed) {
       const voice = plan.voices[name];
       if (!designedAnchor(paths, name, voice)) await makeAnchor({ session, paths, name, voice, language: voice.language ?? plan.language ?? 'auto' });
     }
-    for (const place of todo) voiceRequest(plan, paths, place); // check every voice before paying for any
+    for (const place of todo) for (const run of voiceRuns(place)) voiceRequest(plan, paths, runPlace(place, run)); // check every voice before paying for any
     for (const place of todo) {
       try {
         const dir = place.reveal ? join(base, 'reveals') : base;
@@ -141,7 +146,7 @@ export function voiceRequest(plan, paths, place, { quote = false } = {}) {
   const name = place.narration.voice;
   const voice = name ? plan.voices?.[name] : null;
   if (name && !voice) throw new Error(`${place.id}: voice "${name}" is not in voices:`);
-  const lines = place.narration.lines.map(String);
+  const lines = place.narration.lines.map(lineText);
   const script = lines.join(' ');
   if (script.length > SPEECH_LIMITS.script) throw new Error(`${place.id}: ${script.length} characters; one take holds ${SPEECH_LIMITS.script}`);
   const language = voice?.language ?? plan.language ?? 'auto';
@@ -169,6 +174,8 @@ export function voiceRequest(plan, paths, place, { quote = false } = {}) {
 }
 
 export async function narratePlace({ session, plan, paths, place, dir }) {
+  const runs = voiceRuns(place);
+  if (runs.length > 1) return narrateConversation({ session, plan, paths, place, dir, runs });
   const journalPath = join(dir, `${place.id}.json`);
   const { mode, lines, reference, request } = voiceRequest(plan, paths, place);
   let referenceSha256 = null;
@@ -210,6 +217,98 @@ export async function narratePlace({ session, plan, paths, place, dir }) {
   log.ok(`${place.id}: ${seconds.toFixed(1)} s, ${lines.length} line(s) timed by ${timing.split}, ${heard.lufs} LUFS → ${shown(mp3)}`);
   if (!end.clean) log.warn(`${place.id}: the ending may be clipped (${end.tailMs} ms of silence after the last sound). Listen; re-take with: node world narrate --retake ${place.id}`);
   if (timing.split === 'length') log.warn(`${place.id}: the pauses do not fall between the lines, so the subtitles are timed by length. Listen, or re-take.`);
+}
+
+/** A line's words: "text" in the place's voice, or { voice, text } in another. */
+export const lineText = line => String(line !== null && typeof line === 'object' ? line.text ?? '' : line);
+
+/**
+ * A place's lines as runs of one voice each, in order: "text" lines in the
+ * place's voice, { voice, text } lines in their own. One run is a monologue;
+ * more are a conversation (a call, an exchange), spoken one take per run.
+ */
+export function voiceRuns(place) {
+  const runs = [];
+  for (const line of place.narration?.lines ?? []) {
+    const voice = (line !== null && typeof line === 'object' && line.voice) || place.narration.voice;
+    const last = runs.at(-1);
+    if (last && last.voice === voice) last.lines.push(lineText(line));
+    else runs.push({ voice, lines: [lineText(line)] });
+  }
+  return runs;
+}
+
+/** One run of a conversation as a place of its own, for voiceRequest. */
+const runPlace = (place, run, part) => ({ ...place, ...(part ? { id: `${place.id}.part-${part}` } : {}), narration: { ...place.narration, voice: run.voice, lines: run.lines } });
+
+/** The pause between two speakers in a conversation, in seconds. */
+export const TURN_GAP = 0.35;
+
+/**
+ * The parts of a conversation on one timeline: each part's timed lines moved
+ * to where it starts (the parts before it plus a TURN_GAP each), with its speaker.
+ */
+export function joinParts(parts, gap = TURN_GAP) {
+  const lines = [];
+  let at = 0;
+  for (const [index, part] of parts.entries()) {
+    for (const line of part.lines) lines.push({ ...line, start: +(line.start + at).toFixed(3), end: +(line.end + at).toFixed(3), ...(part.speaker ? { speaker: part.speaker } : {}) });
+    at += part.seconds + (index < parts.length - 1 ? gap : 0);
+  }
+  return { lines, seconds: +at.toFixed(3) };
+}
+
+/**
+ * A place whose lines change voice (a phone call, an exchange): each run of one
+ * voice is spoken as its own take (in that voice, cloned or designed once, as
+ * any place), then the takes are joined with a short pause between speakers
+ * into the place's one narration, every line timed and captioned with its speaker.
+ */
+async function narrateConversation({ session, plan, paths, place, dir, runs }) {
+  const parts = [];
+  for (const [index, run] of runs.entries()) {
+    const part = runPlace(place, run, index + 1);
+    const journalPath = join(dir, `${part.id}.json`);
+    const raw = join(dir, `${part.id}.raw.wav`);
+    const done = existsSync(journalPath) ? readJson(journalPath) : null;
+    if (!(done?.status === 'completed' && existsSync(raw) && sha256File(raw) === done.rawSha256)) {
+      const { mode, lines, reference, request } = voiceRequest(plan, paths, part);
+      let referenceSha256 = null;
+      if (reference) {
+        const bytes = readFileSync(reference);
+        request.referenceAudio = bytes;
+        referenceSha256 = sha256(bytes);
+      }
+      log.step(`${place.id}, part ${index + 1} of ${runs.length}: ${run.voice}, ${mode} voice, ${request.positivePrompt.length} characters`);
+      const { bytes } = await renderAudio({ session, journalPath, request, contentType: 'audio/wav', say: text => log.dim(text),
+        record: { place: place.id, part: index + 1, voice: run.voice, mode, text: request.positivePrompt, lines, language: request.language,
+          ...(referenceSha256 ? { reference: shown(reference), referenceSha256 } : {}), account: session.username } });
+      writeBytes(raw, bytes);
+    }
+    const pcm = await samples(raw);
+    const seconds = pcm.length / 24000;
+    const speaker = plan.voices?.[run.voice]?.label ?? (run.voice === place.narration.voice ? place.narration.speaker : undefined);
+    parts.push({ voice: run.voice, speaker, raw, seconds, end: ending(pcm), ...lineTimes(run.lines, pauses(pcm), seconds) });
+  }
+  // One take: the parts in order, a breath between speakers.
+  const joined = join(dir, `${place.id}.raw.wav`);
+  const chain = parts.map((part, i) => `[${i}:a]aresample=24000,aformat=sample_fmts=s16:channel_layouts=mono${i < parts.length - 1 ? `,apad=pad_dur=${TURN_GAP}` : ''}[a${i}]`);
+  await ffmpeg([...parts.flatMap(part => ['-i', part.raw]), '-filter_complex', `${chain.join(';')};${parts.map((_, i) => `[a${i}]`).join('')}concat=n=${parts.length}:v=0:a=1[out]`, '-map', '[out]', joined]);
+  const timeline = joinParts(parts);
+  const mp3 = join(dir, `${place.id}.mp3`);
+  await levelAudio(joined, mp3, { lufs: NARRATION_LUFS, truePeak: -1.5, bitrate: '96k', mono: true, sampleRate: 24000 });
+  const heard = await loudness(mp3);
+  writeJson(join(dir, `${place.id}.json`), {
+    place: place.id, mode: 'conversation', voices: runs.map(run => run.voice), status: 'completed', completedAt: new Date().toISOString(),
+    parts: parts.map((part, i) => ({ voice: part.voice, journal: `${place.id}.part-${i + 1}.json`, seconds: +part.seconds.toFixed(3), split: part.split, ending: part.end })),
+    mp3: `${place.id}.mp3`, sha256: sha256File(mp3), seconds: timeline.seconds,
+    split: parts.every(part => part.split === 'pauses') ? 'pauses' : 'length', lines: timeline.lines, ending: parts.at(-1).end, loudness: heard,
+  });
+  log.ok(`${place.id}: a conversation in ${runs.length} parts, ${timeline.seconds.toFixed(1)} s, ${timeline.lines.length} line(s), ${heard.lufs} LUFS → ${shown(mp3)}`);
+  for (const [i, part] of parts.entries()) {
+    if (!part.end.clean) log.warn(`${place.id}, part ${i + 1} (${part.voice}): the ending may be clipped. Listen; re-take with: node world narrate --retake ${place.id}`);
+    if (part.split === 'length') log.warn(`${place.id}, part ${i + 1} (${part.voice}): the pauses do not fall between the lines, so its subtitles are timed by length. Listen, or re-take.`);
+  }
 }
 
 /**

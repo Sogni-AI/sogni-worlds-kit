@@ -34,3 +34,21 @@ test('a take that ends while the voice is still sounding is clipped', () => {
   const result = ending(tone(speech(2)));
   assert.equal(result.clean, false);
 });
+
+test('a place whose lines change voice is a conversation: one run per speaker, joined on one timeline', async () => {
+  const { joinParts, lineText, voiceRuns, TURN_GAP } = await import('../cli/commands/narrate.js');
+  const place = { narration: { voice: 'caller', lines: ['You took the pill.', 'Listen to me.', { voice: 'hero', text: 'Who is this?' }, { voice: 'caller', text: 'A friend.' }] } };
+  assert.deepEqual(voiceRuns(place), [
+    { voice: 'caller', lines: ['You took the pill.', 'Listen to me.'] },
+    { voice: 'hero', lines: ['Who is this?'] },
+    { voice: 'caller', lines: ['A friend.'] },
+  ]);
+  assert.equal(voiceRuns({ narration: { voice: 'narrator', lines: ['One.', 'Two.'] } }).length, 1, 'a monologue stays one take');
+  assert.equal(lineText({ voice: 'x', text: 'Hi.' }), 'Hi.');
+  const timeline = joinParts([
+    { speaker: 'Caller', seconds: 3, lines: [{ text: 'a', start: 0.1, end: 1.4 }, { text: 'b', start: 1.6, end: 2.9 }] },
+    { speaker: 'Hero', seconds: 1, lines: [{ text: 'c', start: 0.05, end: 0.9 }] },
+  ]);
+  assert.deepEqual(timeline.lines.map(l => [l.speaker, l.start]), [['Caller', 0.1], ['Caller', 1.6], ['Hero', +(3 + TURN_GAP + 0.05).toFixed(3)]]);
+  assert.equal(timeline.seconds, +(3 + TURN_GAP + 1).toFixed(3));
+});
