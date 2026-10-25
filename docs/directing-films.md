@@ -466,6 +466,15 @@ stills as any other, and it makes its own dialogue and sound.
   said after the action it should start). Short time ranges ("0–2 s: …, 2–4 s: …")
   hold the order too. Spoken lines use the dialogue form; the kit hands them to
   Seedance as quoted speech.
+- **Words only in quotes, no accents, no spoken-sounding cues.** Seedance can read
+  any sentence aloud and can switch language. Sogni Meme World shipped two such takes
+  (fixed 2026-10-25). A line asked "in his gentle Hungarian accent" came out as
+  Polish-sounding speech. A sound cue written as a sentence ("the latch snap echoes")
+  was spoken by the trapped character, after a mumble. So keep accents out of the
+  direction, write sound as plain nouns ("latch snap, pump clicks"), and put nothing
+  in quotes the character shouldn't say. Before keeping a take, run it through
+  speech-to-text and check every spoken line is the right words in the right
+  language.
 - **One take per film.** Every take costs its full price. Render one, judge it, and
   retake only after changing the words, the stills or whatever caused the failure.
   The canary includes the world's first Seedance film, so one is judged before the
