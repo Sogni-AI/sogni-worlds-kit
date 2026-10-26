@@ -7,14 +7,18 @@ import { gather, nextStep } from './status.js';
 import { ROOT, resolveWorldId, worldPaths, shown } from '../lib/paths.js';
 import { readJson } from '../lib/files.js';
 import { validateWorld, mediaRefs, isRemote } from '../lib/worldjson.js';
+import { deliveryIssues, strayPngs, SOCIAL, DELIVERY_FIX } from '../lib/delivery.js';
 import { runVite } from '../lib/player.js';
 
 export const summary = 'Export a finished world as a static site for any host';
 export const usage = `node world export [world] [--out dist/<world>]
 
-  Builds the player, then copies build/world.json and every film, still and
-  sound it plays next to index.html. The folder works on GitHub Pages, Netlify,
-  Vercel, Cloudflare Pages, S3 — anything that serves files. Guide: docs/hosting.md`;
+  Checks that every film, still and sound build/world.json plays is in the web
+  formats (WebP stills, films through Sogni's streaming profile, PNG only for
+  icons) and stops if one is not. Then builds the player and copies the world,
+  its media and its social card next to index.html. The folder works on GitHub
+  Pages, Netlify, Vercel, Cloudflare Pages, S3 — anything that serves files.
+  Guide: docs/hosting.md`;
 
 const GITHUB_FILE_LIMIT = 100 * 1024 * 1024;
 const GITHUB_SITE_LIMIT = 1024 * 1024 * 1024;
@@ -30,10 +34,12 @@ export async function run(argv) {
     return 1;
   }
   const out = resolve(ROOT, values.out ?? join('dist', id));
-  const { files, copied } = await exportWorld({ paths, out });
+  const { files, copied, remote } = await exportWorld({ paths, out });
   const total = files.reduce((sum, file) => sum + file.size, 0);
   const large = files.filter(file => file.size > GITHUB_FILE_LIMIT);
-  log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files)`);
+  log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files, every one in the web formats)`);
+  if (remote.count) log.info(`${remote.count} media file${remote.count === 1 ? ' streams' : 's stream'} from other hosts and ${remote.count === 1 ? 'is' : 'are'} not checked here.`);
+  if (remote.png.length) log.warn(`${remote.png.length} of them ${remote.png.length === 1 ? 'is a PNG still' : 'are PNG stills'} (${new URL(remote.png[0]).host}); served stills ship as WebP: ask that host for WebP copies.`);
   if (readJson(worldFile).draft) log.warn(`A draft: some films in it have no approved take yet (its About panel says so). Before sharing it, have them judged on node world review ${id}, then build and export again.`);
   if (large.length) {
     log.warn(`GitHub Pages refuses files over 100 MB: ${large.map(f => `${relative(out, f.path)} (${mb(f.size)})`).join(', ')}. Use another host for those, or shorten the film.`);
@@ -56,6 +62,10 @@ export async function exportWorld({ paths, out }) {
   const issues = validateWorld(data);
   if (issues.length) throw new Error(`build/world.json is not valid: ${issues[0]}. Run: node world build ${paths.id}`);
   assertSafeOut(out);
+  // Nothing outside the web formats goes online: checked before the folder is touched.
+  const { issues: delivery, remote } = await deliveryIssues(data, paths.build);
+  if (delivery.length) throw new Error([`Not exported: build/ would serve media outside the web formats (${delivery.length} problem${delivery.length === 1 ? '' : 's'}):`,
+    ...delivery.map(issue => `  ${issue}`), DELIVERY_FIX.replace('node world build', `node world build ${paths.id}`)].join('\n'));
 
   // The player (vite empties the folder first).
   log.step('Building the player');
@@ -79,9 +89,12 @@ export async function exportWorld({ paths, out }) {
     copyFileSync(source, target);
     copied++;
   }
+  if (existsSync(join(paths.build, SOCIAL.file))) copyFileSync(join(paths.build, SOCIAL.file), join(out, SOCIAL.file));
   writeFileSync(join(out, '.nojekyll'), ''); // GitHub Pages: serve every file as it is
+  const stray = strayPngs(data, out);
+  if (stray.length) throw new Error([`${shown(out)} would serve ${stray.length} PNG${stray.length === 1 ? '' : 's'} that ${stray.length === 1 ? 'is' : 'are'} not icons:`, ...stray.map(issue => `  ${issue}`)].join('\n'));
 
-  return { files: walk(out), copied };
+  return { files: walk(out), copied, remote };
 }
 
 /**

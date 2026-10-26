@@ -7,6 +7,7 @@ import { log } from '../lib/log.js';
 import { readJson } from '../lib/files.js';
 import { resolveWorldId, worldPaths } from '../lib/paths.js';
 import { validateWorld } from '../lib/worldjson.js';
+import { SOCIAL } from '../lib/delivery.js';
 
 export const summary = 'Prepare your hosted world for the public Sogni community gallery';
 export const usage = `node world submit [world] --url https://your-world.example/ [--creator "Your name"] [--open]
@@ -16,7 +17,12 @@ export const usage = `node world submit [world] --url https://your-world.example
   No API key is sent. Approval, feedback and withdrawal live in My worlds at
   worlds.sogni.ai. Your world stays on your host. Guide: docs/hosting.md`;
 
-export function submissionUrl(world, hostedUrl, creator) {
+/**
+ * The prefilled gallery form. Its cover is the world's social card (`cover`,
+ * a JPEG beside world.json: the gallery shows it, and crawlers read it where
+ * they do not read WebP), or the opening still for a world built without one.
+ */
+export function submissionUrl(world, hostedUrl, creator, { cover = null } = {}) {
   const issues = validateWorld(world);
   if (issues.length) throw new Error(`Build a valid world before submitting: ${issues[0]}`);
   if (world.draft) throw new Error('Build the approved version of your world before submitting; this is a draft.');
@@ -28,7 +34,7 @@ export function submissionUrl(world, hostedUrl, creator) {
   const manifest = new URL(hosted.searchParams.get('world') || './world.json', hosted);
   const opening = world.places.find(place => place.id === world.start);
   const query = new URLSearchParams({ title: world.title, description: world.subtitle ?? '', url: hosted.href,
-    coverUrl: new URL(opening.still, manifest).href, creatorName: creator ?? world.credit ?? '',
+    coverUrl: new URL(cover ?? opening.still, manifest).href, creatorName: creator ?? world.credit ?? '',
     sceneCount: String(world.places.length), pathCount: String(world.places.reduce((sum, place) => sum + place.hotspots.filter(spot => spot.to).length, 0)) });
   return `https://worlds.sogni.ai/submit-world?${query}`;
 }
@@ -38,7 +44,8 @@ export async function run(argv) {
   if (!values.url) throw new Error('Host your world, then run: node world submit <world> --url https://your-world.example/');
   const id = resolveWorldId(world), file = join(worldPaths(id).build, 'world.json');
   if (!existsSync(file)) throw new Error(`Build your world first: node world build ${id}`);
-  const url = submissionUrl(readJson(file), values.url, values.creator);
+  const cover = existsSync(join(worldPaths(id).build, SOCIAL.file)) ? SOCIAL.file : null;
+  const url = submissionUrl(readJson(file), values.url, values.creator, { cover });
   log.info('Open this link to check your listing, sign in and submit for gallery review:');
   console.log(url);
   log.info('Your world stays on your host. Check decisions, resubmit updates or withdraw from My worlds at worlds.sogni.ai.');

@@ -8,7 +8,8 @@ import { writeJson, sha256File } from '../cli/lib/files.js';
 import { recordVerdict } from '../cli/lib/takes.js';
 import { ffmpeg, probe } from '../cli/lib/media.js';
 import { greyFrames, correlation } from '../cli/lib/screen.js';
-import { validateWorld } from '../cli/lib/worldjson.js';
+import { validateWorld, mediaEntries } from '../cli/lib/worldjson.js';
+import { measureFilm, fastStart } from '../cli/lib/delivery.js';
 import { tempDir, pathsAt, syntheticVideo } from './helpers.js';
 
 const quiet = { step() {}, ok() {}, warn() {}, info() {}, fail() {}, title() {}, next() {}, dim() {} };
@@ -40,7 +41,7 @@ test('build assembles a playable world from approved takes only', async () => {
           { id: 'door', label: 'Open the door', at: [0.4, 0.5], goes: 'b', film: { frames: 124 } },
           { id: 'bird', label: 'Watch the bird', at: [0.8, 0.2], film: { frames: 124 } },
         ] },
-      { id: 'b', title: 'Place B', still: 'stills/b.jpg',
+      { id: 'b', title: 'Place B', still: 'stills/b.jpg', music: { file: 'music/b.wav', credit: 'Mine' },
         objects: [{ id: 'path', label: 'Walk back', select: { positive: [[0.3, 0.6]] }, goes: 'a', film: { frames: 124 } }] },
     ],
   };
@@ -56,16 +57,32 @@ test('build assembles a playable world from approved takes only', async () => {
   writeJson(join(paths.audio, 'narration', 'a.json'), { status: 'completed', mp3: 'a.mp3',
     lines: [{ text: 'Hello.', start: 0.1, end: 0.8 }, { text: 'This is A.', start: 1.0, end: 1.9 }] });
 
+  mkdirSync(paths.music, { recursive: true });
+  await ffmpeg(['-f', 'lavfi', '-i', 'sine=f=330:sample_rate=44100', '-t', '2', join(paths.music, 'b.wav')]);
+
   const result = await buildWorld({ paths, plan, say: quiet });
   assert.deepEqual(result.issues, []);
   const world = JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8'));
   assert.deepEqual(validateWorld(world), []);
+  assert.equal(world.places[1].music.src, 'audio/music-b.mp3', 'a place\'s own WAV track is served as MP3');
   assert.deepEqual(world.aspect, { width: 192, height: 128 });
   assert.equal(world.start, 'a');
   assert.deepEqual(world.order, ['a', 'b']);
 
   const [a, b] = world.places;
-  assert.equal(a.still, 'stills/a.jpg');
+  assert.equal(a.still, 'stills/a.webp', 'a PNG still is served as WebP');
+  assert.equal(b.still, 'stills/b.webp', 'and so is a JPEG one');
+  assert.equal((await sharp(join(paths.build, a.still)).metadata()).format, 'webp');
+  assert.deepEqual(result.delivery, [], 'everything it serves is in the web formats');
+  // Every film streams through the profile: capped, a keyframe every 2 s, its index at the front.
+  for (const { ref } of mediaEntries(world).filter(e => e.kind === 'film')) {
+    const film = await measureFilm(join(paths.build, ref));
+    assert.ok(await fastStart(join(paths.build, ref)), `${ref} starts fast`);
+    assert.ok(film.longestGop <= 2 + 1 / 24 + 1e-3, `${ref}: ${film.longestGop} s between keyframes`);
+    assert.ok(film.withinCap, `${ref} stays inside its cap`);
+  }
+  const card = await sharp(join(paths.build, 'social.jpg')).metadata();
+  assert.deepEqual([card.format, card.width, card.height], ['jpeg', 1200, 630], 'the social card');
   assert.ok(a.loop?.src, 'the approved loop is in');
   assert.deepEqual(a.hotspots.map(h => h.id), ['door'], 'the unjudged moment stays out');
   assert.equal(a.hotspots[0].to, 'b');
@@ -135,7 +152,7 @@ test('build: a close look ships its still, its line and its film back; a loop si
   assert.deepEqual(place.hotspots.map(h => h.id), ['glove', 'note'], 'a close look whose written film back is not ready stays out of the world');
   assert.ok(result.missing.some(m => m.film === 'a-coat-back'));
   const { reveal } = place.hotspots[0];
-  assert.equal(reveal.still, 'stills/reveals/a-glove.jpg');
+  assert.equal(reveal.still, 'stills/reveals/a-glove.webp');
   assert.ok(existsSync(join(paths.build, reveal.still)));
   assert.equal(reveal.done, 'Set it down');
   assert.equal(reveal.narration.src, 'audio/narration-reveal-a-glove.mp3');

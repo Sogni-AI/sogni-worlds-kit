@@ -1,6 +1,8 @@
 // Finishing: turn an approved take into what a visitor streams. The picture is
-// re-encoded once for the web (H.264, fast start) at its delivered size and at
-// exactly half size; the sound is levelled into one mix: every film and loop
+// re-encoded once for the web at its delivered size and at exactly half size,
+// through Sogni's streaming profile (delivery.js: H.264 CRF 23, the bitrate
+// capped by size, a keyframe every 2 s, fast start); the sound is levelled
+// into one mix: every film and loop
 // at one scene level, six below the narrator's voice (rain levelled to the
 // voice's loudness drowns it), so nothing jumps where a film hands over to a loop.
 // Crossings also get a rewind (picture and sound reversed) for the Back
@@ -9,6 +11,7 @@ import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:
 import { basename, dirname, join } from 'node:path';
 import { ffmpeg, probe } from './media.js';
 import { FFMPEG } from './media.js';
+import { videoArgs } from './delivery.js';
 import { stderrOf } from './screen.js';
 import { pushInFrames } from './pushin.js';
 
@@ -19,7 +22,8 @@ import { pushInFrames } from './pushin.js';
  */
 export const FILM_LUFS = -22;
 export const FILM_TRUE_PEAK = -1.5;
-const VIDEO = ['-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
+/** The rewind's reversed pieces before they are joined: lossless, so the one encode of the whole picture is its only loss. */
+const LOSSLESS = ['-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-pix_fmt', 'yuv420p'];
 const AUDIO = ['-c:a', 'aac', '-b:a', '160k', '-ar', '48000'];
 
 /**
@@ -53,14 +57,14 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = 
   const resize = target.width !== info.width || target.height !== info.height;
   if (!resize && !pushIn) {
     const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
-    await ffmpeg(['-i', input, ...VIDEO, ...audio, out]);
-    await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+    await ffmpeg(['-i', input, ...videoArgs(info), ...audio, out]);
+    await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...videoArgs({ width: info.width / 2, height: info.height / 2, fps: info.fps }), '-c:a', 'copy', out720]);
     return { width: info.width, height: info.height, seconds: +info.seconds.toFixed(3), frames: info.frames };
   }
   const fit = `scale=${target.width}:${target.height}:flags=lanczos`;
   if (!pushIn) {
     const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
-    await ffmpeg(['-i', input, '-vf', `${fit},setsar=1`, ...VIDEO, ...audio, out]);
+    await ffmpeg(['-i', input, '-vf', `${fit},setsar=1`, ...videoArgs({ ...target, fps: info.fps }), ...audio, out]);
   } else {
     const work = join(dirname(out), `.pushin-${basename(out, '.mp4')}`);
     rmSync(work, { recursive: true, force: true });
@@ -73,12 +77,12 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = 
       const graph = [`[0:v]scale=out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1,${tags}[a]`, `[1:v]${fit}:out_range=tv,setsar=1,format=yuv420p,${tags}[b]`, `[a][b]concat=n=2:v=1:a=0[v]`];
       if (info.audioChannels) graph.push(`[1:a]adelay=${lead}:all=1,apad${level ? `,${level}` : ''}[aud]`);
       await ffmpeg(['-framerate', '24', '-i', join(work, '%03d.png'), '-i', input, '-filter_complex', graph.join(';'), '-map', '[v]',
-        ...(info.audioChannels ? ['-map', '[aud]', '-shortest', ...AUDIO] : ['-an']), ...VIDEO, out]);
+        ...(info.audioChannels ? ['-map', '[aud]', '-shortest', ...AUDIO] : ['-an']), ...videoArgs({ ...target, fps: 24 }), out]);
     } finally {
       rmSync(work, { recursive: true, force: true });
     }
   }
-  await ffmpeg(['-i', out, '-vf', `scale=${target.width / 2}:${target.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+  await ffmpeg(['-i', out, '-vf', `scale=${target.width / 2}:${target.height / 2}:flags=lanczos`, ...videoArgs({ width: target.width / 2, height: target.height / 2, fps: pushIn ? 24 : info.fps }), '-c:a', 'copy', out720]);
   const done = await probe(out);
   return { width: done.width, height: done.height, seconds: +done.seconds.toFixed(3), frames: done.frames };
 }
@@ -88,7 +92,9 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = 
  * close look's object back (`sound: 'forward'`: a room's sound and a set-down
  * read naturally forwards, a reversed creak does not). The picture is
  * reversed in two-second pieces joined in reverse order, so memory stays
- * bounded at 2K; the sound is reversed whole (it is small).
+ * bounded at 2K; the pieces are lossless and the joined picture is encoded
+ * once, whole, so its bitrate stays inside the cap across every join. The
+ * sound is reversed whole (it is small).
  */
 export async function rewindFilm(finished, out, out720, { segmentFrames = 48, sound = 'reverse' } = {}) {
   const info = await probe(finished);
@@ -100,7 +106,7 @@ export async function rewindFilm(finished, out, out720, { segmentFrames = 48, so
     for (let start = 0, index = 0; start < info.frames; start += segmentFrames, index++) {
       const count = Math.min(segmentFrames, info.frames - start);
       const piece = join(work, `piece-${String(index).padStart(4, '0')}.mp4`);
-      await ffmpeg(['-i', finished, '-vf', `trim=start_frame=${start}:end_frame=${start + count},setpts=PTS-STARTPTS,reverse`, '-an', ...VIDEO, piece]);
+      await ffmpeg(['-i', finished, '-vf', `trim=start_frame=${start}:end_frame=${start + count},setpts=PTS-STARTPTS,reverse`, '-an', ...LOSSLESS, piece]);
       pieces.push(piece);
     }
     const list = join(work, 'list.txt');
@@ -113,8 +119,8 @@ export async function rewindFilm(finished, out, out720, { segmentFrames = 48, so
     const audio = own
       ? (info.audioChannels ? ['-i', finished, '-map', '0:v', '-map', '1:a', ...(sound === 'reverse' ? ['-af', 'areverse'] : []), ...AUDIO] : ['-map', '0:v', '-an'])
       : ['-stream_loop', '-1', '-i', sound, '-map', '0:v', '-map', '1:a?', ...AUDIO, '-t', String(info.seconds)];
-    await ffmpeg(['-i', picture, ...audio, '-c:v', 'copy', '-movflags', '+faststart', ...(own ? ['-shortest'] : []), out]);
-    if (out720) await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...VIDEO, '-c:a', 'copy', out720]);
+    await ffmpeg(['-i', picture, ...audio, ...videoArgs(info), ...(own ? ['-shortest'] : []), out]);
+    if (out720) await ffmpeg(['-i', out, '-vf', `scale=${info.width / 2}:${info.height / 2}:flags=lanczos`, ...videoArgs({ width: info.width / 2, height: info.height / 2, fps: info.fps }), '-c:a', 'copy', out720]);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

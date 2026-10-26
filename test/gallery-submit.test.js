@@ -20,6 +20,13 @@ test('a built Kit world produces a gallery form with credit, opening still and a
   assert.equal(url.searchParams.has('apiKey'), false);
 });
 
+test('the cover is the world\'s JPEG social card when the build made one', () => {
+  const data = structuredClone(world);
+  data.places[0].still = 'stills/opening.webp'; data.start = data.places[0].id;
+  const url = new URL(submissionUrl(data, 'https://creator.example/my-world/', 'A creator', { cover: 'social.jpg' }));
+  assert.equal(url.searchParams.get('coverUrl'), 'https://creator.example/my-world/social.jpg');
+});
+
 test('custom player manifest URLs and existing absolute media URLs resolve correctly', () => {
   const data = structuredClone(world);
   data.places[0].still = 'stills/opening.jpg'; data.start = data.places[0].id;

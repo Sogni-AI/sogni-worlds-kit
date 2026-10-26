@@ -174,24 +174,34 @@ function narrationIssues(narration, where, issues) {
   }
 }
 
-/** Every media path a world refers to (relative ones are files to ship with it). */
-export function mediaRefs(world) {
-  const refs = new Set();
-  const add = value => { if (typeof value === 'string' && value) refs.add(value); };
-  const addFilm = value => { if (value) { add(value.src); add(value.src720); } };
-  add(world.music?.src);
-  for (const speaker of Object.values(world.speakers ?? {})) add(speaker?.avatar);
+/**
+ * Every media file a world refers to, with what it is (`film`, `still`, `icon`,
+ * `audio` or `model`) and where: what delivery.js checks each against.
+ */
+export function mediaEntries(world) {
+  const entries = [];
+  const add = (ref, kind, where) => { if (typeof ref === 'string' && ref) entries.push({ ref, kind, where }); };
+  const addFilm = (value, where) => { if (value) { add(value.src, 'film', `${where}.src`); add(value.src720, 'film', `${where}.src720`); } };
+  add(world.music?.src, 'audio', 'music');
+  for (const [name, speaker] of Object.entries(world.speakers ?? {})) add(speaker?.avatar, 'icon', `speakers.${name}.avatar`);
   for (const place of world.places ?? []) {
-    add(place.still);
-    addFilm(place.loop);
-    add(place.narration?.src);
-    add(place.music?.src);
+    const at = `places[${place.id}]`;
+    add(place.still, 'still', `${at}.still`);
+    addFilm(place.loop, `${at}.loop`);
+    add(place.narration?.src, 'audio', `${at}.narration`);
+    add(place.music?.src, 'audio', `${at}.music`);
     for (const hotspot of place.hotspots ?? []) {
-      addFilm(hotspot.film); addFilm(hotspot.rewind); add(hotspot.figure?.model); add(hotspot.figure?.icon);
-      add(hotspot.reveal?.still); add(hotspot.reveal?.narration?.src); addFilm(hotspot.reveal?.back);
+      const spot = `${at}.hotspots[${hotspot.id}]`;
+      addFilm(hotspot.film, `${spot}.film`); addFilm(hotspot.rewind, `${spot}.rewind`);
+      add(hotspot.figure?.model, 'model', `${spot}.figure.model`); add(hotspot.figure?.icon, 'icon', `${spot}.figure.icon`);
+      add(hotspot.reveal?.still, 'still', `${spot}.reveal.still`); add(hotspot.reveal?.narration?.src, 'audio', `${spot}.reveal.narration`);
+      addFilm(hotspot.reveal?.back, `${spot}.reveal.back`);
     }
   }
-  return [...refs];
+  return entries;
 }
+
+/** Every media path a world refers to (relative ones are files to ship with it). */
+export const mediaRefs = world => [...new Set(mediaEntries(world).map(entry => entry.ref))];
 
 export const isRemote = ref => /^[a-z]+:\/\//i.test(ref);

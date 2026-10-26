@@ -13,16 +13,20 @@ import { canvasByName, delivered } from '../lib/h3.js';
 import { isSeedance } from '../lib/seedance.js';
 import { finishFilm, rewindFilm, relevelFilm, cleanPartials, FILM_LUFS } from '../lib/finish.js';
 import { validateWorld, FORMAT } from '../lib/worldjson.js';
+import { deliveryIssues, writeServedStill, writeIcon, writeSocialCard, WEB_AUDIO, SOCIAL } from '../lib/delivery.js';
+import { ffmpeg } from '../lib/media.js';
 import { figureFiles } from '../lib/figures.js';
 import { wantsFigure } from './figures.js';
 
 export const summary = 'Assemble the playable world (build/world.json) from your approved takes';
 export const usage = `node world build [world] [--force] [--drafts]
 
-  Finishes every approved take for the web (full size and half size, levelled
-  sound), renders a rewind for every crossing, copies stills, outlines,
-  narration and music, and writes build/world.json. Films without an approved
-  take are left out and listed. --force re-encodes everything.
+  Finishes every approved take for the web (full size and half size through
+  Sogni's streaming profile, levelled sound), renders a rewind for every
+  crossing, writes the stills as WebP and a JPEG social card, copies outlines,
+  narration and music, checks every file against the web formats
+  (docs/hosting.md › What a world serves) and writes build/world.json. Films
+  without an approved take are left out and listed. --force re-encodes everything.
 
   --drafts  also use the newest take nobody has rejected for a film with no
             approved take yet, so the whole world can be played before every
@@ -32,7 +36,8 @@ export const usage = `node world build [world] [--force] [--drafts]
 
 // The picture's recipe. The sound's level is kept beside it (`lufs`): a new level re-levels the
 // sound of the films already finished, in seconds, and never re-encodes a picture.
-const RECIPE = 'film-v1';
+// film-v2: Sogni's streaming profile (CRF 23 capped by size, a keyframe every 2 s) and WebP stills.
+const RECIPE = 'film-v2';
 /** What a film finished before levels were recorded was levelled to. */
 const FIRST_LUFS = -14;
 
@@ -51,7 +56,7 @@ export async function run(argv) {
   log.title(`Building ${plan.title || id}`);
   const result = await buildWorld({ paths, plan, force: values.force, drafts: values.drafts });
   report(result, id);
-  return result.issues.length ? 1 : 0;
+  return result.issues.length || result.delivery.length ? 1 : 0;
 }
 
 /**
@@ -116,19 +121,18 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     films.set(film.id, entry);
   }
 
-  // Stills: the canonical picture of every place, as JPEG.
+  // Stills: the canonical picture of every place, served as WebP at its own size.
   const stills = {};
   let stillSize = null;
   for (const place of plan.places) {
     if (!place.still) throw new Error(`Place "${place.id}" has no still. Run: node world ingest`);
     const source = worldFile(paths, place.still, `places.${place.id}.still`);
     if (!existsSync(source)) throw new Error(`Place "${place.id}": ${place.still} is missing. Run: node world ingest`);
-    const target = join(out, 'stills', `${place.id}.jpg`);
+    const target = join(out, 'stills', `${place.id}.webp`);
     const sha = sha256File(source);
-    if (!fresh(`stills/${place.id}.jpg`, sha, [target])) {
-      if (/\.jpe?g$/i.test(extname(source))) copyFileSync(source, target);
-      else await sharp(source).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(target);
-      manifest[`stills/${place.id}.jpg`] = { source: sha, recipe: RECIPE };
+    if (!fresh(`stills/${place.id}.webp`, sha, [target])) {
+      await writeServedStill(source, target);
+      manifest[`stills/${place.id}.webp`] = { source: sha, recipe: RECIPE };
     }
     stills[place.id] = rel(out, target);
     stillSize ??= await sharp(target).metadata();
@@ -184,12 +188,11 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (!existsSync(source)) throw new Error(`${key}: the reveal still ${reveal.still} is missing. Run: node world reveals`);
     // In their own folder: a place may be called what an object's close look is (<place>-<object>).
     mkdirSync(join(out, 'stills', 'reveals'), { recursive: true });
-    const target = join(out, 'stills', 'reveals', `${key}.jpg`);
+    const target = join(out, 'stills', 'reveals', `${key}.webp`);
     const sha = sha256File(source);
-    if (!fresh(`stills/reveals/${key}.jpg`, sha, [target])) {
-      if (/\.jpe?g$/i.test(extname(source))) copyFileSync(source, target);
-      else await sharp(source).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(target);
-      manifest[`stills/reveals/${key}.jpg`] = { source: sha, recipe: RECIPE };
+    if (!fresh(`stills/reveals/${key}.webp`, sha, [target])) {
+      await writeServedStill(source, target);
+      manifest[`stills/reveals/${key}.webp`] = { source: sha, recipe: RECIPE };
     }
     let spoken;
     const receiptPath = join(paths.audio, 'narration', 'reveals', `${key}.json`);
@@ -213,9 +216,17 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (place.music === null) { placeMusic[place.id] = null; continue; }
     const source = place.music.file ? join(paths.dir, place.music.file) : null;
     if (source && existsSync(source)) {
-      const target = join(out, 'audio', `music-${place.id}${extname(source)}`);
+      // Served as it is when every browser streams it; anything else (WAV, AIFF, Ogg) as MP3.
+      const web = WEB_AUDIO.includes(extname(source).toLowerCase());
+      const target = join(out, 'audio', `music-${place.id}${web ? extname(source) : '.mp3'}`);
       mkdirSync(join(out, 'audio'), { recursive: true });
-      copyFileSync(source, target);
+      const sha = sha256File(source);
+      if (web) copyFileSync(source, target);
+      else if (!fresh(rel(out, target), sha, [target])) {
+        say.step(`Encoding ${place.music.file} as MP3`);
+        await ffmpeg(['-i', source, '-vn', '-map_metadata', '-1', '-c:a', 'libmp3lame', '-b:a', '192k', '-write_xing', '1', target]);
+        manifest[rel(out, target)] = { source: sha, recipe: RECIPE };
+      }
       placeMusic[place.id] = clean({ src: rel(out, target), volume: place.music.volume, underFilms: place.music.underFilms, credit: place.music.credit });
     } else {
       missing.push({ film: `music of ${place.id}`, kind: 'music', state: 'unrendered' });
@@ -248,9 +259,9 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (!wantsFigure(object) || readJson(files.receipt, null)?.status !== 'completed' || !existsSync(files.glb)) continue;
     mkdirSync(join(out, 'figures'), { recursive: true });
     const model = join(out, 'figures', `${key}.glb`);
-    const icon = join(out, 'figures', `${key}.png`);
+    const icon = join(out, 'figures', `${key}.webp`);
     copyFileSync(files.glb, model);
-    await sharp(files.cutout).resize(320, 320, { fit: 'inside', withoutEnlargement: true }).png().toFile(icon);
+    await writeIcon(files.cutout, icon);
     figures[key] = { model: rel(out, model), icon: rel(out, icon), name: object.figureName ?? figureName(object.label ?? object.id) };
   }
   const places = plan.places.map(place => {
@@ -309,21 +320,32 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     places,
   });
   const issues = validateWorld(world);
+  // The card a link to the world shows (social sites, the Sogni gallery): its opening still.
+  const opening = places.find(place => place.id === world.start)?.still;
+  if (opening) await writeSocialCard(join(out, opening), join(out, SOCIAL.file));
+  // Every file it serves, in the web formats: nothing outside them reaches a host.
+  const delivery = issues.length ? [] : (await deliveryIssues(world, out)).issues;
   writeJson(manifestPath, manifest);
-  if (!issues.length) writeJson(join(out, 'world.json'), world);
+  if (!issues.length && !delivery.length) writeJson(join(out, 'world.json'), world);
 
   // What a visitor can and cannot do.
   const reachable = new Set([world.start]);
   for (const place of places) for (const h of place.hotspots) if (h.to) reachable.add(h.to);
   const deadEnds = places.filter(p => !p.hotspots.some(h => h.to)).map(p => p.id);
   const unreachable = places.filter(p => !reachable.has(p.id)).map(p => p.id);
-  return { world, issues, missing, deadEnds, unreachable, films: films.size, out, unapproved };
+  return { world, issues, delivery, missing, deadEnds, unreachable, films: films.size, out, unapproved };
 }
 
-function report({ world, issues, missing, deadEnds, unreachable, films, out, unapproved = [] }, id) {
+function report({ world, issues, delivery = [], missing, deadEnds, unreachable, films, out, unapproved = [] }, id) {
   if (issues.length) {
     log.fail('world.json would not be valid:');
     for (const issue of issues) log.info(issue);
+    return;
+  }
+  if (delivery.length) {
+    log.fail(`world.json not written: the world would serve media outside the web formats (${delivery.length} problem${delivery.length === 1 ? '' : 's'}):`);
+    for (const issue of delivery) log.info(issue);
+    log.info(`A file build made: node world build ${id} --force encodes it again. A file you placed by hand: convert it (docs/hosting.md › What a world serves).`);
     return;
   }
   const hotspots = world.places.reduce((n, p) => n + p.hotspots.length, 0);
