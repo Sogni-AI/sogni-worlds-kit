@@ -213,9 +213,17 @@ Community worlds, on its listing page and in the homepage banner. What it takes:
 - a clean loop: either its first and last frames match, or it cuts between
   shots at the loop point, like a teaser montage.
 
-The opening place's living photograph makes a good one: it starts and ends on
-the same still, so it loops without a jump. Make a copy of it with the Kit's own
-film profile, cropped to 16:9 and without its sound, next to the world you host:
+A Kit world may have one already. When the opening place's living photograph
+(its phone copy first) is 16:9 (the Kit's 16:9 canvas, 1344 × 768, counts), runs
+4 to 15 seconds, is under 10 MB and ends on its first frame, `export` names it
+as the page's `og:video` and `submit` lists it as the preview. Nothing is made
+for it, and `export` says which film it named or why none qualifies. That film
+keeps its sound track, which the gallery never plays.
+
+Otherwise, make one. The opening place's living photograph is a good start: it
+begins and ends on the same still, so it loops without a jump. Copy it with the
+Kit's own film profile, cropped to 16:9 at 1280 × 720 and without its sound,
+next to the world you host:
 
 ```bash
 ffmpeg -i dist/<world>/films/<opening place>-loop.mp4 \
@@ -224,7 +232,10 @@ ffmpeg -i dist/<world>/films/<opening place>-loop.mp4 \
   -pix_fmt yuv420p -movflags +faststart dist/<world>/preview.mp4
 ```
 
-Watch it loop a few times before you submit it. Then pass its public link:
+`export` empties its folder each time, so make the preview after your last
+export, or keep it elsewhere and copy it in. Watch it loop a few times before
+you submit it. Then pass its public link
+(`--preview` always wins over the film `export` named):
 
 ```bash
 node world submit <world> --url https://your-world.example/ --creator "Your name" \

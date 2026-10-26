@@ -1,10 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, renameSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { exportWorld, hostWarnings, publicPage, withPreviewTags } from '../cli/commands/export.js';
-import { pageListing } from '../cli/commands/submit.js';
+import { pageListing, submissionUrl } from '../cli/commands/submit.js';
+import { videoArgs } from '../cli/lib/delivery.js';
+import { ffmpeg } from '../cli/lib/media.js';
+import { previewLoop } from '../cli/lib/preview.js';
 import { writeJson } from '../cli/lib/files.js';
 import { pathsAt, tempDir } from './helpers.js';
 
@@ -82,4 +85,72 @@ test('an exported world is read back by submit as itself: its real title, descri
   assert.equal(card.title, 'Harbour & Tides');
   assert.equal(card.cover, 'https://creator.example/harbour/social.jpg', 'absolute, wherever the page is read from');
   assert.ok(html.includes('<script type="module"'), 'the player still loads');
+});
+
+// The preview loop: export names the opening place's loop as og:video only when it qualifies.
+const loopFilm = async (path, { width, height, seconds, seamless = true }) => {
+  mkdirSync(dirname(path), { recursive: true });
+  // Seamless: the film plays forward, then back, so it ends on its first frame. Otherwise a pan that never comes back.
+  const source = seamless ? `testsrc2=size=${width}x${height}:rate=24:duration=${seconds / 2}` : `testsrc2=size=${width * 3}x${height}:rate=24:duration=${seconds},crop=${width}:${height}:x=t*${width / seconds}:y=0`;
+  const graph = seamless ? '[0:v]split[a][b];[b]reverse[r];[a][r]concat=n=2:v=1:a=0[v]' : '[0:v]null[v]';
+  await ffmpeg(['-f', 'lavfi', '-i', source, '-filter_complex', graph, '-map', '[v]', ...videoArgs({ width, height, fps: 24 }), '-an', path]);
+};
+async function builtWorld(name, films) {
+  const paths = pathsAt(tempDir(`export-${name}`), 'harbour');
+  mkdirSync(join(paths.build, 'stills'), { recursive: true });
+  await sharp({ create: { width: 448, height: 256, channels: 3, background: '#335577' } }).webp().toFile(join(paths.build, 'stills', 'quay.webp'));
+  const loop = {};
+  for (const [key, spec] of Object.entries(films)) {
+    loop[key] = `films/quay-loop${key === 'src720' ? '-720' : ''}.mp4`;
+    await loopFilm(join(paths.build, loop[key]), spec);
+  }
+  writeJson(join(paths.build, 'world.json'), { format: 'sogni-world@1', id: 'harbour', title: 'Harbour', aspect: { width: 448, height: 256 }, start: 'quay',
+    places: [{ id: 'quay', title: 'Quay', still: 'stills/quay.webp', ...(films.src ? { loop } : {}), hotspots: [] }] });
+  return paths;
+}
+const sixteenNine = { width: 448, height: 256, seconds: 4 }; // the Kit's 16:9 canvas shape, 7:4
+
+test('a seamless, 16:9 opening loop of 4 to 15 s is named as og:video, relative or absolute, and submit reads it back', async () => {
+  const paths = await builtWorld('preview', { src: sixteenNine });
+  const plain = join(tempDir('export-preview-plain'), 'site');
+  const result = await exportWorld({ paths, out: plain });
+  assert.deepEqual(result.preview.preview, { ref: 'films/quay-loop.mp4', width: 448, height: 256 });
+  const html = readFileSync(join(plain, 'index.html'), 'utf8');
+  assert.equal(tag(html, 'property', 'og:video'), 'films/quay-loop.mp4');
+  assert.equal(tag(html, 'property', 'og:video:type'), 'video/mp4');
+  assert.deepEqual([tag(html, 'property', 'og:video:width'), tag(html, 'property', 'og:video:height')], ['448', '256']);
+  assert.equal(pageListing(html, 'https://creator.example/harbour/').preview, 'https://creator.example/harbour/films/quay-loop.mp4');
+  const linked = join(tempDir('export-preview-linked'), 'site');
+  await exportWorld({ paths, out: linked, url: publicPage('https://creator.example/harbour') });
+  assert.equal(tag(readFileSync(join(linked, 'index.html'), 'utf8'), 'property', 'og:video'), 'https://creator.example/harbour/films/quay-loop.mp4');
+  // Kit-mode submit lists the same film from the build, beside the world's public link.
+  const { preview } = await previewLoop(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), paths.build);
+  const kit = submissionUrl(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), 'https://creator.example/harbour', 'N', { preview: preview.ref });
+  assert.equal(new URL(kit).searchParams.get('previewUrl'), 'https://creator.example/harbour/films/quay-loop.mp4');
+});
+
+test('no og:video for a loop that jumps, is not 16:9, is too short or is not in the Kit\'s film profile; the phone copy comes first', async () => {
+  for (const [name, spec, why] of [
+    ['jumps', { ...sixteenNine, seamless: false }, /does not end on its first frame/],
+    ['three-two', { width: 384, height: 256, seconds: 4 }, /is 384×256, not 16:9/],
+    ['short', { ...sixteenNine, seconds: 2 }, /runs 2\.0 s; a preview runs 4 to 15 s/],
+  ]) {
+    const paths = await builtWorld(name, { src: spec });
+    const out = join(tempDir(`export-preview-${name}`), 'site');
+    const result = await exportWorld({ paths, out });
+    assert.equal(result.preview.preview, null, name);
+    assert.match(result.preview.why, why, name);
+    assert.equal(tag(readFileSync(join(out, 'index.html'), 'utf8'), 'property', 'og:video'), undefined, `${name}: no og:video`);
+  }
+  const none = await builtWorld('none', {});
+  assert.deepEqual(await previewLoop(JSON.parse(readFileSync(join(none.build, 'world.json'), 'utf8')), none.build), { preview: null, why: 'the opening place has no living-photo loop' });
+  // A film from before the profile (index at the end) is never named, whatever it shows.
+  const old = await builtWorld('old-profile', { src: sixteenNine });
+  const film = join(old.build, 'films', 'quay-loop.mp4');
+  await ffmpeg(['-i', film, '-c', 'copy', '-movflags', '-faststart', `${film}.tmp.mp4`]);
+  renameSync(`${film}.tmp.mp4`, film);
+  assert.match((await previewLoop(JSON.parse(readFileSync(join(old.build, 'world.json'), 'utf8')), old.build)).why, /not in the Kit's film profile/);
+  // Both qualify: the phone copy, the smaller file, is the preview.
+  const both = await builtWorld('both', { src: sixteenNine, src720: { width: 224, height: 128, seconds: 4 } });
+  assert.equal((await previewLoop(JSON.parse(readFileSync(join(both.build, 'world.json'), 'utf8')), both.build)).preview.ref, 'films/quay-loop-720.mp4');
 });

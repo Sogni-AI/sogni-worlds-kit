@@ -9,6 +9,7 @@ import { listWorlds, resolveWorldId, worldPaths } from '../lib/paths.js';
 import { validateWorld } from '../lib/worldjson.js';
 import { asDirectory, isPublicHttps } from '../lib/links.js';
 import { galleryIssues, galleryLength, LIMITS, linkProblem } from '../lib/gallery.js';
+import { previewLoop } from '../lib/preview.js';
 import { SOCIAL } from '../lib/delivery.js';
 
 export const summary = 'Prepare your hosted world for the public Sogni community gallery';
@@ -331,13 +332,17 @@ export async function run(argv) {
   else {
     const id = resolveWorldId(world), file = join(worldPaths(id).build, 'world.json');
     if (!existsSync(file)) throw new Error(`Build your world first: node world build ${id}`);
-    const cover = existsSync(join(worldPaths(id).build, SOCIAL.file)) ? SOCIAL.file : null;
-    const preview = values.preview === undefined ? null : givenPreview(values.preview);
-    url = submissionUrl(readJson(file), values.url, values.creator, { cover, preview });
-    if (values.preview) log.info(`Preview loop: ${new URL(url).searchParams.get('previewUrl')}`);
+    const build = worldPaths(id).build, data = readJson(file);
+    const cover = existsSync(join(build, SOCIAL.file)) ? SOCIAL.file : null;
+    // The preview loop: --preview, or the opening place's loop when it qualifies (the same one export names as og:video).
+    const given = values.preview === undefined ? null : givenPreview(values.preview);
+    const auto = given ? null : await previewLoop(data, build);
+    url = submissionUrl(data, values.url, values.creator, { cover, preview: given ?? auto.preview?.ref ?? null });
+    const previewUrl = new URL(url).searchParams.get('previewUrl');
+    if (previewUrl) log.info(`Preview loop: ${previewUrl}${given ? '' : `  (the opening place's loop, ${auto.preview.ref})`}`);
     log.info('Open this link to check your listing, sign in and submit for gallery review:');
     console.log(url);
-    if (!values.preview) log.info(`No preview loop. ${ADD_PREVIEW}`);
+    if (!previewUrl) log.info(`No preview loop: ${auto.why}. ${ADD_PREVIEW}`);
     log.info('Your world stays on your host. Check decisions, resubmit updates or withdraw from My worlds at worlds.sogni.ai.');
   }
   if (values.open) {

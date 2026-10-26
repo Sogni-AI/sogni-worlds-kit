@@ -10,6 +10,7 @@ import { validateWorld, mediaRefs, isRemote } from '../lib/worldjson.js';
 import { deliveryIssues, strayPngs, SOCIAL, DELIVERY_FIX } from '../lib/delivery.js';
 import { runVite } from '../lib/player.js';
 import { asDirectory, isPublicHttps } from '../lib/links.js';
+import { previewLoop } from '../lib/preview.js';
 
 export const summary = 'Export a finished world as a static site for any host';
 export const usage = `node world export [world] [--out dist/<world>] [--url https://your-world.example/]
@@ -20,8 +21,9 @@ export const usage = `node world export [world] [--out dist/<world>] [--url http
   its media and its social card next to index.html. The folder works on GitHub
   Pages, Netlify, Vercel, Cloudflare Pages, S3 — anything that serves files.
 
-  index.html carries the world's link-preview tags (title, description, cover).
-  --url, the public link visitors will play it at, makes the cover link
+  index.html carries the world's link-preview tags (title, description, cover,
+  and the opening place's loop as og:video when it can be the world's preview
+  loop). --url, the public link visitors will play it at, makes those links
   absolute, as social sites and chat apps need. Guide: docs/hosting.md`;
 
 const GITHUB_FILE_LIMIT = 100 * 1024 * 1024;
@@ -46,10 +48,11 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ESCAP
 
 /**
  * The link-preview tags for an exported world: its title, its subtitle as the
- * description, and `cover` (relative to the page, or absolute). With `url`, the
- * page's public link, the cover becomes absolute and the page names its link.
+ * description, `cover` (relative to the page, or absolute) and, when the world
+ * has one, its preview loop `video` ({ ref, width, height }) as og:video. With
+ * `url`, the page's public link, both become absolute and the page names its link.
  */
-export function previewTags(world, { cover, url = null }) {
+export function previewTags(world, { cover, url = null, video = null }) {
   const title = escapeHtml(world.title), description = world.subtitle ? escapeHtml(world.subtitle) : null;
   const image = escapeHtml(url ? new URL(cover, url).href : cover);
   const meta = (key, name, content) => `<meta ${key}="${name}" content="${content}">`;
@@ -62,7 +65,11 @@ export function previewTags(world, { cover, url = null }) {
     meta('name', 'twitter:card', 'summary_large_image'),
     meta('name', 'twitter:title', title),
     description && meta('name', 'twitter:description', description),
-    meta('name', 'twitter:image', image)].filter(Boolean);
+    meta('name', 'twitter:image', image),
+    ...(video ? [meta('property', 'og:video', escapeHtml(url ? new URL(video.ref, url).href : video.ref)),
+      meta('property', 'og:video:type', 'video/mp4'),
+      meta('property', 'og:video:width', String(video.width)),
+      meta('property', 'og:video:height', String(video.height))] : [])].filter(Boolean);
 }
 
 /** The player's index.html with the world's preview tags in place of its placeholder title. */
@@ -94,13 +101,15 @@ export async function run(argv) {
     return 1;
   }
   const out = resolve(ROOT, values.out ?? join('dist', id));
-  const { files, copied, remote } = await exportWorld({ paths, out, url: page });
+  const { files, copied, remote, preview } = await exportWorld({ paths, out, url: page });
   const total = files.reduce((sum, file) => sum + file.size, 0);
   log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files, every one in the web formats)`);
   if (remote.count) log.info(`${remote.count} media file${remote.count === 1 ? ' streams' : 's stream'} from other hosts and ${remote.count === 1 ? 'is' : 'are'} not checked here.`);
   if (remote.png.length) log.warn(`${remote.png.length} of them ${remote.png.length === 1 ? 'is a PNG still' : 'are PNG stills'} (${new URL(remote.png[0]).host}); served stills ship as WebP: ask that host for WebP copies.`);
   if (readJson(worldFile).draft) log.warn(`A draft: some films in it have no approved take yet (its About panel says so). Before sharing it, have them judged on node world review ${id}, then build and export again.`);
   for (const warning of hostWarnings(files, out)) log.warn(warning);
+  if (preview.preview) log.info(`Its preview loop is ${preview.preview.ref} (named as og:video; node world submit lists it).`);
+  else log.info(`No preview loop: ${preview.why}. You can make one (docs/hosting.md › Preview loop).`);
   if (page) log.info(`Link previews show its cover from ${page.href}.`);
   else log.info(`Link previews: export again with --url <its public link> once you know it, so social sites and chat apps can show its cover.`);
   const rel = shown(out);
@@ -154,12 +163,14 @@ export async function exportWorld({ paths, out, url = null }) {
   // The page's preview: its cover is the social card, or the opening still for a world built without one.
   const index = join(out, 'index.html');
   const cover = social ? SOCIAL.file : data.places.find(place => place.id === data.start).still;
-  writeFileSync(index, withPreviewTags(readFileSync(index, 'utf8'), data, { cover, url }));
+  // Its preview loop, when the opening place's loop qualifies (lib/preview.js): nothing is made for it.
+  const preview = await previewLoop(data, out);
+  writeFileSync(index, withPreviewTags(readFileSync(index, 'utf8'), data, { cover, url, video: preview.preview }));
   writeFileSync(join(out, '.nojekyll'), ''); // GitHub Pages: serve every file as it is
   const stray = strayPngs(data, out);
   if (stray.length) throw new Error([`${shown(out)} would serve ${stray.length} PNG${stray.length === 1 ? '' : 's'} that ${stray.length === 1 ? 'is' : 'are'} not icons:`, ...stray.map(issue => `  ${issue}`)].join('\n'));
 
-  return { files: walk(out), copied, remote };
+  return { files: walk(out), copied, remote, preview };
 }
 
 /**
