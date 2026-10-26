@@ -28,7 +28,10 @@ export const WEBP = Object.freeze({ quality: 84, smartSubsample: true, effort: 6
 export const SOCIAL = Object.freeze({ file: 'social.jpg', width: 1200, height: 630, quality: 85 });
 /** The largest PNG that still counts as an icon. */
 export const ICON_MAX = 512;
-/** How far over the cap a film may measure before it fails (the encoder lands just under it). */
+/**
+ * Slack on the cap's buffer when a served film is measured. x264 starts the buffer 90% full and keeps inside it
+ * (vbvLowest), so every film it capped measures inside this with room to spare.
+ */
 const TOLERANCE = 0.05;
 
 /**
@@ -160,7 +163,9 @@ export async function fastStart(path) {
  * the longest stretch between keyframes, and whether it stays inside its cap.
  * "Inside the cap" is the cap's own rule: no stretch of the film carries more
  * than the cap for that long plus the buffer (twice the cap), so a visitor on
- * a link at the cap never waits once playing has begun.
+ * a link at the cap never waits once playing has begun. It is the only rule on
+ * bitrate: a capped encode may spend its buffer on top of the cap, so a short,
+ * busy film can average (and one second carry) more than the cap and be fine.
  */
 export async function measureFilm(path) {
   const out = await run(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries',
@@ -211,8 +216,10 @@ export async function filmIssues(path, where) {
   if (m.pixFmt && m.pixFmt !== 'yuv420p') issues.push(`${where}: is ${m.pixFmt}, not yuv420p`);
   if (!m.fastStart) issues.push(`${where}: its index is at the end (no fast start), so it cannot play until it has all arrived`);
   if (m.longestGop > GOP_SECONDS + 1 / m.fps + 1e-3) issues.push(`${where}: ${Number.isFinite(m.longestGop) ? `${m.longestGop.toFixed(2)} s` : 'no keyframe'} between keyframes (at most ${GOP_SECONDS} s)`);
-  if (m.averageBps > m.profile.maxrate * (1 + TOLERANCE)) issues.push(`${where}: averages ${mbps(m.averageBps)}, over the ${mbps(m.profile.maxrate)} cap for a ${m.width}×${m.height} film`);
-  else if (!m.withinCap) issues.push(`${where}: bursts past the ${mbps(m.profile.maxrate)} cap for a ${m.width}×${m.height} film (its busiest second carries ${mbps(m.busiestSecondBps)}): it was encoded without the cap`);
+  if (!m.withinCap) {
+    issues.push(`${where}: carries more than the ${mbps(m.profile.maxrate)} cap and its ${Math.round(m.profile.bufsize / 1e6)} Mbit buffer allow for a ${m.width}×${m.height} film`
+      + ` (it averages ${mbps(m.averageBps)}; its busiest second carries ${mbps(m.busiestSecondBps)}): it was encoded without the cap`);
+  }
   return issues;
 }
 

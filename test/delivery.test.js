@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { ffmpeg } from '../cli/lib/media.js';
 import { finishFilm } from '../cli/lib/finish.js';
-import { bitrateProfile, videoArgs, filmIssues, imageIssues, audioIssues, deliveryIssues, strayPngs, writeIcon, writeServedStill } from '../cli/lib/delivery.js';
+import { bitrateProfile, videoArgs, encodeFilm, filmIssues, measureFilm, imageIssues, audioIssues, deliveryIssues, strayPngs, writeIcon, writeServedStill } from '../cli/lib/delivery.js';
 import { tempDir, syntheticVideo } from './helpers.js';
 
 test('the streaming profile: CRF 23, the cap by short edge with a buffer of twice it, a keyframe every 2 s, fast start', () => {
@@ -24,13 +24,14 @@ test('a film encoded without the profile fails, and says why; the finished one p
   const dir = tempDir('delivery-film');
   const take = join(dir, 'take.mp4');
   await syntheticVideo(take, { source: 'testsrc2=size=SIZE:rate=24', seconds: 5 });
-  // Lossless noise, one keyframe, the index at the end: what an uncapped encode looks like.
+  // Lossless noise, one keyframe, the index at the end: what an uncapped encode looks like (about 26 Mbps, far more
+  // than three seconds at the 4.5 Mbps cap plus its 9 Mbit buffer can carry).
   const raw = join(dir, 'raw.mp4');
-  await ffmpeg(['-f', 'lavfi', '-i', 'nullsrc=s=192x128:r=24,geq=random(1)*255:128:128', '-t', '3', '-c:v', 'libx264', '-qp', '0', '-g', '250', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', raw]);
+  await ffmpeg(['-f', 'lavfi', '-i', 'nullsrc=s=384x256:r=24,geq=random(1)*255:128:128', '-t', '3', '-c:v', 'libx264', '-qp', '0', '-g', '250', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', raw]);
   const issues = await filmIssues(raw, 'raw.mp4');
   assert.ok(issues.some(i => /fast start/.test(i)), 'no fast start');
   assert.ok(issues.some(i => /between keyframes/.test(i)), 'GOP over 2 s');
-  assert.ok(issues.some(i => /averages .* over the 4\.5 Mbps cap/.test(i)), 'over the cap on average');
+  assert.ok(issues.some(i => /carries more than the 4\.5 Mbps cap and its 9 Mbit buffer allow .* averages/.test(i)), 'more than the cap and its buffer');
 
   const main = join(dir, 'main.mp4'), half = join(dir, 'half.mp4');
   await finishFilm(take, main, half);
@@ -46,7 +47,34 @@ test('a film under the cap on average that bursts past it still fails', async ()
     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', film]);
   const issues = await filmIssues(film, 'burst.mp4');
   assert.equal(issues.length, 1, issues.join('; '));
-  assert.match(issues[0], /bursts past the 4\.5 Mbps cap .* busiest second carries/);
+  assert.match(issues[0], /carries more than the 4\.5 Mbps cap and its 9 Mbit buffer allow .* busiest second carries .*: it was encoded without the cap/);
+});
+
+// Reported 2026-10-26: 37 of 54 films a creator's Kit had encoded itself (8 to 9.5 s of fountains, surf, drone moves)
+// failed build's check at 12.6 to 13.6 Mbps (2K) and 4.7 to 5.0 Mbps (768p), against a check of the average at the cap
+// plus 5%. x264 starts its buffer 90% full and may spend it on top of the cap, so a short, busy film averages over it.
+test('a short, busy film the Kit encodes passes the Kit\'s own check though it averages over its cap; uncapped, it fails', async () => {
+  const dir = tempDir('delivery-busy');
+  for (const [width, height, seconds] of [[1344, 768, 8.7], [2688, 1536, 4]]) {
+    const master = join(dir, `master-${height}.mkv`), film = join(dir, `film-${height}.mp4`), uncapped = join(dir, `uncapped-${height}.mp4`);
+    // Grain moving over every pixel: harder for x264 than any fountain. The master is compressed to keep the test
+    // small (encodeFilm only decodes it); it is still far busier than the cap allows.
+    await ffmpeg(['-f', 'lavfi', '-i', `color=c=gray:s=${width}x${height}:r=24,noise=alls=60:allf=t+u`, '-t', String(seconds),
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '30', '-pix_fmt', 'yuv420p', master]);
+    const { maxrate } = bitrateProfile(width, height);
+    await encodeFilm(master, film, { width, height, fps: 24 });
+    const measured = await measureFilm(film);
+    assert.ok(measured.averageBps > maxrate * 1.05, `${width}×${height}: averages ${(measured.averageBps / 1e6).toFixed(2)} Mbps, over the cap + 5% the old check allowed`);
+    assert.deepEqual(await filmIssues(film, `film-${height}.mp4`), [], `${width}×${height}: the Kit's own encode passes`);
+    // The same clip through the same profile without its cap.
+    const args = videoArgs({ width, height, fps: 24 });
+    const withoutCap = args.filter((arg, i) => !['-maxrate', '-bufsize'].includes(arg) && !['-maxrate', '-bufsize'].includes(args[i - 1]));
+    await ffmpeg(['-i', master, ...withoutCap, '-an', uncapped]);
+    rmSync(master);
+    const issues = await filmIssues(uncapped, `uncapped-${height}.mp4`);
+    assert.equal(issues.length, 1, issues.join('; '));
+    assert.match(issues[0], /carries more than the .* cap and its .* buffer allow .*: it was encoded without the cap/);
+  }
 });
 
 test('stills ship as WebP, PNG only for icons of 512 px or less, sound compressed, nothing carrying camera metadata', async () => {

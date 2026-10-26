@@ -41,8 +41,8 @@ What is inside, and how big it gets:
 | `figures/` | 3D figures (GLB) and their icons (WebP) |
 | `social.jpg` | The card a link to the world shows: its opening picture, 1200 × 630 |
 
-The bitrate cap bounds a 2K film at 1.5 MB per second (12 Mbps) and its
-half-size copy at about 0.56 MB per second (4.5 Mbps); calm films come in well
+The bitrate cap holds a 2K film to about 1.5 MB per second (12 Mbps) and its
+half-size copy to about 0.56 MB per second (4.5 Mbps); calm films come in well
 under. The export prints the total.
 
 ## What a world serves
@@ -60,9 +60,10 @@ else, naming each file and what is wrong with it.
 | Icons | WebP, or PNG of 512 px or less. PNG is for icons only |
 | Sound | MP3 or AAC (a place's own WAV or AIFF track is encoded as MP3) |
 
-A film is checked by its average bitrate and by whether any stretch of it
-carries more than its cap allows (the cap for that long plus the buffer), so a
-visitor on a link at the cap never waits once it is playing. The PNGs the
+A film is checked by whether any stretch of it carries more than its cap
+allows (the cap for that long plus the buffer), so a visitor on a link at the
+cap never waits once it is playing. A short, busy film may average a little
+over its cap: that is the buffer, spent as the cap allows. The PNGs the
 pipeline keeps (painted places, outlines, masks, a figure's plates) stay in
 your world's folder; they are never served. Look at what you ship at full size,
 on faces, writing, edges and skies, not only at the file size.
