@@ -6,17 +6,18 @@
 //            enlarged, metadata stripped
 //   films    H.264 through Sogni's streaming profile (the one Sogni's own
 //            worlds use): CRF 23, the bitrate capped by the picture's short
-//            edge, a keyframe every 2 s, yuv420p, the index at the front
+//            edge, a keyframe every 2 s, yuv420p, the index at the front, and
+//            a last frame as sharp as the rest (encodeFilm)
 //   social   one JPEG card, 1200 × 630 (crawlers do not all read WebP)
 //   PNG      icons only (512 px or less). The PNGs the pipeline keeps
 //            (generations, masks, push-in frames) are never served.
 //
 // Format guide: docs/hosting.md › What a world serves.
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { extname, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
-import { FFPROBE, run } from './media.js';
+import { FFMPEG, FFPROBE, ffmpeg, probe, run } from './media.js';
 import { mediaEntries, isRemote } from './worldjson.js';
 
 export const CRF = 23;
@@ -45,6 +46,79 @@ export function videoArgs({ width, height, fps = 24 }) {
   const { maxrate, bufsize } = bitrateProfile(width, height);
   return ['-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(CRF), '-maxrate', String(maxrate), '-bufsize', String(bufsize),
     '-g', String(Math.max(1, Math.round((fps || 24) * GOP_SECONDS))), '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
+}
+
+/** The lossless picture a served film is encoded from (finish.js writes it; encodeFilm reads it). */
+export const LOSSLESS = Object.freeze(['-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-pix_fmt', 'yuv420p']);
+
+/**
+ * Seconds of the last frame, held, that the encoder sees after a film. Coded as the end of the stream, a film's last
+ * frame is referenced by nothing, and under the cap x264 starves it (a Sogni film landed at 30.7 dB against its
+ * master, 41.0 uncapped: a smeared face and ringing text, on the frame the player holds at a handover). Held frames
+ * after it make it a frame that others lean on; encodeFilm cuts them off again before the film is served.
+ */
+export const TAIL_SECONDS = 1;
+
+/**
+ * The lowest fullness, in bits, of the cap's buffer in x264's own model: 90% full when playing starts, filled at the
+ * cap, drained by each frame in decode order. Below zero, a visitor on a link at the cap would wait mid-film.
+ */
+export function vbvLowest(frameBits, { maxrate, bufsize }, fps) {
+  let level = bufsize * 0.9, lowest = Infinity;
+  for (const bits of frameBits) {
+    level -= bits;
+    lowest = Math.min(lowest, level);
+    level = Math.min(bufsize, level + maxrate / fps);
+  }
+  return lowest;
+}
+
+/** The kept film must decode to exactly the first `frames` frames of the padded encode, or the cut was not clean. */
+export function assertKeptFrames(kept, padded, frames) {
+  if (kept.length !== frames) throw new Error(`kept ${kept.length} frames, not ${frames}`);
+  if (padded.length <= frames) throw new Error('the padded encode has no held tail');
+  const differs = kept.findIndex((hash, i) => hash !== padded[i]);
+  if (differs >= 0) throw new Error(`kept frame ${differs} differs from the padded encode: the cut after the last frame was not clean`);
+}
+
+const frameHashes = async path => (await run(FFMPEG, ['-v', 'error', '-i', path, '-map', '0:v:0', '-f', 'framemd5', '-'])).toString('utf8')
+  .split('\n').filter(line => line && !line.startsWith('#')).map(line => line.split(',').at(-1).trim());
+/** Video packets in decode order: their size in bits and whether each is a keyframe. */
+const videoPackets = async path => (await run(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=size,flags', '-of', 'csv=p=0', path]))
+  .toString('utf8').split('\n').filter(Boolean).map(line => { const [size, flags = ''] = line.split(','); return { bits: Number(size) * 8, key: flags.includes('K') }; });
+
+/**
+ * Encode a served film from its lossless `master` (picture and finished sound) through the streaming profile, at
+ * `width` × `height` (scaled down when the master is larger), with a sharp last frame. The picture is encoded with a
+ * held tail and an IDR forced on the last real frame, then cut back to the master's length by stream copy: closed
+ * GOPs and an IDR as the last kept frame make that cut valid for any length. It is proven, not assumed: the kept
+ * frames must decode bit for bit to the padded encode's, the last one must be a keyframe, the length and duration
+ * must match the master and the film must stay inside the cap's buffer, or this throws (no fallback to a plain encode).
+ */
+export async function encodeFilm(master, out, { width, height, fps = 24 }) {
+  const info = await probe(master);
+  const frames = info.frames;
+  if (!frames) throw new Error(`${master}: no video frames`);
+  const scale = width === info.width && height === info.height ? [] : [`scale=${width}:${height}:flags=lanczos`];
+  const temp = join(dirname(out), `.encode-${basename(out, '.mp4')}`);
+  const padded = `${temp}.padded.mp4`, picture = `${temp}.picture.mp4`;
+  try {
+    await ffmpeg(['-i', master, '-map', '0:v:0', '-vf', [...scale, `tpad=stop_mode=clone:stop_duration=${TAIL_SECONDS}`].join(','),
+      '-force_key_frames', `expr:eq(n,${frames - 1})`, ...videoArgs({ width, height, fps }), '-forced-idr', '1', '-fps_mode', 'passthrough', '-an', padded]);
+    await ffmpeg(['-i', padded, '-map', '0:v:0', '-c', 'copy', '-frames:v', String(frames), picture]);
+    assertKeptFrames(await frameHashes(picture), await frameHashes(padded), frames);
+    if (!(await videoPackets(picture)).at(-1)?.key) throw new Error(`${out}: the last frame is not a keyframe (the forced IDR did not land on it)`);
+    await ffmpeg(['-i', picture, '-i', master, '-map', '0:v:0', '-map', '1:a?', '-c', 'copy', '-movflags', '+faststart', out]);
+  } finally {
+    rmSync(padded, { force: true });
+    rmSync(picture, { force: true });
+  }
+  const done = await probe(out);
+  if (done.frames !== frames) throw new Error(`${out}: ${done.frames} frames, the master has ${frames}`);
+  if (Math.abs(done.seconds - info.seconds) >= 1 / (fps || 24)) throw new Error(`${out}: lasts ${done.seconds} s, the master ${info.seconds} s`);
+  const lowest = vbvLowest((await videoPackets(out)).map(p => p.bits), bitrateProfile(width, height), fps || 24);
+  if (lowest < 0) throw new Error(`${out}: overruns its cap's buffer by ${Math.round(-lowest)} bits`);
+  return { frames, seconds: done.seconds, bufferLowestBits: Math.round(lowest) };
 }
 
 /** A served still from a canonical one: the same pixels, as WebP, metadata stripped. */
