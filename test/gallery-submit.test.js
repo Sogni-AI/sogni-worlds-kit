@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { externalSubmission, submissionMode, submissionUrl, worldCounts } from '../cli/commands/submit.js';
+import { externalSubmission, givenPreview, pageListing, submissionMode, submissionUrl, worldCounts } from '../cli/commands/submit.js';
 import { validateWorld } from '../cli/lib/worldjson.js';
 import { galleryLength, linkProblem } from '../cli/lib/gallery.js';
 
@@ -239,4 +239,62 @@ test('a Kit world the gallery would refuse fails before a link is printed, sayin
   assert.throws(() => submissionUrl(world, PAGE, at(81)), /The creator name is 81 characters; .*--creator/);
   assert.throws(() => submissionUrl(world, PAGE, '   '), /The creator name is blank/);
   for (const url of ['https://localhost/world/', 'https://203.0.113.9/', 'https://world.test/']) assert.throws(() => submissionUrl(world, url, 'N'), /^Error: --url .*HTTPS link where visitors play/, url);
+});
+
+// The preview loop: --preview, or the page's og:video, listed as previewUrl.
+const video = (key, content) => `<meta property="${key}" content="${content}">`;
+const withVideo = tags => page(`<title>T</title><meta property="og:image" content="og.jpg">${tags}`);
+
+test('the page\'s og:video gives the preview loop: secure_url, then url, then og:video, the first HTTPS one, resolved against the page', () => {
+  const read = tags => pageListing(withVideo(tags), PAGE);
+  assert.deepEqual([read(video('og:video', 'loop.mp4')).preview, read(video('og:video', 'loop.mp4')).previewFrom], [`${PAGE}loop.mp4`, 'og:video']);
+  assert.equal(read(video('og:video', '/media/loop.mp4')).preview, 'https://creator.example/media/loop.mp4');
+  const all = video('og:video', 'https://a.example/v.mp4') + video('og:video:url', 'https://b.example/v.mp4') + video('og:video:secure_url', 'https://c.example/v.mp4');
+  assert.deepEqual([read(all).preview, read(all).previewFrom], ['https://c.example/v.mp4', 'og:video:secure_url']);
+  assert.equal(read(video('og:video', 'https://a.example/v.mp4') + video('og:video:url', 'https://b.example/v.mp4')).preview, 'https://b.example/v.mp4');
+  // A link that is not HTTPS is passed over for the next one, and with none the page has no preview.
+  assert.equal(read(video('og:video', 'https://a.example/v.mp4') + video('og:video:secure_url', 'http://c.example/v.mp4')).preview, 'https://a.example/v.mp4');
+  assert.equal(read(video('og:video', 'http://creator.example/v.mp4')).preview, undefined);
+  assert.equal(read('').preview, undefined);
+  // Several videos: one typed video/mp4 first; one typed as anything else is not an MP4.
+  const several = video('og:video', 'https://a.example/v.webm') + video('og:video:type', 'video/webm')
+    + video('og:video', 'https://a.example/v') + video('og:video', 'https://a.example/v.mp4') + video('og:video:type', 'video/mp4; codecs="avc1"');
+  assert.equal(read(several).preview, 'https://a.example/v.mp4');
+  assert.equal(read(video('og:video', 'https://a.example/v.webm') + video('og:video:type', 'video/webm') + video('og:video', 'https://a.example/plain')).preview, 'https://a.example/plain');
+  assert.equal(read(video('og:video', 'https://player.example/embed') + video('og:video:type', 'text/html')).preview, undefined);
+  // Structures that use only og:video:url still separate: a second :url starts the next video.
+  assert.equal(read(video('og:video:url', 'https://a.example/1.mp4') + video('og:video:type', 'video/webm') + video('og:video:url', 'https://a.example/2.mp4') + video('og:video:type', 'video/mp4')).preview, 'https://a.example/2.mp4');
+  assert.equal(read(`<!-- ${video('og:video', 'https://a.example/hidden.mp4')} -->`).preview, undefined, 'never from a comment');
+});
+
+test('outside the Kit the link carries previewUrl from og:video or --preview, and the summary says where it came from', async () => {
+  const pages = { [PAGE]: withVideo(video('og:video:secure_url', 'films/preview.mp4') + video('og:video:type', 'video/mp4')) };
+  const listed = await externalSubmission(PAGE, { creator: 'N' }, { fetch: site(pages) });
+  assert.equal(new URL(listed.url).searchParams.get('previewUrl'), `${PAGE}films/preview.mp4`);
+  assert.equal(listed.from.preview, 'og:video:secure_url');
+  const given = await externalSubmission(PAGE, { preview: 'https://cdn.example/teaser.mp4' }, { fetch: site(pages) });
+  assert.equal(new URL(given.url).searchParams.get('previewUrl'), 'https://cdn.example/teaser.mp4', '--preview overrides the page');
+  assert.equal(given.from.preview, 'given');
+  const none = await externalSubmission(PAGE, {}, { fetch: site({ [PAGE]: withVideo('') }) });
+  assert.equal(new URL(none.url).searchParams.has('previewUrl'), false, 'no preview is fine');
+  assert.equal(none.previewNote, null);
+  // One on a name the gallery would not take is left out, and the person is told why.
+  const local = await externalSubmission(PAGE, {}, { fetch: site({ [PAGE]: withVideo(video('og:video', 'https://media.local/loop.mp4')) }) });
+  assert.equal(new URL(local.url).searchParams.has('previewUrl'), false);
+  assert.match(local.previewNote, /The page's og:video \(https:\/\/media\.local\/loop\.mp4\) is on media\.local.*left out.*--preview/);
+});
+
+test('--preview is a public HTTPS link to an MP4, as the gallery takes it, in both modes', async () => {
+  for (const [value, problem] of [['http://creator.example/p.mp4', /not an HTTPS link/], ['https://me:pw@creator.example/p.mp4', /name or password/],
+    ['https://10.1.2.3/p.mp4', /IP address/], ['https://localhost/p.mp4', /not a public name/], ['preview.mp4', /not a link/], ['', /not a link/],
+    [`https://creator.example/${'p'.repeat(2048)}.mp4`, /characters; the gallery takes at most 2,048/]]) {
+    assert.throws(() => givenPreview(value), problem, value);
+    await assert.rejects(externalSubmission(PAGE, { preview: value }, { fetch: site({ [PAGE]: OG }) }), new RegExp(`^Error: --preview .*${problem.source}`), value);
+  }
+  assert.equal(givenPreview('https://creator.example/preview.mp4'), 'https://creator.example/preview.mp4');
+  // A Kit world's link carries it too, after its cover.
+  const kit = new URL(submissionUrl(world, PAGE, 'N', { preview: 'https://creator.example/north-pole/preview.mp4' }));
+  assert.equal(kit.searchParams.get('previewUrl'), 'https://creator.example/north-pole/preview.mp4');
+  assert.deepEqual([...kit.searchParams.keys()], ['title', 'description', 'url', 'coverUrl', 'previewUrl', 'creatorName', 'sceneCount', 'pathCount']);
+  assert.equal(new URL(submissionUrl(world, PAGE, 'N')).searchParams.has('previewUrl'), false, 'and without one the link is as before');
 });

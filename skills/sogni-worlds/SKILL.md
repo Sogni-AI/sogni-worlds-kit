@@ -85,7 +85,9 @@ after 2 minutes, so start it when they are at the browser); you run
 `npx wrangler@4.129.0 pages project create <name> --production-branch main` once, then
 `npx wrangler@4.129.0 pages deploy dist/<id> --project-name <name> --branch main`, and use
 `https://<name>.pages.dev`. Then run
-`node world submit <id> --url <public HTTPS link> --creator "Their name"`. Give
+`node world submit <id> --url <public HTTPS link> --creator "Their name"` (add
+`--preview <HTTPS link to an MP4>` for an optional preview loop: docs/hosting.md ›
+Preview loop). Give
 them the printed, prefilled submission link: they sign in to Sogni, check their
 sharing permissions and send it for review. Decisions, resubmission and
 withdrawal are in My worlds. If they decline, continue with their chosen sharing

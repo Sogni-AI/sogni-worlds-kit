@@ -197,7 +197,44 @@ the complete experience before listing it in the public community gallery.
 Approval and feedback appear in [My worlds](https://worlds.sogni.ai/?view=mine),
 where you can update or withdraw the listing. The gallery credits you and links
 visitors to your hosted world; your files stay with your host. Your Sogni API key
-is never sent with the submission.
+is never sent with the submission. To have the gallery play a teaser of your
+world, add a [preview loop](#preview-loop).
+
+## Preview loop
+
+A preview loop is optional. Sogni Worlds plays it on your world's card in
+Community worlds, on its listing page and in the homepage banner. What it takes:
+
+- a short, silent MP4 that plays muted in a loop: 4 to 15 seconds;
+- H.264 with fast start;
+- 16:9, at 1280 × 720 or 1920 × 1080;
+- under 10 MB;
+- hosted next to the world, on HTTPS;
+- a clean loop: either its first and last frames match, or it cuts between
+  shots at the loop point, like a teaser montage.
+
+The opening place's living photograph makes a good one: it starts and ends on
+the same still, so it loops without a jump. Make a copy of it with the Kit's own
+film profile, cropped to 16:9 and without its sound, next to the world you host:
+
+```bash
+ffmpeg -i dist/<world>/films/<opening place>-loop.mp4 \
+  -vf "crop='min(iw,ih*16/9)':'min(ih,iw*9/16)',scale=1280:720:flags=lanczos" -an \
+  -c:v libx264 -profile:v high -preset slow -crf 23 -maxrate 4500000 -bufsize 9000000 -g 48 \
+  -pix_fmt yuv420p -movflags +faststart dist/<world>/preview.mp4
+```
+
+Watch it loop a few times before you submit it. Then pass its public link:
+
+```bash
+node world submit <world> --url https://your-world.example/ --creator "Your name" \
+  --preview https://your-world.example/preview.mp4
+```
+
+For a world built outside the Kit, `submit` uses the page's `og:video` when you
+don't pass `--preview` (its `og:video:secure_url`, `og:video:url` or `og:video`,
+the first HTTPS one; one typed `video/mp4` first when the page lists several).
+The preview link must be a public HTTPS link, like the cover.
 
 ## Updating a world
 

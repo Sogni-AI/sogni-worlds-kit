@@ -352,7 +352,9 @@ already chosen whether to submit, ask: "Would you like to submit this world to
 Sogni's public community gallery?" Submission is optional. If they agree, help
 host the export if needed (not online yet? suggest Cloudflare Pages on the free
 plan: docs/hosting.md › Cloudflare Pages), then run
-`node world submit <id> --url https://their-host.example/ --creator "Their name"`.
+`node world submit <id> --url https://their-host.example/ --creator "Their name"`
+(an optional preview loop for the gallery's card: `--preview <HTTPS link to an MP4>`;
+docs/hosting.md › Preview loop).
 Give the person the printed link; they sign in to Sogni, confirm their credit and
 sharing permissions, and submit for review. Building a world does not authorize
 public submission. Decisions, updates and withdrawal are in My worlds at
