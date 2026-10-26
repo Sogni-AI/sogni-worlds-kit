@@ -115,7 +115,7 @@ export class Ui {
     this.slowBox.hidden = !state;
     if (!state) return;
     const here = state.loaded !== null ? `: ${Math.round(state.loaded * 100)}% of the film is here` : '';
-    this.slowText.textContent = `Slow connection${here}. It plays through; nothing is skipped.`;
+    this.slowText.textContent = `Slow connection${here}.`;
     this.slowButton.hidden = state.quality !== '2k';
   }
 
