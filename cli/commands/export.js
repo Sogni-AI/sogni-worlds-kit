@@ -22,6 +22,20 @@ export const usage = `node world export [world] [--out dist/<world>]
 
 const GITHUB_FILE_LIMIT = 100 * 1024 * 1024;
 const GITHUB_SITE_LIMIT = 1024 * 1024 * 1024;
+const CLOUDFLARE_FILE_LIMIT = 25 * 1024 * 1024;
+
+/** What the free hosts will refuse in an exported folder: one line per limit it crosses. */
+export function hostWarnings(files, out) {
+  const total = files.reduce((sum, file) => sum + file.size, 0);
+  const named = list => list.map(f => `${relative(out, f.path)} (${mb(f.size)})`).join(', ');
+  const warnings = [];
+  const overGithub = files.filter(file => file.size > GITHUB_FILE_LIMIT);
+  if (overGithub.length) warnings.push(`GitHub Pages refuses files over 100 MB: ${named(overGithub)}. Use another host for those, or shorten the film.`);
+  if (total > GITHUB_SITE_LIMIT) warnings.push(`GitHub Pages sites are limited to about 1 GB; this one is ${mb(total)}. Netlify, Vercel, Cloudflare Pages or S3 take it.`);
+  const overCloudflare = files.filter(file => file.size > CLOUDFLARE_FILE_LIMIT);
+  if (overCloudflare.length) warnings.push(`Cloudflare Pages refuses files over 25 MiB: ${named(overCloudflare)}. Use another host such as Netlify, or put those films on Cloudflare R2 (docs/hosting.md › Cloudflare Pages).`);
+  return warnings;
+}
 
 export async function run(argv) {
   const { values, world } = parse(argv, { out: { type: 'string' } });
@@ -36,22 +50,18 @@ export async function run(argv) {
   const out = resolve(ROOT, values.out ?? join('dist', id));
   const { files, copied, remote } = await exportWorld({ paths, out });
   const total = files.reduce((sum, file) => sum + file.size, 0);
-  const large = files.filter(file => file.size > GITHUB_FILE_LIMIT);
   log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files, every one in the web formats)`);
   if (remote.count) log.info(`${remote.count} media file${remote.count === 1 ? ' streams' : 's stream'} from other hosts and ${remote.count === 1 ? 'is' : 'are'} not checked here.`);
   if (remote.png.length) log.warn(`${remote.png.length} of them ${remote.png.length === 1 ? 'is a PNG still' : 'are PNG stills'} (${new URL(remote.png[0]).host}); served stills ship as WebP: ask that host for WebP copies.`);
   if (readJson(worldFile).draft) log.warn(`A draft: some films in it have no approved take yet (its About panel says so). Before sharing it, have them judged on node world review ${id}, then build and export again.`);
-  if (large.length) {
-    log.warn(`GitHub Pages refuses files over 100 MB: ${large.map(f => `${relative(out, f.path)} (${mb(f.size)})`).join(', ')}. Use another host for those, or shorten the film.`);
-  }
-  if (total > GITHUB_SITE_LIMIT) log.warn(`GitHub Pages sites are limited to about 1 GB; this one is ${mb(total)}. Netlify, Vercel, Cloudflare Pages or S3 take it.`);
+  for (const warning of hostWarnings(files, out)) log.warn(warning);
   const rel = shown(out);
   log.info('Put it online (any one of these):');
-  log.info(`  Netlify           npx netlify-cli deploy --dir ${rel} --prod      (or drag the folder onto app.netlify.com/drop)`);
-  log.info(`  Vercel            npx vercel ${rel} --prod`);
-  log.info(`  Cloudflare Pages  npx wrangler pages deploy ${rel}`);
+  log.info(`  Cloudflare Pages  npx wrangler@4.129.0 login, then npx wrangler@4.129.0 pages deploy ${rel} --project-name ${id}      (free; see docs/hosting.md)`);
+  log.info(`  Netlify           npx netlify-cli@27.12.0 deploy --dir ${rel} --prod      (or drag the folder onto app.netlify.com/drop)`);
+  log.info(`  Vercel            npx vercel@63.1.2 ${rel} --prod`);
   log.info(`  GitHub Pages      push the folder's contents to a gh-pages branch (see docs/hosting.md)`);
-  log.info(`  Try it locally    npx serve ${rel}`);
+  log.info(`  Try it locally    npx serve@14.2.6 ${rel}`);
   return 0;
 }
 

@@ -85,23 +85,61 @@ bigger and no sharper.
 
 Any one of these works. Each gives you a public link to share.
 
-**Netlify** — the quickest: drag the exported folder onto
+### Cloudflare Pages
+
+The recommended free option. It runs on Cloudflare's free plan and serves
+byte-range requests, so films seek and start fast.
+
+1. Make a free Cloudflare account at
+   [dash.cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up) if you
+   don't have one.
+2. Sign in once from this computer. It opens your browser: click **Allow**. The
+   sign-in gives up after 2 minutes, so start it when you are at the browser.
+
+   ```bash
+   npx wrangler@4.129.0 login
+   ```
+
+3. Create the project once, with `main` as its live branch. Pick a name for it
+   (the world's id works):
+
+   ```bash
+   npx wrangler@4.129.0 pages project create <name> --production-branch main
+   ```
+
+4. Deploy the export to that live branch. Name the branch every time: wrangler
+   otherwise takes it from the git branch you are on, and a deploy from any
+   other branch is only a preview, not what `https://<name>.pages.dev` shows.
+
+   ```bash
+   npx wrangler@4.129.0 pages deploy dist/<world> --project-name <name> --branch main
+   ```
+
+Your world is then at `https://<name>.pages.dev`; use that link to share and
+to submit it. (The link wrangler prints with an extra prefix in front is that
+one deployment's.) You can attach your own domain later in the Cloudflare
+dashboard.
+
+Limits: every file must be 25 MiB or less, and a site holds up to 20,000
+files. `export` warns you about any file over 25 MiB. **A world with a file
+over 25 MiB will be refused by Pages.** Host it on another service below, such
+as Netlify, or put the large films on Cloudflare R2. The account owner must
+enable R2 in the Cloudflare dashboard first. It is on the free plan, but it may
+ask for a card on file.
+
+### Other hosts
+
+**Netlify**: drag the exported folder onto
 [app.netlify.com/drop](https://app.netlify.com/drop), or
 
 ```bash
-npx netlify-cli deploy --dir dist/<world> --prod
+npx netlify-cli@27.12.0 deploy --dir dist/<world> --prod
 ```
 
 **Vercel**
 
 ```bash
-npx vercel dist/<world> --prod
-```
-
-**Cloudflare Pages** (generous bandwidth, good for film-heavy worlds)
-
-```bash
-npx wrangler pages deploy dist/<world>
+npx vercel@63.1.2 dist/<world> --prod
 ```
 
 **GitHub Pages** — free, but it refuses single files over 100 MB and sites

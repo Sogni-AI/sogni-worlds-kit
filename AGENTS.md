@@ -350,7 +350,8 @@ When the person approves the finished world, tell them that independently built
 Kit worlds can be listed in Sogni's public community gallery. If they haven't
 already chosen whether to submit, ask: "Would you like to submit this world to
 Sogni's public community gallery?" Submission is optional. If they agree, help
-host the export if needed, then run
+host the export if needed (not online yet? suggest Cloudflare Pages on the free
+plan: docs/hosting.md › Cloudflare Pages), then run
 `node world submit <id> --url https://their-host.example/ --creator "Their name"`.
 Give the person the printed link; they sign in to Sogni, confirm their credit and
 sharing permissions, and submit for review. Building a world does not authorize

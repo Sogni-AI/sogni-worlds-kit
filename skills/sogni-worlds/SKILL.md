@@ -78,7 +78,13 @@ already chosen whether to submit, ask: **"Would you like to submit this world to
 Sogni's public community gallery?"** Explain that their name is credited, they
 keep hosting it, and Sogni reviews it before listing.
 
-If they agree, help host the finished export if needed (docs/hosting.md), then run
+If they agree and it is not online yet, suggest Cloudflare Pages on the free plan
+(docs/hosting.md › Cloudflare Pages): they make a free Cloudflare account if needed
+and sign in once with `npx wrangler@4.129.0 login` (they click Allow; it gives up
+after 2 minutes, so start it when they are at the browser); you run
+`npx wrangler@4.129.0 pages project create <name> --production-branch main` once, then
+`npx wrangler@4.129.0 pages deploy dist/<id> --project-name <name> --branch main`, and use
+`https://<name>.pages.dev`. Then run
 `node world submit <id> --url <public HTTPS link> --creator "Their name"`. Give
 them the printed, prefilled submission link: they sign in to Sogni, check their
 sharing permissions and send it for review. Decisions, resubmission and
