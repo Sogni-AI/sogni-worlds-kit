@@ -1,5 +1,5 @@
 // export: a folder you can put on any static host.
-import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
@@ -9,16 +9,20 @@ import { readJson } from '../lib/files.js';
 import { validateWorld, mediaRefs, isRemote } from '../lib/worldjson.js';
 import { deliveryIssues, strayPngs, SOCIAL, DELIVERY_FIX } from '../lib/delivery.js';
 import { runVite } from '../lib/player.js';
+import { asDirectory, isPublicHttps } from '../lib/links.js';
 
 export const summary = 'Export a finished world as a static site for any host';
-export const usage = `node world export [world] [--out dist/<world>]
+export const usage = `node world export [world] [--out dist/<world>] [--url https://your-world.example/]
 
   Checks that every film, still and sound build/world.json plays is in the web
   formats (WebP stills, films through Sogni's streaming profile, PNG only for
   icons) and stops if one is not. Then builds the player and copies the world,
   its media and its social card next to index.html. The folder works on GitHub
   Pages, Netlify, Vercel, Cloudflare Pages, S3 — anything that serves files.
-  Guide: docs/hosting.md`;
+
+  index.html carries the world's link-preview tags (title, description, cover).
+  --url, the public link visitors will play it at, makes the cover link
+  absolute, as social sites and chat apps need. Guide: docs/hosting.md`;
 
 const GITHUB_FILE_LIMIT = 100 * 1024 * 1024;
 const GITHUB_SITE_LIMIT = 1024 * 1024 * 1024;
@@ -37,8 +41,50 @@ export function hostWarnings(files, out) {
   return warnings;
 }
 
+const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ESCAPES[character]);
+
+/**
+ * The link-preview tags for an exported world: its title, its subtitle as the
+ * description, and `cover` (relative to the page, or absolute). With `url`, the
+ * page's public link, the cover becomes absolute and the page names its link.
+ */
+export function previewTags(world, { cover, url = null }) {
+  const title = escapeHtml(world.title), description = world.subtitle ? escapeHtml(world.subtitle) : null;
+  const image = escapeHtml(url ? new URL(cover, url).href : cover);
+  const meta = (key, name, content) => `<meta ${key}="${name}" content="${content}">`;
+  return [`<title>${title}</title>`,
+    description && meta('name', 'description', description),
+    meta('property', 'og:title', title),
+    description && meta('property', 'og:description', description),
+    meta('property', 'og:image', image),
+    url && meta('property', 'og:url', escapeHtml(url.href)),
+    meta('name', 'twitter:card', 'summary_large_image'),
+    meta('name', 'twitter:title', title),
+    description && meta('name', 'twitter:description', description),
+    meta('name', 'twitter:image', image)].filter(Boolean);
+}
+
+/** The player's index.html with the world's preview tags in place of its placeholder title. */
+export function withPreviewTags(html, world, options) {
+  const tags = previewTags(world, options).join('\n    ');
+  const title = /<title\b[^>]*>[\s\S]*?<\/title\s*>/i;
+  if (title.test(html)) return html.replace(title, () => tags);
+  if (/<\/head\s*>/i.test(html)) return html.replace(/<\/head\s*>/i, closing => `  ${tags}\n  ${closing}`);
+  throw new Error('The player\'s index.html has no <head>, so its link-preview tags cannot be written. Run: npm install, then export again.');
+}
+
+/** --url: the public HTTPS link visitors will play the world at, as the directory it is served from. */
+export function publicPage(value) {
+  let url;
+  try { url = new URL(value); } catch { url = null; }
+  if (!url || !isPublicHttps(url)) throw new Error('--url is the public HTTPS link visitors will play your world at, with no name or password in it.');
+  return asDirectory(url);
+}
+
 export async function run(argv) {
-  const { values, world } = parse(argv, { out: { type: 'string' } });
+  const { values, world } = parse(argv, { out: { type: 'string' }, url: { type: 'string' } });
+  const page = values.url === undefined ? null : publicPage(values.url);
   const id = resolveWorldId(world);
   const paths = worldPaths(id);
   const worldFile = join(paths.build, 'world.json');
@@ -48,16 +94,20 @@ export async function run(argv) {
     return 1;
   }
   const out = resolve(ROOT, values.out ?? join('dist', id));
-  const { files, copied, remote } = await exportWorld({ paths, out });
+  const { files, copied, remote } = await exportWorld({ paths, out, url: page });
   const total = files.reduce((sum, file) => sum + file.size, 0);
   log.ok(`${shown(out)}/ — ${files.length} files, ${mb(total)} (${copied} media files, every one in the web formats)`);
   if (remote.count) log.info(`${remote.count} media file${remote.count === 1 ? ' streams' : 's stream'} from other hosts and ${remote.count === 1 ? 'is' : 'are'} not checked here.`);
   if (remote.png.length) log.warn(`${remote.png.length} of them ${remote.png.length === 1 ? 'is a PNG still' : 'are PNG stills'} (${new URL(remote.png[0]).host}); served stills ship as WebP: ask that host for WebP copies.`);
   if (readJson(worldFile).draft) log.warn(`A draft: some films in it have no approved take yet (its About panel says so). Before sharing it, have them judged on node world review ${id}, then build and export again.`);
   for (const warning of hostWarnings(files, out)) log.warn(warning);
+  if (page) log.info(`Link previews show its cover from ${page.href}.`);
+  else log.info(`Link previews: export again with --url <its public link> once you know it, so social sites and chat apps can show its cover.`);
   const rel = shown(out);
   log.info('Put it online (any one of these):');
-  log.info(`  Cloudflare Pages  npx wrangler@4.129.0 login, then npx wrangler@4.129.0 pages deploy ${rel} --project-name ${id}      (free; see docs/hosting.md)`);
+  log.info(`  Cloudflare Pages  npx wrangler@4.129.0 login      (free; see docs/hosting.md)`);
+  log.info(`                    npx wrangler@4.129.0 pages project create ${id} --production-branch main      (once)`);
+  log.info(`                    npx wrangler@4.129.0 pages deploy ${rel} --project-name ${id} --branch main`);
   log.info(`  Netlify           npx netlify-cli@27.12.0 deploy --dir ${rel} --prod      (or drag the folder onto app.netlify.com/drop)`);
   log.info(`  Vercel            npx vercel@63.1.2 ${rel} --prod`);
   log.info(`  GitHub Pages      push the folder's contents to a gh-pages branch (see docs/hosting.md)`);
@@ -65,8 +115,8 @@ export async function run(argv) {
   return 0;
 }
 
-/** Build the player into `out` and copy the world beside it. */
-export async function exportWorld({ paths, out }) {
+/** Build the player into `out`, copy the world beside it and give the page the world's preview tags. */
+export async function exportWorld({ paths, out, url = null }) {
   const worldFile = join(paths.build, 'world.json');
   const data = readJson(worldFile);
   const issues = validateWorld(data);
@@ -99,7 +149,12 @@ export async function exportWorld({ paths, out }) {
     copyFileSync(source, target);
     copied++;
   }
-  if (existsSync(join(paths.build, SOCIAL.file))) copyFileSync(join(paths.build, SOCIAL.file), join(out, SOCIAL.file));
+  const social = existsSync(join(paths.build, SOCIAL.file));
+  if (social) copyFileSync(join(paths.build, SOCIAL.file), join(out, SOCIAL.file));
+  // The page's preview: its cover is the social card, or the opening still for a world built without one.
+  const index = join(out, 'index.html');
+  const cover = social ? SOCIAL.file : data.places.find(place => place.id === data.start).still;
+  writeFileSync(index, withPreviewTags(readFileSync(index, 'utf8'), data, { cover, url }));
   writeFileSync(join(out, '.nojekyll'), ''); // GitHub Pages: serve every file as it is
   const stray = strayPngs(data, out);
   if (stray.length) throw new Error([`${shown(out)} would serve ${stray.length} PNG${stray.length === 1 ? '' : 's'} that ${stray.length === 1 ? 'is' : 'are'} not icons:`, ...stray.map(issue => `  ${issue}`)].join('\n'));

@@ -22,10 +22,18 @@ serves against the web formats below and writes no `world.json` if one is off.
 ```bash
 node world export           # → dist/<world>/
 node world export --out ~/Sites/my-trip
+node world export --url https://<name>.pages.dev/   # the link it will be played at
 ```
 
 The folder is emptied and rebuilt each time, so point `--out` at a folder of
 its own (inside this repository, exports go under `dist/`, which git ignores).
+
+Its `index.html` carries the world's link-preview tags: the title, the subtitle
+and the cover (the social card) that social sites and chat apps show for a
+link. They need the cover as a full link, so pass `--url` with the public link
+visitors will play it at once you know it (on Cloudflare Pages that is
+`https://<name>.pages.dev/`, known before you deploy). Without `--url` the cover
+link is relative to the page: `node world submit` still reads it.
 
 What is inside, and how big it gets:
 

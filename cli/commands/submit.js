@@ -7,6 +7,7 @@ import { log } from '../lib/log.js';
 import { readJson } from '../lib/files.js';
 import { listWorlds, resolveWorldId, worldPaths } from '../lib/paths.js';
 import { validateWorld } from '../lib/worldjson.js';
+import { asDirectory, isPublicHttps } from '../lib/links.js';
 import { SOCIAL } from '../lib/delivery.js';
 
 export const summary = 'Prepare your hosted world for the public Sogni community gallery';
@@ -36,9 +37,6 @@ const PAGE_LIMIT = 2 * 1024 * 1024;
 const MANIFEST_LIMIT = 8 * 1024 * 1024;
 const TIMEOUT_MS = 15_000;
 
-/** A link visitors open from the gallery: HTTPS, and no name or password in it. */
-const isPublicHttps = url => url.protocol === 'https:' && !url.username && !url.password;
-
 /** Scenes and paths as the gallery lists them: every place, and every hotspot that goes somewhere. */
 export function worldCounts(world) {
   const places = Array.isArray(world?.places) ? world.places : [];
@@ -56,11 +54,9 @@ export function submissionUrl(world, hostedUrl, creator, { cover = null } = {}) 
   const issues = validateWorld(world);
   if (issues.length) throw new Error(`Build a valid world before submitting: ${issues[0]}`);
   if (world.draft) throw new Error('Build the approved version of your world before submitting; this is a draft.');
-  const hosted = new URL(hostedUrl);
-  if (!isPublicHttps(hosted)) throw new Error(PUBLIC_LINK);
-  // Static hosts may redirect a directory URL to add its slash. Resolve media
-  // as that directory does, while preserving a custom ?world= player input.
-  if (!hosted.pathname.endsWith('/') && !/\.[^/]+$/.test(hosted.pathname)) hosted.pathname += '/';
+  if (!isPublicHttps(new URL(hostedUrl))) throw new Error(PUBLIC_LINK);
+  // Resolve media as the page's directory does, preserving a custom ?world= player input.
+  const hosted = asDirectory(hostedUrl);
   const manifest = new URL(hosted.searchParams.get('world') || './world.json', hosted);
   const opening = world.places.find(place => place.id === world.start);
   const counts = worldCounts(world);
