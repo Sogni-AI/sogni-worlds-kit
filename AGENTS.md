@@ -358,6 +358,8 @@ public submission. Decisions, updates and withdrawal are in My worlds at
 worlds.sogni.ai. Before changing a listed world's content, withdraw its listing,
 then resubmit the updated version. Hosting stays with the creator.
 
+World built outside the Kit? `node world submit --url <link> --creator "Name"`; the gallery review checks it.
+
 ## When the person hands you the whole build
 
 Sometimes the person gives you an idea and asks for a finished world without

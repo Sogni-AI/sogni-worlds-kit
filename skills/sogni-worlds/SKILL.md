@@ -85,3 +85,5 @@ sharing permissions and send it for review. Decisions, resubmission and
 withdrawal are in My worlds. If they decline, continue with their chosen sharing
 plan; gallery submission is optional. An agreement to build a world alone is not
 permission to submit it publicly.
+
+World built outside the Kit? `node world submit --url <link> --creator "Name"`; the gallery review checks it.
