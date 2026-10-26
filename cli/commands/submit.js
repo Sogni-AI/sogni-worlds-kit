@@ -8,6 +8,7 @@ import { readJson } from '../lib/files.js';
 import { listWorlds, resolveWorldId, worldPaths } from '../lib/paths.js';
 import { validateWorld } from '../lib/worldjson.js';
 import { asDirectory, isPublicHttps } from '../lib/links.js';
+import { galleryIssues, galleryLength, LIMITS, linkProblem } from '../lib/gallery.js';
 import { SOCIAL } from '../lib/delivery.js';
 
 export const summary = 'Prepare your hosted world for the public Sogni community gallery';
@@ -25,7 +26,10 @@ export const usage = `node world submit [world] --url https://your-world.example
   og:description or the meta description, og:image as the cover and its
   canonical link; scene and path counts come from a world.json beside the page.
   Flags override what the page says. A count it cannot find, you type in the
-  form. Sogni's gallery review checks every world.`;
+  form. Sogni's gallery review checks every world.
+
+  Either way, the listing is checked against the gallery's own rules (lengths,
+  public HTTPS links) before the link is printed.`;
 
 const GALLERY_FORM = 'https://worlds.sogni.ai/submit-world';
 const PUBLIC_LINK = 'Use the public HTTPS link where visitors play your world.';
@@ -60,10 +64,23 @@ export function submissionUrl(world, hostedUrl, creator, { cover = null } = {}) 
   const manifest = new URL(hosted.searchParams.get('world') || './world.json', hosted);
   const opening = world.places.find(place => place.id === world.start);
   const counts = worldCounts(world);
-  const query = new URLSearchParams({ title: world.title, description: world.subtitle ?? '', url: hosted.href,
+  const fields = { title: world.title, description: world.subtitle ?? '', url: hosted.href,
     coverUrl: new URL(cover ?? opening.still, manifest).href, creatorName: creator ?? world.credit ?? '',
-    sceneCount: String(counts.sceneCount), pathCount: String(counts.pathCount) });
-  return `${GALLERY_FORM}?${query}`;
+    sceneCount: String(counts.sceneCount), pathCount: String(counts.pathCount) };
+  const [issue] = galleryIssues(fields);
+  if (issue) {
+    const rebuild = `in world.yaml, then run node world build ${world.id}`;
+    throw new Error({
+      title: `The world's title ${issue.problem}. Change its title ${rebuild}.`,
+      description: `The world's subtitle (the listing's description) ${issue.problem}. Change its subtitle ${rebuild}.`,
+      creatorName: creator === undefined
+        ? `The world's credit, the creator name when --creator is not given, ${issue.problem}. Pass your name: --creator "Your name".`
+        : `The creator name ${issue.problem}. Pass a shorter one: --creator "Your name".`,
+      url: `--url ${issue.problem}. ${PUBLIC_LINK}`,
+      coverUrl: `The cover link (${fields.coverUrl}) ${issue.problem}. It is the world's social card or opening still: host it beside the world and pass that world's public link as --url.`,
+    }[issue.field]);
+  }
+  return `${GALLERY_FORM}?${new URLSearchParams(fields)}`;
 }
 
 /**
@@ -170,9 +187,9 @@ function wholeNumber(value, flag, min) {
  * Returns { url, fields, from } so the caller can say what came from where.
  */
 export async function externalSubmission(hostedUrl, options = {}, { fetch = globalThis.fetch, timeoutMs = TIMEOUT_MS, pageLimit = PAGE_LIMIT, manifestLimit = MANIFEST_LIMIT } = {}) {
-  let hosted;
-  try { hosted = new URL(hostedUrl); } catch { throw new Error(PUBLIC_LINK); }
-  if (!isPublicHttps(hosted)) throw new Error(PUBLIC_LINK);
+  const urlProblem = linkProblem(hostedUrl);
+  if (urlProblem) throw new Error(`--url ${urlProblem}. ${PUBLIC_LINK}`);
+  const hosted = new URL(hostedUrl);
   const scenes = wholeNumber(options.scenes, 'scenes', 1), paths = wholeNumber(options.paths, 'paths', 0);
 
   let page;
@@ -193,16 +210,14 @@ export async function externalSubmission(hostedUrl, options = {}, { fetch = glob
   const coverGiven = options.cover !== undefined;
   const cover = pick('cover', options.cover, read.cover, 'og:image');
   if (!cover) throw new Error(`${hosted.href} has no og:image. Pass a cover still: --cover https://your-world.example/cover.jpg`);
-  let coverUrl;
-  try { coverUrl = new URL(cover); } catch { coverUrl = null; }
-  if (!coverUrl || !isPublicHttps(coverUrl)) {
-    throw new Error(coverGiven ? 'Use a public HTTPS link for --cover.' : `The page's og:image (${cover}) is not a public HTTPS link. Pass a cover still: --cover https://…`);
+  const coverProblem = linkProblem(cover);
+  if (coverProblem) {
+    throw new Error(coverGiven ? `--cover ${coverProblem}. Use a public HTTPS link to a still from your world.`
+      : `The page's og:image (${cover}) ${coverProblem}. Pass a cover still: --cover https://…`);
   }
-  let canonical = null;
-  if (read.canonical) {
-    try { canonical = new URL(read.canonical); } catch { canonical = null; }
-    if (canonical && !isPublicHttps(canonical)) canonical = null;
-  }
+  const coverUrl = new URL(cover);
+  // The page's canonical link is a default: one the gallery would not take is passed over for --url.
+  const canonical = read.canonical && !linkProblem(read.canonical) && galleryLength(new URL(read.canonical).href) <= LIMITS.url ? new URL(read.canonical) : null;
   const url = canonical?.href ?? hosted.href;
   from.url = canonical ? 'canonical link' : 'given';
 
@@ -224,6 +239,14 @@ export async function externalSubmission(hostedUrl, options = {}, { fetch = glob
     ...(options.creator?.trim() ? { creatorName: options.creator.trim() } : {}),
     ...(sceneCount !== undefined ? { sceneCount: String(sceneCount) } : {}),
     ...(pathCount !== undefined ? { pathCount: String(pathCount) } : {}) };
+  const [issue] = galleryIssues(fields);
+  if (issue) {
+    const source = from[issue.field === 'coverUrl' ? 'cover' : issue.field];
+    const what = source && source !== 'given' ? `The page's ${source}` : { title: 'The title', description: 'The description',
+      creatorName: 'The creator name', url: 'The link', coverUrl: 'The cover link' }[issue.field];
+    throw new Error(`${what} ${issue.problem}. ${{ title: 'Pass a shorter title: --title "…"', description: 'Pass a shorter description: --description "…"',
+      creatorName: 'Pass a shorter name: --creator "…"', url: 'Pass a shorter link: --url https://…', coverUrl: 'Pass a shorter cover link: --cover https://…' }[issue.field]}`);
+  }
   return { url: `${GALLERY_FORM}?${new URLSearchParams(fields)}`, fields, from };
 }
 

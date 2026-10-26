@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { externalSubmission, submissionMode, submissionUrl, worldCounts } from '../cli/commands/submit.js';
 import { validateWorld } from '../cli/lib/worldjson.js';
+import { galleryLength, linkProblem } from '../cli/lib/gallery.js';
 
 const world = JSON.parse(readFileSync(new URL('../examples/the-dream-thread/world.json', import.meta.url), 'utf8'));
 
@@ -31,10 +32,10 @@ test('the cover is the world\'s JPEG social card when the build made one', () =>
 test('custom player manifest URLs and existing absolute media URLs resolve correctly', () => {
   const data = structuredClone(world);
   data.places[0].still = 'stills/opening.jpg'; data.start = data.places[0].id;
-  const url = new URL(submissionUrl(data, 'https://creator.example/player/index.html?world=../../story/world.json'));
+  const url = new URL(submissionUrl(data, 'https://creator.example/player/index.html?world=../../story/world.json', 'A creator'));
   assert.equal(url.searchParams.get('coverUrl'), 'https://creator.example/story/stills/opening.jpg');
   const absolute = world.places.find(place => place.id === world.start).still;
-  assert.equal(new URL(submissionUrl(world, 'https://creator.example/')).searchParams.get('coverUrl'), absolute);
+  assert.equal(new URL(submissionUrl(world, 'https://creator.example/', 'A creator')).searchParams.get('coverUrl'), absolute);
 });
 
 test('only approved builds and public HTTPS player links are prepared', () => {
@@ -174,4 +175,68 @@ test('a world in worlds/ is checked from its build; anything else is read from i
   // Kit worlds still pass the schema and the draft check before a link is made.
   assert.throws(() => submissionUrl({ ...world, draft: true }, PAGE), /draft/);
   assert.throws(() => submissionUrl({ ...world, places: [] }, PAGE), /valid world/);
+});
+
+// The gallery's own rules (worlds.sogni.ai SubmitKitWorldDto, externalWorldUrl, submitKit), checked before a link is printed.
+test('lengths are measured as the gallery measures them: an emoji or a character with its variation selector counts once', () => {
+  assert.equal(galleryLength('North Pole'), 10);
+  assert.equal(galleryLength('🎄🦌'), 2, 'surrogate pairs count once');
+  assert.equal(galleryLength('❤️ snow'), 6, 'a heart with its emoji selector counts once');
+  assert.equal(galleryLength('️'), 1, 'a selector with nothing before it still counts');
+});
+
+test('the gallery takes public HTTPS names only: no IP address, localhost, .local, .internal, .test or .invalid', () => {
+  assert.equal(linkProblem('https://natalieart.github.io/sogni-north-pole/'), null);
+  for (const [url, problem] of [
+    ['http://creator.example/', /not an HTTPS link/], ['https://me:pw@creator.example/', /name or password/], ['not a link', /not a link/],
+    ['https://192.168.1.20/world/', /IP address/], ['https://[::1]/', /IP address/], ['https://intranet/', /no public name/],
+    ['https://localhost/', /not a public name/], ['https://LOCALHOST:8443/', /not a public name/], ['https://me.localhost/', /not a public name/],
+    ['https://box.local/', /not a public name/], ['https://api.internal/', /not a public name/], ['https://site.test/', /not a public name/], ['https://x.invalid/', /not a public name/],
+  ]) assert.match(linkProblem(url) ?? 'accepted', problem, url);
+  assert.equal(linkProblem('https://testing.example/'), null, 'only a whole label is reserved');
+});
+
+test('outside the Kit, a value the gallery would refuse fails before a link is printed, naming the field, its limit and the flag', async () => {
+  const fetch = (pages = { [PAGE]: OG }) => ({ fetch: site(pages) });
+  const at = (n, char = 'a') => char.repeat(n);
+  assert.ok(await externalSubmission(PAGE, { title: at(120), description: at(1000), creator: at(80) }, fetch()));
+  assert.ok(await externalSubmission(PAGE, { title: '🎄'.repeat(120) }, fetch()), '120 emoji are 240 code units, and the gallery takes them');
+  await assert.rejects(externalSubmission(PAGE, { title: at(121) }, fetch()), /^Error: The title is 121 characters; the gallery takes at most 120\. Pass a shorter title: --title/);
+  await assert.rejects(externalSubmission(PAGE, { description: at(1001) }, fetch()), /The description is 1,001 characters; the gallery takes at most 1,000\. Pass a shorter description: --description/);
+  await assert.rejects(externalSubmission(PAGE, { creator: at(81) }, fetch()), /The creator name is 81 characters; the gallery takes at most 80\. Pass a shorter name: --creator/);
+  // A long og:description is the page's, and --description replaces it.
+  const longDescription = page(`<meta property="og:title" content="T"><meta property="og:image" content="og.jpg"><meta property="og:description" content="${at(1204)}">`);
+  await assert.rejects(externalSubmission(PAGE, {}, fetch({ [PAGE]: longDescription })), /The page's og:description is 1,204 characters; the gallery takes at most 1,000\. Pass a shorter description: --description/);
+  assert.ok(await externalSubmission(PAGE, { description: 'Short' }, fetch({ [PAGE]: longDescription })));
+  const longTitle = page(`<title>${at(130)}</title><meta property="og:image" content="og.jpg">`);
+  await assert.rejects(externalSubmission(PAGE, {}, fetch({ [PAGE]: longTitle })), /The page's <title> is 130 characters; .*--title/);
+  // Links: the page's own link is checked before anything is fetched; a cover on a private name names --cover or og:image.
+  for (const url of ['https://192.168.1.20/world/', 'https://localhost/world/', 'https://world.local/', 'https://intranet/']) {
+    const calls = [];
+    await assert.rejects(externalSubmission(url, {}, { fetch: site({}, calls) }), /^Error: --url .*HTTPS link where visitors play/, url);
+    assert.deepEqual(calls, [], `${url} is never fetched`);
+  }
+  const noCanonical = page('<title>T</title><meta property="og:image" content="https://creator.example/og.jpg">');
+  await assert.rejects(externalSubmission(`${PAGE}${at(2048)}`, {}, fetch({ [`${PAGE}${at(2048)}`]: noCanonical })), /The link is 2,\d{3} characters; the gallery takes at most 2,048\. Pass a shorter link: --url/);
+  await assert.rejects(externalSubmission(PAGE, { cover: 'https://media.internal/cover.jpg' }, fetch()), /--cover is on media\.internal/);
+  await assert.rejects(externalSubmission(PAGE, { cover: `https://cdn.example/${at(2048)}.jpg` }, fetch()), /The cover link is 2,\d{3} characters; .*--cover/);
+  await assert.rejects(externalSubmission(PAGE, {}, fetch({ [PAGE]: page('<title>T</title><meta property="og:image" content="https://10.0.0.5/og.jpg">') })), /The page's og:image \(https:\/\/10\.0\.0\.5\/og\.jpg\) is an IP address.*--cover/);
+  // A canonical link the gallery would not take is passed over for --url.
+  const localCanonical = page('<title>T</title><meta property="og:image" content="og.jpg"><link rel="canonical" href="https://world.local/">');
+  assert.equal(new URL((await externalSubmission(PAGE, {}, fetch({ [PAGE]: localCanonical }))).url).searchParams.get('url'), PAGE);
+  // Counts: whole numbers, at least one scene and no fewer than no paths.
+  await assert.rejects(externalSubmission(PAGE, { paths: '-1' }, fetch()), /--paths is a whole number, 0 or more/);
+  await assert.rejects(externalSubmission(PAGE, { scenes: '2.5' }, fetch()), /--scenes is a whole number, 1 or more/);
+});
+
+test('a Kit world the gallery would refuse fails before a link is printed, saying what to change', () => {
+  const at = n => 'a'.repeat(n);
+  assert.ok(submissionUrl({ ...world, title: at(120), subtitle: at(1000) }, PAGE, at(80)));
+  assert.throws(() => submissionUrl({ ...world, title: at(121) }, PAGE, 'N'), /The world's title is 121 characters; the gallery takes at most 120\. Change its title in world\.yaml, then run node world build the-dream-thread/);
+  assert.throws(() => submissionUrl({ ...world, subtitle: at(1001) }, PAGE, 'N'), /The world's subtitle \(the listing's description\) is 1,001 characters; .* Change its subtitle in world\.yaml/);
+  // A Kit world's credit is its About panel's line: often far longer than a name.
+  assert.throws(() => submissionUrl(world, PAGE), /The world's credit, the creator name when --creator is not given, is 521 characters; the gallery takes at most 80\. Pass your name: --creator/);
+  assert.throws(() => submissionUrl(world, PAGE, at(81)), /The creator name is 81 characters; .*--creator/);
+  assert.throws(() => submissionUrl(world, PAGE, '   '), /The creator name is blank/);
+  for (const url of ['https://localhost/world/', 'https://203.0.113.9/', 'https://world.test/']) assert.throws(() => submissionUrl(world, url, 'N'), /^Error: --url .*HTTPS link where visitors play/, url);
 });
