@@ -99,6 +99,10 @@ node world play             # play it locally
 node world export           # a static folder you can host anywhere
 ```
 
+Everything it serves is in the web formats Sogni's own worlds use (WebP stills,
+films through a capped H.264 streaming profile with a phone copy, a JPEG social
+card), and `build` and `export` stop on anything else ([docs/hosting.md](docs/hosting.md#what-a-world-serves)).
+
 Once hosted, share it with the Sogni community:
 `node world submit <world> --url https://your-world.example/ --creator "Your name"`.
 Open the printed link, sign in and send it for review. Approved worlds appear in
@@ -131,7 +135,7 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/plan.png" alt="A terminal showing node world plan for The Long White Cloud: the story, then each place with what you click, where it goes, the film's length and a one-line idea."><br><b>Your agent writes the plan</b></td>
+    <td width="50%"><img src="docs/media/plan.webp" alt="A terminal showing node world plan for The Long White Cloud: the story, then each place with what you click, where it goes, the film's length and a one-line idea."><br><b>Your agent writes the plan</b></td>
     <td width="50%"><img src="docs/media/outline.jpg" alt="A cliff in Milford Sound with green click points on a waterfall, red points beside it and on a boat, and the waterfall traced in a magenta outline by Segment Anything 3."><br><b>One click becomes an outline</b></td>
   </tr>
   <tr>

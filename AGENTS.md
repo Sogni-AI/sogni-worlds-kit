@@ -338,6 +338,14 @@ node world export      # a static folder you can host anywhere
 
 Tell the person how to host it (docs/hosting.md).
 
+**Ship only what `build` made.** It serves the web formats Sogni's own worlds use:
+stills as WebP, films through the streaming profile (H.264, CRF 23 with the bitrate
+capped by size, a keyframe every 2 s, fast start, a half-size phone copy), a JPEG
+social card, PNG only for icons. `build` and `export` check every file and stop on
+one outside them, naming it and saying how to fix it: fix it, never work around
+the check. Never copy a raw take, a PNG or an uncapped encode into a world you
+host; a file you add by hand is converted first (docs/hosting.md › What a world serves).
+
 When the person approves the finished world, tell them that independently built
 Kit worlds can be listed in Sogni's public community gallery. If they haven't
 already chosen whether to submit, ask: "Would you like to submit this world to

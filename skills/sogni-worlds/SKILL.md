@@ -34,6 +34,10 @@ Rules that matter even before you open AGENTS.md:
 - A retake rewrites the direction that caused the defect.
 - Every click pays off: halfway through its film the visitor sees something the
   still did not show. A light that comes on and goes off again is not a moment.
+- Host only what `node world build` and `export` produce: WebP stills, films
+  through Sogni's streaming profile (capped H.264, 2 s keyframes, fast start), a
+  JPEG social card, PNG only for icons. Both stop on any other file; convert it,
+  never bypass the check (docs/hosting.md › What a world serves).
 - Asked for a finished world with no reviewing along the way? Follow AGENTS.md ›
   "When the person hands you the whole build": you are the first reviewer.
 - A world like a game or a trailer: voices tell it (a call can switch speakers

@@ -16,6 +16,11 @@ Every media field is either a path relative to the `world.json` file
 relative paths against the URL it loaded `world.json` from, so a built world folder
 can be copied to any static host as it is.
 
+Media is served in the web formats: stills WebP, films H.264 MP4 through Sogni's
+streaming profile, icons WebP (or PNG of 512 px or less), sound MP3 or AAC.
+`build` and `export` check every local file and stop on one that is not
+([hosting.md › What a world serves](hosting.md#what-a-world-serves)).
+
 ## The world
 
 | Field | Required | Meaning |
@@ -29,7 +34,7 @@ can be copied to any static host as it is.
 | `start` | yes | The id of the first place. |
 | `order` | | Place ids in story order. When present the world is a story told in order: each place offers its next stop first, and the Places panel lists places in this order. `null` or absent for a free-roaming world. |
 | `music` | | One track under the whole world, or `null`. See below. A place can carry its own `music` in its place. |
-| `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles. |
+| `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles (WebP, or a PNG of 512 px or less). |
 | `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "A Sogni World", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
 | `map` | | `false` hides the Places panel, for a world with secrets or fatal choices. Default `true`. |
 | `draft` | | `true` when the build used takes nobody has approved yet (`node world build --drafts`). The player marks it "Draft" in the top bar while you play it locally (`node world play`); an exported copy says so in its About panel instead, so visitors are not greeted by it. |
@@ -39,7 +44,7 @@ can be copied to any static host as it is.
 
 | Field | Meaning |
 | --- | --- |
-| `src` | An MP3 (or any format browsers play). It loops. |
+| `src` | An MP3 or AAC file. It loops. |
 | `volume` | How loud it sits under the scene; `1` is the default. The visitor's music slider scales it from silence to twice that. |
 | `underFilms` | Multiplier while a film or narration plays; default `0.5`. |
 | `credit` | Shown in the About panel. Use only music you have the rights to. |
@@ -52,15 +57,15 @@ can be copied to any static host as it is.
 | `title` | yes | The place's name. |
 | `chapter` | | Where or when it is, shown before the title ("Day 1 · Wellington"). |
 | `caption` | | One line shown for a few seconds on arrival. |
-| `still` | yes | The canonical still. Every film that starts or ends here starts or ends on exactly this picture. |
+| `still` | yes | The canonical still, as WebP. Every film that starts or ends here starts or ends on exactly this picture. |
 | `loop` | | The living photograph: a film whose first and last frames are the still. It plays over the still with its sound, lap after lap. |
 | `narration` | | `{ src?, lines: [{ text, speaker?, start?, end? }] }`. With `src`, each line shows while the audio is between its `start` and `end` (seconds). Without audio, or with sound off, the lines show at reading pace. |
 | `ending` | | `{ kind: "death" \| "end", title, text? }`: arriving here ends the story. The player shows a card ("You died" or "The end", the title and text) with **Rewind** (the crossing that led here, played backwards) and **Start over**. |
 | `music` | | The track under this place, with the same fields as the world's `music`. It replaces the world's track while you are here (the player fades one out and the next in on arrival); `null` means silence here. Absent, the world's track carries on. |
 | `hotspots` | yes | The things to click (may be empty). |
 
-The player shows a place with its loop's video frames rather than the JPEG
-whenever a loop exists: a JPEG and a video decode to slightly different colours,
+The player shows a place with its loop's video frames rather than the still
+whenever a loop exists: a picture and a video decode to slightly different colours,
 and the films start and end on video frames.
 
 ## A hotspot
@@ -76,7 +81,7 @@ and the films start and end on video frames.
 | `next` | | In a story told in order, this is the way to the next stop (the Next stop button takes it). |
 | `shortcut` | | A crossing that jumps out of the story's order, labelled as a shortcut. |
 | `collect` | | A collectible (never with `to`): its moment plays, then it joins the visitor's collection, counted in the top bar ("Figures 2/5") and kept in their browser. With a `figure` and no `film`, it is picked up straight from the picture. |
-| `figure` | | A 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (PNG). After the film the visitor turns the figure over (`@google/model-viewer`, loaded only then). A collectible's figure also joins the collection panel, which shows found figures and silhouettes of hidden ones; a figure without `collect` is only turned over. |
+| `figure` | | A 3D figure: `{ model, icon?, name? }`. `model` is a GLB, `icon` the object cut out on transparency (WebP, or a PNG of 512 px or less). After the film the visitor turns the figure over (`@google/model-viewer`, loaded only then). A collectible's figure also joins the collection panel, which shows found figures and silhouettes of hidden ones; a figure without `collect` is only turned over. |
 | `details` | | A card about the object, `{ title?, text, facts? }` (`facts` is a list of `[label, value]` pairs), shown beside its film until the visitor closes it or moves on. |
 | `film` | yes* | The film. See below. *A collectible with a `figure` may leave it out. |
 | `reveal` | | A close look, never with `to`: `{ still, back, narration?, done? }`. The `film` lands on `still` (its last frame) and the player holds there: the place does not move, `narration` (`{ src?, lines }`, as a place's) is spoken with subtitles, a `figure` is turned over over the held picture, and one button (`done`, default "Continue", or "Put it down" with a figure) plays `back`, a film from `still` to the place's still. |
@@ -86,8 +91,8 @@ and the films start and end on video frames.
 
 | Field | Required | Meaning |
 | --- | --- | --- |
-| `src` | yes | The full-size film (the 2K-class two-stage delivery). |
-| `src720` | | An exact half-size copy for phones and slow connections (the player's 720p setting). |
+| `src` | yes | The full-size film (the 2K-class two-stage delivery), H.264 MP4: CRF 23 capped at 12 Mbps for 2K (8 Mbps up to 1080 px, 4.5 Mbps up to 768 px, buffer twice the cap), a keyframe every 2 s, fast start. |
+| `src720` | | An exact half-size copy for phones and slow connections (the player's 720p setting), under its own size's cap. |
 | `seconds` | | Its length. Informational. |
 
 A crossing's first frame is its place's still and its last frame is the landing
@@ -110,7 +115,7 @@ replaces it only once its first frame is on screen.
     {
       "id": "harbour",
       "title": "The Harbour",
-      "still": "stills/harbour.jpg",
+      "still": "stills/harbour.webp",
       "loop": { "src": "films/harbour-loop.mp4", "src720": "films/harbour-loop-720.mp4" },
       "hotspots": [
         {
@@ -128,7 +133,7 @@ replaces it only once its first frame is on screen.
     {
       "id": "beach",
       "title": "The Beach",
-      "still": "stills/beach.jpg",
+      "still": "stills/beach.webp",
       "hotspots": []
     }
   ]

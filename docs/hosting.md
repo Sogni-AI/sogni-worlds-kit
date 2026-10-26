@@ -14,7 +14,8 @@ node world play             # plays it on http://localhost:5173/ — go through 
 
 `build` lists anything not in the world yet (films with no approved take,
 narration not spoken yet) and any place you cannot leave or cannot reach. A
-visitor only ever sees what you approved.
+visitor only ever sees what you approved. It also checks every file the world
+serves against the web formats below and writes no `world.json` if one is off.
 
 ## 2. Export
 
@@ -32,15 +33,52 @@ What is inside, and how big it gets:
 | --- | --- |
 | `index.html`, `player-assets/` | The player |
 | `world.json` | The world: places, things to click, films, narration, music |
-| `stills/` | One photograph per place |
+| `stills/<place>.webp` | One picture per place (and `stills/reveals/` for close looks), WebP |
 | `films/<film>.mp4` | Each film at full size (2K class: 2304 × 1536 for 3:2 photos) |
 | `films/<film>-720.mp4` | The same film at exactly half size, for phones and slow connections |
 | `films/<film>-rewind*.mp4` | Crossings played backwards, for Back |
 | `audio/` | Narration and music |
+| `figures/` | 3D figures (GLB) and their icons (WebP) |
+| `social.jpg` | The card a link to the world shows: its opening picture, 1200 × 630 |
 
-A 2K film is roughly 0.5–1.5 MB per second. The Long White Cloud (22 places,
-40 crossings) comes to about 2.4 GB with its half-size copies and rewinds; a
-five-place starter world is a few hundred MB. The export prints the total.
+The bitrate cap bounds a 2K film at 1.5 MB per second (12 Mbps) and its
+half-size copy at about 0.56 MB per second (4.5 Mbps); calm films come in well
+under. The export prints the total.
+
+## What a world serves
+
+Everything in the export is in the formats the web plays best, the same ones
+Sogni's own worlds use. `build` makes them and `export` refuses to copy anything
+else, naming each file and what is wrong with it.
+
+| What | Format |
+| --- | --- |
+| Stills and close looks | WebP, quality 84 with sharp YUV, at their own pixel size (never enlarged), no camera metadata |
+| Films | H.264 MP4, yuv420p, CRF 23 with the bitrate capped by the short edge (up to 768 px: 4.5 Mbps; up to 1080 px: 8 Mbps; above, 2K: 12 Mbps; buffer twice the cap), a keyframe every 2 s, the index at the front (fast start) |
+| The phone copy | Every film again at exactly half size (`src720`), under its own cap |
+| Social card | JPEG, 1200 × 630 (crawlers do not all read WebP) |
+| Icons | WebP, or PNG of 512 px or less. PNG is for icons only |
+| Sound | MP3 or AAC (a place's own WAV or AIFF track is encoded as MP3) |
+
+A film is checked by its average bitrate and by whether any stretch of it
+carries more than its cap allows (the cap for that long plus the buffer), so a
+visitor on a link at the cap never waits once it is playing. The PNGs the
+pipeline keeps (painted places, outlines, masks, a figure's plates) stay in
+your world's folder; they are never served. Look at what you ship at full size,
+on faces, writing, edges and skies, not only at the file size.
+
+Editing `world.json` by hand or adding a file yourself? Convert it first:
+
+```bash
+# a still: WebP at its own size, metadata stripped
+node -e "require('sharp')('in.png').webp({quality:84,smartSubsample:true,effort:6}).toFile('out.webp')"
+# a 2K film (use 4500000/9000000 for 768 px or less, 8000000/16000000 up to 1080 px; -g is 2 s of frames)
+ffmpeg -i in.mp4 -c:v libx264 -preset slow -crf 23 -maxrate 12000000 -bufsize 24000000 -g 48 \
+  -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 160k out.mp4
+```
+
+Never make a 2K copy of a film that was not delivered at 2K: an enlarged film is
+bigger and no sharper.
 
 ## 3. Put it online
 
@@ -101,7 +139,8 @@ node world submit <world> --url https://your-world.example/ --creator "Your name
 ```
 
 Open the printed link (or add `--open`). It fills in the title, description,
-opening picture, creator credit and scene/path counts from your built world.
+cover (the world's `social.jpg`), creator credit and scene/path counts from your
+built world.
 Sign in with your Sogni account, check the details and sharing permissions, then
 submit. You can also fill in the form at
 [worlds.sogni.ai/submit-world](https://worlds.sogni.ai/submit-world) directly.
@@ -123,6 +162,11 @@ review. A listing under review is not shown in the gallery.
 Approve new takes, `node world build`, `node world export`, and upload the
 folder again. Unchanged films are not re-encoded. Film file names stay the same
 when a film is replaced, so give your host's cache a moment, or purge it.
+
+A world first built with an earlier version of the kit is encoded again on its
+next build, and its stills change from `.jpg` to `.webp`. If its gallery listing
+points its cover at an old `stills/….jpg`, change the cover link to the new
+`social.jpg` when you submit the update (`node world submit` prints it).
 
 ## Privacy
 

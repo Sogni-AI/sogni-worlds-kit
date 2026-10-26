@@ -25,7 +25,7 @@ agent) what comes next.
 | 7 | `screen` · `note` · `reject` | ffmpeg | `take-<n>.screen.json`, `take-<n>.sheet.jpg`, notes |
 | 8 | `review` | a local page | `review/verdicts.json` (your decisions), `notes.json` and `still-notes.json` (your area notes), `marks/` (the frames you drew on) |
 | 9 | `narrate` · `music` | Qwen3-TTS · MiniMax Music 3 | `audio/narration/<place>.*`, `audio/music/*` |
-| 10 | `build` · `play` · `export` | ffmpeg · Vite | `build/world.json` + finished media · a static site |
+| 10 | `build` · `play` · `export` | ffmpeg · sharp · Vite | `build/world.json` + finished media in the web formats (WebP stills, films through the streaming profile, a JPEG social card) · a static site |
 
 ## A world's folder
 
@@ -41,7 +41,7 @@ worlds/my-trip/
   renders/<film>/       every take of every film, each with its receipt
   audio/                narration and music takes
   review/               verdicts.json, notes.json, still-notes.json and marks/
-  build/                the finished world: world.json + stills/ + films/ + audio/
+  build/                the finished world: world.json + stills/ (WebP) + films/ + audio/ + social.jpg
 ```
 
 The plan, verdicts and receipts are small, and git keeps them. Photos, stills,
@@ -72,7 +72,8 @@ of your photos (3:2 is 1152×768, 16:9 is 1344×768, and so on, up to H3's limit
 5. saved once as JPEG quality 95 with full colour resolution
 
 That file is the place from then on. Masks are traced on it, and every film that
-starts or ends there is pinned to it.
+starts or ends there is pinned to it. It is never served as it is: `build` serves
+a WebP copy of the same pixels.
 
 ### 3. The plan
 
@@ -153,14 +154,20 @@ normalises a file you own.
 
 - levels its sound to the world's one scene level (−22 LUFS, six under the narrator)
 - sizes a Seedance film onto the canvas, and puts a crossing's push-in in front of it
-- encodes a 2K file and an exact half-size copy for phones
+- encodes a 2K file and an exact half-size copy for phones through Sogni's
+  streaming profile: H.264, CRF 23 with the bitrate capped by size (12 Mbps at
+  2K, 4.5 Mbps for the half-size copy of a 3:2 world), a keyframe every 2 s, fast start
 - renders a reversed copy of every crossing, so Back plays the journey in reverse
-- copies the stills, narration and music
+- writes the stills as WebP, figure icons as WebP, and a 1200 × 630 JPEG social
+  card from the opening still; copies narration and music (a place's own WAV
+  track becomes MP3)
+- checks every file the world serves against those formats, and stops if one is off
 - writes `build/world.json` ([format](world-json.md))
 
 Objects whose film isn't approved yet are left out, and `build` lists them.
-`play` opens the world locally. `export` makes a static folder you can put on any
-web host ([hosting.md](hosting.md)).
+`play` opens the world locally. `export` checks the formats again, then makes a
+static folder you can put on any web host ([hosting.md](hosting.md), which lists
+the formats under "What a world serves").
 
 ## Why it's built this way
 

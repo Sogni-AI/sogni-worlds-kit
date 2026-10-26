@@ -66,8 +66,8 @@
       "required": ["src"],
       "additionalProperties": false,
       "properties": {
-        "src": { "type": "string", "description": "The full-size film (2K class)." },
-        "src720": { "type": "string", "description": "An exact half-size copy for phones and slow connections." },
+        "src": { "type": "string", "description": "The full-size film (2K class): H.264 MP4, CRF 23 capped by size (12 Mbps at 2K), a keyframe every 2 s, fast start." },
+        "src720": { "type": "string", "description": "An exact half-size copy for phones and slow connections, under its own size's cap." },
         "seconds": { "type": "number" }
       }
     },
@@ -80,7 +80,7 @@
         "title": { "type": "string" },
         "chapter": { "type": "string" },
         "caption": { "type": "string", "description": "One line shown on arrival." },
-        "still": { "type": "string", "description": "The canonical still. Every film that starts or ends here starts or ends on exactly this picture." },
+        "still": { "type": "string", "description": "The canonical still, as WebP. Every film that starts or ends here starts or ends on exactly this picture." },
         "loop": { "oneOf": [{ "$ref": "#/$defs/film" }, { "type": "null" }], "description": "The living photograph: plays over the still, starting and ending on it." },
         "music": { "oneOf": [{ "$ref": "#/$defs/music" }, { "type": "null" }], "description": "The track under this place, in place of the world's while you are here; null for silence here. Absent, the world's track carries on." },
         "narration": {
@@ -152,7 +152,7 @@
           "additionalProperties": false,
           "properties": {
             "model": { "type": "string", "description": "The GLB, relative to world.json." },
-            "icon": { "type": "string", "description": "The object cut out on transparency (PNG): its picture in the collection." },
+            "icon": { "type": "string", "description": "The object cut out on transparency (WebP, or a PNG of 512 px or less): its picture in the collection." },
             "name": { "type": "string", "description": "What it is called in the collection." }
           }
         },
@@ -174,7 +174,7 @@
           "required": ["still", "back"],
           "additionalProperties": false,
           "properties": {
-            "still": { "type": "string", "description": "The close look: the film's last frame and the film back's first." },
+            "still": { "type": "string", "description": "The close look, as WebP: the film's last frame and the film back's first." },
             "narration": { "$ref": "#/$defs/place/properties/narration" },
             "done": { "type": "string", "description": "The button that ends the close look (default \"Continue\", or \"Put it down\" with a figure)." },
             "back": { "$ref": "#/$defs/film" }
