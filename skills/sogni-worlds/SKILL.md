@@ -2,7 +2,7 @@
 name: sogni-worlds
 description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a Sogni World to the public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   homepage: https://github.com/Sogni-AI/sogni-worlds-kit
   openclaw:
     emoji: "🌍"
