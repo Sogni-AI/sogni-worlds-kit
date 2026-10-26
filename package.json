@@ -17,7 +17,9 @@
     "typecheck": "tsc -p player/tsconfig.json --noEmit",
     "test": "node --test \"test/*.test.js\"",
     "check": "npm run typecheck && npm test && node world lint-examples",
-    "check:player": "node test/player-playback.mjs"
+    "check:player": "node test/player-playback.mjs",
+    "publish:clawhub": "node scripts/publish-clawhub.mjs",
+    "check:clawhub": "node scripts/publish-clawhub.mjs --check"
   },
   "dependencies": {
     "@sogni-ai/sogni-client": "^5.63.3",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@google/model-viewer": "^4.3.1",
+    "clawhub": "0.23.3",
     "three": "^0.183.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.1"

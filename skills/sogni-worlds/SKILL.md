@@ -1,6 +1,18 @@
 ---
 name: sogni-worlds
 description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a Sogni World to the public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
+metadata:
+  version: "0.1.0"
+  homepage: https://github.com/Sogni-AI/sogni-worlds-kit
+  openclaw:
+    emoji: "🌍"
+    primaryEnv: "SOGNI_API_KEY"
+    os: ["darwin", "linux", "win32"]
+    # Only hard requirements: the kit itself is cloned by the first step below,
+    # and `node world doctor` says how to install anything else it needs.
+    requires:
+      bins: ["node", "git"]
+      anyBins: ["ffmpeg"]
 ---
 
 # Sogni Worlds
@@ -9,14 +21,20 @@ Everything happens inside the Sogni Worlds Kit, a repository with a command-line
 pipeline, a player and the full instructions.
 
 1. **Find or fetch the kit.** If the current folder (or a parent) has `world.js` and
-   `AGENTS.md` mentioning "Sogni World", you are in it. Otherwise:
+   `AGENTS.md` mentioning "Sogni World", you are in it: run
+   `node world update --check` once per session. Otherwise fetch it where the
+   person wants their worlds to live:
 
    ```bash
    git clone https://github.com/Sogni-AI/sogni-worlds-kit
    cd sogni-worlds-kit && npm install
+   node world doctor
    ```
 
-   If the kit is already there, run `node world update --check` once per session.
+   It needs Node 22.12+, git and ffmpeg; `doctor` says how to install what is
+   missing. With no Sogni API key yet, the person runs `node world setup` in their
+   own terminal: it asks for the key and saves it, so the key never passes
+   through you.
 
 2. **Read `AGENTS.md` in the kit and follow it.** It is the complete workflow:
    setup, interview, plan, select, render (canary first), screen, the person's
@@ -52,8 +70,7 @@ output. Finish the current step, tell the person, and offer to run `node world u
 (summarise `node world update --whats-new`). If they decline, run
 `node world update --snooze`.
 
-Needs Node 22.12+, ffmpeg and a Sogni API key (`node world setup`). An Unlimited plan
-is strongly recommended for a whole world.
+An Unlimited plan is strongly recommended for a whole world.
 
 When the person approves the finished world, tell them that independently built
 Kit worlds can appear in Sogni's public community gallery. If they haven't
