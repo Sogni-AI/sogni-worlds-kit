@@ -203,7 +203,8 @@ world, add a [preview loop](#preview-loop).
 ## Preview loop
 
 A preview loop is optional. Sogni Worlds plays it on your world's card in
-Community worlds, on its listing page and in the homepage banner. What it takes:
+Community worlds and on its listing page, and in the homepage banner when Sogni
+features your world. What it takes:
 
 - a short, silent MP4 that plays muted in a loop: 4 to 15 seconds;
 - H.264 with fast start;
