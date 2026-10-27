@@ -23,8 +23,9 @@ export const usage = `node world export [world] [--out dist/<world>] [--url http
 
   index.html carries the world's link-preview tags (title, description, cover,
   and the opening place's loop as og:video when it can be the world's preview
-  loop). --url, the public link visitors will play it at, makes those links
-  absolute, as social sites and chat apps need. Guide: docs/hosting.md`;
+  loop). With --url, a qualifying loop also gets an X video card and its own
+  embedded player. --url makes the links absolute, as social sites and chat
+  apps need. Guide: docs/hosting.md`;
 
 const GITHUB_FILE_LIMIT = 100 * 1024 * 1024;
 const GITHUB_SITE_LIMIT = 1024 * 1024 * 1024;
@@ -50,7 +51,8 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ESCAP
  * The link-preview tags for an exported world: its title, its subtitle as the
  * description, `cover` (relative to the page, or absolute) and, when the world
  * has one, its preview loop `video` ({ ref, width, height }) as og:video. With
- * `url`, the page's public link, both become absolute and the page names its link.
+ * `url`, the page's public link, both become absolute and a qualifying video
+ * becomes an X Player Card. Without a public URL or preview, keep the image card.
  */
 export function previewTags(world, { cover, url = null, video = null }) {
   const title = escapeHtml(world.title), description = world.subtitle ? escapeHtml(world.subtitle) : null;
@@ -62,14 +64,40 @@ export function previewTags(world, { cover, url = null, video = null }) {
     description && meta('property', 'og:description', description),
     meta('property', 'og:image', image),
     url && meta('property', 'og:url', escapeHtml(url.href)),
-    meta('name', 'twitter:card', 'summary_large_image'),
+    meta('name', 'twitter:card', url && video ? 'player' : 'summary_large_image'),
     meta('name', 'twitter:title', title),
     description && meta('name', 'twitter:description', description),
     meta('name', 'twitter:image', image),
+    ...(url && video ? [
+      meta('name', 'twitter:player', escapeHtml(new URL('preview/', url).href)),
+      meta('name', 'twitter:player:width', String(video.width)),
+      meta('name', 'twitter:player:height', String(video.height)),
+      meta('name', 'twitter:player:stream', escapeHtml(new URL(video.ref, url).href)),
+      meta('name', 'twitter:player:stream:content_type', 'video/mp4'),
+    ] : []),
     ...(video ? [meta('property', 'og:video', escapeHtml(url ? new URL(video.ref, url).href : video.ref)),
       meta('property', 'og:video:type', 'video/mp4'),
       meta('property', 'og:video:width', String(video.width)),
       meta('property', 'og:video:height', String(video.height))] : [])].filter(Boolean);
+}
+
+/** A video-only iframe: no game bundle, sign-in, navigation or audible autoplay. */
+function previewPlayer(world, { cover, url, video }) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${escapeHtml(world.title)} — Video Preview</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}video{display:block;width:100%;height:100%;object-fit:contain}</style>
+</head>
+<body>
+<video controls autoplay muted loop playsinline preload="metadata" aria-label="${escapeHtml(world.title)} video preview" poster="${escapeHtml(new URL(cover, url).href)}">
+<source src="${escapeHtml(new URL(video.ref, url).href)}" type="video/mp4">
+</video>
+</body>
+</html>\n`;
 }
 
 /** The player's index.html with the world's preview tags in place of its placeholder title. */
@@ -110,7 +138,7 @@ export async function run(argv) {
   for (const warning of hostWarnings(files, out)) log.warn(warning);
   if (preview.preview) log.info(`Its preview loop is ${preview.preview.ref} (named as og:video; node world submit lists it).`);
   else log.info(`No preview loop: ${preview.why}. You can make one (docs/hosting.md › Preview loop).`);
-  if (page) log.info(`Link previews show its cover from ${page.href}.`);
+  if (page) log.info(preview.preview ? `Link previews use its video on X and its cover where video is unsupported, from ${page.href}.` : `Link previews show its cover from ${page.href}.`);
   else log.info(`Link previews: export again with --url <its public link> once you know it, so social sites and chat apps can show its cover.`);
   const rel = shown(out);
   log.info('Put it online (any one of these):');
@@ -166,6 +194,10 @@ export async function exportWorld({ paths, out, url = null }) {
   // Its preview loop, when the opening place's loop qualifies (lib/preview.js): nothing is made for it.
   const preview = await previewLoop(data, out);
   writeFileSync(index, withPreviewTags(readFileSync(index, 'utf8'), data, { cover, url, video: preview.preview }));
+  if (url && preview.preview) {
+    mkdirSync(join(out, 'preview'), { recursive: true });
+    writeFileSync(join(out, 'preview/index.html'), previewPlayer(data, { cover, url, video: preview.preview }));
+  }
   writeFileSync(join(out, '.nojekyll'), ''); // GitHub Pages: serve every file as it is
   const stray = strayPngs(data, out);
   if (stray.length) throw new Error([`${shown(out)} would serve ${stray.length} PNG${stray.length === 1 ? '' : 's'} that ${stray.length === 1 ? 'is' : 'are'} not icons:`, ...stray.map(issue => `  ${issue}`)].join('\n'));

@@ -5,6 +5,18 @@ scripts), `world.json`, and the stills, films and sounds it plays. There is no
 server, database or account behind it, so any host that serves files can run
 it — including free ones.
 
+## Contents
+
+- Build and export — prepare the static folder and public URL.
+- What a world serves — check media formats before adding files.
+- Put it online — choose and configure a static host.
+- Checking the live copy — verify the published experience.
+- Submit to the Sogni community gallery — read when the creator wants a listing.
+- Preview loop — choose an existing loop or prepare a teaser.
+- Video share cards — defaults, embedded players and stale social cards.
+- Updating a world — rebuild and update an existing listing.
+- Privacy — read before publishing personal media.
+
 ## 1. Build and check it
 
 ```bash
@@ -34,6 +46,9 @@ link. They need the cover as a full link, so pass `--url` with the public link
 visitors will play it at once you know it (on Cloudflare Pages that is
 `https://<name>.pages.dev/`, known before you deploy). Without `--url` the cover
 link is relative to the page: `node world submit` still reads it.
+When its opening loop qualifies as a preview and `--url` is supplied, the export
+also generates an X video card and `preview/index.html`, a lightweight embedded
+player. Otherwise X uses the image card. See [Video share cards](#video-share-cards).
 
 What is inside, and how big it gets:
 
@@ -48,6 +63,7 @@ What is inside, and how big it gets:
 | `audio/` | Narration and music |
 | `figures/` | 3D figures (GLB) and their icons (WebP) |
 | `social.jpg` | The card a link to the world shows: its opening picture, 1200 × 630 |
+| `preview/index.html` | Video-only share player, when a loop qualifies and `--url` is supplied |
 
 The bitrate cap holds a 2K film to about 1.5 MB per second (12 Mbps) and its
 half-size copy to about 0.56 MB per second (4.5 Mbps); calm films come in well
@@ -254,6 +270,42 @@ For a world built outside the Kit, `submit` uses the page's `og:video` when you
 don't pass `--preview` (its `og:video:secure_url`, `og:video:url` or `og:video`,
 the first HTTPS one; one typed `video/mp4` first when the page lists several).
 The preview link must be a public HTTPS link, like the cover.
+
+## Video share cards
+
+Prefer video when an approved preview represents the experience well at card
+size. Watch it first: avoid blurry footage, unwanted spoilers, broken loop
+seams or sound that does not match its picture. Reuse approved media; this
+default does not authorize a new render or publication. A JPEG image card is
+the right choice when no suitable preview is available.
+
+`export --url <public HTTPS directory>` uses the opening loop that passes the
+checks above for both `og:video` and `twitter:card=player`. It writes
+`twitter:player` pointing at `preview/`, width and height from the actual film,
+and `twitter:player:stream` / `twitter:player:stream:content_type` pointing at
+the same MP4. `og:image` and `twitter:image` remain for the poster and clients
+without video support. With no qualifying loop or public URL, it keeps
+`summary_large_image`. Re-exporting removes any obsolete preview player.
+
+The iframe is just a responsive video with controls, inline playback, looping
+and muted autoplay. It loads no game code. Its HTML, MP4 and poster must load
+over public HTTPS without sign-in; the host must allow X to embed the iframe.
+Keep the audio in the file and let the viewer turn sound on. For a custom
+teaser or export, generate this same metadata and player; `submit --preview`
+changes the gallery listing only, not the page's share tags.
+
+After hosting, check the initial HTML as `Twitterbot/1.0`, the player in an
+iframe, playback and controls, then use X's
+[Card Validator](https://cards-dev.x.com/validator). Report metadata validation
+and actual post playback separately; never post on someone's behalf just to
+test a card. Do not expose private media for link crawlers.
+
+If an image card was already shared, X may retain it after the site is updated.
+For the next post, serve the same experience at a fresh share path with its own
+`og:url` and canonical identity, rather than redirecting to the cached address.
+For Kit exports, export the world into that path with `--url` set to the fresh
+public address. Keep the original link working and updated. A host cache purge
+does not clear X's cache, and a query parameter is not a guaranteed refresh.
 
 ## Updating a world
 

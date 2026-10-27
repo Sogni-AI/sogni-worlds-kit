@@ -338,6 +338,16 @@ node world export      # a static folder you can host anywhere
 
 Tell the person how to host it (docs/hosting.md).
 
+**Prefer video link previews when suitable.** Reuse an approved, representative
+opening loop or teaser; watch it for quality, spoilers, a clean seam and sound
+that matches its picture. With a known public HTTPS address, `node world export
+--url <address>` automatically generates Open Graph video tags, an X Player
+Card and a video-only iframe when the opening loop qualifies. Keep the JPEG
+poster; without a qualifying loop or public URL, use the image card. Never
+render a new teaser or publish private media merely to get a video card.
+For custom exports, follow docs/hosting.md › Video share cards, including live
+validation and a fresh share path when replacing an already-cached image card.
+
 **Ship only what `build` made.** It serves the web formats Sogni's own worlds use:
 stills as WebP, films through the streaming profile (H.264, CRF 23 with the bitrate
 capped by size, a keyframe every 2 s, fast start, a half-size phone copy), a JPEG

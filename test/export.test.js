@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, renameSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { exportWorld, hostWarnings, publicPage, withPreviewTags } from '../cli/commands/export.js';
@@ -39,6 +39,7 @@ test('the exported page carries the world\'s preview tags, every value escaped',
   for (const [attr, name] of [['property', 'og:title'], ['name', 'twitter:title']]) assert.equal(tag(html, attr, name), 'Ships &amp; &quot;Tides&quot; &lt;2&gt;', name);
   for (const [attr, name] of [['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']]) assert.equal(tag(html, attr, name), 'A harbour&#39;s day, dawn &gt; dusk', name);
   assert.equal(tag(html, 'name', 'twitter:card'), 'summary_large_image');
+  assert.equal(tag(html, 'name', 'twitter:player'), undefined);
   // A world with no subtitle has no description tags rather than empty ones.
   assert.equal(tag(withPreviewTags('<head></head>', { ...built, subtitle: undefined }, { cover: 'social.jpg' }), 'name', 'description'), undefined);
   assert.throws(() => withPreviewTags('<body></body>', built, { cover: 'social.jpg' }), /no <head>/);
@@ -85,6 +86,8 @@ test('an exported world is read back by submit as itself: its real title, descri
   assert.equal(card.title, 'Harbour & Tides');
   assert.equal(card.cover, 'https://creator.example/harbour/social.jpg', 'absolute, wherever the page is read from');
   assert.ok(html.includes('<script type="module"'), 'the player still loads');
+  assert.equal(tag(html, 'name', 'twitter:card'), 'summary_large_image', 'a public URL alone is not a video card');
+  assert.equal(existsSync(join(linked, 'preview/index.html')), false);
 });
 
 // The preview loop: export names the opening place's loop as og:video only when it qualifies.
@@ -120,13 +123,34 @@ test('a seamless, 16:9 opening loop of 4 to 15 s is named as og:video, relative 
   assert.equal(tag(html, 'property', 'og:video:type'), 'video/mp4');
   assert.deepEqual([tag(html, 'property', 'og:video:width'), tag(html, 'property', 'og:video:height')], ['448', '256']);
   assert.equal(pageListing(html, 'https://creator.example/harbour/').preview, 'https://creator.example/harbour/films/quay-loop.mp4');
+  assert.equal(tag(html, 'name', 'twitter:card'), 'summary_large_image', 'X needs a public HTTPS player URL');
+  assert.equal(tag(html, 'name', 'twitter:player'), undefined);
+  assert.equal(existsSync(join(plain, 'preview/index.html')), false);
   const linked = join(tempDir('export-preview-linked'), 'site');
   await exportWorld({ paths, out: linked, url: publicPage('https://creator.example/harbour') });
-  assert.equal(tag(readFileSync(join(linked, 'index.html'), 'utf8'), 'property', 'og:video'), 'https://creator.example/harbour/films/quay-loop.mp4');
+  const linkedHtml = readFileSync(join(linked, 'index.html'), 'utf8');
+  const stream = 'https://creator.example/harbour/films/quay-loop.mp4';
+  assert.equal(tag(linkedHtml, 'property', 'og:video'), stream);
+  assert.equal(tag(linkedHtml, 'name', 'twitter:card'), 'player');
+  assert.equal(tag(linkedHtml, 'name', 'twitter:player'), 'https://creator.example/harbour/preview/');
+  assert.equal(tag(linkedHtml, 'name', 'twitter:player:stream'), stream);
+  assert.equal(tag(linkedHtml, 'name', 'twitter:player:stream:content_type'), 'video/mp4');
+  assert.deepEqual([tag(linkedHtml, 'name', 'twitter:player:width'), tag(linkedHtml, 'name', 'twitter:player:height')], ['448', '256']);
+  const embed = readFileSync(join(linked, 'preview/index.html'), 'utf8');
+  assert.ok(embed.includes(`<source src="${stream}" type="video/mp4">`), 'iframe plays the same qualified video as Open Graph');
+  assert.match(embed, /controls autoplay muted loop playsinline/);
+  assert.ok(embed.includes('poster="https://creator.example/harbour/stills/quay.webp"'), 'nested player resolves poster against the world root');
+  assert.doesNotMatch(embed, /<script\b/, 'embedding the preview never starts the game');
   // Kit-mode submit lists the same film from the build, beside the world's public link.
   const { preview } = await previewLoop(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), paths.build);
   const kit = submissionUrl(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), 'https://creator.example/harbour', { preview: preview.ref });
   assert.equal(new URL(kit).searchParams.get('previewUrl'), 'https://creator.example/harbour/films/quay-loop.mp4');
+  const withoutLoop = JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8'));
+  delete withoutLoop.places[0].loop;
+  writeJson(join(paths.build, 'world.json'), withoutLoop);
+  await exportWorld({ paths, out: linked, url: publicPage('https://creator.example/harbour') });
+  assert.equal(existsSync(join(linked, 'preview/index.html')), false, 're-exporting without a preview removes the old player');
+  assert.equal(tag(readFileSync(join(linked, 'index.html'), 'utf8'), 'name', 'twitter:card'), 'summary_large_image');
 });
 
 test('no og:video for a loop that jumps, is not 16:9, is too short or is not in the Kit\'s film profile; the phone copy comes first', async () => {
@@ -137,10 +161,12 @@ test('no og:video for a loop that jumps, is not 16:9, is too short or is not in 
   ]) {
     const paths = await builtWorld(name, { src: spec });
     const out = join(tempDir(`export-preview-${name}`), 'site');
-    const result = await exportWorld({ paths, out });
+    const result = await exportWorld({ paths, out, url: publicPage('https://creator.example/harbour') });
     assert.equal(result.preview.preview, null, name);
     assert.match(result.preview.why, why, name);
     assert.equal(tag(readFileSync(join(out, 'index.html'), 'utf8'), 'property', 'og:video'), undefined, `${name}: no og:video`);
+    assert.equal(tag(readFileSync(join(out, 'index.html'), 'utf8'), 'name', 'twitter:card'), 'summary_large_image', name);
+    assert.equal(existsSync(join(out, 'preview/index.html')), false, name);
   }
   const none = await builtWorld('none', {});
   assert.deepEqual(await previewLoop(JSON.parse(readFileSync(join(none.build, 'world.json'), 'utf8')), none.build), { preview: null, why: 'the opening place has no living-photo loop' });
