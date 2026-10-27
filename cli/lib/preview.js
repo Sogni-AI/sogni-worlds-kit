@@ -1,5 +1,5 @@
 // The world's preview loop, when the Kit already has one: the opening place's living photograph, if it can stand as
-// the short, seamless, muted loop Sogni Worlds plays on a world's card (docs/hosting.md › Preview loop). Nothing is
+// the short, seamless loop Sogni Worlds plays on a world's card (docs/hosting.md › Preview loop). Nothing is
 // rendered or encoded for it: a film that does not qualify is simply not named.
 import { statSync } from 'node:fs';
 import { resolve, sep } from 'node:path';

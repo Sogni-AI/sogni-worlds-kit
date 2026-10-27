@@ -1,22 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { externalSubmission, givenPreview, pageListing, submissionMode, submissionUrl, worldCounts } from '../cli/commands/submit.js';
+import { CREATOR_RETIRED, externalSubmission, givenPreview, pageListing, run, submissionMode, submissionUrl, worldCounts } from '../cli/commands/submit.js';
 import { validateWorld } from '../cli/lib/worldjson.js';
 import { galleryLength, linkProblem } from '../cli/lib/gallery.js';
 
 const world = JSON.parse(readFileSync(new URL('../examples/the-dream-thread/world.json', import.meta.url), 'utf8'));
 
-test('a built Kit world produces a gallery form with credit, opening still and accurate counts', () => {
+test('a built Kit world produces a gallery form with its opening still and accurate counts, and no credit', () => {
   const data = structuredClone(world);
   data.places[0].still = 'stills/opening.jpg';
   data.start = data.places[0].id;
-  const url = new URL(submissionUrl(data, 'https://creator.example/my-world', 'A creator'));
+  const url = new URL(submissionUrl(data, 'https://creator.example/my-world'));
   assert.equal(url.origin, 'https://worlds.sogni.ai');
   assert.equal(url.pathname, '/submit-world');
   assert.equal(url.searchParams.get('url'), 'https://creator.example/my-world/');
   assert.equal(url.searchParams.get('coverUrl'), 'https://creator.example/my-world/stills/opening.jpg');
-  assert.equal(url.searchParams.get('creatorName'), 'A creator');
+  assert.equal(url.searchParams.has('creatorName'), false, 'the gallery credits the Sogni username of the account that submits');
   assert.equal(url.searchParams.get('sceneCount'), String(data.places.length));
   assert.equal(url.searchParams.get('pathCount'), String(data.places.flatMap(place => place.hotspots).filter(spot => spot.to).length));
   assert.equal(url.searchParams.has('apiKey'), false);
@@ -25,17 +25,17 @@ test('a built Kit world produces a gallery form with credit, opening still and a
 test('the cover is the world\'s JPEG social card when the build made one', () => {
   const data = structuredClone(world);
   data.places[0].still = 'stills/opening.webp'; data.start = data.places[0].id;
-  const url = new URL(submissionUrl(data, 'https://creator.example/my-world/', 'A creator', { cover: 'social.jpg' }));
+  const url = new URL(submissionUrl(data, 'https://creator.example/my-world/', { cover: 'social.jpg' }));
   assert.equal(url.searchParams.get('coverUrl'), 'https://creator.example/my-world/social.jpg');
 });
 
 test('custom player manifest URLs and existing absolute media URLs resolve correctly', () => {
   const data = structuredClone(world);
   data.places[0].still = 'stills/opening.jpg'; data.start = data.places[0].id;
-  const url = new URL(submissionUrl(data, 'https://creator.example/player/index.html?world=../../story/world.json', 'A creator'));
+  const url = new URL(submissionUrl(data, 'https://creator.example/player/index.html?world=../../story/world.json'));
   assert.equal(url.searchParams.get('coverUrl'), 'https://creator.example/story/stills/opening.jpg');
   const absolute = world.places.find(place => place.id === world.start).still;
-  assert.equal(new URL(submissionUrl(world, 'https://creator.example/', 'A creator')).searchParams.get('coverUrl'), absolute);
+  assert.equal(new URL(submissionUrl(world, 'https://creator.example/')).searchParams.get('coverUrl'), absolute);
 });
 
 test('only approved builds and public HTTPS player links are prepared', () => {
@@ -72,8 +72,8 @@ test('a world built outside the Kit is listed from its page: og tags, a relative
   assert.equal(form.searchParams.get('description'), 'Gingerbread, elves & northern lights');
   assert.equal(form.searchParams.get('coverUrl'), 'https://creator.example/north-pole/og.jpg');
   assert.equal(form.searchParams.get('url'), PAGE, 'the canonical link, not the index.html it was read from');
-  assert.equal(form.searchParams.get('creatorName'), 'NatalieArt');
-  assert.deepEqual([...form.searchParams.keys()], ['title', 'description', 'url', 'coverUrl', 'creatorName'], 'no counts it could not find, and no key');
+  assert.equal(form.searchParams.has('creatorName'), false, 'a --creator an older script passes is ignored');
+  assert.deepEqual([...form.searchParams.keys()], ['title', 'description', 'url', 'coverUrl'], 'no counts it could not find, and no key');
   assert.equal(from.url, 'canonical link');
   assert.deepEqual(calls, ['https://creator.example/north-pole/index.html', 'https://creator.example/north-pole/world.json'], 'only the page and a world.json beside it are read');
 });
@@ -87,12 +87,12 @@ test('without og tags it falls back to <title> and the meta description; tags in
   assert.equal(form.searchParams.get('description'), 'A world of “snow”');
   assert.equal(form.searchParams.get('coverUrl'), 'https://creator.example/media/cover.jpg');
   assert.equal(form.searchParams.get('url'), PAGE);
-  assert.equal(form.searchParams.has('creatorName'), false, 'the person types their credit');
+  assert.equal(form.searchParams.has('creatorName'), false, 'the gallery credits the Sogni username');
 });
 
 test('flags override what the page says, and with both counts given no world.json is read', async () => {
   const calls = [];
-  const { url, from } = await externalSubmission(PAGE, { title: 'My title', description: 'Mine', cover: 'https://cdn.example/cover.jpg', scenes: '12', paths: '0', creator: 'N' },
+  const { url, from } = await externalSubmission(PAGE, { title: 'My title', description: 'Mine', cover: 'https://cdn.example/cover.jpg', scenes: '12', paths: '0' },
     { fetch: site({ [PAGE]: OG }, calls) });
   const form = new URL(url);
   assert.equal(form.searchParams.get('title'), 'My title');
@@ -133,7 +133,7 @@ test('a missing, unreadable or oversized world.json leaves the counts for the pe
     ['over the size cap', JSON.stringify({ places: [{ hotspots: [] }], padding: 'x'.repeat(500) }), { manifestLimit: 100 }],
   ]) {
     const pages = { [PAGE]: OG, ...(manifest === undefined ? {} : { [`${PAGE}world.json`]: manifest }) };
-    const form = new URL((await externalSubmission(PAGE, { creator: 'N' }, { fetch: site(pages), ...limits })).url);
+    const form = new URL((await externalSubmission(PAGE, {}, { fetch: site(pages), ...limits })).url);
     assert.equal(form.searchParams.has('sceneCount'), false, name);
     assert.equal(form.searchParams.has('pathCount'), false, name);
   }
@@ -199,11 +199,11 @@ test('the gallery takes public HTTPS names only: no IP address, localhost, .loca
 test('outside the Kit, a value the gallery would refuse fails before a link is printed, naming the field, its limit and the flag', async () => {
   const fetch = (pages = { [PAGE]: OG }) => ({ fetch: site(pages) });
   const at = (n, char = 'a') => char.repeat(n);
-  assert.ok(await externalSubmission(PAGE, { title: at(120), description: at(1000), creator: at(80) }, fetch()));
+  assert.ok(await externalSubmission(PAGE, { title: at(120), description: at(1000) }, fetch()));
   assert.ok(await externalSubmission(PAGE, { title: '🎄'.repeat(120) }, fetch()), '120 emoji are 240 code units, and the gallery takes them');
   await assert.rejects(externalSubmission(PAGE, { title: at(121) }, fetch()), /^Error: The title is 121 characters; the gallery takes at most 120\. Pass a shorter title: --title/);
   await assert.rejects(externalSubmission(PAGE, { description: at(1001) }, fetch()), /The description is 1,001 characters; the gallery takes at most 1,000\. Pass a shorter description: --description/);
-  await assert.rejects(externalSubmission(PAGE, { creator: at(81) }, fetch()), /The creator name is 81 characters; the gallery takes at most 80\. Pass a shorter name: --creator/);
+  assert.ok(await externalSubmission(PAGE, { creator: at(81) }, fetch()), 'a --creator of any length is ignored');
   // A long og:description is the page's, and --description replaces it.
   const longDescription = page(`<meta property="og:title" content="T"><meta property="og:image" content="og.jpg"><meta property="og:description" content="${at(1204)}">`);
   await assert.rejects(externalSubmission(PAGE, {}, fetch({ [PAGE]: longDescription })), /The page's og:description is 1,204 characters; the gallery takes at most 1,000\. Pass a shorter description: --description/);
@@ -231,14 +231,13 @@ test('outside the Kit, a value the gallery would refuse fails before a link is p
 
 test('a Kit world the gallery would refuse fails before a link is printed, saying what to change', () => {
   const at = n => 'a'.repeat(n);
-  assert.ok(submissionUrl({ ...world, title: at(120), subtitle: at(1000) }, PAGE, at(80)));
-  assert.throws(() => submissionUrl({ ...world, title: at(121) }, PAGE, 'N'), /The world's title is 121 characters; the gallery takes at most 120\. Change its title in world\.yaml, then run node world build the-dream-thread/);
-  assert.throws(() => submissionUrl({ ...world, subtitle: at(1001) }, PAGE, 'N'), /The world's subtitle \(the listing's description\) is 1,001 characters; .* Change its subtitle in world\.yaml/);
-  // A Kit world's credit is its About panel's line: often far longer than a name.
-  assert.throws(() => submissionUrl(world, PAGE), /The world's credit, the creator name when --creator is not given, is 521 characters; the gallery takes at most 80\. Pass your name: --creator/);
-  assert.throws(() => submissionUrl(world, PAGE, at(81)), /The creator name is 81 characters; .*--creator/);
-  assert.throws(() => submissionUrl(world, PAGE, '   '), /The creator name is blank/);
-  for (const url of ['https://localhost/world/', 'https://203.0.113.9/', 'https://world.test/']) assert.throws(() => submissionUrl(world, url, 'N'), /^Error: --url .*HTTPS link where visitors play/, url);
+  assert.ok(submissionUrl({ ...world, title: at(120), subtitle: at(1000) }, PAGE));
+  assert.throws(() => submissionUrl({ ...world, title: at(121) }, PAGE), /The world's title is 121 characters; the gallery takes at most 120\. Change its title in world\.yaml, then run node world build the-dream-thread/);
+  assert.throws(() => submissionUrl({ ...world, subtitle: at(1001) }, PAGE), /The world's subtitle \(the listing's description\) is 1,001 characters; .* Change its subtitle in world\.yaml/);
+  // A Kit world's credit is its About panel's line, never the listing's: the gallery credits the Sogni username.
+  assert.ok(world.credit.length > 80);
+  assert.equal(new URL(submissionUrl(world, PAGE)).searchParams.has('creatorName'), false);
+  for (const url of ['https://localhost/world/', 'https://203.0.113.9/', 'https://world.test/']) assert.throws(() => submissionUrl(world, url), /^Error: --url .*HTTPS link where visitors play/, url);
 });
 
 // The preview loop: --preview, or the page's og:video, listed as previewUrl.
@@ -269,7 +268,7 @@ test('the page\'s og:video gives the preview loop: secure_url, then url, then og
 
 test('outside the Kit the link carries previewUrl from og:video or --preview, and the summary says where it came from', async () => {
   const pages = { [PAGE]: withVideo(video('og:video:secure_url', 'films/preview.mp4') + video('og:video:type', 'video/mp4')) };
-  const listed = await externalSubmission(PAGE, { creator: 'N' }, { fetch: site(pages) });
+  const listed = await externalSubmission(PAGE, {}, { fetch: site(pages) });
   assert.equal(new URL(listed.url).searchParams.get('previewUrl'), `${PAGE}films/preview.mp4`);
   assert.equal(listed.from.preview, 'og:video:secure_url');
   const given = await externalSubmission(PAGE, { preview: 'https://cdn.example/teaser.mp4' }, { fetch: site(pages) });
@@ -293,8 +292,20 @@ test('--preview is a public HTTPS link to an MP4, as the gallery takes it, in bo
   }
   assert.equal(givenPreview('https://creator.example/preview.mp4'), 'https://creator.example/preview.mp4');
   // A Kit world's link carries it too, after its cover.
-  const kit = new URL(submissionUrl(world, PAGE, 'N', { preview: 'https://creator.example/north-pole/preview.mp4' }));
+  const kit = new URL(submissionUrl(world, PAGE, { preview: 'https://creator.example/north-pole/preview.mp4' }));
   assert.equal(kit.searchParams.get('previewUrl'), 'https://creator.example/north-pole/preview.mp4');
-  assert.deepEqual([...kit.searchParams.keys()], ['title', 'description', 'url', 'coverUrl', 'previewUrl', 'creatorName', 'sceneCount', 'pathCount']);
-  assert.equal(new URL(submissionUrl(world, PAGE, 'N')).searchParams.has('previewUrl'), false, 'and without one the link is as before');
+  assert.deepEqual([...kit.searchParams.keys()], ['title', 'description', 'url', 'coverUrl', 'previewUrl', 'sceneCount', 'pathCount']);
+  assert.equal(new URL(submissionUrl(world, PAGE)).searchParams.has('previewUrl'), false, 'and without one the link is as before');
+});
+
+test('node world submit still takes --creator from older scripts, says once that the credit is the Sogni username, and leaves it out', async () => {
+  const printed = [], { fetch, log } = { fetch: globalThis.fetch, log: console.log };
+  globalThis.fetch = site({ [PAGE]: OG });
+  console.log = (...args) => printed.push(args.join(' '));
+  try { assert.equal(await run(['--url', PAGE, '--creator', 'Old name', '--scenes', '3', '--paths', '2']), 0); }
+  finally { globalThis.fetch = fetch; console.log = log; }
+  assert.equal(printed.filter(line => line.includes(CREATOR_RETIRED)).length, 1);
+  const link = new URL(printed.find(line => line.startsWith('https://worlds.sogni.ai/submit-world?')));
+  assert.equal(link.searchParams.has('creatorName'), false);
+  assert.equal(printed.some(line => line.includes('Old name')), false);
 });

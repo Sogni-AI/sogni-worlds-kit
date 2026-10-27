@@ -182,21 +182,24 @@ Open the link on a phone and on a computer, with sound on:
 After checking the live copy, run:
 
 ```bash
-node world submit <world> --url https://your-world.example/ --creator "Your name"
+node world submit <world> --url https://your-world.example/
 ```
 
 Open the printed link (or add `--open`). It fills in the title, description,
-cover (the world's `social.jpg`), creator credit and scene/path counts from your
-built world.
+cover (the world's `social.jpg`) and scene/path counts from your built world.
 Sign in with your Sogni account, check the details and sharing permissions, then
 submit. You can also fill in the form at
 [worlds.sogni.ai/submit-world](https://worlds.sogni.ai/submit-world) directly.
+The listing is credited to your Sogni username (as `@username`), from the
+account you sign in with; there is no name to type. Older scripts that still
+pass `--creator` keep working: `submit` says it is no longer needed and leaves
+it out.
 
 Submitting is free. Your world must play publicly without a login. Sogni reviews
 the complete experience before listing it in the public community gallery.
 Approval and feedback appear in [My worlds](https://worlds.sogni.ai/?view=mine),
-where you can update or withdraw the listing. The gallery credits you and links
-visitors to your hosted world; your files stay with your host. Your Sogni API key
+where you can update or withdraw the listing. The gallery credits your Sogni
+username and links visitors to your hosted world; your files stay with your host. Your Sogni API key
 is never sent with the submission. To have the gallery play a teaser of your
 world, add a [preview loop](#preview-loop).
 
@@ -206,8 +209,10 @@ A preview loop is optional. Sogni Worlds plays it on your world's card in
 Community worlds and on its listing page, and in the homepage banner when Sogni
 features your world. What it takes:
 
-- a short, silent MP4 that plays muted in a loop: 4 to 15 seconds;
+- a short MP4 that loops: 4 to 15 seconds;
 - H.264 with fast start;
+- optionally, a stereo AAC soundtrack: Sogni Worlds plays it only when a visitor
+  points at your card (or taps its speaker button) with sound on;
 - 16:9, at 1280 × 720 or 1920 × 1080;
 - under 10 MB;
 - hosted next to the world, on HTTPS;
@@ -219,12 +224,14 @@ A Kit world may have one already. When the opening place's living photograph
 4 to 15 seconds, is under 10 MB and ends on its first frame, `export` names it
 as the page's `og:video` and `submit` lists it as the preview. Nothing is made
 for it, and `export` says which film it named or why none qualifies. That film
-keeps its sound track, which the gallery never plays.
+keeps its AAC sound track, which plays only when a visitor points at your card
+(or taps its speaker button) with sound on.
 
 Otherwise, make one. The opening place's living photograph is a good start: it
 begins and ends on the same still, so it loops without a jump. Copy it with the
-Kit's own film profile, cropped to 16:9 at 1280 × 720 and without its sound,
-next to the world you host:
+Kit's own film profile, cropped to 16:9 at 1280 × 720 and without its sound
+(to keep the sound, replace `-an` with `-c:a aac -ac 2 -b:a 160k`), next to the
+world you host:
 
 ```bash
 ffmpeg -i dist/<world>/films/<opening place>-loop.mp4 \
@@ -239,7 +246,7 @@ you submit it. Then pass its public link
 (`--preview` always wins over the film `export` named):
 
 ```bash
-node world submit <world> --url https://your-world.example/ --creator "Your name" \
+node world submit <world> --url https://your-world.example/ \
   --preview https://your-world.example/preview.mp4
 ```
 

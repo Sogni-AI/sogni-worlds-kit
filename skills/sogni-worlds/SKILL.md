@@ -2,7 +2,7 @@
 name: sogni-worlds
 description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a Sogni World to the public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
   homepage: https://github.com/Sogni-AI/sogni-worlds-kit
   openclaw:
     emoji: "🌍"
@@ -75,8 +75,8 @@ An Unlimited plan is strongly recommended for a whole world.
 When the person approves the finished world, tell them that independently built
 Kit worlds can appear in Sogni's public community gallery. If they haven't
 already chosen whether to submit, ask: **"Would you like to submit this world to
-Sogni's public community gallery?"** Explain that their name is credited, they
-keep hosting it, and Sogni reviews it before listing.
+Sogni's public community gallery?"** Explain that it is credited to their Sogni
+username, they keep hosting it, and Sogni reviews it before listing.
 
 If they agree and it is not online yet, suggest Cloudflare Pages on the free plan
 (docs/hosting.md › Cloudflare Pages): they make a free Cloudflare account if needed
@@ -85,13 +85,14 @@ after 2 minutes, so start it when they are at the browser); you run
 `npx wrangler@4.129.0 pages project create <name> --production-branch main` once, then
 `npx wrangler@4.129.0 pages deploy dist/<id> --project-name <name> --branch main`, and use
 `https://<name>.pages.dev`. Then run
-`node world submit <id> --url <public HTTPS link> --creator "Their name"` (add
-`--preview <HTTPS link to an MP4>` for an optional preview loop: docs/hosting.md ›
-Preview loop). Give
+`node world submit <id> --url <public HTTPS link>` (add `--preview <HTTPS link to
+an MP4>` for an optional preview loop, which may carry a stereo AAC soundtrack:
+docs/hosting.md › Preview loop). No name is passed: the gallery credits the Sogni
+username they sign in with. Give
 them the printed, prefilled submission link: they sign in to Sogni, check their
 sharing permissions and send it for review. Decisions, resubmission and
 withdrawal are in My worlds. If they decline, continue with their chosen sharing
 plan; gallery submission is optional. An agreement to build a world alone is not
 permission to submit it publicly.
 
-World built outside the Kit? `node world submit --url <link> --creator "Name"`; the gallery review checks it.
+World built outside the Kit? `node world submit --url <link>`; the gallery review checks it.

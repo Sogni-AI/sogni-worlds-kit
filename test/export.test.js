@@ -125,7 +125,7 @@ test('a seamless, 16:9 opening loop of 4 to 15 s is named as og:video, relative 
   assert.equal(tag(readFileSync(join(linked, 'index.html'), 'utf8'), 'property', 'og:video'), 'https://creator.example/harbour/films/quay-loop.mp4');
   // Kit-mode submit lists the same film from the build, beside the world's public link.
   const { preview } = await previewLoop(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), paths.build);
-  const kit = submissionUrl(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), 'https://creator.example/harbour', 'N', { preview: preview.ref });
+  const kit = submissionUrl(JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8')), 'https://creator.example/harbour', { preview: preview.ref });
   assert.equal(new URL(kit).searchParams.get('previewUrl'), 'https://creator.example/harbour/films/quay-loop.mp4');
 });
 

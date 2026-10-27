@@ -13,14 +13,15 @@ import { previewLoop } from '../lib/preview.js';
 import { SOCIAL } from '../lib/delivery.js';
 
 export const summary = 'Prepare your hosted world for the public Sogni community gallery';
-export const usage = `node world submit [world] --url https://your-world.example/ [--creator "Your name"] [--preview https://…] [--open]
-       node world submit --url https://your-world.example/ --creator "Your name"
+export const usage = `node world submit [world] --url https://your-world.example/ [--preview https://…] [--open]
+       node world submit --url https://your-world.example/
          [--title "…"] [--description "…"] [--cover https://…] [--preview https://…] [--scenes N] [--paths N]
 
   Build and host your export first. This prints a prefilled gallery submission
   link; --open also opens it. Sign in to Sogni, check the listing and submit.
-  No API key is sent. Approval, feedback and withdrawal live in My worlds at
-  worlds.sogni.ai. Your world stays on your host. Guide: docs/hosting.md
+  The gallery credits the listing to your Sogni username. No API key is sent.
+  Approval, feedback and withdrawal live in My worlds at worlds.sogni.ai. Your
+  world stays on your host. Guide: docs/hosting.md
 
   A world built outside the Kit: leave out [world] (or name one that is not in
   worlds/). Its listing is read from the hosted page: og:title or <title>,
@@ -29,14 +30,18 @@ export const usage = `node world submit [world] --url https://your-world.example
   Flags override what the page says. A count it cannot find, you type in the
   form. Sogni's gallery review checks every world.
 
-  --preview is the world's preview loop, a short silent MP4 the gallery plays
-  on its card (docs/hosting.md › Preview loop); outside the Kit it defaults to
-  the page's og:video. Either way, the listing is checked against the gallery's
-  own rules (lengths, public HTTPS links) before the link is printed.`;
+  --preview is the world's preview loop, a short MP4 the gallery loops on its
+  card; it may carry a stereo AAC soundtrack, played only when a visitor points
+  at the card or taps its speaker button with sound on (docs/hosting.md ›
+  Preview loop). Outside the Kit it defaults to the page's og:video. Either
+  way, the listing is checked against the gallery's own rules (lengths, public
+  HTTPS links) before the link is printed.`;
 
 const GALLERY_FORM = 'https://worlds.sogni.ai/submit-world';
 const PUBLIC_LINK = 'Use the public HTTPS link where visitors play your world.';
-const ADD_PREVIEW = 'You can add a preview loop, a short silent MP4 that loops cleanly: --preview https://…/preview.mp4 (docs/hosting.md › Preview loop).';
+const ADD_PREVIEW = 'You can add a preview loop, a short MP4 that loops cleanly: --preview https://…/preview.mp4 (docs/hosting.md › Preview loop).';
+/** Said once when --creator is passed: older scripts still pass it, and it still works. */
+export const CREATOR_RETIRED = '--creator is no longer needed: the gallery credits your Sogni username, from the account you sign in with.';
 /** Flags that describe a world built outside the Kit; a Kit world's listing comes from its build. */
 const EXTERNAL_ONLY = ['title', 'description', 'cover', 'scenes', 'paths'];
 /** Reading a hosted page: its tags are in the head, so a large page is read only this far. */
@@ -58,7 +63,7 @@ export function worldCounts(world) {
  * a JPEG beside world.json: the gallery shows it, and crawlers read it where
  * they do not read WebP), or the opening still for a world built without one.
  */
-export function submissionUrl(world, hostedUrl, creator, { cover = null, preview = null } = {}) {
+export function submissionUrl(world, hostedUrl, { cover = null, preview = null } = {}) {
   const issues = validateWorld(world);
   if (issues.length) throw new Error(`Build a valid world before submitting: ${issues[0]}`);
   if (world.draft) throw new Error('Build the approved version of your world before submitting; this is a draft.');
@@ -70,7 +75,6 @@ export function submissionUrl(world, hostedUrl, creator, { cover = null, preview
   const counts = worldCounts(world);
   const fields = { title: world.title, description: world.subtitle ?? '', url: hosted.href,
     coverUrl: new URL(cover ?? opening.still, manifest).href, ...(preview ? { previewUrl: new URL(preview, manifest).href } : {}),
-    creatorName: creator ?? world.credit ?? '',
     sceneCount: String(counts.sceneCount), pathCount: String(counts.pathCount) };
   const [issue] = galleryIssues(fields);
   if (issue) {
@@ -78,9 +82,6 @@ export function submissionUrl(world, hostedUrl, creator, { cover = null, preview
     throw new Error({
       title: `The world's title ${issue.problem}. Change its title ${rebuild}.`,
       description: `The world's subtitle (the listing's description) ${issue.problem}. Change its subtitle ${rebuild}.`,
-      creatorName: creator === undefined
-        ? `The world's credit, the creator name when --creator is not given, ${issue.problem}. Pass your name: --creator "Your name".`
-        : `The creator name ${issue.problem}. Pass a shorter one: --creator "Your name".`,
       url: `--url ${issue.problem}. ${PUBLIC_LINK}`,
       coverUrl: `The cover link (${fields.coverUrl}) ${issue.problem}. It is the world's social card or opening still: host it beside the world and pass that world's public link as --url.`,
       previewUrl: `The preview loop's link (${fields.previewUrl}) ${issue.problem}. Pass a public HTTPS link to an MP4: --preview https://….`,
@@ -285,21 +286,20 @@ export async function externalSubmission(hostedUrl, options = {}, { fetch = glob
   if (pathCount !== undefined) from.pathCount = paths !== undefined ? 'given' : 'world.json';
 
   const fields = { title, ...(description ? { description } : {}), url, coverUrl: coverUrl.href, ...(previewUrl ? { previewUrl } : {}),
-    ...(options.creator?.trim() ? { creatorName: options.creator.trim() } : {}),
     ...(sceneCount !== undefined ? { sceneCount: String(sceneCount) } : {}),
     ...(pathCount !== undefined ? { pathCount: String(pathCount) } : {}) };
   const [issue] = galleryIssues(fields);
   if (issue) {
     const source = from[issue.field === 'coverUrl' ? 'cover' : issue.field];
     const what = source && source !== 'given' ? `The page's ${source}` : { title: 'The title', description: 'The description',
-      creatorName: 'The creator name', url: 'The link', coverUrl: 'The cover link' }[issue.field];
+      url: 'The link', coverUrl: 'The cover link' }[issue.field];
     throw new Error(`${what} ${issue.problem}. ${{ title: 'Pass a shorter title: --title "…"', description: 'Pass a shorter description: --description "…"',
-      creatorName: 'Pass a shorter name: --creator "…"', url: 'Pass a shorter link: --url https://…', coverUrl: 'Pass a shorter cover link: --cover https://…' }[issue.field]}`);
+      url: 'Pass a shorter link: --url https://…', coverUrl: 'Pass a shorter cover link: --cover https://…' }[issue.field]}`);
   }
   return { url: `${GALLERY_FORM}?${new URLSearchParams(fields)}`, fields, from, previewNote };
 }
 
-const LABELS = { title: 'Title', description: 'Description', url: 'Link', coverUrl: 'Cover', previewUrl: 'Preview', creatorName: 'Creator', sceneCount: 'Scenes', pathCount: 'Paths' };
+const LABELS = { title: 'Title', description: 'Description', url: 'Link', coverUrl: 'Cover', previewUrl: 'Preview', sceneCount: 'Scenes', pathCount: 'Paths' };
 const SOURCE_KEY = { coverUrl: 'cover', previewUrl: 'preview' };
 const short = value => (value.length > 90 ? `${value.slice(0, 87)}…` : value);
 
@@ -315,7 +315,6 @@ async function runExternal(given, values) {
   log.info('Open this link to check your listing, sign in and submit for gallery review:');
   console.log(url);
   // The form requires these; what the page could not tell us, the person types in.
-  if (!fields.creatorName) log.info('Type your creator name in the form, or pass --creator "Your name".');
   const uncounted = [!fields.sceneCount && 'scenes', !fields.pathCount && 'paths'].filter(Boolean);
   if (uncounted.length) log.info(`Type the number of ${uncounted.join(' and ')} in the form: there is no world.json beside the page to count them from (or pass ${uncounted.map(name => `--${name} N`).join(' ')}).`);
   if (!fields.previewUrl) log.info(previewNote ?? `No preview loop (the page has no og:video MP4). ${ADD_PREVIEW}`);
@@ -327,6 +326,7 @@ export async function run(argv) {
   const { values, world } = parse(argv, { url: { type: 'string' }, creator: { type: 'string' }, open: { type: 'boolean' },
     title: { type: 'string' }, description: { type: 'string' }, cover: { type: 'string' }, preview: { type: 'string' }, scenes: { type: 'string' }, paths: { type: 'string' } });
   if (!values.url) throw new Error('Host your world, then run: node world submit <world> --url https://your-world.example/');
+  if (values.creator !== undefined) log.dim(CREATOR_RETIRED);
   let url;
   if (submissionMode(world, values) === 'external') url = await runExternal(world, values);
   else {
@@ -337,7 +337,7 @@ export async function run(argv) {
     // The preview loop: --preview, or the opening place's loop when it qualifies (the same one export names as og:video).
     const given = values.preview === undefined ? null : givenPreview(values.preview);
     const auto = given ? null : await previewLoop(data, build);
-    url = submissionUrl(data, values.url, values.creator, { cover, preview: given ?? auto.preview?.ref ?? null });
+    url = submissionUrl(data, values.url, { cover, preview: given ?? auto.preview?.ref ?? null });
     const previewUrl = new URL(url).searchParams.get('previewUrl');
     if (previewUrl) log.info(`Preview loop: ${previewUrl}${given ? '' : `  (the opening place's loop, ${auto.preview.ref})`}`);
     log.info('Open this link to check your listing, sign in and submit for gallery review:');

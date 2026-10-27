@@ -104,10 +104,10 @@ films through a capped H.264 streaming profile with a phone copy, a JPEG social
 card), and `build` and `export` stop on anything else ([docs/hosting.md](docs/hosting.md#what-a-world-serves)).
 
 Once hosted, share it with the Sogni community:
-`node world submit <world> --url https://your-world.example/ --creator "Your name"`.
+`node world submit <world> --url https://your-world.example/`.
 Open the printed link, sign in and send it for review. Approved worlds appear in
 the [public community gallery](https://worlds.sogni.ai/#community-worlds-title)
-with your credit and a link to play. You keep hosting it; manage decisions,
+credited to your Sogni username, with a link to play. You keep hosting it; manage decisions,
 updates and withdrawal in [My worlds](https://worlds.sogni.ai/?view=mine).
 
 Lost at any point? `node world next` prints the one thing to do now.
