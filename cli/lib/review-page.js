@@ -130,9 +130,14 @@ window.syncCompare = (() => {
     const vids = [...g.querySelectorAll('video')];
     const clips = [...g.querySelectorAll('.cmp-clip')];
     const stage = g.querySelector('.cmp-stage');
-    let master = vids[0];
-    const pickMaster = () => { master = vids.reduce((a, b) => ((b.duration || 0) > (a.duration || 0) ? b : a), vids[0]); };
-    vids.forEach(v => v.addEventListener('loadedmetadata', pickMaster));
+    // The longest clip sets the loop; the clip you hear keeps time and is never re-timed (only
+    // the silent clips follow it). When the longest kept time, a heard clip even 25 ms shorter
+    // had its speed rewritten every frame and kept jumping: it played stuttering, worst on phones.
+    let longest = vids[0];
+    const pickLongest = () => { longest = vids.reduce((a, b) => ((b.duration || 0) > (a.duration || 0) ? b : a), vids[0]); };
+    vids.forEach(v => v.addEventListener('loadedmetadata', pickLongest));
+    let heard = 0;
+    const timekeeper = () => { const h = vids[heard]; return h.ended || h.currentTime >= (h.duration || Infinity) - 0.05 ? longest : h; };
     let loop = true, playing = false;
     const bar = g.querySelector('.cmp-bar');
     bar.innerHTML = '<button class="view" title="Flip view (F)">Flip view</button><button class="size" title="Native pixels (N)">Native pixels</button>'
@@ -144,13 +149,14 @@ window.syncCompare = (() => {
       if (!Number.isInteger(i) || i < 0 || i >= vids.length) return;
       vids.forEach(v => { v.muted = true; });
       vids[i].muted = false;
+      heard = i;
       clips.forEach((c, j) => { c.classList.toggle('audible', j === i); c.classList.toggle('shown', j === i); });
       const aud = $('.aud'); if (aud) aud.textContent = clips[i].querySelector('figcaption').dataset.clipLabel;
     }
     const seek = t => vids.forEach(v => { v.currentTime = t; });
     async function play() {
       for (const other of groups) if (other !== api) { other.pause(); other.videos.forEach(v => { v.muted = true; }); other.section.querySelectorAll('.cmp-clip').forEach(c => c.classList.remove('audible')); }
-      if (master.ended || master.currentTime >= master.duration - 0.02) seek(0);
+      if (longest.ended || longest.currentTime >= longest.duration - 0.02) seek(0);
       playing = true; g.classList.add('playing');
       const heard = Math.max(0, clips.findIndex(c => c.classList.contains('audible')));
       setAudio(heard);
@@ -163,21 +169,32 @@ window.syncCompare = (() => {
       }
       requestAnimationFrame(tick);
     }
-    function pause() { if (!playing) return; playing = false; g.classList.remove('playing'); vids.forEach(v => v.pause()); seek(master.currentTime); }
-    function tick() {
+    function pause() { if (!playing) return; playing = false; g.classList.remove('playing'); vids.forEach(v => v.pause()); seek(timekeeper().currentTime); }
+    // Silent clips follow gently: a set 0.95x or 1.05x only while more than a frame off, exactly
+    // 1x again within half a frame, a jump only past half a second (at most once a second per
+    // clip, never while a clip is loading or seeking).
+    const frame = 1 / 24;
+    const setRate = (v, r) => { if (v.playbackRate !== r) v.playbackRate = r; };
+    const starting = new Set(), lastJump = new Map();
+    function tick(now) {
       if (!playing) return;
-      const t = master.currentTime;
+      const keeper = timekeeper();
+      const t = keeper.currentTime;
+      setRate(keeper, 1);
+      const steady = !keeper.seeking && keeper.readyState >= 3;
       for (const v of vids) {
-        if (v === master) continue;
+        if (v === keeper) continue;
         if (t >= (v.duration || Infinity) - 0.05) continue;
-        if (v.paused && !v.ended) v.play().catch(() => {});
-        const drift = v.currentTime - t;
-        if (Math.abs(drift) > 0.25) { v.currentTime = t; v.playbackRate = 1; }
-        else v.playbackRate = 1 - Math.max(-0.1, Math.min(0.1, drift * 2));
+        if (v.paused && !v.ended && !starting.has(v)) { starting.add(v); v.play().catch(() => {}).finally(() => starting.delete(v)); }
+        if (!steady || v.seeking || v.readyState < 3) continue;
+        const drift = v.currentTime - t, off = Math.abs(drift);
+        if (off > 0.5 && now - (lastJump.get(v) ?? -Infinity) >= 1000) { lastJump.set(v, now); setRate(v, 1); v.currentTime = t; }
+        else if (off > frame) setRate(v, drift > 0 ? 0.95 : 1.05);
+        else if (off < frame / 2) setRate(v, 1);
       }
       requestAnimationFrame(tick);
     }
-    vids.forEach(v => v.addEventListener('ended', () => { if (v !== master) return; if (loop) { seek(0); vids.forEach(w => w.play().catch(() => {})); } else pause(); }));
+    vids.forEach(v => v.addEventListener('ended', () => { if (v !== longest) return; if (loop) { seek(0); vids.forEach(w => w.play().catch(() => {})); } else pause(); }));
     const toggleView = () => { stage.classList.toggle('flip'); $('.view').textContent = stage.classList.contains('flip') ? 'Side by side' : 'Flip view'; };
     const toggleSize = () => {
       const native = stage.classList.toggle('native');
@@ -211,8 +228,8 @@ window.syncCompare = (() => {
     const api = {
       section: g, videos: vids, clips, play, pause, isPlaying: () => playing,
       toggle: () => (playing ? pause() : play()),
-      seekBy: dt => seek(Math.min(master.duration || 0, Math.max(0, master.currentTime + dt))),
-      seekTo: t => seek(Math.min(master.duration || 0, Math.max(0, t))),
+      seekBy: dt => seek(Math.min(longest.duration || 0, Math.max(0, timekeeper().currentTime + dt))),
+      seekTo: t => seek(Math.min(longest.duration || 0, Math.max(0, t))),
       restart: () => seek(0), setAudio: i => i < vids.length && setAudio(i), toggleView, toggleSize,
       toggleLoop: () => { loop = !loop; },
       audible: () => clips.find(c => c.classList.contains('audible')) || null,
