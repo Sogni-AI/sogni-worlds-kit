@@ -74,11 +74,20 @@ The shape of every `action`:
    For illustrated worlds, name the medium you can see instead (for example
    "Hand-painted animation, …").
 2. **The path.** Describe what physically happens, in order, in plain words: who
-   moves, what the camera does, and what it passes through.
+   moves, what the camera does, and what it passes through. Name the things it
+   passes on the way that Picture 1 or Picture 2 shows, in order, and what grows
+   larger as it nears them: that is the route the model follows from one picture to
+   the other. A route through something neither picture shows (a stair, a corridor,
+   a door) gets invented and crossfaded to (see Crossings).
 3. **The arrival.** Describe the destination the way its still actually shows it:
-   who is where, doing what, from which viewpoint. The kit then adds "The camera
-   settles into the pose, spacing and composition established by Picture 2 at the
-   end of the shot."
+   who is where, doing what, from which viewpoint. In a crossing that stays in one
+   space (the same street, room or square), anyone or anything Picture 2 shows that
+   Picture 1 lacks comes into view through the motion: the camera moves past an edge
+   or a corner the pictures show, or they walk, drive or are carried in. Say which;
+   left unsaid, they tend to fade or pop in where they stand. Between far-apart
+   places, the boundary the camera passes through does that work. The kit then adds
+   "The camera settles into the pose, spacing and composition established by
+   Picture 2 at the end of the shot."
 
 A real crossing from The Long White Cloud ("Into the sound hole", 294 frames):
 
@@ -109,6 +118,12 @@ Rules that keep the model on your side:
 - **Don't add what the pictures lack.** An object that must be used in the film has
   to be in the start picture already. A prop that appears mid-film to hide the
   change of place reads as a trick.
+- **Living people keep moving.** In a crossing, every living person and animal the
+  pictures show breathes, shifts their weight and carries on with what they are
+  doing while the camera moves, and settles into the pose Picture 2 shows as the
+  film lands. Video models often hold them frozen like a photograph until the last
+  second and then jolt them to life (Mark, 2026-10-28), so write what they are doing
+  on the way. Statues, mannequins, posters and the dead stay as they are.
 - **Plain camera words.** Push in, pull out, pan, tilt, truck, pedestal (rise or
   sink), crane, tracking shot, static shot, POV, with "slowly" or "fast" only when
   it matters.
@@ -194,17 +209,61 @@ another.
 
 A map place is a bird's-eye picture of the world (a city at night, an island, a
 floor plan) whose objects are its districts, each a crossing that dives into one.
-The dive has to land where the visitor clicked, and words can't put it there: told
-to dive into "the upper left", a film goes where it likes (measured on one city
-map, the dives missed their districts by 5% to 44% of the map). Give each such
-crossing a `pushIn` on its district (`pushIn: { at: [0.72, 0.31], zoom: 2 }`). The
-film is rendered from a crop of the map centred on that point, and build puts a
+Where the world can use Seedance, make each dive **one Seedance 2.5 film from the
+whole map to the district's own street-level still** (`model: seedance-2-5` or
+`seedance-2-5-uncensored`, 8 s = `frames: 193`): the classic drone descent from a
+bird's-eye view to eye level, with no `pushIn` and no second crossing. On Sogni Meme
+World's city map (2026-10-27 and 28), every dive built the old way, a digital push on
+the map cut or whipped into a separately rendered aerial, read as a sloppy transition:
+that map holds its detail only to about 1.5× and goes to mush past it. Its single
+fly-in from the whole map to Skid Row was judged flawless. For seven more districts,
+11 such takes were rendered: four first takes were set aside (a swoop through
+treetops, a dive through a roof hatch, a landing on another district's blocks and
+garbled lettering, all described below), and the seven kept await review (as of
+2026-10-28).
+
+Seedance needs a 16:9, 4:3, 1:1, 3:4 or 9:16 canvas and is paid in tokens at about
+nine times H3's price. A 3:2 world, or one that must stay on an Unlimited plan, keeps
+the H3 dive: words can't put an H3 dive on its district (measured on one city map,
+told to dive into "the upper left", the dives missed by 5% to 44% of the map), so give
+each such crossing a `pushIn` on its district (`pushIn: { at: [0.72, 0.31], zoom: 2 }`).
+The film is rendered from a crop of the map centred on that point, and build puts a
 frame-exact digital push-in in front of it, so the finished film starts on the whole
-map, moves onto the district in three quarters of a second and dives from there.
-Put the object's `at` beside the same point. The film's end still is the district
-from above or from a high angle; going on down to street level is a second crossing
-from there. A map place suits `order: free`, and the player's Places panel stays as
-it is.
+map, moves onto the district in three quarters of a second and dives from there. Put
+the object's `at` beside the same point. That film's end still is the district from
+above or from a high angle; going on down to street level is a second crossing from
+there. The bullets below are for the Seedance dive.
+
+- **Aim at a landmark, then follow the take.** Name something the map shows that the
+  drone can find (a pier, a hillside cemetery, the tallest spire, a freeway
+  interchange with a loop ramp) and say what grows larger and sharper as it drops. A
+  distinct landmark usually brings the flight close, but no wording pins the spot:
+  a first take aimed at "the old low blocks" landed on another district's blocks in
+  the middle of the map, a retake asked for the small upper pier and took the lower
+  coast, and Skid Row's flawless take panned off the map's bottom edge.
+- **The object goes where the film went.** Watch the take, find where the camera is
+  over the map when it leaves the map's own picture, and move the object's `at`
+  there; a fly-in that pans off the map's edge before it drops sits on that edge. Two
+  districts never share a landing: if they would, re-shoot one with a different
+  landmark.
+- **Write the last two seconds.** Say how the drone comes down to eye level: down the
+  gap between two buildings, along a lane between roofs, through open doors. Keep it
+  out of trees (one take swooped through treetops in a green smear that read as a
+  whip) and out of roofs and openings into open air (one dived into a roof hatch that
+  opened onto an outdoor plaza like a portal). Name any lettering it passes as what it
+  reads, or describe the surface as plain ("a plain polished gold canopy"): a canopy
+  the action left unnamed came out reading "FEOEOD FOOWER", and the plain one still
+  grew two small emblems with tiny unreadable text.
+- **Living people keep moving as it arrives**: mid-action, breathing, shifting their
+  weight, each ending on their pose in the still. Write that rather than "everyone
+  stays where they are", which risks a crowd frozen until the cut.
+- A take may tilt up to the skyline and fly in toward the horizon; it looks great, but
+  it redraws the city as it tilts, so its landing can't be read off the map. Keep that
+  object where the story needs it.
+
+A map place suits `order: free`, and the player's Places panel stays as it is. `pushIn`
+is for a crossing that leaves through a small part of an ordinary picture (a door
+across a room), and for a map dive that has to stay on H3.
 
 ## Loops
 

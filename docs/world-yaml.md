@@ -311,10 +311,12 @@ film:
 
 `pushIn` makes a crossing start with a frame-exact digital push-in from the whole
 still onto a crop centred on `at` (`zoom` 1.25 to 3; `frames` 6 to 48, default 18):
-the film is rendered from that crop and build puts the push-in in front of it, so a
-dive into a map lands where its district is (directing-films.md › A map, and diving
-into it). `model` is `seedance-2-5` or `seedance-2-5-uncensored`, for the shots H3
-can't carry: premium, paid in tokens even on an Unlimited plan, whole seconds
+the film is rendered from that crop and build puts the push-in in front of it. It is
+for a crossing that leaves through a small part of an ordinary picture, and for a map
+dive that stays on H3; where Seedance can be used, a dive from a map is one Seedance
+film from the whole map instead (directing-films.md › A map, and diving into it).
+`model` is `seedance-2-5` or `seedance-2-5-uncensored`, for the shots H3 can't carry:
+premium, paid in tokens even on an Unlimited plan, whole seconds
 (`frames` = seconds × 24 + 1), no keyframes, and only on a 16:9, 4:3, 1:1, 3:4 or
 9:16 canvas (directing-films.md › Seedance 2.5).
 

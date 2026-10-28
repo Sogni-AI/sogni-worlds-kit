@@ -197,8 +197,12 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 - A film H3 can't carry (people talking to each other, fast action where one thing
   causes the next) may opt into Seedance 2.5 with `model: seedance-2-5`: premium,
   not covered by Unlimited, one take per film (docs/directing-films.md › Seedance 2.5).
-  A crossing that leaves through a small part of its picture (a district on a map)
-  starts with a `pushIn` on that point.
+  Where the canvas and budget allow Seedance, a dive from a map into a district is one
+  Seedance film from the whole map to the district's street-level still, aimed at a
+  landmark the map shows, and the district then sits where the film lands
+  (docs/directing-films.md › A map, and diving into it). A crossing that leaves
+  through a small part of an ordinary picture, or a map dive that stays on H3, starts
+  with a `pushIn` on that point.
 - In a made-up world, every word serves the `plot`: each place delivers its beat,
   each clue is planted where the plot says (in a picture, a close look or a line),
   every person keeps the one name the cast gives them, and no line gives a twist away
