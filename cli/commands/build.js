@@ -31,8 +31,10 @@ export const usage = `node world build [world] [--force] [--drafts]
   --drafts  also use the newest take nobody has rejected for a film with no
             approved take yet, so the whole world can be played before every
             film is judged. The player marks such a world "Draft". Approving
-            is still done on the review page; build again without --drafts
-            for the finished world.`;
+            is still done on the review page (individually or for all takes
+            in this build). A draft cannot be submitted to the gallery.
+            Approve before hosting, then build again without --drafts for
+            the finished world. Unchanged films are not re-encoded.`;
 
 // The picture's recipe. The sound's level is kept beside it (`lufs`): a new level re-levels the
 // sound of the films already finished, in seconds, and never re-encodes a picture.
@@ -356,7 +358,7 @@ function report({ world, issues, delivery = [], missing, deadEnds, unreachable, 
     log.warn(`Not in the world yet (${missing.length}):`);
     for (const m of missing) log.info(`${m.film} — ${m.state}`);
   }
-  if (unapproved.length) log.warn(`A draft: ${unapproved.length} film${unapproved.length === 1 ? ' has' : 's have'} no approved take yet and use${unapproved.length === 1 ? 's' : ''} the newest unrejected one (${unapproved.join(', ')}). Approve on node world review ${id}, then build again without --drafts`);
+  if (unapproved.length) log.warn(`A draft: ${unapproved.length} film${unapproved.length === 1 ? ' has' : 's have'} no approved take yet and use${unapproved.length === 1 ? 's' : ''} the newest unrejected one (${unapproved.join(', ')}). A draft cannot be submitted to the gallery. Before hosting, approve individually or use "Approve this build’s takes" on node world review ${id}, then build again without --drafts. Unchanged films are not re-encoded.`);
   const endings = new Set(world.places.filter(p => p.ending).map(p => p.id));
   deadEnds = deadEnds.filter(id => !endings.has(id));
   if (deadEnds.length) log.warn(`No way on from: ${deadEnds.join(', ')}`);

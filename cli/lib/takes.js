@@ -159,7 +159,7 @@ export const nextTake = takes => (takes.at(-1)?.take ?? 0) + 1;
 export function filmState(allTakes) {
   const takes = allTakes.filter(t => !t.stale);
   if (takes.some(t => t.verdict?.verdict === 'approved')) return 'approved';
-  if (takes.some(t => t.journal.status === 'completed' && !t.verdict)) return 'unjudged';
+  if (takes.some(t => t.journal.status === 'completed' && (!t.verdict || t.verdict.verdict === 'passed'))) return 'unjudged';
   if (takes.some(t => ['submitting', 'submitted'].includes(t.journal.status))) return 'rendering';
   const latest = takes.at(-1);
   if (!latest) return 'unrendered';

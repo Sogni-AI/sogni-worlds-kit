@@ -28,7 +28,7 @@ const PRECEDENCE = ['rendering', 'failed', 'rejected', 'unrendered', 'unjudged']
  * with the films in that state. { ids, films: [{ id, state }], state, waiting }
  */
 export function canaryStatus(plan, paths, verdicts = readVerdicts(paths), notes = readNotes(paths)) {
-  const films = canaryFilms(plan).map(film => ({ id: film.id, state: filmState(listTakes(paths, film.id, verdicts, notes)) }));
+  const films = canaryFilms(plan).map(film => ({ id: film.id, state: filmState(listTakes(paths, film.id, verdicts, notes, film)) }));
   if (!films.length) return { ids: [], films, state: 'none', waiting: [] };
   const state = films.every(film => film.state === 'approved') ? 'approved' : PRECEDENCE.find(s => films.some(film => film.state === s));
   return { ids: films.map(film => film.id), films, state, waiting: films.filter(film => film.state === state).map(film => film.id) };

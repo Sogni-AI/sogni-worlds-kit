@@ -66,7 +66,7 @@ export function gather(id) {
     if (rejected) feedback.push({ film: film.id, take: rejected.take, verdict: rejected.verdict.note ?? '', notes: rejected.notes.filter(n => n.by !== 'agent') });
     for (const take of list) {
       if (take.journal.status === 'completed') finishedTakes += 1;
-      if (take.stale || take.journal.status !== 'completed' || take.verdict) continue;
+      if (take.stale || take.journal.status !== 'completed' || (take.verdict && (state === 'approved' || take.verdict.verdict !== 'passed'))) continue;
       unjudged.push(`${film.id} take ${take.take}`);
       if (!take.screen) unscreened.push(`${film.id} take ${take.take}`);
       else if (!take.notes.some(n => n.by === 'agent')) unlooked.push({ film: film.id, take: take.take });

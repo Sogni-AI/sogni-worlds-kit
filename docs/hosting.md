@@ -29,6 +29,19 @@ narration not spoken yet) and any place you cannot leave or cannot reach. A
 visitor only ever sees what you approved. It also checks every file the world
 serves against the web formats below and writes no `world.json` if one is off.
 
+For a whole-world review, build with `--drafts` and play every path first. Then
+open `node world review`: **Approve this build’s takes** lists the exact takes
+in that playable version and asks you to confirm that you approve them all.
+Per-take review stays available. Refresh the page to see new renders or changed
+pictures; the server does not need restarting. A passed take appears again if
+its film has no current approved take.
+
+Before hosting the finished version, build again **without `--drafts`**, then
+export. Unchanged films are not re-encoded. A draft export shows visitors a
+Draft badge and cannot be submitted to the gallery; exporting does not approve
+its films or remove that badge. If you already hosted the draft, update the
+hosted files after approval and export.
+
 ## 2. Export
 
 ```bash
@@ -111,8 +124,12 @@ Any one of these works. Each gives you a public link to share.
 
 ### Cloudflare Pages
 
-The recommended free option. It runs on Cloudflare's free plan and serves
-byte-range requests, so films seek and start fast.
+The recommended free option. It runs on Cloudflare's free plan. As of
+2026-10, [Cloudflare Pages returns HTTP 200 for byte-range requests](https://developers.cloudflare.com/pages/configuration/serving-pages/#caching-and-performance),
+so seeking may be limited to the part already downloaded. The player's Skip
+lands directly when the end cannot be reached yet; normal playback streams
+from the start. For byte-range seeking across a film before it finishes
+downloading, host the films on a service that returns HTTP 206 Partial Content.
 
 1. Make a free Cloudflare account at
    [dash.cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up) if you

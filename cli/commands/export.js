@@ -158,6 +158,7 @@ export async function exportWorld({ paths, out, url = null }) {
   const data = readJson(worldFile);
   const issues = validateWorld(data);
   if (issues.length) throw new Error(`build/world.json is not valid: ${issues[0]}. Run: node world build ${paths.id}`);
+  if (data.draft) log.warn(`Exporting a draft: visitors will see "Draft", and it cannot be submitted to the gallery. Before hosting, approve its takes on node world review ${paths.id} ("Approve this build’s takes" approves the version you played), then build without --drafts and export again. Unchanged films are not re-encoded.`);
   assertSafeOut(out);
   // Nothing outside the web formats goes online: checked before the folder is touched.
   const { issues: delivery, remote } = await deliveryIssues(data, paths.build);

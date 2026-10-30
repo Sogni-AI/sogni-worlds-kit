@@ -14,6 +14,9 @@
 //  4. panel     Arriving does not fetch the Places panel's pictures while it
 //               is closed (found while checking 1 and 2: The Dream Thread
 //               fetched all 23, 35 MB, at its second arrival).
+//  5. skip-no-range / reveal-no-range: a partly downloaded crossing or close
+//               look can be skipped when the host returns HTTP 200 to Range.
+//  6. review-build: bulk approval confirms the exact built takes; Cancel saves nothing.
 //
 //   npm run check:player                 builds the player and runs every check
 //   node test/player-playback.mjs --player <dir> [--only join,pause]
@@ -22,7 +25,7 @@
 // headless Chrome over the DevTools protocol with Node's own WebSocket, so the
 // kit needs no browser package. Not part of `npm test`: it needs a browser.
 import { spawn } from 'node:child_process';
-import { createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { delimiter, extname, join, resolve, sep } from 'node:path';
@@ -31,6 +34,10 @@ import sharp from 'sharp';
 import { ffmpeg } from '../cli/lib/media.js';
 import { runVite } from '../cli/lib/player.js';
 import { validateWorld } from '../cli/lib/worldjson.js';
+import { startReviewServer } from '../cli/commands/review.js';
+import { readVerdicts } from '../cli/lib/takes.js';
+import { sha256File, writeJson } from '../cli/lib/files.js';
+import { pathsAt } from './helpers.js';
 
 const { values } = parseArgs({ options: { player: { type: 'string' }, only: { type: 'string' }, keep: { type: 'boolean' } } });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -178,7 +185,10 @@ async function openPage(devtools, { throttle = null } = {}) {
       const buttons = [...document.querySelectorAll('button')].filter(b => !b.hidden && b.offsetParent !== null).map(b => b.textContent.trim());
       return { begun: !document.querySelector('section.begin'), inFilm: Boolean(app?.classList.contains('in-film')),
         hotspots: Boolean(document.querySelector('.hotspots:not([hidden]) .hotspot')), place: document.querySelector('.where .place')?.textContent ?? null,
-        film: film ? { t: film.currentTime, paused: film.paused, ended: film.ended } : null, buttons, check: window.__check };
+        film: film ? { t: film.currentTime, duration: film.duration, paused: film.paused, ended: film.ended,
+          bufferedEnd: film.buffered.length ? film.buffered.end(film.buffered.length - 1) : 0 } : null,
+        holding: Boolean(app?.classList.contains('holding')), still: document.querySelector('.frame img.still')?.getAttribute('src'),
+        text: app?.textContent, buttons, check: window.__check };
     })()`),
     click: text => evaluate(`(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim() === ${JSON.stringify(text)} && !x.hidden); if (!b) return false; b.click(); return true; })()`),
     spot: label => evaluate(`(() => { const b = [...document.querySelectorAll('.hotspot .label')].find(x => x.querySelector('.action')?.textContent === ${JSON.stringify(label)}); if (!b) return false; b.click(); return true; })()`),
@@ -226,7 +236,9 @@ async function makeWorld(dir) {
     format: 'sogni-world@1', id: 'player-check', title: 'Player check', aspect: { width: W, height: H }, start: 'yard', order: null, music: null,
     places: [
       { id: 'yard', title: 'Yard', still: 'stills/yard.png', loop: { src: 'films/yard-loop.mp4' },
-        hotspots: [spot('door', 'Into the hall', 'hall', 'yard-hall', [0.3, 0.5]), spot('ladder', 'Up the ladder', 'roof', 'yard-roof', [0.7, 0.5])] },
+        hotspots: [spot('door', 'Into the hall', 'hall', 'yard-hall', [0.3, 0.5]), spot('ladder', 'Up the ladder', 'roof', 'yard-roof', [0.7, 0.5]),
+          { ...spot('clue', 'Look at the clue', null, 'yard-roof', [0.5, 0.5]), reveal: { still: 'stills/hall.png',
+            back: { src: 'films/yard-hall.mp4' }, narration: { lines: [{ text: 'The clue is here.' }] }, done: 'Put it down' } }] },
       { id: 'hall', title: 'Hall', still: 'stills/hall.png', hotspots: [spot('stairs', 'Up the stairs', 'roof', 'hall-roof', [0.5, 0.5])] },
       { id: 'roof', title: 'Roof', still: 'stills/roof.png', loop: { src: 'films/roof-loop.mp4' }, hotspots: [spot('down', 'Back down', 'yard', 'roof-yard', [0.5, 0.5])] },
     ],
@@ -240,15 +252,17 @@ async function makeWorld(dir) {
 function serve(playerDir, worldDir) {
   const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.mp4': 'video/mp4', '.png': 'image/png', '.svg': 'image/svg+xml' };
   const server = createServer((req, res) => {
-    const path = decodeURIComponent((req.url ?? '/').split('?')[0]);
+    let path = decodeURIComponent((req.url ?? '/').split('?')[0]);
+    const noRanges = path.startsWith('/no-range/');
+    if (noRanges) path = path.slice('/no-range'.length);
     const [base, rel] = path.startsWith('/world/') ? [worldDir, path.slice(7)] : [playerDir, path.slice(1) || 'index.html'];
     const file = resolve(base, rel);
     if (!file.startsWith(resolve(base) + sep) || !existsSync(file) || !statSync(file).isFile()) { res.statusCode = 404; return res.end(); }
     const size = statSync(file).size;
     res.setHeader('Content-Type', TYPES[extname(file)] ?? 'application/octet-stream');
-    res.setHeader('Accept-Ranges', 'bytes');
+    if (!noRanges) res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'no-cache');
-    const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
+    const range = noRanges ? null : /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
     let start = 0, end = size - 1;
     if (range) {
       start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
@@ -276,6 +290,93 @@ async function begin(page, url) {
 }
 
 const CHECKS = {
+  /** The creator may cancel bulk approval; confirming approves only the build's selected take. */
+  async 'review-build'(devtools) {
+    const paths = pathsAt(join(root, 'review-world'));
+    const plan = { title: 'Review browser check', places: [{ id: 'a', loop: {}, objects: [] }] };
+    mkdirSync(join(paths.renders, 'a-loop'), { recursive: true });
+    const shas = [];
+    for (const [index, name] of ['yard-loop', 'yard-hall'].entries()) {
+      const n = index + 1;
+      const file = join(paths.renders, 'a-loop', `take-${n}.mp4`);
+      copyFileSync(join(root, 'world', 'films', `${name}.mp4`), file);
+      const sha = sha256File(file);
+      shas.push(sha);
+      writeJson(join(paths.renders, 'a-loop', `take-${n}.json`), { status: 'completed', sha256: sha });
+    }
+    writeJson(join(paths.build, 'world.json'), { draft: true, places: [{ id: 'a', loop: { src: 'films/a-loop.mp4' }, hotspots: [] }] });
+    writeJson(join(paths.build, '.manifest.json'), { 'films/a-loop.mp4': { source: shas[0] } });
+    const server = await startReviewServer({ plan, paths, title: plan.title, port: 0 });
+    const page = await openPage(devtools);
+    let accept = false, prompts = 0;
+    const stop = devtools.on(message => {
+      if (message.method !== 'Page.javascriptDialogOpening') return;
+      prompts++;
+      void devtools.send('Page.handleJavaScriptDialog', { accept }, message.sessionId);
+    });
+    try {
+      await page.open(`http://127.0.0.1:${server.address().port}/`);
+      await page.click('Approve this build’s takes');
+      if (prompts !== 1 || Object.keys(readVerdicts(paths)).length) return { ok: false, detail: 'cancel changed verdicts or did not ask for confirmation' };
+      accept = true;
+      await page.click('Approve this build’s takes');
+      for (let i = 0; i < 50 && !readVerdicts(paths)[shas[0]]; i++) await sleep(100);
+      const verdicts = readVerdicts(paths);
+      const remaining = await page.evaluate(`document.querySelector('#count').textContent`);
+      const ok = prompts === 2 && verdicts[shas[0]]?.verdict === 'approved' && !verdicts[shas[1]] && remaining === '1 take awaits you';
+      return { ok, detail: ok ? 'Cancel saved nothing; Confirm approved the built take and left the newer take waiting' : JSON.stringify({ prompts, verdicts, remaining }) };
+    } finally {
+      stop();
+      await page.close();
+      await new Promise(done => server.close(done));
+    }
+  },
+
+  /** A host that ignores Range cannot strand a visitor in a partly downloaded film. */
+  async 'skip-no-range'(devtools, url) {
+    const page = await openPage(devtools, { throttle: 12 });
+    try {
+      const hosted = new URL(url);
+      const world = new URL(hosted.searchParams.get('world'));
+      world.pathname = '/no-range' + world.pathname;
+      hosted.searchParams.set('world', world.href);
+      await begin(page, hosted.href);
+      await page.spot('Up the ladder');
+      const playing = await until(page, s => s.film && s.film.t > 0.6, 30_000, 'the unbuffered crossing');
+      if (playing.film.bufferedEnd >= playing.film.duration - 0.05) return { ok: false, detail: 'the crossing fully downloaded; the no-range path was not exercised' };
+      await page.click('Skip ›');
+      await until(page, s => atRest(s) && s.place === 'Roof', 3000, 'Skip to land without downloading the end');
+      await page.click('← Back');
+      await until(page, s => s.inFilm, 3000, 'Back from the landing');
+      await sleep(700);
+      await page.click('Skip ›');
+      await until(page, s => atRest(s) && s.place === 'Yard', 10_000, 'Back to the yard');
+      return { ok: true, detail: '960×540, 8 s crossing at 1.5 MB/s, HTTP 200: Skip landed within 3 s and Back returned to the yard' };
+    } finally { await page.close(); }
+  },
+
+  /** Skipping an unbuffered close look shows its still, its clue and its Done button. */
+  async 'reveal-no-range'(devtools, url) {
+    const page = await openPage(devtools, { throttle: 12 });
+    try {
+      const hosted = new URL(url);
+      const world = new URL(hosted.searchParams.get('world'));
+      world.pathname = '/no-range' + world.pathname;
+      hosted.searchParams.set('world', world.href);
+      await begin(page, hosted.href);
+      await page.spot('Look at the clue');
+      const playing = await until(page, s => s.film && s.film.t > 0.6, 30_000, 'the unbuffered close look');
+      if (playing.film.bufferedEnd >= playing.film.duration - 0.05) return { ok: false, detail: 'the close look fully downloaded; the no-range path was not exercised' };
+      await page.click('Skip ›');
+      const held = await until(page, s => s.holding && s.buttons.includes('Put it down') && s.text.includes('The clue is here.'), 3000, 'the close look and its line to hold');
+      const ok = !held.film && held.still.endsWith('/stills/hall.png') && held.text.includes('The clue is here.');
+      if (!ok) return { ok: false, detail: 'the close look held a mid-film frame or lost its still, line or Done button: ' + JSON.stringify(held) };
+      await page.click('Put it down');
+      await until(page, atRest, 20_000, 'the close look to return');
+      return { ok: true, detail: '960×540, 8 s close look at 1.5 MB/s, HTTP 200: Skip showed its still, clue and Done; Done returned to the yard' };
+    } finally { await page.close(); }
+  },
+
   /** A film landing on a place with no loop hands over only to a still that can be drawn. */
   async join(devtools, url) {
     const page = await openPage(devtools, { throttle: 5 });

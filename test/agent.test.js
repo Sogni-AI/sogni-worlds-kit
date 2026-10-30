@@ -1,15 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { checkShape, extractJson, grammarOf } from '../cli/lib/llm.js';
 import { placeProblems, routesFor } from '../cli/agent/write.js';
 import { buildWorld } from '../cli/commands/build.js';
+import { approveBuild, currentBuildTakes } from '../cli/commands/review.js';
+import { submissionUrl } from '../cli/commands/submit.js';
 import { writeJson, sha256File } from '../cli/lib/files.js';
 import { recordVerdict } from '../cli/lib/takes.js';
 import { lintPlan } from '../cli/lib/lint.js';
-import { validateWorld, FORMAT } from '../cli/lib/worldjson.js';
+import { validateWorld, mediaRefs, FORMAT } from '../cli/lib/worldjson.js';
 import { tempDir, pathsAt, syntheticVideo } from './helpers.js';
 
 const quiet = { step() {}, ok() {}, warn() {}, info() {}, fail() {}, title() {}, next() {}, dim() {} };
@@ -157,4 +159,15 @@ test('build --drafts plays unjudged takes, never rejected ones, and marks the wo
   assert.equal(toy.collect, true);
   assert.ok(result.unapproved.includes('a-door take 1'), 'the rejected take 2 is never used; take 1 is');
   assert.deepEqual(result.deadEnds, ['end'], 'buildWorld still lists it; the report leaves endings out');
+
+  assert.throws(() => submissionUrl(world, 'https://example.com/world/'), /draft/);
+  const films = mediaRefs(world).filter(ref => ref.endsWith('.mp4'));
+  const before = films.map(ref => ({ sha: sha256File(join(paths.build, ref)), mtime: statSync(join(paths.build, ref)).mtimeMs }));
+  const snapshot = currentBuildTakes(plan, paths);
+  assert.equal(snapshot.takes.length, 3, 'generated rewinds are not separate takes to approve');
+  assert.equal(approveBuild(plan, paths, { ...snapshot, confirmed: true }), null);
+  const finished = await buildWorld({ paths, plan, say: quiet });
+  assert.equal(finished.world.draft, undefined, 'approval and a cached rebuild remove the draft badge');
+  assert.deepEqual(films.map(ref => ({ sha: sha256File(join(paths.build, ref)), mtime: statSync(join(paths.build, ref)).mtimeMs })), before, 'approval never re-encodes unchanged films');
+  assert.doesNotThrow(() => submissionUrl(finished.world, 'https://example.com/world/'), 'the approved build can be submitted');
 });

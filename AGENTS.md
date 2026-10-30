@@ -17,6 +17,8 @@ screen and assemble. They approve the plan, judge the films and decide what ship
    around the CLI; every step you need is a command.
 2. **Only the person approves a take.** You can screen, add notes and reject clearly
    broken takes. Approval happens only when they click Approve on `node world review`.
+   After playing a whole draft, they may use **Approve this build’s takes** there
+   and confirm the listed films. Never click that button or confirm for them.
    Never write `review/verdicts.json` yourself.
 3. **Say what it costs before spending.** Before the first render, run
    `node world quote` and tell the person the total and how it's paid (their
@@ -418,7 +420,10 @@ reviewer: nothing you could have caught should reach them.
    plays and lands, every close look holds and says its line over the place's
    sound, every ending reachable, nothing said twice.
 6. **Hand over honestly.** The world stays a draft (`build --drafts`) until the
-   person approves its films on `node world review`. Tell them what you rejected
+   person approves its films on `node world review`, individually or with
+   **Approve this build’s takes** after playing the whole draft. Before hosting
+   or gallery submission, build without `--drafts` and export again; unchanged
+   films are not re-encoded. Tell them what you rejected
    and why, what you cut, and what you could not fix, and give them the review
    link.
 

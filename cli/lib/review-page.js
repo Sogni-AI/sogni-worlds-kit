@@ -3,8 +3,8 @@
 // each take; judged takes disappear. Served by `node world review`.
 
 /** The page for a set of films awaiting verdicts. Everything renders client-side from DATA. */
-export function reviewPage({ title, token, films }) {
-  const data = JSON.stringify({ title, token, films }).replace(/</g, '\\u003c');
+export function reviewPage({ title, token, films, build = null }) {
+  const data = JSON.stringify({ title, token, films, build }).replace(/</g, '\\u003c');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -20,6 +20,8 @@ export function reviewPage({ title, token, films }) {
   <kbd>A</kbd> approve · <kbd>R</kbd> reject · <kbd>S</kbd> seen, not chosen — on the take you are hearing ·
   <kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> seek · <kbd>1</kbd>–<kbd>9</kbd> choose whose sound plays ·
   <kbd>M</kbd> mark an area on the frame you are watching (drag a box, say what you mean) · tap a start or end picture to mark it</p>
+  <p class="how">New renders or changed pictures? <a href="/">Refresh the take list</a>.</p>
+  <div id="build-review" hidden></div>
 </header>
 <main id="films"></main>
 <div id="marker" hidden><div class="mk-panel">
@@ -46,6 +48,10 @@ body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 -ap
 header { padding: 16px 20px 4px; }
 h1 { margin: 0; font-size: 20px; } h1 small { color: var(--dim); font-weight: 400; margin-left: 8px; }
 .how { color: var(--dim); font-size: 13px; margin: 6px 0 0; }
+.how a { color: var(--accent); }
+#build-review { margin: 14px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+#build-review button { font: inherit; background: var(--good); color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+#build-review button:disabled { opacity: .5; cursor: wait; }
 kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--text); }
 main { padding: 0 20px 40px; }
 #done { padding: 40px 20px; font-size: 18px; } code { background: var(--panel); padding: 2px 6px; border-radius: 4px; }
@@ -274,6 +280,41 @@ const PAGE = `
   const main = document.getElementById('films');
   const films = DATA.films;
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const buildReview = document.getElementById('build-review');
+  if (DATA.build && (DATA.build.error || DATA.build.pending)) {
+    buildReview.hidden = false;
+    if (DATA.build.error) buildReview.textContent = DATA.build.error;
+    else {
+      const build = DATA.build;
+      buildReview.innerHTML = '<p>Played the whole draft? Approve the exact takes in its current build (' + build.takes.length + ' films, ' + build.pending + ' awaiting approval).</p>'
+        + '<details><summary>Takes in this build</summary><p>' + build.takes.map(t => esc(t.film) + ' · take ' + t.take).join('<br>') + '</p></details>'
+        + '<p><button type="button">Approve this build’s takes</button></p><p class="result" role="status"></p>';
+      const button = buildReview.querySelector('button');
+      button.addEventListener('click', async () => {
+        if (!confirm('I have played this world and approve all ' + build.takes.length + ' films in this build (' + build.pending + ' awaiting approval). Save these verdicts?')) return;
+        button.disabled = true;
+        const result = buildReview.querySelector('.result');
+        try {
+          const response = await fetch('/approve-build', { method: 'POST', headers: { 'content-type': 'application/json', 'x-review-token': DATA.token }, body: JSON.stringify({ worldSha: build.worldSha, takes: build.takes, confirmed: true }) });
+          result.textContent = await response.text();
+          if (!response.ok) { button.disabled = false; return; }
+          button.textContent = 'Build’s takes approved';
+          for (const film of [...films]) {
+            const chosen = build.takes.find(t => t.film === film.id);
+            if (!chosen) continue;
+            const take = film.takes.find(t => t.sha === chosen.sha);
+            if (take) film.ref = { take: take.take, url: take.url };
+            film.takes = film.takes.filter(t => t.sha !== chosen.sha);
+            const section = [...main.children].find(s => s.dataset.film === film.id);
+            window.syncCompare.drop(section);
+            if (film.takes.length) { const fresh = render(film); section.replaceWith(fresh); window.syncCompare.add(fresh); }
+            else { section.remove(); films.splice(films.indexOf(film), 1); }
+          }
+          updateCount();
+        } catch (error) { result.textContent = 'Could not save: ' + error.message; button.disabled = false; }
+      });
+    }
+  }
   const awaiting = () => films.reduce((n, f) => n + f.takes.length, 0);
   function updateCount() {
     const n = awaiting();
@@ -438,8 +479,10 @@ const PAGE = `
       fig.querySelector('.meta').textContent = 'Could not save: ' + (await response.text());
       return;
     }
-    // Approving one take settles the film: its other takes are marked seen.
-    film.takes = verdict === 'approved' ? [] : film.takes.filter(t => t.sha !== sha);
+    // A newer take may have arrived since this page opened. Keep it waiting.
+    const chosen = film.takes.find(t => t.sha === sha);
+    if (verdict === 'approved') film.ref = { take: chosen.take, url: chosen.url };
+    film.takes = film.takes.filter(t => verdict === 'approved' ? t.take > chosen.take : t.sha !== sha);
     const wasPlaying = window.syncCompare.groups.some(api => api.section === section && api.isPlaying());
     window.syncCompare.drop(section);
     if (film.takes.length) {

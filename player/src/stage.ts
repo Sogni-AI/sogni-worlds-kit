@@ -142,11 +142,11 @@ export class Stage {
    * moves behind a figure being turned over or a line being said.
    */
   async playToHold(film: Film, still: string) {
-    await this.roll(film);
+    const ended = await this.roll(film);
     this.setStill({ still });
     // Held on the film's last frame; if it never played, on the close look's own picture.
     this.deck.stop();
-    if (this.film.classList.contains('on')) this.follow(this.film);
+    if (ended && this.film.classList.contains('on')) this.follow(this.film);
     else {
       this.hideFilm(); // a landed film still waiting for its place's still
       this.follow(null);
@@ -191,17 +191,28 @@ export class Stage {
       const resumed = () => this.onInterrupted?.(false);
       video.addEventListener('pause', paused);
       video.addEventListener('playing', resumed);
-      await Promise.race([this.untilEnded(), abandoned]);
+      const ending = new AbortController();
+      await Promise.race([this.untilEnded(video, ending.signal), abandoned]);
+      ending.abort();
       video.removeEventListener('pause', paused);
       video.removeEventListener('playing', resumed);
       this.onInterrupted?.(false);
-    } else release(video); // and stop fetching it: the place it was skipped to needs the connection
+    }
+    if (given) {
+      video.classList.remove('on');
+      release(video); // stop fetching it: the landing needs the connection
+      if (this.following === video) {
+        this.follow(null);
+        release(this.backdropVideo);
+      }
+    }
     this.abandon = undefined;
     stop();
     video.removeEventListener('progress', loaded);
     video.classList.remove('stalled');
     this.onStall?.(false, null);
     this.playing = null;
+    return !given && video.ended;
   }
 
   /**
@@ -224,16 +235,16 @@ export class Stage {
    * connection is retried once from where it was; only a second failure
    * ends the film where it is, so a broken file never strands the visitor.
    */
-  private async untilEnded() {
+  private async untilEnded(video: HTMLVideoElement, signal: AbortSignal) {
     let retried = false;
     for (;;) {
-      await whenEnded(this.film);
-      if (this.film.ended || retried || !this.film.error) return;
+      await whenEnded(video, signal);
+      if (signal.aborted || video.ended || retried || !video.error) return;
       retried = true;
-      const at = this.film.currentTime;
-      this.film.load();
-      this.film.currentTime = at;
-      void playWithSound(this.film);
+      const at = video.currentTime;
+      video.load();
+      video.currentTime = at;
+      void playWithSound(video);
     }
   }
 
@@ -245,10 +256,18 @@ export class Stage {
    */
   skip() {
     if (!this.playing) return;
-    if (Number.isFinite(this.film.duration)) {
-      this.film.currentTime = Math.max(0, this.film.duration - 0.05);
+    const video = this.film;
+    const end = video.duration - 0.05;
+    const contains = (ranges: TimeRanges) => {
+      for (let i = 0; i < ranges.length; i++) if (ranges.start(i) <= end && end <= ranges.end(i)) return true;
+      return false;
+    };
+    // Hosts without byte ranges cannot seek beyond what has arrived. Land
+    // directly instead of leaving Skip waiting for the rest of the download.
+    if (Number.isFinite(end) && end >= 0 && (contains(video.seekable) || contains(video.buffered))) {
+      video.currentTime = end;
       // Paused from outside, it would sit just short of its end: Skip plays it there.
-      if (this.film.paused) void playWithSound(this.film);
+      if (video.paused) void playWithSound(video);
     } else this.abandon?.();
   }
 

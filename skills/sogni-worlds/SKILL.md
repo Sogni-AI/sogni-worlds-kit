@@ -2,7 +2,7 @@
 name: sogni-worlds
 description: Build a Sogni World — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a Sogni World to the public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
 metadata:
-  version: "0.3.1"
+  version: "0.3.2"
   homepage: https://github.com/Sogni-AI/sogni-worlds-kit
   openclaw:
     emoji: "🌍"
@@ -46,6 +46,9 @@ pipeline, a player and the full instructions.
 Rules that matter even before you open AGENTS.md:
 
 - Only the person approves films (`node world review`); you may reject broken ones.
+  After playing a whole draft, they can confirm **Approve this build’s takes**
+  on that page. Never confirm for them. Then build without `--drafts` and export
+  before hosting or submitting; drafts keep their badge and cannot be submitted.
 - Quote before spending (`node world quote`), and render the canary before the rest.
 - Never edit a still or use a video frame as one.
 - Look at every picture at full size before writing about it.

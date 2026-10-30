@@ -46,16 +46,18 @@ export function release(video: HTMLVideoElement) {
  * Resolve when the video reaches its last frame (it stays on screen, paused
  * there), or fails to load, so a broken file never strands the visitor.
  */
-export function whenEnded(video: HTMLVideoElement): Promise<void> {
+export function whenEnded(video: HTMLVideoElement, signal?: AbortSignal): Promise<void> {
   return new Promise(resolve => {
-    if (video.ended) return resolve();
+    if (video.ended || signal?.aborted) return resolve();
     const done = () => {
       video.removeEventListener('ended', done);
       video.removeEventListener('error', done);
+      signal?.removeEventListener('abort', done);
       resolve();
     };
     video.addEventListener('ended', done);
     video.addEventListener('error', done);
+    signal?.addEventListener('abort', done, { once: true });
   });
 }
 

@@ -11,6 +11,8 @@ import { addNote, addStillNote, listTakes, marksDir, normalBox, recordVerdict, r
 import { ffmpeg } from '../lib/media.js';
 import { shown } from '../lib/paths.js';
 import { reviewPage } from '../lib/review-page.js';
+import { readJson, sha256File } from '../lib/files.js';
+import { mediaRefs } from '../lib/worldjson.js';
 import { nextStep } from './status.js';
 
 export const summary = 'Open your review page: approve, reject or pass each new take';
@@ -21,6 +23,12 @@ export const usage = `node world review [world] [--port 4700]
   is the one you hear. Approve the one you want; reject with a note saying what
   to change; "Seen" for a take that is fine but not the one. Verdicts are saved
   to review/verdicts.json, pinned to each file's SHA-256.
+
+  Played the whole draft? "Approve this build’s takes" lists and, after your
+  confirmation, approves the exact takes used by build/world.json. It never
+  chooses a newer retake for you. Then build without --drafts and export before
+  hosting or submitting. Unchanged films are not re-encoded. Refresh the page
+  to see newly rendered takes and changes to the plan; no server restart needed.
 
   "Mark an area" on a take (or on a film's start or end picture) pauses it, lets
   you drag a box over what you mean and type a note: "smoke from this house".
@@ -36,13 +44,13 @@ export async function run(argv) {
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
   const first = awaitingFilms(plan, paths);
-  if (!first.length) {
+  if (!first.length && !currentBuildTakes(plan, paths)?.pending) {
     log.ok('Nothing is waiting for your verdict.');
     log.next(nextStep(id));
     return 0;
   }
   const port = Number(values.port);
-  const server = await startReviewServer({ plan, paths, port, title: plan.title || id });
+  const server = await startReviewServer({ plan, paths, port, title: plan.title || id, loadPlan: () => readPlan(id).plan });
   const count = first.reduce((n, film) => n + film.takes.length, 0);
   log.ok(`${count} take(s) of ${first.length} film(s) await you.`);
   log.info(`Open http://127.0.0.1:${port}/`);
@@ -53,9 +61,9 @@ export async function run(argv) {
 }
 
 /** Serve the review page for one world on 127.0.0.1. Resolves once listening. */
-export async function startReviewServer({ plan, paths, port = 4700, title }) {
+export async function startReviewServer({ plan, paths, port = 4700, title, loadPlan = () => plan }) {
   const token = randomBytes(16).toString('hex');
-  const server = createServer((request, response) => handle(request, response, { plan, paths, token, title })
+  const server = createServer((request, response) => handle(request, response, { loadPlan, paths, token, title })
     .catch(error => { response.writeHead(500, { 'content-type': 'text/plain' }); response.end(String(error.message)); }));
   await new Promise((done, fail) => { server.once('error', fail); server.listen(port, '127.0.0.1', done); });
   return server;
@@ -64,8 +72,10 @@ export async function startReviewServer({ plan, paths, port = 4700, title }) {
 async function handle(request, response, context) {
   const url = new URL(request.url, 'http://127.0.0.1');
   if (request.method === 'GET' && url.pathname === '/') {
-    const films = awaitingFilms(context.plan, context.paths);
-    const html = reviewPage({ title: context.title, token: context.token, films });
+    const plan = context.loadPlan();
+    const films = awaitingFilms(plan, context.paths);
+    const build = currentBuildTakes(plan, context.paths);
+    const html = reviewPage({ title: plan.title || context.title, token: context.token, films, build });
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
     response.end(html);
     return;
@@ -74,15 +84,23 @@ async function handle(request, response, context) {
   if (request.method === 'POST' && url.pathname === '/verdict') {
     if (request.headers['x-review-token'] !== context.token) { response.writeHead(403); response.end('This page is out of date; reload it.'); return; }
     const body = JSON.parse(await readBody(request));
-    const message = applyVerdict(context.plan, context.paths, body);
+    const message = applyVerdict(context.loadPlan(), context.paths, body);
     response.writeHead(message ? 400 : 200, { 'content-type': 'text/plain' });
     response.end(message ?? 'ok');
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/approve-build') {
+    if (request.headers['x-review-token'] !== context.token) { response.writeHead(403); response.end('This page is out of date; reload it.'); return; }
+    const body = JSON.parse(await readBody(request));
+    const message = approveBuild(context.loadPlan(), context.paths, body);
+    response.writeHead(message ? 400 : 200, { 'content-type': 'text/plain' });
+    response.end(message ?? 'Approved. Build again without --drafts, then export and update your host. Unchanged films are not re-encoded.');
     return;
   }
   if (request.method === 'POST' && url.pathname === '/mark') {
     if (request.headers['x-review-token'] !== context.token) { response.writeHead(403); response.end('This page is out of date; reload it.'); return; }
     const body = JSON.parse(await readBody(request));
-    const result = await applyMark(context.plan, context.paths, body);
+    const result = await applyMark(context.loadPlan(), context.paths, body);
     if (typeof result === 'string') { response.writeHead(400, { 'content-type': 'text/plain' }); response.end(result); return; }
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(JSON.stringify(result));
@@ -91,20 +109,71 @@ async function handle(request, response, context) {
   response.writeHead(404); response.end('Not found');
 }
 
-/** Record a person's verdict; approving one take marks the film's other waiting takes as seen. */
+/** Approving a take settles only older waiting takes that still fit the film. */
 export function applyVerdict(plan, paths, { sha, verdict, note }) {
   if (!VERDICTS.includes(verdict)) return `Unknown verdict "${verdict}"`;
   const film = filmsOf(plan).find(f => listTakes(paths, f.id).some(t => t.sha === sha));
   if (!film) return 'That take is not in this world';
-  const takes = listTakes(paths, film.id);
+  const takes = listTakes(paths, film.id, undefined, undefined, film);
   const take = takes.find(t => t.sha === sha);
+  if (verdict === 'approved' && take.stale) return 'The pictures for this take have changed. Reload the page and review a current take.';
   recordVerdict(paths, sha, { film: film.id, take: take.take, verdict, note: String(note ?? '').slice(0, 2000), by: 'you' });
   if (verdict === 'approved') {
     for (const other of takes) {
-      if (other.sha !== sha && other.journal.status === 'completed' && other.sha && !other.verdict) {
+      if (other.take < take.take && !other.stale && other.journal.status === 'completed' && other.sha && !other.verdict) {
         recordVerdict(paths, other.sha, { film: film.id, take: other.take, verdict: 'passed', note: `Take ${take.take} was approved`, by: 'you' });
       }
     }
+  }
+  return null;
+}
+
+/** Exact source takes used by the playable build, including older draft builds. */
+export function currentBuildTakes(plan, paths) {
+  const file = join(paths.build, 'world.json');
+  if (!existsSync(file)) return null;
+  const world = readJson(file);
+  const refs = new Set(mediaRefs(world));
+  const manifest = readJson(join(paths.build, '.manifest.json'), {});
+  const selected = [];
+  for (const film of filmsOf(plan)) {
+    const ref = `films/${film.id}.mp4`;
+    if (!refs.has(ref)) continue;
+    const source = manifest[ref]?.source?.split('+')[0];
+    const take = listTakes(paths, film.id, undefined, undefined, film).find(t => t.sha === source);
+    if (!take || take.stale || take.journal.status !== 'completed' || take.verdict?.verdict === 'rejected' || !existsSync(take.files.video)) {
+      return { error: `${film.id} has changed or is no longer available. Rebuild the draft before approving it.` };
+    }
+    selected.push({ film: film.id, take: take.take, sha: take.sha });
+  }
+  if (!selected.length) return null;
+  // A changed plan must not silently approve just the subset it still names.
+  const planned = new Set(filmsOf(plan).map(f => `films/${f.id}.mp4`));
+  const generated = new Set();
+  for (const place of world.places ?? []) for (const spot of place.hotspots ?? []) {
+    if (spot.rewind?.src) generated.add(spot.rewind.src);
+    if (spot.reveal?.back?.src && !planned.has(spot.reveal.back.src)) generated.add(spot.reveal.back.src);
+  }
+  const untracked = [...refs].find(ref => ref.startsWith('films/') && ref.endsWith('.mp4') && !ref.endsWith('-720.mp4') && !planned.has(ref) && !generated.has(ref));
+  if (untracked) return { error: 'The build contains films no longer in the plan. Rebuild the draft before approving it.' };
+  const verdicts = readVerdicts(paths);
+  return { worldSha: sha256File(file), takes: selected, pending: selected.filter(t => verdicts[t.sha]?.verdict !== 'approved').length };
+}
+
+/** A person's explicit confirmation approves only the build snapshot they were shown. */
+export function approveBuild(plan, paths, snapshot) {
+  const current = currentBuildTakes(plan, paths);
+  if (!current || current.error) return current?.error ?? 'Build a playable draft first.';
+  if (snapshot?.confirmed !== true || snapshot.worldSha !== current.worldSha || JSON.stringify(snapshot.takes) !== JSON.stringify(current.takes)) {
+    return 'The build has changed or was not confirmed. Reload the page and confirm its takes again.';
+  }
+  // Validate every source before writing any verdict; a replaced file cannot inherit approval.
+  for (const entry of current.takes) {
+    const take = listTakes(paths, entry.film).find(t => t.sha === entry.sha);
+    if (sha256File(take.files.video) !== entry.sha) return `${entry.film} take ${entry.take} has changed. Rebuild the draft before approving it.`;
+  }
+  for (const entry of current.takes) {
+    if (readVerdicts(paths)[entry.sha]?.verdict !== 'approved') recordVerdict(paths, entry.sha, { film: entry.film, take: entry.take, verdict: 'approved', note: 'Approved in the playable build', by: 'you' });
   }
   return null;
 }
@@ -158,9 +227,9 @@ export function awaitingFilms(plan, paths) {
   const out = [];
   for (const film of filmsOf(plan)) {
     const takes = listTakes(paths, film.id, verdicts, notes, film);
-    const waiting = takes.filter(t => !t.stale && t.journal.status === 'completed' && t.sha && !t.verdict && existsSync(t.files.video));
+    const approved = takes.filter(t => !t.stale && t.verdict?.verdict === 'approved' && existsSync(t.files.video)).at(-1);
+    const waiting = takes.filter(t => !t.stale && t.journal.status === 'completed' && t.sha && (!t.verdict || (!approved && t.verdict.verdict === 'passed')) && existsSync(t.files.video));
     if (!waiting.length) continue;
-    const approved = takes.filter(t => t.verdict?.verdict === 'approved').at(-1);
     const from = placeById(plan, film.from), to = placeById(plan, film.to);
     const object = from?.objects?.find(o => o.id === film.object);
     const ends = endPictures(film);
