@@ -47,7 +47,7 @@ export async function main(argv) {
 
 async function help(name) {
   if (name) return main([name, '--help']);
-  console.log('Build a Sogni World from your photos. Usage: node world <command> [world] [options]\n');
+  console.log('Build a world from your photos or an idea. Usage: node world <command> [world] [options]\n');
   for (const [group, names] of COMMANDS) {
     console.log(group);
     for (const commandName of names) {

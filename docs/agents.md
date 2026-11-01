@@ -159,11 +159,11 @@ the check off.
 
 ## What to say to your agent
 
-> Build a Sogni World from the photos in worlds/my-trip.
+> Build a world from the photos in worlds/my-trip.
 
 Other good openers:
 
-- "Build a Sogni World from this concept, with no photos: … Paint the places, make
+- "Build a world from this concept, with no photos: … Paint the places, make
   two of the choices fatal, and hide a collectible in every place."
 - "Plan a world from these photos, but don't render anything until I've seen the plan."
 - "Make a three-place canary world from my best three photos so I can see the quality."

@@ -35,7 +35,7 @@ streaming profile, icons WebP (or PNG of 512 px or less), sound MP3 or AAC.
 | `order` | | Place ids in story order. When present the world is a story told in order: each place offers its next stop first, and the Places panel lists places in this order. `null` or absent for a free-roaming world. |
 | `music` | | One track under the whole world, or `null`. See below. A place can carry its own `music` in its place. |
 | `speakers` | | `{ "<name>": { "avatar": "<image>" } }`: a small round picture beside that speaker's subtitles (WebP, or a PNG of 512 px or less). |
-| `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "A Sogni World", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
+| `intro` | | The Begin card's words: `{ eyebrow?, tagline?, warning?, begin? }` (defaults: "Sogni Worlds", the subtitle, none, "Begin"). `warning` is a content note, e.g. for an 18+ world. |
 | `map` | | `false` hides the Places panel, for a world with secrets or fatal choices. Default `true`. |
 | `draft` | | `true` when the build used takes nobody has approved yet (`node world build --drafts`). The player marks it "Draft" in the top bar while you play it locally (`node world play`); an exported copy says so in its About panel instead, so visitors are not greeted by it. |
 | `places` | yes | The places. See below. |

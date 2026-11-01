@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Sogni-AI/sogni-worlds-kit/schema/world.schema.json",
-  "title": "Sogni World (world.json)",
+  "title": "Sogni Worlds world (world.json)",
   "description": "A finished, playable world. `node world build` writes it; the player reads it. Media paths are relative to this file, or absolute https URLs.",
   "type": "object",
   "required": ["format", "id", "title", "aspect", "start", "places"],
@@ -50,7 +50,7 @@
       "description": "The Begin card's words. Every field is optional; the defaults suit a photo world.",
       "additionalProperties": false,
       "properties": {
-        "eyebrow": { "type": "string", "description": "Small line above the title (default \"A Sogni World\")." },
+        "eyebrow": { "type": "string", "description": "Small line above the title (default \"Sogni Worlds\")." },
         "tagline": { "type": "string", "description": "A line or two under the title." },
         "warning": { "type": "string", "description": "A content note on the card, e.g. for an 18+ world." },
         "begin": { "type": "string", "description": "The Begin button's words." }

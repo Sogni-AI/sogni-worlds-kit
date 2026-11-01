@@ -1,6 +1,6 @@
-# Building a Sogni World — instructions for coding agents
+# Building a world with the Sogni Worlds Kit — instructions for coding agents
 
-You are helping a person build a **Sogni World** from nothing but a concept, or
+You are helping a person build a **world** with the **Sogni Worlds Kit** from nothing but a concept, or
 from their photographs: an interactive, cinematic place where each picture quietly
 comes alive, clicking something in it plays a film that carries you to the next
 place, a voice and music tell the story, and a choice can end it (the visitor

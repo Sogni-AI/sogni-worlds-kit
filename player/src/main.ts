@@ -1,4 +1,4 @@
-// The Sogni World player: load a world.json, show its first place, and let the
+// The Sogni Worlds player: load a world.json, show its first place, and let the
 // visitor travel by clicking things in the pictures.
 import './styles.css';
 import { collectionCard, figuresOf, foundCard, inspect, type Figure } from './figures';

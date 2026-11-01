@@ -58,7 +58,7 @@ const site = (pages, calls = []) => async (url, init) => {
 const page = head => `<!doctype html><html><head><meta charset="utf-8">${head}</head><body><main></main></body></html>`;
 const OG = page(`<title>Plain title</title>
   <meta name="description" content="Plain description">
-  <meta property="og:title" content="The North Pole, a Sogni World">
+  <meta property="og:title" content="The North Pole, made with Sogni Worlds">
   <meta property="og:description" content="Gingerbread, elves &amp; northern lights">
   <meta property="og:image" content="og.jpg">
   <link rel="canonical" href="https://creator.example/north-pole/">`);
@@ -68,7 +68,7 @@ test('a world built outside the Kit is listed from its page: og tags, a relative
   const { url, from } = await externalSubmission('https://creator.example/north-pole/index.html', { creator: 'NatalieArt' }, { fetch: site({ 'https://creator.example/north-pole/index.html': OG }, calls) });
   const form = new URL(url);
   assert.equal(form.origin + form.pathname, 'https://worlds.sogni.ai/submit-world');
-  assert.equal(form.searchParams.get('title'), 'The North Pole, a Sogni World');
+  assert.equal(form.searchParams.get('title'), 'The North Pole, made with Sogni Worlds');
   assert.equal(form.searchParams.get('description'), 'Gingerbread, elves & northern lights');
   assert.equal(form.searchParams.get('coverUrl'), 'https://creator.example/north-pole/og.jpg');
   assert.equal(form.searchParams.get('url'), PAGE, 'the canonical link, not the index.html it was read from');

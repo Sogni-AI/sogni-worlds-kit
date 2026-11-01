@@ -358,7 +358,7 @@ export class Ui {
     made.innerHTML = `Made with <a href="https://www.sogni.ai" target="_blank" rel="noopener">Sogni</a>. Build your own from your photos, with your own coding agent: <a href="${REPO}" target="_blank" rel="noopener">sogni-worlds-kit</a>.`;
     const more = el('p', 'small');
     more.innerHTML = '<a href="https://worlds.sogni.ai/how-this-was-made" target="_blank" rel="noopener">How the official worlds were made</a> · '
-      + '<a href="https://blog.sogni.ai/blogs/how-agents-built-sogni-world/" target="_blank" rel="noopener">How agents built Sogni World</a> · '
+      + '<a href="https://blog.sogni.ai/blogs/how-agents-built-sogni-world/" target="_blank" rel="noopener">How agents built Sogni Worlds</a> · '
       + '<a href="https://worlds.sogni.ai" target="_blank" rel="noopener">worlds.sogni.ai</a>';
     const keys = el('p', 'small keys', `Click the picture itself to hide or show the labels. Keys: N next stop · B back · S skip film · M sound${document.fullscreenEnabled ? ' · F full screen' : ''} · Esc close`);
     card.append(made, more, keys);
@@ -414,7 +414,7 @@ export function beginScreen(root: HTMLElement, world: World, still: string, onGe
     screen.style.backgroundImage = `url("${still}")`;
     const card = el('div', 'begin-card');
     const intro = world.intro ?? {};
-    card.append(el('p', 'eyebrow', intro.eyebrow ?? 'A Sogni World'), el('h1', '', world.title));
+    card.append(el('p', 'eyebrow', intro.eyebrow ?? 'Sogni Worlds'), el('h1', '', world.title));
     if (intro.tagline ?? world.subtitle) card.append(el('p', 'lede', intro.tagline ?? world.subtitle ?? ''));
     if (intro.warning) card.append(el('p', 'warning', intro.warning));
     const button = el('button', 'pill primary big', intro.begin ?? 'Begin');

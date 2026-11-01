@@ -70,12 +70,12 @@ No photos? Skip this: give your agent a concept instead and it paints the places
 
 Open your agent in the kit folder and give it an idea:
 
-> Build a Sogni World from this concept: a lighthouse keeper's last night on a rock
+> Build a world from this concept: a lighthouse keeper's last night on a rock
 > in the Atlantic, in seven places. Two choices are fatal. Paint the places.
 
 or, with photographs:
 
-> Build a Sogni World from the photos in worlds/my-trip.
+> Build a world from the photos in worlds/my-trip.
 
 It follows [AGENTS.md](../AGENTS.md):
 

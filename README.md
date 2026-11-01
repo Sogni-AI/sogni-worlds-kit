@@ -13,7 +13,7 @@ coding agent from nothing but an idea. Your own photographs work too.**
 [▶ Play The Dream Thread](https://worlds.sogni.ai/demo) ·
 [▶ Play The Long White Cloud](https://worlds.sogni.ai/demo/the-long-white-cloud) ·
 [How this was made](https://worlds.sogni.ai/how-this-was-made) ·
-[How agents built Sogni World](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/) ·
+[How agents built Sogni Worlds](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/) ·
 [Build with your agent](https://worlds.sogni.ai/build-with-agent)
 
 Each place quietly comes alive. Click something in it (a door, a boat, a guitar)
@@ -64,13 +64,13 @@ node world new my-world     # bring an idea; or copy photos into worlds/my-world
 
 Open your agent in this folder and give it an idea:
 
-> Build a Sogni World from this concept: a lighthouse keeper's last night on a rock
+> Build a world from this concept: a lighthouse keeper's last night on a rock
 > in the Atlantic, in seven places. Two choices are fatal and every place hides a
 > collectible. Paint the places.
 
 Or, with photographs:
 
-> Build a Sogni World from the photos in worlds/my-world.
+> Build a world from the photos in worlds/my-world.
 
 Your agent reads [AGENTS.md](AGENTS.md) and then:
 
@@ -267,7 +267,7 @@ worlds/               your worlds
 
 - [How this was made](https://worlds.sogni.ai/how-this-was-made): every model, the
   real prompts and the SDK call behind each step of the official worlds
-- [How Claude Code and Codex agents built Sogni World](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/):
+- [How Claude Code and Codex agents built Sogni Worlds](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/):
   the story, told by the agents
 - [Build with your agent](https://worlds.sogni.ai/build-with-agent): a personalised
   brief for your agent

@@ -1,4 +1,4 @@
-# The plan for one Sogni World. Your agent fills this in; you approve it.
+# The plan for one world. Your agent fills this in; you approve it.
 # Reference: docs/world-yaml.md   Craft rules: docs/directing-films.md
 # `node world lint` checks it. `node world next` says what to do now.
 

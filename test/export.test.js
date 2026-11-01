@@ -33,9 +33,9 @@ const built = { title: 'Ships & "Tides" <2>', subtitle: 'A harbour\'s day, dawn 
 const tag = (html, attr, name) => new RegExp(`<meta ${attr}="${name}" content="([^"]*)">`).exec(html)?.[1];
 
 test('the exported page carries the world\'s preview tags, every value escaped', () => {
-  const html = withPreviewTags('<head>\n    <title>Sogni World</title>\n  </head>', built, { cover: 'social.jpg' });
+  const html = withPreviewTags('<head>\n    <title>Sogni Worlds</title>\n  </head>', built, { cover: 'social.jpg' });
   assert.ok(html.includes('<title>Ships &amp; &quot;Tides&quot; &lt;2&gt;</title>'));
-  assert.ok(!html.includes('Sogni World'), 'the placeholder title is replaced');
+  assert.ok(!html.includes('Sogni Worlds'), 'the placeholder title is replaced');
   for (const [attr, name] of [['property', 'og:title'], ['name', 'twitter:title']]) assert.equal(tag(html, attr, name), 'Ships &amp; &quot;Tides&quot; &lt;2&gt;', name);
   for (const [attr, name] of [['name', 'description'], ['property', 'og:description'], ['name', 'twitter:description']]) assert.equal(tag(html, attr, name), 'A harbour&#39;s day, dawn &gt; dusk', name);
   assert.equal(tag(html, 'name', 'twitter:card'), 'summary_large_image');
