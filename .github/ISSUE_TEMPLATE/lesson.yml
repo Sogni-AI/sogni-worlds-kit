@@ -1,0 +1,35 @@
+name: Lesson from a session
+description: Something a world taught your agent that the kit should say.
+title: "Lesson: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing it. Accepted lessons go into AGENTS.md or `docs/`, and every kit picks them up through `node world update`.
+        Leave out API keys, private prompts, names, and anything taken from your media.
+  - type: input
+    id: where
+    attributes:
+      label: Model or step
+      placeholder: "a crossing film, Seedance 2.5, screening, narration, the player, …"
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: What you saw, with error codes, frame numbers or settings where they matter.
+    validations:
+      required: true
+  - type: textarea
+    id: instead
+    attributes:
+      label: What to do instead
+      description: The fix that worked, and how you checked it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "kit 0.3.2 (the version in package.json)"

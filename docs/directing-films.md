@@ -545,6 +545,16 @@ stills as any other, and it makes its own dialogue and sound.
   model needs its one-time likeness and consent agreement accepted in a Sogni app
   first (code 4103). A face refused on both models can't be filmed with Seedance:
   keep that film on H3 or cut it. The rules for real people (below) still apply.
+- **Both stills must agree on who stands where.** If a person is on the left in
+  the first still and on the right in the last, Seedance dissolves see-through
+  doubles between them (Sogni Meme World, 2026-10-31). Paint the stills with the
+  same arrangement, or write the move into the direction ("he walks behind her
+  from screen right to screen left").
+- **Check the first frames.** A Seedance take can jump at frame 1: frame 0 is the
+  still, frame 1 a different shot (a person missing, a giant prop in the wide).
+  Screening flags it as a `hard-cut` at frame 1. Reject it.
+- **Spell spoken words the way they sound.** "Rickrolled" was spoken as
+  "Rick-wrapped"; "Rick-rolled" fixed it. Speech-to-text catches these.
 - **The stretch step.** Now and then Seedance draws everything between the pinned
   ends about 1% wider than they are: the picture jumps in shape just after the first
   frame and just before the last, and a loop breathes at every wrap. `screen` measures
@@ -592,6 +602,8 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
 - a real person's face drifting into someone else's;
 - smeared struts from a bridge or tower route;
 - music in the soundtrack when none was asked for;
+- a whoosh, swish or sting that nothing on screen makes, often in a film's last
+  second (on a cut it sounds cheap);
 - a frozen tail (the last seconds don't move) or a flash at a loop's seam;
 - a moment in which nothing happens: a light, a glow or a screen comes on and
   goes off again, or the picture barely changes (screening says `little-happens`);

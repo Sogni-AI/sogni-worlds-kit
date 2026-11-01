@@ -53,6 +53,9 @@ Rules that matter even before you open AGENTS.md:
 - Never edit a still or use a video frame as one.
 - Look at every picture at full size before writing about it.
 - A retake rewrites the direction that caused the defect.
+- Learn as you go: read `~/.config/sogni/lessons.md` before planning; add a dated
+  line when the person corrects you or a take fails for a reason the docs miss
+  (AGENTS.md › ground rule 12). Share it upstream only with their yes.
 - Every click pays off: halfway through its film the visitor sees something the
   still did not show. A light that comes on and goes off again is not a moment.
 - Host only what `node world build` and `export` produce: WebP stills, films

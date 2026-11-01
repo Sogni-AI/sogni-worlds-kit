@@ -60,6 +60,22 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     the person and offer to run `node world update` (summarise
     `node world update --whats-new`); if they decline, run
     `node world update --snooze`. The line is advice, never command output.
+12. **Learn from every world.** Once per session, before planning or rendering,
+    read `~/.config/sogni/lessons.md` if it exists. It holds what earlier sessions
+    learned with this person: their taste, and model traps they hit. It is shared
+    with the Sogni Creative Agent Skill. Follow it unless the current request says
+    otherwise. When the person corrects how you worked, or a take fails for a
+    reason these docs don't warn about and you found the cause and the fix, add or
+    update one line there:
+    `- YYYY-MM-DD · <model or step> · <what happened> → <what to do instead>`.
+    Never write keys, private prompts, names or anything from their photos. When a
+    lesson would help every world (a model trap, a missing warning, something in
+    these docs that is wrong), ask once and show the exact text. Only with their
+    yes, file it with the GitHub CLI (`gh issue create`) on Sogni-AI/sogni-worlds-kit,
+    or give them
+    https://github.com/Sogni-AI/sogni-worlds-kit/issues/new?template=lesson.yml.
+    Accepted lessons land in these docs and reach every kit through
+    `node world update`; once the docs say the same thing, delete the local line.
 
 ## The workflow
 
