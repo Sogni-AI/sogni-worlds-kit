@@ -159,15 +159,22 @@ and ingest them like photographs:
   (`sogni-agent -m krea2_turbo_fp8_scaled "…"`) for a first place, Sogni Krea 2
   Identity Edit to keep the same character in the next ones, all at one canvas
   size (1344×768 for 16:9, 1152×768 for 3:2). Save them into `photos/` in story
-  order.
+  order. Horror and sexy pictures use the Dark Beast models
+  (`dark_beast_krea2_fp8`; `dark_beast_krea2_identity_edit_v1_2` with references):
+  GPT Image refuses gore on a real person's likeness and sexualized edits.
 
 Before painting any place, make **one character sheet per recurring character**
 (the same character, full body, front, three-quarter, side and back views on plain
 light grey; Identity Edit from their reference picture), look at it at full size,
 and give that sheet as a context picture for every place they appear in: a name
-alone doesn't keep a face. Two places that show one space must agree on everything
-both show: paint the second from the first one's pixels with an edit that changes
-only what the story moved, or the crossing between them morphs the props.
+alone doesn't keep a face. Describe a creature or character as an original design
+(shape, skin, colours, features): a generic "kaiju" painted a Godzilla look-alike,
+and Seedance refused every film made from it. Two places that show one space must
+agree on everything both show: paint the second from the first one's pixels with an
+edit that changes only what the story moved, or the crossing between them morphs
+the props. The Dark Beast Identity Edit re-composes (it adds a person or reframes)
+rather than editing in place; an instruction edit (Qwen Image Edit) keeps the frame
+but softens detail and garbles background writing, so check it at full size.
 
 Whichever way they are painted, **you write the words of any writing a place
 shows**: a model spells only the words its prompt gives it. A mirror the story

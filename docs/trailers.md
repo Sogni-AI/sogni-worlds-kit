@@ -38,6 +38,15 @@ ffmpeg, and the mistakes that cost real trailers a retake. Build the world first
   ```
 
   (0.4377 is 1 − 10^(−5/20): a 5 dB dip.)
+- **A line that has to land.** A cloned narration take reads evenly, and a hook or
+  a line to remember often needs panic, a shout or a comic beat. Have a video model
+  perform it in the same voice and keep only its sound: LTX-2.3 with the voice's
+  recording as its voice identity (Sogni-hosted, the cheap first try), or Seedance
+  2.5 in reference mode with the speaker's still and the recording (premium; 480p
+  is enough when only the sound is kept). The Sogni Creative Agent Skill's
+  `references/models.md` › When a cloned line sounds flat has the commands and the
+  prompt. The rules for cloning a voice apply (AGENTS.md, ground rule 8). Check
+  every word with speech-to-text and judge the voice by ear.
 - Level the finished trailer for the web, about −14 LUFS, true peak under −1 dB.
 
 ## Picture

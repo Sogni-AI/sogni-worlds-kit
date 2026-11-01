@@ -544,7 +544,10 @@ stills as any other, and it makes its own dialogue and sound.
   `seedance-2-5-uncensored` with the same words, never with softened ones. That
   model needs its one-time likeness and consent agreement accepted in a Sogni app
   first (code 4103). A face refused on both models can't be filmed with Seedance:
-  keep that film on H3 or cut it. The rules for real people (below) still apply.
+  keep that film on H3 or cut it. The rules for real people (below) still apply. A
+  still that looks like famous IP (a generic "kaiju" painted Godzilla-like) had
+  every Seedance film made from it refused at output (Sogni Meme World,
+  2026-11): paint an original design, described explicitly, before rendering.
 - **Both stills must agree on who stands where.** If a person is on the left in
   the first still and on the right in the last, Seedance dissolves see-through
   doubles between them (Sogni Meme World, 2026-10-31). Paint the stills with the
