@@ -173,8 +173,9 @@ and Seedance refused every film made from it. Two places that show one space mus
 agree on everything both show: paint the second from the first one's pixels with an
 edit that changes only what the story moved, or the crossing between them morphs
 the props. The Dark Beast Identity Edit re-composes (it adds a person or reframes)
-rather than editing in place; an instruction edit (Qwen Image Edit) keeps the frame
-but softens detail and garbles background writing, so check it at full size.
+rather than editing in place: crop to the subject, and fix a content problem by
+re-prompting it, never with a cleanup pass from an older edit model (it scrubs the
+gore, grime and texture out). Check every painting at full size.
 
 Whichever way they are painted, **you write the words of any writing a place
 shows**: a model spells only the words its prompt gives it. A mirror the story
