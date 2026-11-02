@@ -66,7 +66,7 @@ function placeSchema({ minObjects, maxObjects }) {
         collect: { type: 'boolean' },
         film: FILM,
         // A close look: "" everywhere for any other object.
-        reveal: strict({ paint: str(0, 700), line: str(0, 260), done: str(0, 40) }),
+        reveal: strict({ paint: str(0, 700), people: { type: 'boolean' }, line: str(0, 260), done: str(0, 40) }),
       }),
     },
   });
@@ -123,7 +123,7 @@ function placeBrief({ place, index, context, required }) {
     const others = places.filter(p => p.id !== place.id && !required.some(r => r.to === p.id) && !p.ending);
     if (context.order === 'linear' && others.length) lines.push(`- Optional: at most one shortcut ("shortcut": true) to another place in the story: ${others.map(p => `${p.id} ("${p.title ?? p.id}")`).join(', ')}. Only if a clickable thing here really suggests it.`);
     if (context.order === 'linear' && index === places.length - 1 && places.length > 1 && !place.ending) lines.push(`- This is the last place in the story: one object should lead back to the start ("goes": "${places[0].id}") so the journey can begin again.`);
-    lines.push('- An object the visitor would pick up, open, read, turn over or ask is a close look: "goes": "" and a "reveal": "paint" says only what changes in a close-up of this same picture around it (it now lies turned over, its page open, she has turned to you), with any writing on it named as what it reads; "line" is what the narrator says over it, one or two short sentences that tell the visitor something new (a clue, a name, what it means); "done" is the button that ends it ("Set the glove down"). Its "film" moves in from this picture to that close look as the change happens (a hand turns the glove over), and is played backwards to put it back. Any other object has "reveal": {"paint": "", "line": "", "done": ""}.');
+    lines.push('- An object the visitor would pick up, open, read, turn over or ask is a close look: "goes": "" and a "reveal": "paint" says only what changes in a close-up of this same picture around it (it now lies turned over, its page open, she has turned to you), with any writing on it named as what it reads; "people" is true when a person or a character is in that close-up (their likeness must hold), else false; "line" is what the narrator says over it, one or two short sentences that tell the visitor something new (a clue, a name, what it means); "done" is the button that ends it ("Set the glove down"). Its "film" moves in from this picture to that close look as the change happens (a hand turns the glove over), and is played backwards to put it back. Any other object has "reveal": {"paint": "", "people": false, "line": "", "done": ""}.');
     lines.push('- Every other object is a moment: "goes": "" — a small, surprising event with a clear cause and a payoff, caused by that object (a kea lands on the mirror and tugs its rubber seal; a lantern\'s flame leans toward the visitor), and the picture returns to rest. It moves the story: after it the visitor knows or feels something new about this world. Never a moment in which someone only breathes, shifts or sways: the loop already does that. Never a device switched on: the moment ends on its start picture, so the device is off again by the end and the visitor saw a light come and go. Never a hand that only points at a thing, and never a thing lifted away that vanishes and is thrown back: the film must end where it began, so choose an event that runs its course in place.');
     if (context.mechanics?.collectibles && place.collectible) lines.push(`- Collectible: one object must be "${place.collectible}", with "collect": true and "goes": "" — finding it adds a figure to the visitor's collection. Its moment film shows it coming to life briefly and returning to rest. Its label names it ("${place.collectible}") and its hint teases it.`);
     else lines.push('- Set "collect": false on every object.');
@@ -131,7 +131,7 @@ function placeBrief({ place, index, context, required }) {
 
   lines.push('', '# What to write', [
     'Reply with JSON only:',
-    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" }, "reveal": { "paint", "line", "done" } } ] }',
+    '{ "title", "chapter", "caption", "narration": [lines], "loop": { "idea", "action", "sound" }, "objects": [ { "id", "target", "label", "hint", "goes", "shortcut", "collect", "film": { "frames", "idea", "action", "sound" }, "reveal": { "paint", "people", "line", "done" } } ] }',
     `- ${place.ending ? 'No objects.' : `${required.length > 1 ? required.length : 2} to 4 objects, each a distinct thing really in the picture, each causing its own film.`}`,
     '- "id": a short lower-case id with dashes ("door", "red-lantern").',
     '- "target": the exact thing to click, described so someone could point at it in the picture ("the open red round door behind the couple"). It must be a single object, not a group or a region.',

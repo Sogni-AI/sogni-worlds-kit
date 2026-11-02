@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { dirname, extname, join, resolve } from 'node:path';
 import { parse } from '../index.js';
 import { log } from '../lib/log.js';
-import { readPlan, filmsOf, placeById } from '../lib/plan.js';
+import { readPlan, filmsOf, placeById, matureWorld } from '../lib/plan.js';
 import { resolveWorldId, shown, filmId } from '../lib/paths.js';
 import { writeJson } from '../lib/files.js';
 import { approvedTake, listTakes } from '../lib/takes.js';
@@ -77,7 +77,7 @@ function fromWorld(world, values) {
   const id = resolveWorldId(world);
   const { plan, paths } = readPlan(id);
   const only = values.only?.length ? new Set(values.only) : null;
-  const mature = Boolean(plan.mature) || /18\+/.test(plan.intro?.warning ?? '');
+  const mature = matureWorld(plan);
   const items = [];
   for (const film of filmsOf(plan)) {
     // The film back from a close look is the visitor's "done", not a click.

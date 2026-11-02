@@ -19,8 +19,12 @@ Spark is half a US cent:
 
 Object selection (SAM 3), narration and music cost cents each. A 3D figure for a
 collectible is about 61 Spark ($0.30) plus its plate: Pixal3D 60, the BiRefNet cut-out 1, and one
-Qwen Image Edit picture; a close look is three Qwen Image Edit candidates (`node world quote` prices
-both at today's rates; as of 2026-10).
+edited picture; a close look is three edited candidates. FLUX 3 Image Klein paints both (about
+2 Spark, $0.01, a picture); Krea 2 Identity Edit, for a close look with a person in it, about
+6 Spark ($0.03); Dark Beast Krea 2 Identity Edit, in an 18+ world, about 8 Spark ($0.04); GPT
+Image 2.5 Sunburst at high quality, with `edits: premium`, about 8 Spark ($0.04) a close look
+and 14 ($0.07) a plate, paid from Premium Spark even on an Unlimited plan (`node world quote`
+prices them at today's rates; as of 2026-11).
 
 **Seedance 2.5**, the premium model a film can opt into for dialogue and fast
 action (directing-films.md › Seedance 2.5), costs about **148 Spark per second**

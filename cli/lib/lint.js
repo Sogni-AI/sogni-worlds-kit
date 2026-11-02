@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
 import { filmPrompt, FILM_MODELS, isSeedance, isSeedanceFrames, SEEDANCE_FRAMES, shapeFor } from './seedance.js';
 import { pushInIssues } from './pushin.js';
-import { filmsOf, placeById } from './plan.js';
+import { filmsOf, matureWorld, placeById } from './plan.js';
 import { isInsideWorld } from './paths.js';
 import { correlation, layoutOf, SAME_VIEW } from './screen.js';
 import { detailsIssues } from './worldjson.js';
@@ -249,8 +249,9 @@ export async function lintViews(plan, paths) {
 function lintReveal(object, at, { plan, place, add, contained, checkFiles, file }) {
   const reveal = object.reveal;
   if (plan.places.some(p => p.id === `${place.id}-${object.id}`)) add('error', at, `a place is called "${place.id}-${object.id}", the name of this close look: rename the place or the object`);
-  if (typeof reveal !== 'object' || Array.isArray(reveal)) return add('error', at, 'reveal is { paint, zoom, still, seen, line, voice, done, back }');
-  for (const key of Object.keys(reveal)) if (!['paint', 'zoom', 'still', 'seen', 'line', 'voice', 'done', 'back'].includes(key)) add('error', at, `unknown field "${key}" (paint, zoom, still, seen, line, voice, done, back)`);
+  if (typeof reveal !== 'object' || Array.isArray(reveal)) return add('error', at, 'reveal is { paint, people, zoom, still, seen, line, voice, done, back }');
+  for (const key of Object.keys(reveal)) if (!['paint', 'people', 'zoom', 'still', 'seen', 'line', 'voice', 'done', 'back'].includes(key)) add('error', at, `unknown field "${key}" (paint, people, zoom, still, seen, line, voice, done, back)`);
+  if (reveal.people !== undefined && typeof reveal.people !== 'boolean') add('error', `${at}.people`, 'people is true when the close look shows a person (Krea 2 Identity Edit keeps who they are), else false');
   if (object.goes) add('error', at, 'a crossing goes somewhere else; only a moment holds on a close look (remove `goes` or the reveal)');
   if (!object.film) add('error', at, 'a reveal needs the object\'s `film`: the film from the place into the close look');
   if (!reveal.still) {
@@ -299,6 +300,9 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
     }
   }
   if (plan.map !== undefined && typeof plan.map !== 'boolean') add('error', 'map', 'map is true or false');
+  if (plan.mature !== undefined && typeof plan.mature !== 'boolean') add('error', 'mature', 'mature is true for an 18+ world, else false');
+  if (plan.edits !== undefined && plan.edits !== 'premium') add('error', 'edits', 'edits is premium (GPT Image 2.5 Sunburst paints close looks and plates, paid from Premium Spark), or left out');
+  else if (plan.edits === 'premium' && matureWorld(plan)) add('warn', 'edits', 'an 18+ world\'s close looks and plates are painted by Dark Beast Krea 2 Identity Edit: GPT Image 2.5 refuses gore and sexual edits, so edits: premium does nothing here');
   if (!plan.places.length) add('warn', 'places', 'no places yet: put photos in photos/ and run `node world ingest`');
 
   const ids = new Set();

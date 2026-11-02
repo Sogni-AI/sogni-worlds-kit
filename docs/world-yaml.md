@@ -114,6 +114,8 @@ places:
 | `start` | The first place. `ingest` sets it to the first photo if empty. |
 | `canvas` | The render canvas every place shares, e.g. `1152x768`. Set by `ingest` from your photos. |
 | `contentFilter` | `on` or `off` (default `off`: new worlds start with it off): Sogni's safe-content filter on generated films. With it on, a withheld film is recorded as a failed take. |
+| `mature` | `true` for an 18+ world (horror, gore or other adult content): Dark Beast Krea 2 Identity Edit paints its close looks and figure plates. `node world agent` sets it from the brief. |
+| `edits` | `premium`: GPT Image 2.5 Sunburst paints the close looks and figure plates, paid from Premium Spark even on an Unlimited plan. Ask the person first, and only offer it when they have Premium Spark. Leave it out for FLUX 3 Image Klein (and Krea 2 Identity Edit for a close look with a person). It does nothing in an 18+ world. |
 | `intro` | Optional words for the Begin card: `{ eyebrow, tagline, warning, begin }`. |
 | `map` | `false` hides the Places panel (no spoilers, no teleporting). |
 | `plot` | A made-up world's story, which visitors never see (below). |
@@ -273,6 +275,7 @@ objects:
       paint: >                  # only what changes in the zoomed crop of the place's still
         The top grey glove now lies turned over in the same place, palm up: dried brown-red blood stains its palm,
         and a small white laundry tag inside its cuff reads "T. HALE". Everything else stays as it is.
+      people: false             # true when a person is in the close-up: Krea 2 Identity Edit keeps who they are
       zoom: 2                   # optional: how far the close look moves in, 1 to 3 (default: the object fills ~2/5, at most 2x)
       still: reveals/office-glove.jpg   # written by `node world reveals --pick`; never edit the image
       seen: >                   # what is really in the close look, after looking at it at full size
@@ -284,7 +287,9 @@ objects:
 ```
 
 `node world reveals` paints candidates for every reveal with `paint` and no
-`still`, each scored for how much of the room it kept; `--pick <place-object> <n>`
+`still` (FLUX 3 Image Klein; Krea 2 Identity Edit with `people: true`; Dark Beast
+Krea 2 Identity Edit in an 18+ world; GPT Image 2.5 Sunburst with `edits: premium`),
+each scored for how much of the room it kept; `--pick <place-object> <n>`
 keeps one. Then write `seen` and make the film's arrival match it. `node world
 narrate` speaks every `line` in the place's voice. Writing in the close look is
 named in `paint` and in the film's action as what it reads, with the same words

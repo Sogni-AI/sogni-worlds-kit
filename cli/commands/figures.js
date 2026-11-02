@@ -7,7 +7,7 @@ import { readPlan } from '../lib/plan.js';
 import { resolveWorldId, shown, filmId } from '../lib/paths.js';
 import { readJson, writeJson, sha256 } from '../lib/files.js';
 import { connect } from '../lib/sogni.js';
-import { cutoutOf, figureFiles, FIGURE_MODELS, FIGURE_QUALITY, headNoun, matteJob, meshJob, plateContext, plateJob, platePrompt } from '../lib/figures.js';
+import { cutoutOf, figureFiles, figureModels, FIGURE_MODELS, FIGURE_QUALITY, headNoun, matteJob, meshJob, plateContext, plateJob, platePrompt } from '../lib/figures.js';
 import { contentFilterOff } from './render.js';
 import { nextStep } from './status.js';
 
@@ -17,10 +17,12 @@ export const usage = `node world figures [world] [--only <place-object> ...] [--
   Every object marked collect: true (and any with figure: true) becomes a
   figure the visitor turns over in 3D when they find it. A thing in a picture
   is small, lies on something and shows one side, so it is made again first:
-  Qwen Image Edit draws it alone, whole and detailed on a white plate from a
-  crop of its picture (its SAM 3 outline only says where it is) and from its
-  close look when it has one, in the words of figureLook (what it is, with any
-  writing on it named as what it reads). Pixal3D builds the GLB from that
+  the world's edit model (FLUX 3 Image Klein; Dark Beast Krea 2 Identity Edit
+  in an 18+ world; GPT Image 2.5 Sunburst with edits: premium) draws it alone,
+  whole and detailed on a white plate from a crop of its picture (its SAM 3
+  outline only says where it is) and from its close look when it has one, in
+  the words of figureLook (what it is, with any writing on it named as what it
+  reads). Pixal3D builds the GLB from that
   plate (about 60,000 triangles, a 2K texture, 8–12 MB); BiRefNet cuts the
   plate out for the collection's icon. Run select first. figure: false on an
   object keeps it a plain collectible.
@@ -57,11 +59,12 @@ export async function run(argv) {
   if (only) for (const key of only) if (!todo.some(t => t.key === key)) log.warn(`${key}: not a collectible, already made, or not outlined`);
   if (!todo.length) { log.ok('Every figure is made.'); log.next(nextStep(id)); return 0; }
 
+  const models = figureModels(plan);
   const session = await connect({ appId: `sogni-worlds-figures-${id}` });
   let made = 0;
   const failed = [];
   try {
-    log.title(`Making ${todo.length} figure${todo.length === 1 ? '' : 's'} (${FIGURE_MODELS.mesh}, ${FIGURE_QUALITY.meshTargetFaces.toLocaleString()} triangles)`);
+    log.title(`Making ${todo.length} figure${todo.length === 1 ? '' : 's'} (plates by ${models.plate}, ${FIGURE_MODELS.mesh}, ${FIGURE_QUALITY.meshTargetFaces.toLocaleString()} triangles)`);
     for (const { place, object, key, files, mask } of todo) {
       mkdirSync(files.dir, { recursive: true });
       const previous = readJson(files.receipt, null);
@@ -76,7 +79,7 @@ export async function run(argv) {
       const noun = object.figureNoun ?? headNoun(object.target || object.label);
       const prompt = platePrompt(object.figureLook ?? object.target ?? object.figureName ?? noun, { closeLook: Boolean(closeLook) });
       const receipt = { key, place: place.id, object: object.id, label: object.label, noun, source: shown(source), sourceSha256: sha256(readFileSync(source)), maskSha256: sha256(readFileSync(mask)),
-        ...(closeLook ? { closeLook: shown(closeLook), closeLookSha256: sha256(readFileSync(closeLook)) } : {}), prompt, quality: FIGURE_QUALITY, models: FIGURE_MODELS };
+        ...(closeLook ? { closeLook: shown(closeLook), closeLookSha256: sha256(readFileSync(closeLook)) } : {}), prompt, quality: FIGURE_QUALITY, models };
       let cut = null;
       try {
         // A plate already made from these same inputs (--cutouts, or a mesh that failed) is reused.
@@ -88,7 +91,7 @@ export async function run(argv) {
           const context = await plateContext({ source, mask });
           writeFileSync(files.context, context.png);
           writeJson(files.receipt, { ...receipt, crop: context.crop, status: 'submitting', stage: 'plate', at: new Date().toISOString() });
-          const plate = await plateJob(session, { contexts: [...(closeLook ? [readFileSync(closeLook)] : []), context.png], prompt, contentFilter: !contentFilterOff(plan) });
+          const plate = await plateJob(session, { model: models.plate, contexts: [...(closeLook ? [readFileSync(closeLook)] : []), context.png], prompt, contentFilter: !contentFilterOff(plan) });
           writeFileSync(files.plate, plate.png);
           writeJson(files.receipt, { ...receipt, crop: context.crop, plateProject: plate.projectId, status: 'submitting', stage: 'matte', at: new Date().toISOString() });
           const matte = await matteJob(session, plate.png);

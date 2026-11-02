@@ -1,10 +1,11 @@
 // Figures: a collectible object stood up in 3D, so the visitor who finds it
 // can pick it up and turn it over. A thing in a picture is small, lies on a
 // table and shows one side, and a mesh built from that cut-out is a blob with
-// the table fused under it. So the object is first made again, alone: Qwen
-// Image Edit draws it whole and detailed on a plain white plate from its
-// picture (and from its close look, when it has one), the recipe the live
-// worlds' figures were rebuilt with. Pixal3D builds the mesh from that plate;
+// the table fused under it. So the object is first made again, alone: the
+// world's edit model (FLUX 3 Image Klein; Dark Beast Krea 2 Identity Edit in an
+// 18+ world; GPT Image 2.5 Sunburst with edits: premium) draws it whole and
+// detailed on a plain white plate from its picture (and from its close look,
+// when it has one). Pixal3D builds the mesh from that plate;
 // BiRefNet cuts it out for the collection's icon. Its outline only says where
 // the object is: it is never used to cut anything out.
 //
@@ -17,13 +18,15 @@
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { RefusedError, watchRefusals } from './sogni.js';
-import { edit, EDIT_MODEL } from './paint.js';
+import { edit, editEstimate, editModel } from './paint.js';
 
 export const FIGURE_MODELS = Object.freeze({
-  plate: EDIT_MODEL,
   matte: 'birefnet_image_background_removal_fp16',
   mesh: 'pixal3d_int8_i23d',
 });
+
+/** The models of a figure in this world: its plate is drawn by the world's edit model. */
+export const figureModels = plan => ({ plate: editModel(plan), ...FIGURE_MODELS });
 
 /**
  * The mesh a browser can carry: about 60,000 triangles and a 2K texture make
@@ -49,7 +52,7 @@ export const figureFiles = (paths, key) => {
 };
 
 /**
- * What Qwen Image Edit is told: the same object, alone, whole and detailed on
+ * What the edit model is told: the same object, alone, whole and detailed on
  * white, from its picture (the first reference is the close look when there is
  * one). `look` is the plan's words for it. A figure carries no writing: Pixal3D
  * paints its texture from the plate, and small lettering (a tag that read
@@ -82,9 +85,9 @@ export async function plateContext({ source, mask }) {
   return { png, crop };
 }
 
-/** The object alone on white, drawn by Qwen Image Edit from its context pictures. */
-export async function plateJob(session, { contexts, prompt, seed, contentFilter = false }) {
-  const { projectId, images } = await edit(session, { prompt, context: contexts, width: PLATE, height: PLATE, seed, count: 1, contentFilter });
+/** The object alone on white, drawn by the world's edit model (figureModels) from its context pictures. */
+export async function plateJob(session, { model, contexts, prompt, seed, contentFilter = false }) {
+  const { projectId, images } = await edit(session, { model, prompt, context: contexts, width: PLATE, height: PLATE, seed, count: 1, contentFilter });
   return { projectId, png: images[0] };
 }
 
@@ -209,10 +212,10 @@ export async function meshJob(session, cutoutPng, noun, quality = FIGURE_QUALITY
   return { projectId, bytes, glb };
 }
 
-/** What one figure costs: the plate, the BiRefNet cut-out and the Pixal3D mesh, priced by Sogni. */
-export async function figureEstimate(session) {
-  let usd = 0, token = 0;
-  for (const [model, size] of [[FIGURE_MODELS.plate, PLATE], [FIGURE_MODELS.matte, PLATE], [FIGURE_MODELS.mesh, PLATE]]) {
+/** What one figure costs in this world: the plate, the BiRefNet cut-out and the Pixal3D mesh, priced by Sogni. */
+export async function figureEstimate(session, plan) {
+  let { usd, token } = await editEstimate(session, { model: editModel(plan), count: 1, width: PLATE, height: PLATE });
+  for (const [model, size] of [[FIGURE_MODELS.matte, PLATE], [FIGURE_MODELS.mesh, PLATE]]) {
     const options = await session.client.projects.getModelOptions(model).catch(() => null);
     const estimate = await session.client.projects.estimateCost({ network: 'fast', tokenType: session.billing.tokenType, model, imageCount: 1,
       stepCount: options?.steps?.default ?? 1, previewCount: 0, guidance: options?.guidance?.default ?? 1, width: size, height: size, billingMode: session.billing.mode });

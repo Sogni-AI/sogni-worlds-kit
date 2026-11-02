@@ -38,6 +38,11 @@ canvas: ""
 # Sogni's safe-content filter on generated films: on or off.
 contentFilter: off
 
+# Optional: true for an 18+ world (Dark Beast paints its close looks and figure plates).
+# mature: true
+# Optional, only with the person's yes and Premium Spark: GPT Image 2.5 paints them instead.
+# edits: premium
+
 # Optional voices for narration. Clone only a voice you own or have permission to use.
 voices: {}
 #  narrator:
@@ -107,5 +112,6 @@ places: []
 #        reveal:
 #          paint: >                      # only what changes, in a zoomed crop of this place's still
 #            The letter now lies open in the same place, its first line in blue ink reads "Meet me at the pier".
+#          people: false                 # true when a person is in the close-up (Krea 2 Identity Edit keeps who they are)
 #          line: "She wrote it the night before the ferry left."   # the narrator says it over the close look
 #          done: Fold it away

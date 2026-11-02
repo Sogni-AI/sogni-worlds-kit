@@ -79,6 +79,7 @@ narration:
   style: in my first person, like a voice note to a friend
 music:
   mood: gentle fingerpicked guitar, salty and bright
+edits: premium               # optional: GPT Image 2.5 paints the close looks and figure plates, from Premium Spark
 approvals:                   # your standing answers, so it can go on without asking
   plan: yes
   spend: yes
@@ -107,7 +108,7 @@ paint:
     below a sleeping stone giant. Three curious things call to him …
   places: 3                  # how many ordinary places (endings are extra)
   canvas: 1344x768
-  mature: false              # true for an 18+ world (horror, gore)
+  mature: false              # true for an 18+ world (horror, gore): Dark Beast paints and edits it
   references:
     - file: simon.jpg
       who: Simon, the pink sloth
@@ -153,8 +154,9 @@ collectible is an object with `collect: true`: its moment plays, then the visito
 picks up its 3D figure and turns it over, and it joins their collection
 ("Figures 2/5", kept in their browser), where hidden ones show as silhouettes.
 The agent makes the figures with `node world figures`: the object's SAM 3
-outline says where it is, Qwen Image Edit draws it again alone, whole and
-detailed on a white plate, and Pixal3D builds a GLB of about 60,000 triangles
+outline says where it is, FLUX 3 Image Klein draws it again alone, whole and
+detailed on a white plate (Dark Beast Krea 2 Identity Edit in an 18+ world, GPT
+Image 2.5 Sunburst with `edits: premium`), and Pixal3D builds a GLB of about 60,000 triangles
 from that plate. Run `node world figures <id> --cutouts` to look at the plates
 before any mesh is made. Both are ordinary
 `world.yaml` fields ([world-yaml.md](world-yaml.md)), so a coding agent can use

@@ -140,6 +140,9 @@ export async function run(argv) {
       doc.set('plot', doc.createNode({ promise, truth, cast, beats: Object.fromEntries(beats.map(b => [b.place, b.beat])), twists }));
     }
     doc.set('contentFilter', 'off');
+    // An 18+ world's close looks and figure plates are painted by Dark Beast; edits: premium pays GPT Image 2.5 for them.
+    if (mature) doc.set('mature', true);
+    if (brief.edits === 'premium') doc.set('edits', 'premium');
     doc.set('order', brief.order ?? (brief.paint ? 'free' : 'linear'));
     if (brief.narration?.voice === 'design' && state.world.narrator) doc.set('voices', doc.createNode({ narrator: { design: state.world.narrator } }));
     if (brief.music && state.world.music) doc.set('music', doc.createNode({ prompt: state.world.music, seconds: brief.music.seconds ?? 120 }));
@@ -200,7 +203,7 @@ export async function run(argv) {
             at: before?.at, select: before?.select,
             goes: o.goes || undefined, shortcut: o.goes && o.shortcut ? true : undefined, collect: o.collect ? true : undefined,
             film: { frames: o.film.frames, idea: o.film.idea, action: o.film.action, sound: o.film.sound },
-            reveal: !o.goes && o.reveal?.paint ? clean({ paint: o.reveal.paint, line: o.reveal.line || undefined, done: o.reveal.done || undefined,
+            reveal: !o.goes && o.reveal?.paint ? clean({ paint: o.reveal.paint, people: o.reveal.people || undefined, line: o.reveal.line || undefined, done: o.reveal.done || undefined,
               // A close look painted on an earlier run is kept, with what was seen in it.
               still: before?.reveal?.still, seen: before?.reveal?.seen }) : undefined,
           });

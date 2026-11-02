@@ -1,7 +1,8 @@
 // world.yaml: the plan of one world. Your agent writes it, you approve it, and
 // every command reads it. Reference: docs/world-yaml.md. Shape, in short:
 //
-//   id, title, subtitle, story, order (linear|free), start, canvas, contentFilter
+//   id, title, subtitle, story, order (linear|free), start, canvas, contentFilter,
+//   mature (true for an 18+ world), edits (premium: GPT Image 2.5 for close looks and plates)
 //   voices:  { <name>: { clone: voices/x.m4a, transcript } | { design: "..." } }
 //   music:   { prompt, seconds } | { file, credit }
 //   places:  - id, photo, still, title, chapter, caption, seen,
@@ -14,7 +15,7 @@
 //                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }],
 //                                   model (seedance-2-5 | seedance-2-5-uncensored; default MiniMax H3),
 //                                   pushIn: { at: [x, y], zoom, frames } (a crossing only) },
-//                           reveal: { paint, zoom, still, seen, line, done,
+//                           reveal: { paint, people, zoom, still, seen, line, done,
 //                                     back: { frames, idea, action, sound } }   (a moment that holds on a close look;
 //                                     back only when the film in cannot simply run backwards)
 //
@@ -55,6 +56,9 @@ function normalize(plan) {
 }
 
 export const placeById = (plan, id) => plan.places.find(place => place.id === id);
+
+/** An 18+ world: `mature: true`, or a title card that warns 18+. */
+export const matureWorld = plan => Boolean(plan.mature) || /18\+/.test(plan.intro?.warning ?? '');
 
 /**
  * Every film the plan asks for, in story order, each with the stills it

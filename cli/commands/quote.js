@@ -15,7 +15,7 @@ import { SPEECH_MODELS } from '../lib/audio.js';
 import { musicEstimate } from './music.js';
 import { wantsFigure } from './figures.js';
 import { figureEstimate, figureFiles } from '../lib/figures.js';
-import { EDIT_MODEL } from '../lib/paint.js';
+import { EDIT_MODELS, editEstimate, editModel, PAINT_SIZES } from '../lib/paint.js';
 import { readJson } from '../lib/files.js';
 import { filmId } from '../lib/paths.js';
 
@@ -91,22 +91,22 @@ export async function run(argv) {
     }
     if (figures.length) {
       try {
-        const each = await figureEstimate(session);
-        audio.push({ item: `figures: ${figures.length} (plate + Pixal3D + BiRefNet)`, usd: each.usd * figures.length, token: each.token * figures.length });
+        const each = await figureEstimate(session, plan);
+        audio.push({ item: `figures: ${figures.length} (plate by ${editModel(plan)} + Pixal3D + BiRefNet)`, usd: each.usd * figures.length, token: each.token * figures.length });
       } catch (error) {
         audio.push({ item: 'figures', error: error.message });
       }
     }
-    // Close looks still to paint: three Qwen Image Edit candidates each.
+    // Close looks still to paint: three candidates each, priced per edit model (a close look with a person has its own).
     const looks = plan.places.flatMap(place => place.objects.filter(o => !o.goes && o.reveal?.paint && !o.reveal.still));
-    if (looks.length) {
+    const byModel = Map.groupBy(looks, object => editModel(plan, { people: object.reveal.people === true }));
+    const [width, height] = PAINT_SIZES[`${canvas.width}x${canvas.height}`] ?? [canvas.width, canvas.height];
+    for (const [model, objects] of byModel) {
       try {
-        const canvas = canvasOf(plan);
-        const estimate = await session.client.projects.estimateCost({ network: 'fast', tokenType: session.billing.tokenType, model: EDIT_MODEL, imageCount: 3 * looks.length,
-          stepCount: 20, previewCount: 0, guidance: 4, width: canvas.width, height: canvas.height, billingMode: session.billing.mode });
-        audio.push({ item: `close looks: ${looks.length} (3 candidates each, Qwen Image Edit)`, usd: Number(estimate.usd), token: Number(estimate.token) });
+        const estimate = await editEstimate(session, { model, count: 3 * objects.length, width, height });
+        audio.push({ item: `close looks: ${objects.length} (3 candidates each, ${model}${model === EDIT_MODELS.premium ? ', paid in tokens' : ''})`, ...estimate });
       } catch (error) {
-        audio.push({ item: 'close looks', error: error.message });
+        audio.push({ item: `close looks (${model})`, error: error.message });
       }
     }
     const audioUsd = audio.reduce((sum, row) => sum + (row.usd || 0), 0);
@@ -123,6 +123,7 @@ export async function run(argv) {
     if (rows.length) log.step(`${rows.length} film${rows.length === 1 ? '' : 's'}, ${(total.seconds / 60).toFixed(1)} minutes of 2K film: ${total.spark.toFixed(0)} Spark (${usd(total.usd)}) at pay-as-you-go prices`);
     for (const row of audio) log.info(`${row.item.padEnd(34)} ${row.error ? `could not quote: ${row.error}` : `$${row.usd.toFixed(3)}`}`);
     if (audio.length) log.step(`Narration, music and figures: about $${audioUsd.toFixed(2)} at pay-as-you-go prices${rows.length ? `; everything together about ${usd(total.usd + audioUsd)}` : ''}`);
+    if (editModel(plan) === EDIT_MODELS.premium && (looks.length || figures.length)) log.step('edits: premium — GPT Image 2.5 Sunburst paints the close looks and figure plates, paid from your token balance (Premium Spark) even on an Unlimited plan.');
     const canary = canaryStatus(plan, paths);
     const canaryRows = rows.filter(row => canary.ids.includes(row.film));
     if (!['approved', 'none'].includes(canary.state) && canaryRows.length) {

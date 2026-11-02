@@ -260,8 +260,12 @@ when its clicks didn't change.
 
 Then make the close looks, in this order (`node world next` walks you through it):
 `node world reveals` crops each place's still around the object and edits in only
-what `reveal.paint` describes (Qwen Image Edit), three candidates each, with a
-`room kept` score. Look at every candidate at full size beside its `.zoom.png` (the
+what `reveal.paint` describes, three candidates each, with a `room kept` score.
+The edit model follows the plan: FLUX 3 Image Klein, or Krea 2 Identity Edit when
+you set `reveal.people: true` because a person is in that close-up; Dark Beast
+Krea 2 Identity Edit for every edit in an 18+ world (`mature: true`); GPT Image
+2.5 Sunburst when the person has Premium Spark and says yes to `edits: premium`
+(ask first: it is paid from Premium Spark, not the Unlimited plan). Look at every candidate at full size beside its `.zoom.png` (the
 room unchanged, the object and people as in the place, the writing exactly the
 words you named), keep one with `node world reveals --pick <place-object> <n>`, write
 its `reveal.seen`, then rewrite the object's film so it arrives on that picture

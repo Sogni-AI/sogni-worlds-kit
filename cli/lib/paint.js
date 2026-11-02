@@ -2,6 +2,7 @@
 // same SDK and API key as everything else. A painted still is then ingested
 // exactly like a photograph and is just as immutable afterwards.
 import { RefusedError, watchRefusals } from './sogni.js';
+import { matureWorld } from './plan.js';
 
 /**
  * The image models a painted world uses. Identity Edit keeps the same
@@ -17,13 +18,56 @@ export const PAINT_MODELS = Object.freeze({
 });
 
 /**
- * Qwen Image Edit 2511: an edit that keeps everything it is not told to change,
- * so the light, the furniture and the room stay where the reference has them.
- * It makes a figure's clean plate (the object alone on white, the recipe the
- * live worlds' 3D figures were rebuilt with) and a close look (the place's
- * own picture, zoomed, with only the object changed), at the model's defaults.
+ * The models that edit a picture: a close look (the place's own picture,
+ * zoomed, with only the object changed) and a figure's clean plate (the object
+ * alone on white). Mark's routing (2026-11-01); Qwen Image Edit, an older
+ * model, is never used:
+ *   things   FLUX 3 Image Klein: places, props, writing, a figure's plate
+ *   people   Krea 2 Identity Edit: a close look with a person in it (reveal.people)
+ *   mature   Dark Beast Krea 2 Identity Edit: every edit in an 18+ world
+ *   premium  GPT Image 2.5 Sunburst: every other edit when the person chose
+ *            `edits: premium` (paid from Premium Spark; an Unlimited plan does not cover it)
  */
-export const EDIT_MODEL = 'qwen_image_edit_2511_fp8';
+export const EDIT_MODELS = Object.freeze({
+  things: 'flux3_image_klein_sd_int8_convrot',
+  people: 'krea2_identity_edit_v1_2',
+  mature: 'dark_beast_krea2_identity_edit_v1_2',
+  premium: 'gpt-image-2.5-sunburst',
+});
+
+/** GPT Image 2.5's quality when the person pays for the best edit. */
+export const PREMIUM_QUALITY = 'high';
+
+/** GPT Image 2.5 is a premium vendor model no Unlimited plan covers: like Seedance, it always pays in tokens. */
+export const editBillingMode = (model, billing) => (model === EDIT_MODELS.premium ? 'tokens' : billing.mode);
+
+/** The model for one edit in this world: `people` when the picture shows a person. */
+export function editModel(plan, { people = false } = {}) {
+  if (matureWorld(plan)) return EDIT_MODELS.mature;
+  if (plan.edits === 'premium') return EDIT_MODELS.premium;
+  return people ? EDIT_MODELS.people : EDIT_MODELS.things;
+}
+
+/** An edit model's own settings: its tier's defaults, and GPT Image's quality. */
+async function editSettings(session, model) {
+  if (model === EDIT_MODELS.premium) return { gptImageQuality: PREMIUM_QUALITY };
+  const options = await session.client.projects.getModelOptions?.(model).catch(() => null);
+  return {
+    ...(options?.steps?.default !== undefined ? { steps: options.steps.default } : {}),
+    ...(options?.guidance?.default !== undefined ? { guidance: options.guidance.default } : {}),
+    ...(options?.sampler?.default ? { sampler: options.sampler.default } : {}),
+    ...(options?.scheduler?.default ? { scheduler: options.scheduler.default } : {}),
+  };
+}
+
+/** What `count` edits by `model` at this size cost, priced by Sogni (nothing is submitted). */
+export async function editEstimate(session, { model, count, width, height }) {
+  const options = await session.client.projects.getModelOptions(model);
+  const estimate = await session.client.projects.estimateCost({ network: 'fast', tokenType: session.billing.tokenType, model, imageCount: count,
+    stepCount: options?.steps?.default ?? 1, previewCount: 0, guidance: options?.guidance?.default ?? 1, width, height,
+    ...(model === EDIT_MODELS.premium ? { gptImageQuality: PREMIUM_QUALITY } : {}), billingMode: editBillingMode(model, session.billing) });
+  return { usd: Number(estimate.usd), token: Number(estimate.token) };
+}
 
 /** The reviewed step counts: 8 for text-to-image, 10 for an edit. */
 const STEPS = { text: 8, edit: 10 };
@@ -93,22 +137,21 @@ export async function paint(session, { prompt, width, height, seed, context = []
 }
 
 /**
- * `count` Qwen Image Edit results of one instruction on up to three context
- * pictures, at the model's own steps and guidance. Returns PNG buffers.
+ * `count` results of one edit instruction by `model` (from editModel) on one
+ * or two context pictures, at the model's own settings. Returns PNG buffers.
  */
-export async function edit(session, { prompt, context, width, height, seed, count = 1, contentFilter = false }) {
-  if (!context?.length || context.length > 3) throw new Error('an edit takes one to three context pictures');
-  const options = await session.client.projects.getModelOptions?.(EDIT_MODEL).catch(() => null);
+export async function edit(session, { model, prompt, context, width, height, seed, count = 1, contentFilter = false }) {
+  // Every edit model takes two pictures (Krea 2 Identity Edit's limit); the kit never sends more.
+  if (!context?.length || context.length > 2) throw new Error('an edit takes one or two context pictures');
+  const settings = await editSettings(session, model);
   const refusals = watchRefusals(session.client);
   try {
     const project = await refusals.creating(() => session.client.projects.create({
-      type: 'image', modelId: EDIT_MODEL, positivePrompt: prompt, negativePrompt: '', stylePrompt: '',
-      steps: options?.steps?.default ?? 20, guidance: options?.guidance?.default ?? 4,
-      ...(options?.sampler?.default ? { sampler: options.sampler.default } : {}),
-      ...(options?.scheduler?.default ? { scheduler: options.scheduler.default } : {}),
+      type: 'image', modelId: model, positivePrompt: prompt, negativePrompt: '', stylePrompt: '',
+      ...settings,
       numberOfMedia: count, numberOfPreviews: 0, sizePreset: 'custom', width, height,
       ...(Number.isInteger(seed) ? { seed } : {}), contextImages: context, outputFormat: 'png',
-      disableNSFWFilter: !contentFilter, network: 'fast', tokenType: session.billing.tokenType, billingMode: session.billing.mode,
+      disableNSFWFilter: !contentFilter, network: 'fast', tokenType: session.billing.tokenType, billingMode: editBillingMode(model, session.billing),
     }));
     const urls = await Promise.race([
       project.waitForCompletion(),
@@ -123,7 +166,7 @@ export async function edit(session, { prompt, context, width, height, seed, coun
       images.push(Buffer.from(await response.arrayBuffer()));
     }
     if (!images.length) throw new Error('Sogni returned no pictures (the safe-content filter may have withheld them)');
-    return { modelId: EDIT_MODEL, projectId: project.id, images };
+    return { modelId: model, projectId: project.id, images };
   } finally {
     refusals.stop();
   }

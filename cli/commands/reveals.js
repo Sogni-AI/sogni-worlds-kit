@@ -8,13 +8,13 @@ import { readPlan, writePlan } from '../lib/plan.js';
 import { resolveWorldId, shown, filmId, worldFile } from '../lib/paths.js';
 import { readJson, writeJson, sha256 } from '../lib/files.js';
 import { connect } from '../lib/sogni.js';
-import { edit, PAINT_SIZES } from '../lib/paint.js';
+import { edit, editModel, PAINT_SIZES } from '../lib/paint.js';
 import { maskBox } from '../lib/figures.js';
 import { correlation } from '../lib/screen.js';
 import { canvasOf, contentFilterOff } from './render.js';
 import { nextStep } from './status.js';
 
-export const summary = 'Paint the close look an object\'s film lands on: the place\'s own picture, zoomed in, with only the object changed (Qwen Image Edit)';
+export const summary = 'Paint the close look an object\'s film lands on: the place\'s own picture, zoomed in, with only the object changed';
 export const usage = `node world reveals [world] [--only <place-object> ...] [--count <n>] [--force]
 node world reveals [world] --pick <place-object> <n>
 
@@ -24,10 +24,13 @@ node world reveals [world] --pick <place-object> <n>
   says its line there or the figure is turned over, and the film runs back to
   put it down. The close look is the place's own still, cropped around the
   object and zoomed (reveal.zoom, 1 to 3; by default the object fills about
-  two fifths of the width), then edited by Qwen Image Edit 2511 to show only
-  what reveal.paint describes. The room around it keeps its geometry, so the
-  film into it is a straight push-in: a repainted room makes the film morph
-  the furniture on the way.
+  two fifths of the width), then edited to show only what reveal.paint
+  describes: by FLUX 3 Image Klein, or Krea 2 Identity Edit when the close
+  look shows a person (reveal.people: true); in an 18+ world (mature: true)
+  by Dark Beast Krea 2 Identity Edit; with edits: premium by GPT Image 2.5
+  Sunburst, paid from Premium Spark. The room around it keeps its geometry,
+  so the film into it is a straight push-in: a repainted room makes the film
+  morph the furniture on the way.
 
   Paints --count candidates (default 3) into reveals/candidates/, beside the
   zoomed crop they were made from (<place>-<object>.zoom.png). Look at each at
@@ -88,8 +91,9 @@ export async function run(argv) {
         const zoomed = await sharp(stillPath).extract(frame.crop).resize(width, height, { fit: 'fill', kernel: 'lanczos3' }).png().toBuffer();
         writeFileSync(join(dir, `${key}.zoom.png`), zoomed);
         const prompt = closeLookPrompt(reveal.paint);
-        log.step(`${key}: ${frame.zoom}× on the object · ${String(reveal.paint).slice(0, 80)}${String(reveal.paint).length > 80 ? '…' : ''}`);
-        const { images, modelId, projectId } = await edit(session, { prompt, context: [zoomed], width, height, count, contentFilter: !contentFilterOff(plan) });
+        const model = editModel(plan, { people: reveal.people === true });
+        log.step(`${key}: ${frame.zoom}× on the object, ${model} · ${String(reveal.paint).slice(0, 80)}${String(reveal.paint).length > 80 ? '…' : ''}`);
+        const { images, modelId, projectId } = await edit(session, { model, prompt, context: [zoomed], width, height, count, contentFilter: !contentFilterOff(plan) });
         const files = [], kept = [];
         for (const [index, bytes] of images.entries()) {
           const file = join(dir, `${key}-${index + 1}.png`);
@@ -142,7 +146,7 @@ async function pickCandidate({ id, doc, plan, paths, key, n }) {
 /** Below this, a candidate's room differs from the zoomed crop enough to be worth a look before choosing it. */
 export const ROOM_KEPT = 0.8;
 
-/** What Qwen Image Edit is told: the zoomed crop exactly as it is, with only the plan's change. */
+/** What the edit model is told: the zoomed crop exactly as it is, with only the plan's change. */
 export const closeLookPrompt = paint => [
   'The same picture, with the same framing, room, light, colours, furniture and people exactly where they are, sharp and finely detailed.',
   `The only change: ${String(paint).replace(/\s+/g, ' ').trim().replace(/[^.!?]$/, '$&.')}`,

@@ -186,7 +186,7 @@ Sogni's decentralized GPU network through your one API key:
 | Keeps the same character in every place, from one reference picture | Sogni Krea 2 Identity Edit |
 | Paints 18+ worlds (horror, gore) | Dark Beast Krea 2, with its own Identity Edit |
 | Traces what you click | Segment Anything 3 |
-| Paints each close look into its place, and draws each 3D figure alone before it is built | Qwen Image Edit 2511 |
+| Paints each close look into its place, and draws each 3D figure alone before it is built | FLUX 3 Image Klein; Krea 2 Identity Edit when a close look shows a person; Dark Beast Krea 2 Identity Edit in 18+ worlds; GPT Image 2.5 Sunburst if you choose it with Premium Spark |
 | Films every crossing, loop and moment | MiniMax H3: first-and-last-frame, two-stage, native 2K with its own sound |
 | Narrates | Qwen3-TTS: a designed voice, or a clone of a voice you own |
 | Scores | MiniMax Music 3 |

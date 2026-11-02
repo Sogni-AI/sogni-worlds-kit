@@ -351,7 +351,10 @@ reads "T. HALE". A reveal gives them that:
 
 The close look is the place's own still, cropped around the object and zoomed
 (about two fifths of the width, at most 2×, or `reveal.zoom` up to 3×), with only
-what changes painted in by Qwen Image Edit (`node world reveals`). The room around
+what changes painted in (`node world reveals`) by FLUX 3 Image Klein, or by Krea 2
+Identity Edit when a person is in the close-up (`reveal.people: true`, so they stay
+who they are); an 18+ world (`mature: true`) uses Dark Beast Krea 2 Identity Edit,
+and `edits: premium` GPT Image 2.5 Sunburst, paid from Premium Spark. The room around
 it keeps its geometry, so the film into it is a straight push-in: a repainted room,
 where a lamp, a chair or a wall is not where the place has it, makes the film morph
 the furniture on the way. `reveals` scores each candidate's room against the crop
@@ -485,8 +488,9 @@ where it goes; a moment and a close look by what they show and tell.
 - **Figures are solid things, made again before they are made 3D.** A thing in a
   picture is small, lies on something and shows one side; a mesh built from that is
   a blob with the table fused under it. So `node world figures` first draws the
-  object again, alone, whole and detailed on a white plate (Qwen Image Edit, from a
-  crop of its picture, and from its close look when it has one), in the words of
+  object again, alone, whole and detailed on a white plate (FLUX 3 Image Klein, or
+  the world's Dark Beast or premium edit model, from a crop of its picture, and from
+  its close look when it has one), in the words of
   `figureLook` (what it is and how it looks, in its full shape: "a lady's light grey
   kid glove, its palm stained with dried blood"), and Pixal3D builds the mesh from
   that plate. A lamp, a boot, a statue or an animal turns over well; a photograph, a
