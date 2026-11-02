@@ -254,10 +254,7 @@ export async function readFinished(read, { attempts = 6, delayMs = 5000, sleep =
 }
 
 /** The stored record of a finished project: the result's hash and filter flags. */
-export const fetchStoredRecord = (client, projectId, options) => {
-  const recorded = clientSpending(client)?.takeRecord(projectId);
-  return recorded ? Promise.resolve(recorded) : readFinished(() => client.projects.get(projectId), options);
-};
+export const fetchStoredRecord = (client, projectId, options) => readFinished(() => client.projects.get(projectId), options);
 
 /**
  * Take back a project an earlier run submitted. A project still rendering is
@@ -312,7 +309,13 @@ export async function waitForProject(client, { project, projectId, ownerPid }, {
       tracked = recovered.project ?? null;
       session = recovered.session ?? null;
     }
-    if (tracked) await settleProject(tracked, { refusals, timeoutMs, onStatus });
+    if (tracked) {
+      try { await settleProject(tracked, { refusals, timeoutMs, onStatus }); }
+      catch (error) {
+        if (tracked.finished) await clientSpending(client)?.readActual(id, { automatic: true });
+        throw error;
+      }
+    }
     const record = await fetchStoredRecord(client, id, { sleep });
     if (!record) {
       throw new Error(tracked

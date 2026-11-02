@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { RefusedError, watchRefusals } from './sogni.js';
 import { edit, editEstimate, editModel } from './paint.js';
+import { clientSpending } from './spending.js';
 
 export const FIGURE_MODELS = Object.freeze({
   matte: 'birefnet_image_background_removal_fp16',
@@ -160,13 +161,14 @@ export async function cutoutOf(platePng, mattePng) {
 }
 
 /** Submit one image job and download its single result. */
-async function oneResult(session, params, { minutes, what }) {
+async function oneResult(session, params, { minutes, what, kind = 'image' }) {
   const refusals = watchRefusals(session.client);
   try {
     const project = await refusals.creating(() => session.client.projects.create({
       type: 'image', numberOfMedia: 1, numberOfPreviews: 0, negativePrompt: '', stylePrompt: '',
       network: 'fast', tokenType: session.billing.tokenType, billingMode: session.billing.mode, ...params,
     }));
+    if (kind !== 'image') clientSpending(session.client)?.classify(project.id, kind);
     const urls = await Promise.race([
       project.waitForCompletion(),
       new Promise((_, reject) => setTimeout(() => reject(new Error(`${what} took longer than ${minutes} minutes`)), minutes * 60_000)),
@@ -205,7 +207,7 @@ export async function meshJob(session, cutoutPng, noun, quality = FIGURE_QUALITY
     modelId: FIGURE_MODELS.mesh, positivePrompt: noun,
     steps: options?.steps?.default ?? 1, guidance: options?.guidance?.default ?? 0,
     startingImage: cutoutPng, ...quality,
-  }, { minutes: 45, what: '3D model' });
+  }, { minutes: 45, what: '3D model', kind: '3d' });
   const glb = inspectGlb(bytes);
   if (!glb.triangles) throw new Error('the 3D model has no geometry');
   if (glb.triangles > quality.meshTargetFaces * 1.2) throw new Error(`the 3D model has ${glb.triangles} triangles, over its budget of ${quality.meshTargetFaces}`);

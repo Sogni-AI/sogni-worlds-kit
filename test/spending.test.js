@@ -117,7 +117,7 @@ test('subscription value is separate from charged tokens; missing cost lookup pr
     const project = { id: 'p', waitForCompletion: async () => ['url'] };
     const client = { projects: { create: async () => project, get: async () => { if (!subscription) throw Object.assign(Error('late'), { status: 404 }); return { status: 'completed', costActual: { costInUSD: '10', costInToken: '2000' } }; } } };
     trackSpending(client, root, { warn: x => warnings.push(x) });
-    await client.projects.create({ type: 'video', billingMode: subscription ? 'subscription' : 'tokens' });
+    await client.projects.create({ type: 'image', billingMode: subscription ? 'subscription' : 'tokens' });
     assert.deepEqual(await project.waitForCompletion(), ['url']);
     const report = spendingReport(root);
     assert.equal(report.project.usd, '0');

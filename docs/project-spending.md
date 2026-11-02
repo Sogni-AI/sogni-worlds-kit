@@ -36,11 +36,16 @@ claim about out-of-pocket cash. Currencies stay separate; no exchange rate is gu
 ## Automatic capture and older projects
 
 Every Kit generation command journals an attempt before submitting it. The SDK's
-settled project cost is captured with one completion lookup; a render's existing
-result read reuses it. Writer/judge LLM stream settlements are captured even when
-the answer is rejected and tried again. A disconnected or cancelled request stays
+settled project cost is captured through a video's existing result read; image,
+3D and audio callers use one completion lookup. Writer/judge LLM stream settlements
+are captured even when the answer is rejected and tried again. A disconnected or cancelled request stays
 unresolved until there is evidence of its charge. A cost lookup failure preserves
-the media and reports the accounting gap. A damaged ledger stops further spending.
+the media and reports the accounting gap. If bookkeeping fails after a paid call,
+the result is preserved and further paid submissions in that session are blocked.
+Repair the ledger and reconcile unresolved receipts before restarting. A damaged
+ledger stops a new submission before it is paid for.
+Concurrent imports serialize their checks and writes, so conflicting receipts
+cannot both be accepted. Applied correction references are idempotent across aliases.
 
 On the first tracked session, existing Kit media receipts are imported once from
 the known receipt folders. Later reports read only the ledger. To import receipts
