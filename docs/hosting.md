@@ -208,7 +208,10 @@ Open the link on a phone and on a computer, with sound on:
 - every thing to click has its outline and label, and plays its film;
 - a crossing lands exactly on the next place's photograph (no jump);
 - Back plays the way you came;
-- narration and music play after the first tap, and the music steps back under films.
+- narration and music play after the first tap, and the music steps back under films;
+- on a small phone held sideways (iPhone SE, 667×375), every menu and dialog shows its top and scrolls to the rest. A
+  panel centred with `align-content: center` or `justify-content: center` loses its top, above where it can scroll, once
+  it is taller than the screen; `safe center` keeps it (Sogni Meme World's menu, 2026-11-01).
 
 ## Submit to the Sogni community gallery
 
