@@ -8,6 +8,7 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import sharp from 'sharp';
+import { clientSpending } from './spending.js';
 
 /** The writer and judge, and the pointer (Qwen places points on a picture far more accurately). */
 export const MODELS = Object.freeze({
@@ -213,7 +214,7 @@ export class Llm {
           lastError = error;
           this.#log({ purpose, model, attempt, seconds: (Date.now() - started) / 1000, error: String(error?.message ?? error).slice(0, 300) });
           // A refusal for money or plan is final, and so is running out of room; a dropped or queued-out job is worth another try.
-          if (error?.length || [4087, 4088, 4089].includes(error?.code) || /insufficient|balance|subscription/i.test(error?.message ?? '')) throw error;
+          if (error?.spending || error?.length || [4087, 4088, 4089].includes(error?.code) || /insufficient|balance|subscription/i.test(error?.message ?? '')) throw error;
           await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
         }
       }
@@ -274,18 +275,27 @@ export class Llm {
 
   async #completeExternal({ messages, maxTokens, temperature, think, schema, purpose, started, attempt }) {
     const { url, key, model } = this.external;
-    const response = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model, messages, max_tokens: maxTokens, ...(temperature !== undefined ? { temperature } : {}), stream: false,
-        chat_template_kwargs: { enable_thinking: Boolean(think) },
-        ...(schema ? { response_format: { type: 'json_schema', json_schema: { name: purpose.replace(/[^a-z0-9_]/gi, '_').slice(0, 60) || 'answer', schema: grammarOf(schema), strict: true } } } : {}),
-      }),
-      signal: AbortSignal.timeout(1_800_000),
-    });
-    if (!response.ok) throw new Error(`${model}: HTTP ${response.status} ${(await response.text()).slice(0, 200)}`);
-    const json = await response.json();
+    const ledger = clientSpending(this.client);
+    const spending = ledger?.begin({ provider: 'external-writer', kind: 'llm', model, currency: 'USD' });
+    let json;
+    try {
+      const response = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model, messages, max_tokens: maxTokens, ...(temperature !== undefined ? { temperature } : {}), stream: false,
+          chat_template_kwargs: { enable_thinking: Boolean(think) },
+          ...(schema ? { response_format: { type: 'json_schema', json_schema: { name: purpose.replace(/[^a-z0-9_]/gi, '_').slice(0, 60) || 'answer', schema: grammarOf(schema), strict: true } } } : {}),
+        }),
+        signal: AbortSignal.timeout(1_800_000),
+      });
+      if (!response.ok) throw new Error(`${model}: HTTP ${response.status} ${(await response.text()).slice(0, 200)}`);
+      json = await response.json();
+      if (spending) ledger.update(spending, { projectId: json.id ?? spending.id, status: 'completed', reconciliationNeeded: true });
+    } catch (error) {
+      if (spending) ledger.update(spending, { status: 'outcome-unknown' });
+      throw error;
+    }
     const choice = json.choices?.[0];
     const content = stripThinking(choice?.message?.content ?? '');
     const usage = json.usage ?? {};

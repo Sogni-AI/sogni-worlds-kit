@@ -60,7 +60,7 @@ export async function run(argv) {
   if (!todo.length) { log.ok('Every figure is made.'); log.next(nextStep(id)); return 0; }
 
   const models = figureModels(plan);
-  const session = await connect({ appId: `sogni-worlds-figures-${id}` });
+  const session = await connect({ worldDir: paths.dir, appId: `sogni-worlds-figures-${id}` });
   let made = 0;
   const failed = [];
   try {

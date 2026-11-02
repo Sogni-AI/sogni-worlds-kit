@@ -110,7 +110,7 @@ export async function run(argv) {
     log.next(nextStep(id));
     return 0;
   }
-  const session = await connect();
+  const session = await connect({ worldDir: paths.dir });
   let failures = 0;
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);

@@ -36,7 +36,7 @@ export async function run(argv) {
     return 1;
   }
 
-  const session = await connect({ appId: `sogni-worlds-story-${Date.now()}` });
+  const session = await connect({ worldDir: paths.dir, appId: `sogni-worlds-story-${Date.now()}` });
   const llm = new Llm({ client: session.client, billing: session.billing, logFile: join(paths.dir, 'agent', 'llm.jsonl') });
   let answer;
   try {

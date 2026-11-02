@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { buildWorld } from '../cli/commands/build.js';
 import { writeJson, sha256File } from '../cli/lib/files.js';
 import { recordVerdict } from '../cli/lib/takes.js';
+import { readSpending } from '../cli/lib/spending.js';
 import { ffmpeg, probe } from '../cli/lib/media.js';
 import { greyFrames, correlation } from '../cli/lib/screen.js';
 import { validateWorld, mediaEntries } from '../cli/lib/worldjson.js';
@@ -20,7 +21,7 @@ async function take(paths, film, number, { kind, seconds, source, verdict, tone 
   await syntheticVideo(video, { source, seconds, tone });
   const sha = sha256File(video);
   writeJson(join(paths.renders, film, `take-${number}.json`), {
-    film, take: number, kind, width: 96, height: 64, frames: Math.round(seconds * 24), status: 'completed', sha256: sha,
+    film, take: number, kind, projectId: `${film}-${number}`, width: 96, height: 64, frames: Math.round(seconds * 24), status: 'completed', sha256: sha,
   });
   if (verdict) recordVerdict(paths, sha, { film, take: number, verdict, note: '', by: 'you' });
   return sha;
@@ -93,6 +94,7 @@ test('build assembles a playable world from approved takes only', async () => {
   assert.deepEqual(b.hotspots[0].at, [0.3, 0.6], 'label falls back to the first SAM click');
   assert.equal(b.hotspots[0].next, true, 'the last place leads back to the first');
   assert.ok(result.missing.some(m => m.film === 'a-bird' && m.state === 'unjudged'));
+  assert.deepEqual(readSpending(paths.dir).selections['build:clips'].projectIds, ['sogni:a-door-2', 'sogni:a-loop-1', 'sogni:b-path-1']);
 
   // The approved take (5 s), not the rejected one (2 s), finished at full and half size.
   const door = await probe(join(paths.build, a.hotspots[0].film.src));
@@ -150,6 +152,7 @@ test('build: a close look ships its still, its line and its film back; a loop si
   assert.deepEqual(validateWorld(world), []);
   const [place] = world.places;
   assert.deepEqual(place.hotspots.map(h => h.id), ['glove', 'note'], 'a close look whose written film back is not ready stays out of the world');
+  assert.equal(readSpending(paths.dir).selections['build:clips'].projectIds.includes('sogni:a-coat-1'), false, 'an approved but unserved film is not a used clip');
   assert.ok(result.missing.some(m => m.film === 'a-coat-back'));
   const { reveal } = place.hotspots[0];
   assert.equal(reveal.still, 'stills/reveals/a-glove.webp');

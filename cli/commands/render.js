@@ -264,7 +264,7 @@ export async function run(argv) {
   const specs = new Map();
   for (const w of work.filter(w => !w.resume)) specs.set(w.film.id, await takeSpec(plan, paths, w.film, w.take, { seed }));
 
-  const session = await connect();
+  const session = await connect({ worldDir: paths.dir });
   const { client, billing } = session;
   const refusals = watchRefusals(client);
   try {

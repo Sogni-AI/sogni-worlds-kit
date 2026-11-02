@@ -82,6 +82,11 @@ under a subscribed account use the plan automatically.
 
 Every render prints the account, the plan and the billing choice before it submits.
 
+For what the project has actually consumed, run `node world spend`. Its durable
+ledger separates used clips, all attempts, cash purchases, vendor credits and
+subscription value. Quotes and missing historical charges stay separate:
+[Project lifetime spending](project-spending.md).
+
 ### Fair use, plainly
 
 "Unlimited" is fair-use scheduling, not unmetered compute. Each plan has a daily

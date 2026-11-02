@@ -45,7 +45,7 @@ export async function run(argv) {
   const clicks = values.manifest ? await fromManifest(values.manifest, values.out) : fromWorld(world, values);
   if (!clicks.items.length) { log.warn('No films with a clickable object to audit.'); return 0; }
 
-  const session = await connect({ appId: `sogni-worlds-audit-${Date.now()}` });
+  const session = await connect({ worldDir: clicks.projectDir, appId: `sogni-worlds-audit-${Date.now()}` });
   const llm = new Llm({ client: session.client, billing: session.billing, logFile: clicks.logFile, concurrency: Number(process.env.SOGNI_AGENT_CONCURRENCY || (session.tier === 'unlimited_pro' ? 4 : 2)) });
   const results = [];
   try {
@@ -104,7 +104,7 @@ function fromWorld(world, values) {
       mature,
     });
   }
-  return { items, cacheDir: join(paths.cache, 'click-audit'), out: join(paths.review, 'click-audit.json'), logFile: join(paths.dir, 'agent', 'llm.jsonl') };
+  return { items, projectDir: paths.dir, cacheDir: join(paths.cache, 'click-audit'), out: join(paths.review, 'click-audit.json'), logFile: join(paths.dir, 'agent', 'llm.jsonl') };
 }
 
 async function fromManifest(file, outFile) {
@@ -131,5 +131,5 @@ async function fromManifest(file, outFile) {
     items.push({ ...entry, still: await local(entry.still), video: await local(entry.video) });
   }
   const out = resolve(outFile ?? file.replace(/\.json$/, '') + '.report.json');
-  return { items, cacheDir, out, logFile: join(dirname(out), 'click-audit.llm.jsonl') };
+  return { items, projectDir: base, cacheDir, out, logFile: join(dirname(out), 'click-audit.llm.jsonl') };
 }

@@ -243,7 +243,12 @@ collectible figures: [docs/agent.md](docs/agent.md).
 | Make | `select` · `render` · `figures` · `narrate` · `music` | Outlines, films, 3D collectibles, voice, score |
 | Judge | `screen` · `audit-clicks` · `note` · `reject` · `review` | Automatic checks, does each film answer its click, agent notes, your verdicts and area notes |
 | Finish | `build` · `play` · `export` · `submit` | Assemble, play, host and submit to the community gallery |
-| Where am I? | `status` · `next` | The whole picture, or just the next step |
+| Where am I? | `status` · `next` · `spend` | Progress, the next step, and lifetime spending |
+
+`node world spend <world>` reports used clips, all attempts including rerolls,
+and the project's cash purchases and vendor credits from a durable local ledger.
+Missing historical costs stay visible. Details and external receipt imports:
+[docs/project-spending.md](docs/project-spending.md).
 
 The kit checks for a newer version once a day and says so in one line. `node world update`
 installs it; `--snooze` means not now, and `SOGNI_NO_UPDATE_CHECK=1` turns the check off.

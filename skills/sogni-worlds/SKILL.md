@@ -50,6 +50,10 @@ Rules that matter even before you open AGENTS.md:
   on that page. Never confirm for them. Then build without `--drafts` and export
   before hosting or submitting; drafts keep their badge and cannot be submitted.
 - Quote before spending (`node world quote`), and render the canary before the rest.
+- Keep lifetime spending in the world's ledger (`node world spend`). Kit calls
+  record themselves; import external attempts, rerolls and completed funding
+  receipts as you go. Keep vendor credits separate from cash and usage, and flag
+  missing historical charges (docs/project-spending.md).
 - Never edit a still or use a video frame as one.
 - Look at every picture at full size before writing about it.
 - A retake rewrites the direction that caused the defect.

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { SogniClient } from '@sogni-ai/sogni-client';
 import { billingPreference, sogniCredentials } from './env.js';
+import { trackSpending, clientSpending } from './spending.js';
 
 export const LINKS = Object.freeze({
   apiKey: 'https://dashboard.sogni.ai/api-key',
@@ -52,7 +53,7 @@ export function safeError(error, prefix) {
  * Sign in and decide billing. Billing is SOGNI_BILLING_MODE when set;
  * otherwise an active Unlimited plan pays ("subscription"), else tokens.
  */
-export async function connect({ appId } = {}) {
+export async function connect({ appId, worldDir } = {}) {
   const credentials = sogniCredentials();
   if (!credentials) throw new Error(`No Sogni API key found. Run: node world setup   (get a key at ${LINKS.apiKey})`);
   // Recorded in each journal, so a later run can tell which app instance holds its projects.
@@ -100,6 +101,10 @@ export async function connect({ appId } = {}) {
   if (mode === 'subscription' && !tier) {
     close(client);
     throw new Error(`SOGNI_BILLING_MODE is subscription, but this account has no active Unlimited plan. Subscribe at ${LINKS.subscribe} or set SOGNI_BILLING_MODE=tokens`);
+  }
+  if (worldDir) {
+    try { trackSpending(client, worldDir); }
+    catch (error) { close(client); throw error; }
   }
   return {
     client,
@@ -249,7 +254,10 @@ export async function readFinished(read, { attempts = 6, delayMs = 5000, sleep =
 }
 
 /** The stored record of a finished project: the result's hash and filter flags. */
-export const fetchStoredRecord = (client, projectId, options) => readFinished(() => client.projects.get(projectId), options);
+export const fetchStoredRecord = (client, projectId, options) => {
+  const recorded = clientSpending(client)?.takeRecord(projectId);
+  return recorded ? Promise.resolve(recorded) : readFinished(() => client.projects.get(projectId), options);
+};
 
 /**
  * Take back a project an earlier run submitted. A project still rendering is

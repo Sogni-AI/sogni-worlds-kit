@@ -12,11 +12,12 @@ import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../
 import { canvasByName, delivered } from '../lib/h3.js';
 import { isSeedance } from '../lib/seedance.js';
 import { finishFilm, rewindFilm, relevelFilm, cleanPartials, FILM_LUFS } from '../lib/finish.js';
-import { validateWorld, FORMAT } from '../lib/worldjson.js';
+import { validateWorld, mediaRefs, FORMAT } from '../lib/worldjson.js';
 import { deliveryIssues, writeServedStill, writeIcon, writeSocialCard, WEB_AUDIO, SOCIAL } from '../lib/delivery.js';
 import { ffmpeg } from '../lib/media.js';
 import { figureFiles } from '../lib/figures.js';
 import { wantsFigure } from './figures.js';
+import { recordSelection } from '../lib/spending.js';
 
 export const summary = 'Assemble the playable world (build/world.json) from your approved takes';
 export const usage = `node world build [world] [--force] [--drafts]
@@ -328,7 +329,15 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
   // Every file it serves, in the web formats: nothing outside them reaches a host.
   const delivery = issues.length ? [] : (await deliveryIssues(world, out)).issues;
   writeJson(manifestPath, manifest);
-  if (!issues.length && !delivery.length) writeJson(join(out, 'world.json'), world);
+  if (!issues.length && !delivery.length) {
+    writeJson(join(out, 'world.json'), world);
+    // A draft cannot replace the last approved build's cost selection.
+    if (!unapproved.length) {
+      const served = new Set(mediaRefs(world));
+      const clips = [...films.values()].filter(entry => served.has(entry.src));
+      recordSelection(paths.dir, 'build:clips', clips.map(entry => entry.take.journal.projectId).filter(Boolean), { unidentified: clips.filter(entry => !entry.take.journal.projectId).length });
+    }
+  }
 
   // What a visitor can and cannot do.
   const reachable = new Set([world.start]);

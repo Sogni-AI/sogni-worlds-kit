@@ -17,7 +17,7 @@ export const COMMANDS = [
   ['Make', ['select', 'reveals', 'render', 'figures', 'narrate', 'music']],
   ['Judge', ['screen', 'audit-clicks', 'note', 'reject', 'review']],
   ['Finish', ['build', 'play', 'export', 'submit']],
-  ['Where am I?', ['status', 'next']],
+  ['Where am I?', ['status', 'next', 'spend']],
   ['No coding agent?', ['agent']],
 ];
 

@@ -121,7 +121,7 @@ export async function run(argv) {
   }
 
   mkdirSync(paths.selections, { recursive: true });
-  const session = await connect();
+  const session = await connect({ worldDir: paths.dir });
   const refusals = watchRefusals(session.client);
   let done = 0;
   const failed = [];

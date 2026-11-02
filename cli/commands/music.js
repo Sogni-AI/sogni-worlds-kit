@@ -109,7 +109,7 @@ export async function run(argv) {
 
   const { model, seconds } = musicJob(music);
   const request = musicRequest(music);
-  const session = await connect();
+  const session = await connect({ worldDir: paths.dir });
   try {
     log.info(`Signed in as ${session.username} · ${describeBilling(session.billing)}`);
     const quote = await musicEstimate(session, music).catch(() => null);

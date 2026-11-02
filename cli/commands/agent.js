@@ -77,7 +77,7 @@ export async function run(argv) {
   const state = readJson(stateFile, {});
   const save = () => writeJson(stateFile, state);
 
-  const session = await connect({ appId: `sogni-worlds-agent-${id}` });
+  const session = await connect({ worldDir: paths.dir, appId: `sogni-worlds-agent-${id}` });
   const llm = new Llm({ client: session.client, billing: session.billing, logFile: join(paths.dir, 'agent', 'llm.jsonl'), concurrency: Number(process.env.SOGNI_AGENT_CONCURRENCY || (session.tier === 'unlimited_pro' ? 4 : 2)) });
   const mature = Boolean(brief.paint?.mature || brief.mature);
   let closed = false;

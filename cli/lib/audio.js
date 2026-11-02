@@ -3,6 +3,7 @@
 // twice, and what comes back is measured before anyone listens to it.
 import { existsSync, writeFileSync } from 'node:fs';
 import { readJson, writeJson, sha256 } from './files.js';
+import { clientSpending } from './spending.js';
 import { FFMPEG, run } from './media.js';
 import { readFinished, recoverProject, settleProject, watchRefusals, RefusedError, refusedForSure, safeError } from './sogni.js';
 
@@ -114,13 +115,13 @@ export async function waitForAudio(client, { project, projectId, ownerPid }, { r
     if (tracked) {
       const urls = await settleProject(tracked, { refusals, timeoutMs, onStatus: say });
       const job = tracked.jobs?.find(j => j.status === 'completed') ?? tracked.jobs?.[0];
-      if (urls?.[0]) return { url: urls[0], jobId: job?.id ?? null };
+      if (urls?.[0]) { await clientSpending(client)?.readActual(id); return { url: urls[0], jobId: job?.id ?? null }; }
     }
     // Finished while nobody listened: one look at its result, which mints the download URL.
     const result = await readFinished(() => client.projects.getResult(id, { kind: 'audio' }), { sleep });
     if (!result) throw new Error(`Project ${id} is no longer running and Sogni has no result for it. Check your recent jobs at https://app.sogni.ai`);
     const job = result.jobs?.find(j => j.status === 'completed');
-    if (result.status === 'completed' && job?.url) return { url: job.url, jobId: job.id };
+    if (result.status === 'completed' && job?.url) { await clientSpending(client)?.readActual(id); return { url: job.url, jobId: job.id }; }
     if (result.finished) {
       const reason = result.jobs?.find(j => j.reason)?.reason ?? job?.urlUnavailable;
       throw new RefusedError({ code: null, message: `the job ${result.status}${reason ? `: ${reason}` : ''} (project ${id})` });

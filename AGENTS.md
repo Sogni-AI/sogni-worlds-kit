@@ -25,6 +25,11 @@ screen and assemble. They approve the plan, judge the films and decide what ship
    Unlimited plan or their token balance). Start with `node world render --canary`
    (one crossing, one loop and the first close look). A plain `render` refuses to start the rest until the
    person has approved the canary on the review page.
+   Keep lifetime costs with the project: run `node world spend` at handover and
+   when asked about spending. Kit calls are recorded automatically. Import every
+   external generation (including rerolls) and every completed purchase or vendor
+   credit before the next batch; keep cash, credits, usage and quotes separate.
+   Missing historical amounts stay unresolved, never zero (docs/project-spending.md).
 4. **Stills are sacred.** `ingest` makes each canonical still once. Never edit,
    re-save, crop, upscale or replace a still, and never use a video frame or a
    screenshot as one. Every film starts and ends on those exact bytes.

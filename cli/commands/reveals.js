@@ -79,7 +79,7 @@ export async function run(argv) {
     mkdirSync(join(dir, 'earlier', stamp), { recursive: true });
     for (const name of earlier) renameSync(join(dir, name), join(dir, 'earlier', stamp, name));
   }
-  const session = await connect({ appId: `sogni-worlds-reveals-${id}` });
+  const session = await connect({ worldDir: paths.dir, appId: `sogni-worlds-reveals-${id}` });
   const failed = [];
   try {
     log.title(`Painting ${todo.length} close look${todo.length === 1 ? '' : 's'}, ${count} candidate${count === 1 ? '' : 's'} each`);
