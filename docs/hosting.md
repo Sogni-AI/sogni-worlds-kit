@@ -13,7 +13,7 @@ it — including free ones.
 - Checking the live copy — verify the published experience.
 - Submit to the Sogni community gallery — read when the creator wants a listing.
 - Preview loop — choose an existing loop or prepare a teaser.
-- Video share cards — defaults, embedded players and stale social cards.
+- Video share cards — defaults, embedded players, stale social cards and Share buttons.
 - Updating a world — rebuild and update an existing listing.
 - Privacy — read before publishing personal media.
 
@@ -323,6 +323,20 @@ For the next post, serve the same experience at a fresh share path with its own
 For Kit exports, export the world into that path with `--url` set to the fresh
 public address. Keep the original link working and updated. A host cache purge
 does not clear X's cache, and a query parameter is not a guaranteed refresh.
+
+### Share buttons
+
+If a world puts its own Share button on screen, do not hand it to
+`navigator.share` alone. On a desktop Mac the system sheet offers AirDrop,
+Messages, Notes and the like, and no social network, so the button looks broken.
+Show each network's own composer link (X `x.com/intent/post?text=&url=`, Facebook
+`facebook.com/sharer/sharer.php?u=`, WhatsApp `wa.me/?text=`, Reddit
+`reddit.com/submit?url=&title=`, Threads `threads.net/intent/post?text=&url=`,
+Bluesky `bsky.app/intent/compose?text=`, Telegram `t.me/share/url?url=&text=`,
+LinkedIn `linkedin.com/sharing/share-offsite/?url=`, and `mailto:`) as plain
+links, so a phone opens the network's app. Add a Copy link button, and offer the
+system sheet as "More" where it exists: on phones that sheet is how a link
+reaches Instagram, TikTok and Messages, which have no web composer.
 
 ## Updating a world
 
