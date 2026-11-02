@@ -156,6 +156,14 @@ kit makes that shape from what it already has:
 The player has no timers, meters or scores, so a world never promises them: the
 game is the choices, the films and what the voices tell.
 
+If you build your own player around a world (Sogni Meme World does), keep its film
+controls to two rules from playing it (as of 2026-11): **Skip never skips a choice**.
+It lands on the next thing the visitor does, such as a prompt held on a film's last
+frame, never past it. A **back button in front of Skip** (a DVD remote's |◀◀, not a
+circular "refresh" arrow) returns to the last choice with everything as it stood
+there. With no choice behind the film, it restarts the film. This kit's player already
+lands Skip on a film's last frame, where the choices appear.
+
 ## Endings
 
 Every ending is earned. A fatal choice is a real temptation, with a reason to take
