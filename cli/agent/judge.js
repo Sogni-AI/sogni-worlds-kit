@@ -5,7 +5,8 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { ROOT } from '../lib/paths.js';
-import { ON_ONE_STILL } from '../lib/h3.js';
+import { LOOP_FRAMES, ON_ONE_STILL, writtenCamera } from '../lib/h3.js';
+import { isSeedance, SEEDANCE_FRAMES } from '../lib/seedance.js';
 import sharp from 'sharp';
 import { frameImage } from '../lib/screen.js';
 import { clickCauses, lintDirection } from '../lib/lint.js';
@@ -14,7 +15,7 @@ import { FRAME_GRID, writerSystem } from './prompts.js';
 
 const REJECT_ON_SIGHT = [
   'a dissolve or crossfade between two pictures (both show through each other for a few frames), or a fade through black: look hardest at the strips of consecutive frames where the picture changes fastest',
-  'in a loop or a moment, a camera that pushes in, pulls back, pans or drifts and then returns to the starting framing',
+  'in a loop or a moment, a camera that pushes in, pulls back, pans or drifts and then returns to the starting framing, when its direction gives it no camera move of its own',
   'a morph (a wall that becomes a sky, a person who becomes another person)',
   'a hard cut or a sudden jump in the middle',
   'writing that is not real words, or not the words the direction quotes: on signs, mirrors, notes, labels, patches or number plates',
@@ -72,7 +73,9 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
   const text = [
     `A ${film.kind} film, take ${take.take} of "${film.id}". It should start on the picture described as: ${fromSeen}`,
     object ? `The visitor clicked: ${object.target || object.label}, labelled "${object.label}"${object.hint ? ` (${object.hint})` : ''}. That thing must lead the film and the film must do what the label promises; "clickedThingLeads" says whether it does, judged from the frames.` : 'It is the place\'s living picture (nothing was clicked).',
-    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}` : `and end back on the same picture, its camera locked (the frame does not move at all).`,
+    !ON_ONE_STILL.has(film.kind) ? `and end on the picture described as: ${toSeen}`
+      : writtenCamera(film) ? `and end back on the same picture. Its camera does what this says, and comes back to the same framing: ${writtenCamera(film)}`
+        : 'and end back on the same picture, its camera locked (the frame does not move at all).',
     film.kind === 'reveal' ? 'It lands on a close look the world holds on; then, unless it has its own film back, it is played backwards to put the object down. Reject it if anything in it would look plainly wrong running backwards (rain or smoke rising, someone walking or speaking backwards, a pour going up).' : null,
     `Its direction: ${film.action}`,
     `Its sound: ${film.sound}`,
@@ -93,16 +96,20 @@ export async function judgeTake(llm, { take, film, object = null, fromSeen, toSe
   });
 }
 
-const RETAKE_SCHEMA = {
+/** The answer to a retake. Its frames are the film's model's own: H3's grid, or Seedance's whole seconds. */
+const retakeSchema = film => ({
   type: 'object', additionalProperties: false, required: ['diagnosis', 'film'],
   properties: {
     diagnosis: { type: 'string', minLength: 10 },
     film: {
       type: 'object', additionalProperties: false, required: ['frames', 'idea', 'action', 'sound'],
-      properties: { frames: { type: 'integer', enum: FRAME_GRID }, idea: { type: 'string' }, action: { type: 'string', minLength: 150 }, sound: { type: 'string', minLength: 20 } },
+      properties: { frames: { type: 'integer', enum: isSeedance(film.model) ? SEEDANCE_FRAMES : FRAME_GRID }, idea: { type: 'string' }, action: { type: 'string', minLength: 150 }, sound: { type: 'string', minLength: 20 } },
     },
   },
-};
+});
+
+/** A loop keeps its length through a retake: 192 frames on H3, its own whole seconds on Seedance. */
+export const loopFrames = film => (isSeedance(film.model) ? film.frames : LOOP_FRAMES);
 
 /** Rewrite a rejected film's direction so the observed defect has no cause left in the words. */
 export async function rewriteFilm(llm, { film, label, hint, target = '', objectId = '', reasons, marks = [], fromStill, toStill, fromSeen, toSeen, mature }) {
@@ -116,17 +123,18 @@ export async function rewriteFilm(llm, { film, label, hint, target = '', objectI
     drawn.length ? `The person drew a red box on ${drawn.length === 1 ? 'a frame' : `${drawn.length} frames`} of the rejected take to show exactly where (each picture below comes with their words). Fix what is inside the box and keep what was right outside it.` : null,
     label ? `What the visitor clicked: "${label}" (${hint ?? ''}). That object must still cause the film and lead it: keep the route through it, and change how it happens, never what it is.` : 'It is the place\'s loop.',
     `Start picture (seen): ${fromSeen}`,
-    ON_ONE_STILL.has(kind) ? 'It ends back on the start picture, and its camera stays where it is.' : `End picture (seen): ${toSeen}`,
+    ON_ONE_STILL.has(kind) ? `It ends back on the start picture, and its camera ${writtenCamera(film) ? `does what its camera sentence says (it is kept as written): ${writtenCamera(film)}` : 'stays where it is.'}` : `End picture (seen): ${toSeen}`,
+    isSeedance(film.model) ? `It is rendered by ${film.model} (the Seedance 2.5 section of the craft rules): its frames are whole seconds, seconds × 24 + 1.` : null,
     `The rejected direction: ${JSON.stringify({ frames: film.frames, idea: film.idea, action: film.action, sound: film.sound })}`,
-    `Reply with JSON {"diagnosis": "which words caused the defect and what you changed", "film": {"frames", "idea", "action", "sound"}}.${kind === 'loop' ? ' A loop is always 192 frames.' : ''}`,
+    `Reply with JSON {"diagnosis": "which words caused the defect and what you changed", "film": {"frames", "idea", "action", "sound"}}.${kind === 'loop' ? ` This loop is always ${loopFrames(film)} frames.` : ''}`,
   ].filter(Boolean).join('\n');
   const drift = answer => (label ? clickCauses({ label, target, id: objectId }, answer.film) : null);
-  const check = answer => lintDirection({ ...answer.film, kind }, `${label ?? ''} ${hint ?? ''} ${answer.film.idea}`)
-    .filter(f => f.level === 'error' || ['face-turn', 'dark-screen'].includes(f.rule))
+  // The rewrite is linted as the film it replaces: the same model, camera and landing, which it does not change.
+  const check = answer => lintDirection({ model: film.model, camera: film.camera, landing: film.landing, ...answer.film, kind }, `${label ?? ''} ${hint ?? ''} ${answer.film.idea}`)
     .map(f => `${f.level === 'error' ? '' : '(warning) '}film ${f.field}: ${f.message}`)
     // A retake changes how the clicked thing does it, never what was clicked: drifting off it is an error here.
     .concat(drift(answer) ? [`film action: ${drift(answer)}. Keep the route through ${target || label}`] : [])
-    .concat(kind === 'loop' && answer.film.frames !== 192 ? ['a loop is 192 frames'] : [])
+    .concat(kind === 'loop' && answer.film.frames !== loopFrames(film) ? [`this loop is ${loopFrames(film)} frames`] : [])
     // The same words render the same failure: a rewrite has to change the action or the sound.
     .concat(answer.film.action.trim() === String(film.action).trim() && answer.film.sound.trim() === String(film.sound).trim() ? ['film: the direction is unchanged; change the words that caused the rejection'] : []);
   return llm.json({
@@ -137,7 +145,7 @@ export async function rewriteFilm(llm, { film, label, hint, target = '', objectI
       ...(ON_ONE_STILL.has(kind) ? [] : [{ type: 'text', text: 'The end picture:' }, await imagePart(toStill)]),
       ...(await Promise.all(drawn.map(async m => [{ type: 'text', text: `Take ${m.take}${m.time != null ? ` at ${Number(m.time).toFixed(1)} s` : ''}, the red box: "${m.text}"` }, await imagePart(m.image)]))).flat(),
     ],
-    schema: RETAKE_SCHEMA,
+    schema: retakeSchema(film),
     check,
     rounds: 4,
     purpose: `retake-${film.id}`,

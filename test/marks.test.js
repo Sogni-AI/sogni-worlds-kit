@@ -77,3 +77,25 @@ test('a retake shows the writer the person\'s area notes and the frames they dre
   assert.ok(texts.some(text => text.startsWith('Take 1 at 0.5 s, the red box: "smoke from this house only"')));
   assert.equal(request.user.filter(part => part.type === 'image_url').length, 2, 'the start picture and the marked frame');
 });
+
+test('a retake keeps the film\'s model: a Seedance film is rewritten in whole seconds and linted as Seedance', async () => {
+  const { loopFrames } = await import('../cli/agent/judge.js');
+  const { SEEDANCE_FRAMES } = await import('../cli/lib/seedance.js');
+  const { FRAME_GRID } = await import('../cli/agent/prompts.js');
+  const paths = await world();
+  const still = join(paths.stills, 'a.jpg');
+  const action = 'Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: a cottage in a field. The cottage door bursts open and a dog races out across the grass, scattering the hens, and leaps the low stone wall.';
+  let request;
+  const llm = { json: async args => { request = args; return { diagnosis: 'the dog froze; it now runs the whole way', film: { frames: 145, idea: 'i', action, sound: 'Hens squawk; paws thud on grass.' } }; } };
+  const seedance = { id: 'a-door', kind: 'moment', model: 'seedance-2-5', frames: 121, idea: 'x', action: 'x', sound: 'y' };
+  await rewriteFilm(llm, { film: seedance, label: 'Open the door', hint: 'h', target: 'the cottage door', objectId: 'door', reasons: ['take 1: the dog froze'], fromStill: still, toStill: still, fromSeen: 'a cottage', toSeen: 'a cottage', mature: false });
+  assert.deepEqual(request.schema.properties.film.properties.frames.enum, SEEDANCE_FRAMES);
+  assert.deepEqual(request.check({ film: { frames: 145, idea: 'i', action, sound: 'Hens squawk; paws thud on grass.' } }).filter(p => !p.startsWith('(warning)')), [], 'Seedance whole seconds pass the check');
+  assert.match(request.user[0].text, /rendered by seedance-2-5/);
+  const h3 = { ...seedance, model: undefined, frames: 141 };
+  await rewriteFilm(llm, { film: h3, label: 'Open the door', hint: 'h', target: 'the cottage door', objectId: 'door', reasons: ['take 1: the dog froze'], fromStill: still, toStill: still, fromSeen: 'a cottage', toSeen: 'a cottage', mature: false });
+  assert.deepEqual(request.schema.properties.film.properties.frames.enum, FRAME_GRID);
+  assert.ok(request.check({ film: { frames: 145, idea: 'i', action, sound: 'Hens squawk.' } }).some(p => /frames must be one of/.test(p)), 'an H3 film stays on its grid');
+  assert.equal(loopFrames({ kind: 'loop', frames: 192 }), 192);
+  assert.equal(loopFrames({ kind: 'loop', model: 'seedance-2-5', frames: 121 }), 121);
+});

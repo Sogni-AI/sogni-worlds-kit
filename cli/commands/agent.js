@@ -20,7 +20,7 @@ import { writeBible, paintPlaces } from '../agent/concept.js';
 import { lookAt, revisePlace, writePlace, writeWorld } from '../agent/write.js';
 import { critiqueStory, storyWords } from '../agent/story.js';
 import { checkOutline, locate, selectionResult } from '../agent/point.js';
-import { judgeTake, rewriteFilm } from '../agent/judge.js';
+import { judgeTake, loopFrames, rewriteFilm } from '../agent/judge.js';
 import { pickCloseLook } from '../agent/reveal.js';
 import { gather } from './status.js';
 import { wantsFigure } from './figures.js';
@@ -466,7 +466,7 @@ async function retake({ llm, id, paths, film, state, mature }) {
   });
   const at = film.kind === 'loop' ? ['places', pi, 'loop']
     : ['places', pi, 'objects', place.objects.indexOf(object), ...(film.kind === 'back' ? ['reveal', 'back'] : ['film'])];
-  doc.setIn([...at, 'frames'], film.kind === 'loop' ? 192 : next.frames);
+  doc.setIn([...at, 'frames'], film.kind === 'loop' ? loopFrames(film) : next.frames);
   doc.setIn([...at, 'idea'], next.idea);
   doc.setIn([...at, 'action'], next.action);
   doc.setIn([...at, 'sound'], next.sound);
