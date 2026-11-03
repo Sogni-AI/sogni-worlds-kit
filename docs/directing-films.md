@@ -122,7 +122,8 @@ Rules that keep the model on your side:
 - **Only what can be seen or heard.** No notes to the model ("preserve anatomy",
   "no morphing", "keep it realistic"), no genre or mood labels ("a horror shot"),
   no words in ALL CAPITALS (proper nouns such as Māori or Te Pā Tū are fine), no
-  clock times inside the shot.
+  clock times inside an H3 shot (a Seedance film may give time ranges: Seedance 2.5,
+  below).
 - **Positive facts only.** Write "her face stays turned toward the ice", not "we
   never see her face". Naming a thing, even to forbid it, puts it in the film.
 - **Don't add what the pictures lack.** An object that must be used in the film has
@@ -214,9 +215,9 @@ another.
   what the story moved, so everything both show is the same. Two different rooms
   need a designed passage between them (a door, something passing the lens, a screen
   switched off and on again), never a blend.
-- **Give it personality.** Aim for "quirky and fun, or super cool, or cheeky", not
-  "the camera walks forward". Build a small setup, escalation and payoff around the
-  object. Make sure two crossings in one world don't use the same trick.
+- **Give it personality**, in the world's own tone, never just "the camera walks
+  forward". Build a small setup, escalation and payoff around the object. Make
+  sure two crossings in one world don't use the same trick.
 
 ### A map, and diving into it
 
@@ -548,9 +549,14 @@ stills as any other, and it makes its own dialogue and sound.
 - **Spell out the order and the cause.** Write events in the order they happen and
   say what causes what: "She says…, then the glass slips from his hand", "Only after
   he speaks, the lantern drifts down". Seedance swaps events left unordered (a line
-  said after the action it should start). Short time ranges ("0–2 s: …, 2–4 s: …")
-  hold the order too. Spoken lines use the dialogue form; the kit hands them to
+  said after the action it should start). Time-coded beats hold the order, and in a
+  film over 5 seconds they are the way to write it: "0–2 s: …, 2–4 s: …, 4–6 s: …",
+  covering the whole film. Spoken lines use the dialogue form; the kit hands them to
   Seedance as quoted speech.
+- **One primary camera move.** Give the shot one camera move (or a locked camera),
+  separate from what the people and things in it do. A chain of actions is fine
+  when each is written in order with what causes it; the camera keeps to its one
+  move.
 - **Write what the viewer sees and hears, not what they should conclude.** Seedance
   renders the evidence it's given, not the claim. A chase written "about 90 mph" played
   at about 19 (Sogni Meme World, 2026-11-03); faces came out huge because the reference
@@ -558,18 +564,30 @@ stills as any other, and it makes its own dialogue and sound.
   a film must land, such as speed, size, weight, danger or a joke, write what a camera
   and microphone would capture: the world rushing past, sag and impact, behaviour.
   Make every still agree with it, because poses, sizes and props in a still will
-  happen. Hold the plan to real-world common sense, ask one shot for one camera move
-  and one main action, and judge the take by watching it play against how the real
-  thing would look, never by a paused frame.
-- **Words only in quotes, no accents, no spoken-sounding cues.** Seedance can read
-  any sentence aloud and can switch language. Sogni Meme World shipped two such takes
-  (fixed 2026-10-25). A line asked "in his gentle Hungarian accent" came out as
-  Polish-sounding speech. A sound cue written as a sentence ("the latch snap echoes")
-  was spoken by the trapped character, after a mumble. So keep accents out of the
-  direction, write sound as plain nouns ("latch snap, pump clicks"), and put nothing
-  in quotes the character shouldn't say. Before keeping a take, run it through
-  speech-to-text and check every spoken line is the right words in the right
-  language.
+  happen. Pace is evidence too: a fast shot shows what rushes past the camera, the
+  ground covered in each beat and the impacts with what they cause, because a
+  stated speed or the word "fast" alone renders slower; a calm one moves slowly and
+  evenly. Hold the plan to real-world common sense, and judge the take by watching
+  it play against how the real thing would look, never by a paused frame.
+- **Say what stays, not what mustn't happen.** "Both hands stay on the wheel", "the
+  road ahead is empty", "every person, prop and colour stays as the first frame
+  shows it": a negation names the thing, and Seedance can draw it.
+- **One continuous shot, unless the person asks for a cut.** The film is pinned to
+  its two stills; a cut inside it makes the last frame arrive from nowhere.
+- **Words only in quotes, no spoken-sounding cues.** Seedance can read any sentence
+  aloud and can switch language. Sogni Meme World shipped two such takes (fixed
+  2026-10-25). A sound cue written as a sentence ("the latch snap echoes") was spoken
+  by the trapped character, after a mumble. So write sound as plain nouns ("latch
+  snap, pump clicks"), and put nothing in quotes the character shouldn't say.
+  Before keeping a take, run it through speech-to-text and check every spoken line
+  is the right words in the right language.
+- **An accent in words can drift.** A line asked "in his gentle Hungarian accent"
+  came out Polish-sounding (Sogni Meme World, 2026-10-25). A new character may have
+  an accent the person asked for; check it by ear. A kit-rendered Seedance film takes
+  no voice reference, so Seedance gives each speaker a voice per film, and a
+  recurring voice drifts between films: listen to each new line beside the
+  approved ones, and keep a character's description the same in every film they
+  speak in.
 - **One take per film.** Every take costs its full price. Render one, judge it, and
   retake only after changing the words, the stills or whatever caused the failure.
   The canary includes the world's first Seedance film, so one is judged before the

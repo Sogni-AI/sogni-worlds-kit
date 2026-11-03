@@ -1,8 +1,8 @@
 # Building a world with the Sogni Worlds Kit — instructions for coding agents
 
 You are helping a person build a **world** with the **Sogni Worlds Kit** from nothing but a concept, or
-from their photographs: an interactive, cinematic place where each picture quietly
-comes alive, clicking something in it plays a film that carries you to the next
+from their photographs: an interactive, cinematic place where each picture comes
+alive, clicking something in it plays a film that carries you to the next
 place, a voice and music tell the story, and a choice can end it (the visitor
 rewinds and chooses again). Play the finished example first to see the target:
 <https://worlds.sogni.ai/demo/the-long-white-cloud>.
@@ -114,18 +114,23 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     lands. One agent keeps the edit and the final call: helpers report what they find
     and never change the cut.
 15. **Every speaking character keeps one voice: write a voice bible before the first
-    talking film.** For each character who speaks on camera, record exactly one
-    reference clip (their own recording, or the approved take of a designed voice)
-    and one fixed wording. Put "Jean's voice is exactly @Audio1." once near the top
-    of the prompt, and "Jean, in his own voice exactly @Audio1," before each of his
-    lines. Every film that character speaks in uses that clip and those words
-    verbatim; delivery ("quietly", "through gritted teeth") goes after the tag.
-    Never describe a recurring voice in fresh words, and never add an accent or
+    talking film.** A film made with `sogni-agent` in reference mode (a trailer
+    line, a performed scene) can carry a voice. For each character who speaks in
+    one, record exactly one reference clip (their own recording, or the approved
+    take of a designed voice) and one fixed wording. Put "Jean's voice is exactly
+    @Audio1." once near the top of the prompt, and "Jean, in his own voice exactly
+    @Audio1," before each of his lines. Every such film uses that clip and those
+    words verbatim; delivery ("quietly", "through gritted teeth") goes after the
+    tag. Never describe a recurring voice in fresh words, and never add an accent or
     language ("plain American English") that the approved films don't have: the
     model follows the words and drifts away from the reference, so a character
-    sounds like a different person from film to film. Before a new line, read how
-    the approved films worded that voice. Judge the result by ear: play the new line
-    right after an approved one.
+    sounds like a different person from film to film. A new character may have an
+    accent the person asked for; an accent in words can drift (a Hungarian accent
+    came out Polish once), so check it by ear. Kit-rendered Seedance films take no
+    voice reference (they render from the two stills and the words), so recurring
+    voices drift between films: write each character the same way in every film.
+    Before a new line, read how the approved films worded that voice. Judge the
+    result by ear: play the new line right after an approved one.
 
 ## The workflow
 
@@ -534,7 +539,7 @@ uses the same API key and plan. Useful here:
 
 - places from imagination: `sogni-agent -m krea2_turbo_fp8_scaled "…"`
 - the same person or character in a new picture, or a keyframe that moves them:
-  Sogni Krea 2 Identity Edit (`krea2_identity_edit_sogni_v0_3_alpha`) with context
+  Sogni Krea 2 Identity Edit (`krea2_identity_edit_v1_2`) with context
   images
 - a quick single test film, a sound effect, background removal, a 3D collectible
 
@@ -544,7 +549,7 @@ world is cut from its approved films with ffmpeg: docs/trailers.md.
 ## What good looks like
 
 Watch the example world before building, and read
-docs/case-study-the-long-white-cloud.md. Every place is quietly alive. Every click
+docs/case-study-the-long-white-cloud.md. Every place is alive at its own pace. Every click
 does something caused by the thing you clicked, and tells you something. Every
 journey passes through a door, a cloud, a waterfall or a lens instead of dissolving. The sound is rich and
 the music sits under it. And a person watched every film that shipped.

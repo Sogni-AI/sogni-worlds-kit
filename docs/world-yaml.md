@@ -41,7 +41,7 @@ voices:
     transcript: "Exactly what I say in the recording."
 
 music:
-  prompt: "Gentle fingerpicked acoustic guitar and soft strings, warm and unhurried, loops cleanly"
+  prompt: "Fingerpicked acoustic guitar and strings, 84 BPM, D major, loops cleanly"   # instruments, tempo, key and this world's mood
   seconds: 120
 
 places:
@@ -208,9 +208,9 @@ One entry per photograph, in story order. `ingest` adds `id`, `photo` and
 
 ## loop
 
-The place, gently alive: the camera where the still has it, the whole frame
-moving a little (breath, water, cloud, grass), starting and ending on the still.
-Its film id is `<place>-loop`.
+The place alive at the pace it has (calm water laps; a storm thrashes): the camera
+where the still has it, the whole frame moving (breath, water, cloud, grass),
+starting and ending on the still. Its film id is `<place>-loop`.
 
 ```yaml
 loop:

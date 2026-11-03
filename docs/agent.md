@@ -75,10 +75,10 @@ photos:                      # in story order
     story: The ferry out to the island, wind everywhere.
 narration:
   voice: design              # or none
-  description: a warm, unhurried woman in her forties
+  description: a woman in her forties   # age, gender, register and pace: how it should sound
   style: in my first person, like a voice note to a friend
 music:
-  mood: gentle fingerpicked guitar, salty and bright
+  mood: fingerpicked guitar     # instruments, tempo and the mood you want
 edits: premium               # optional: GPT Image 2.5 paints the close looks and figure plates, from Premium Spark
 approvals:                   # your standing answers, so it can go on without asking
   plan: yes

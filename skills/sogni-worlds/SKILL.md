@@ -65,9 +65,11 @@ Rules that matter even before you open AGENTS.md:
   cuts, moving shots move, and text reads. A fresh agent re-checks the stitched film.
   Split reviews across parallel agents with sheets built in one pass; one agent keeps
   the edit (AGENTS.md › ground rule 14).
-- Voice bible before the first talking film: one reference clip and one fixed
-  wording per speaking character, pasted verbatim into every film; no fresh voice
-  descriptions or accents (AGENTS.md › ground rule 15).
+- Voice bible before the first talking film made with `sogni-agent` reference mode:
+  one reference clip and one fixed wording per speaking character, pasted verbatim
+  into every film; no fresh voice descriptions. An accent only when the person asked
+  for one, checked by ear. Kit-rendered Seedance films take no voice reference, so
+  recurring voices drift between them (AGENTS.md › ground rule 15).
 - A retake rewrites the direction that caused the defect.
 - Learn as you go: read `~/.config/sogni/lessons.md` before planning; add a dated
   line when the person corrects you or a take fails for a reason the docs miss

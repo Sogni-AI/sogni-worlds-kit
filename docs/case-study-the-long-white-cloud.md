@@ -8,7 +8,9 @@
 by Sogni's Mark Ledford, taken with his partner Jen in March and April
 2023. It is the world this kit was extracted from. Its plan in `examples/` holds
 the real direction behind every film that shipped. The kit's `render` assembles
-those directions into exactly the prompts that rendered the live films.
+its crossings into exactly the prompts that rendered the live films; its loops and
+moments now also open on the locked-camera sentence the kit learned after this
+world shipped.
 
 ## The brief
 

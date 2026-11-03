@@ -19,7 +19,7 @@ export const summary = 'Make the world\'s music (MiniMax Music 3 on Sogni) or le
 export const usage = `node world music [world] [--retake]
 
   world.yaml music: either
-    prompt: "gentle fingerpicked acoustic guitar and soft strings, 84 BPM, D major, warm, unhurried"
+    prompt: "<instruments>, 84 BPM, D major, <this world's mood>"
     seconds: 120            # 10–300 (a ceiling: Music 3 may end on a resolution a little sooner)
     model: minimax_music3   # the default; ace_step_1.5_xl_turbo or _sft for exact bpm/keyscale and up to 600 s
   or, only for music you have the rights to:

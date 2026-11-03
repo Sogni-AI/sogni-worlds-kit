@@ -16,7 +16,7 @@ coding agent from nothing but an idea. Your own photographs work too.**
 [How agents built Sogni Worlds](https://blog.sogni.ai/blogs/how-agents-built-sogni-world/) ·
 [Build with your agent](https://worlds.sogni.ai/build-with-agent)
 
-Each place quietly comes alive. Click something in it (a door, a boat, a guitar)
+Each place comes alive. Click something in it (a door, a boat, a guitar)
 and a film carries you to the next place, passing through the door, over the
 ridge or down through the cloud. A voice tells the story and music sits
 underneath. Some choices can be fatal, and the visitor rewinds to choose again;
