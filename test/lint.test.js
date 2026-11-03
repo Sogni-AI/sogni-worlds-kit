@@ -230,3 +230,14 @@ test('a reveal: only on a moment, painted or described, its film back optional; 
   // The film back is linted like every film.
   assert.ok(findings(withObject({ reveal: { still: 'r.jpg', seen: 's', line: 'x', back: { ...film, frames: 200 } } })).some(f => f.where === 'films.office-glove-back.frames'));
 });
+
+test('a voice sample is text, read only by a designed voice, and long enough to clone from', () => {
+  const findings = voices => lintPlan({ id: 'w', title: 'W', canvas: '1152x768', order: 'free', voices, places: [] }, { dir: '/nonexistent' }, { checkFiles: false })
+    .filter(f => f.where.startsWith('voices.'));
+  const sample = 'You found the letter. Good. Now put it back where it was, and walk out the way you came in, slowly, before the lamp burns down.';
+  assert.deepEqual(findings({ keeper: { design: 'A low, hoarse man.', sample } }), []);
+  assert.deepEqual(findings({ keeper: { design: 'A low, hoarse man.' } }), [], 'a voice without a sample is as it was');
+  assert.equal(findings({ keeper: { design: 'A low, hoarse man.', sample: 7 } })[0].level, 'error');
+  assert.equal(findings({ keeper: { design: 'A low, hoarse man.', sample: 'Go.' } })[0].level, 'warn');
+  assert.match(findings({ me: { clone: 'voices/me.m4a', transcript: 'Hi.', sample } })[0].message, /only a designed voice/);
+});

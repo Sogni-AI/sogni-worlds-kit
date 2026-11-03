@@ -10,7 +10,7 @@ import { canaryStatus } from '../lib/canary.js';
 import { gather, nextAction, nextStep } from './status.js';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { ANCHOR_SCRIPT, speechEstimate, voiceRequest, voiceRuns } from './narrate.js';
+import { anchorScript, speechEstimate, voiceRequest, voiceRuns } from './narrate.js';
 import { SPEECH_MODELS } from '../lib/audio.js';
 import { musicEstimate } from './music.js';
 import { wantsFigure } from './figures.js';
@@ -71,9 +71,9 @@ export async function run(argv) {
           const { request, needsSample } = voiceRequest(plan, paths, { ...place, narration: { ...place.narration, voice: run.voice, lines: run.lines } }, { quote: true });
           const estimate = await speechEstimate(session, request);
           row.usd += estimate.usd; row.token += estimate.token;
-          // A designed voice is designed once on a fixed passage, then cloned for every place.
+          // A designed voice is designed once on its sample (or a fixed passage), then cloned for every place.
           if (needsSample && !audio.some(item => item.item === `voice design: ${needsSample} (once)`)) {
-            audio.push({ item: `voice design: ${needsSample} (once)`, ...(await speechEstimate(session, { modelId: SPEECH_MODELS.design, positivePrompt: ANCHOR_SCRIPT })) });
+            audio.push({ item: `voice design: ${needsSample} (once)`, ...(await speechEstimate(session, { modelId: SPEECH_MODELS.design, positivePrompt: anchorScript(plan.voices[needsSample]) })) });
           }
         }
         audio.push(row);

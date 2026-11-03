@@ -415,8 +415,9 @@ node world figures --cutouts   # each figure drawn alone on a white plate: look 
 node world figures             # build the 3D figures the visitor turns over
 ```
 
-A designed voice is designed once and cloned for every place, so the narrator
-stays one person. Turn every figure over in `node world play` before sharing:
+A designed voice is designed once, speaking its `sample`, and cloned for every
+place, so the narrator stays one person. Every line comes out in the register of
+that sample, so write it in character (docs/world-yaml.md › voices and music). Turn every figure over in `node world play` before sharing:
 the back and any face are where a figure goes wrong.
 
 ### 10. Build, play, share

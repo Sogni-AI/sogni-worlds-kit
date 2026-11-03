@@ -423,6 +423,15 @@ export function lintPlan(plan, paths, { checkFiles = true } = {}) {
       if (!voice.transcript) add('error', `voices.${name}`, 'a cloned voice needs the exact transcript of its recording');
       if (contained(`voices.${name}`, 'recording', voice.clone) && checkFiles && !existsSync(file(voice.clone))) add('error', `voices.${name}`, `${voice.clone} is missing`);
     } else if (!voice?.design) add('error', `voices.${name}`, 'give `clone` (a recording you own) or `design` (a description)');
+    // A designed voice is designed once on its sample: what the character would say, in their own manner.
+    if (voice?.sample !== undefined && voice?.sample !== null) {
+      const sample = typeof voice.sample === 'string' ? voice.sample.trim() : '';
+      if (!sample) add('error', `voices.${name}.sample`, 'sample is text: about 15 seconds the character would say, in their own manner');
+      else if (!voice.design) add('warn', `voices.${name}.sample`, 'only a designed voice speaks a sample; a cloned or studio voice ignores it');
+      // Cloning needs 3–30 s of speech (SPEECH_LIMITS). The fixed passage, 233 characters, speaks in about 15 s;
+      // these bounds leave room for a slower or quicker voice either side.
+      else if (sample.length < 60 || sample.length > 330) add('warn', `voices.${name}.sample`, `${sample.length} characters: every line is cloned from this recording, which has to last 3–30 s; about 15 s (two to four spoken sentences) is safest`);
+    }
   }
   if (plan.music) {
     if (plan.music.file) {

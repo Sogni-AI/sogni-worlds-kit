@@ -128,8 +128,10 @@ the same picture, so make it a close look that reveals something, or cut it.
   the character once, not four times, and seen from behind as the sheet's back
   view has them.)
 - **A voice is designed once.** Give each speaking character a voice under `voices`
-  with a `label` (their name). The kit designs it once and clones it for every line,
-  so the same person speaks throughout.
+  with a `label` (their name) and a `sample`: two to four sentences they would say,
+  the way they say it. The kit designs the voice once, speaking that sample, and
+  clones it for every line, so the same person speaks throughout, in their own
+  register.
 
 ## A world that plays like a game
 

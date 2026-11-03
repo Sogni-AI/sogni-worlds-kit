@@ -49,11 +49,12 @@ voices: {}
 #    clone: voices/narrator.m4a         # 10–30 s of clean speech
 #    transcript: "Exactly what is said in the recording."
 #  guide:
-#    design: "A warm, unhurried woman in her forties, close to the microphone."
+#    design: "..."                      # who speaks: age, gender, register and pace, as the character sounds
+#    sample: "..."                      # about 15 s they would say, in their own manner: every line is cloned in this register
 
 # Optional music under the whole world.
 music: null
-#  prompt: "Gentle fingerpicked acoustic guitar and soft strings, warm and unhurried, loops cleanly"
+#  prompt: "..."                      # instruments, tempo, key and this world's mood; "loops cleanly"
 #  seconds: 120
 # or, only for music you have the rights to:
 #  file: music/my-song.mp3

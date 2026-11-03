@@ -316,6 +316,7 @@ const WORLD_SCHEMA = strict({
   subtitle: str(2, 120),
   story: str(60, 900),
   narrator: str(0, 300),
+  narratorSample: str(0, 330),
   music: str(0, 500),
 });
 
@@ -327,7 +328,8 @@ export async function writeWorld(llm, { brief, places, given = {} }) {
     'Reply with JSON:',
     `- "title": ${brief.title ? `exactly "${brief.title}"` : 'a short evocative title'}; "subtitle": one line for the title card.`,
     '- "story": one paragraph (at most 900 characters) for the people who will make its films: what the world is, its tone and look, and who is in it. Films carry the visitor between places by moving through something physical in each picture (a doorway, water, a cloud, a lens); say so plainly, and never describe crossings as fades, music or voice-overs.',
-    `- "narrator": ${brief.narration?.voice === 'design' ? `a voice description for a text-to-speech voice designer, from the person's request: "${brief.narration.description}". Describe age, gender, accent, tone and pace in one or two sentences.` : '""'}`,
+    `- "narrator": ${brief.narration?.voice === 'design' ? `a voice description for a text-to-speech voice designer, from the person's request: "${brief.narration.description}". Describe age, gender, tone and pace in one or two sentences, and an accent only when the person asked for one.` : '""'}`,
+    `- "narratorSample": ${brief.narration?.voice === 'design' ? 'two to four sentences (about 15 seconds aloud, at most 330 characters) this narrator would say in this world, in their own register and pace: the voice is designed once on these words and every line is cloned from that recording, so the sample sets the register every line will have.' : '""'}`,
     `- "music": ${brief.music ? `a prompt for a music generator (instruments, tempo, mood, texture, "loops cleanly"), from the person's request: "${brief.music.mood}". No lyrics.` : '""'}`,
   ].join('\n');
   const answer = await llm.json({ system: 'You write the framing text for an interactive cinematic world, faithfully to what its owner asked for.', user, schema: WORLD_SCHEMA, purpose: 'world', maxTokens: 3000 });

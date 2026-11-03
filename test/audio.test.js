@@ -52,3 +52,28 @@ test('a place whose lines change voice is a conversation: one run per speaker, j
   assert.deepEqual(timeline.lines.map(l => [l.speaker, l.start]), [['Caller', 0.1], ['Caller', 1.6], ['Hero', +(3 + TURN_GAP + 0.05).toFixed(3)]]);
   assert.equal(timeline.seconds, +(3 + TURN_GAP + 1).toFixed(3));
 });
+
+test('a designed voice is designed on its own sample; a voice without one keeps the passage it was designed on', async () => {
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  const { ANCHOR_SCRIPT, anchorFiles, anchorScript, designedAnchor, voiceRequest } = await import('../cli/commands/narrate.js');
+  const { tempDir, pathsAt } = await import('./helpers.js');
+  const paths = pathsAt(tempDir('anchor'));
+  mkdirSync(paths.voices, { recursive: true });
+  const design = 'A man in his sixties, low and hoarse, close to the microphone.';
+  const sample = 'You found the letter. Good. Now put it back where it was, and walk out the way you came in, slowly, before the lamp burns down.';
+  // A voice designed before samples existed: its recording and the fixed passage it spoke.
+  const files = anchorFiles(paths, 'keeper');
+  writeFileSync(files.wav, 'wav');
+  writeFileSync(files.json, JSON.stringify({ design, script: ANCHOR_SCRIPT }));
+  assert.equal(anchorScript({ design }), ANCHOR_SCRIPT);
+  assert.deepEqual(designedAnchor(paths, 'keeper', { design }), { file: files.wav, transcript: ANCHOR_SCRIPT }, 'an existing voice is never designed again');
+  const plan = { voices: { keeper: { design } } };
+  const place = { id: 'cellar', narration: { voice: 'keeper', lines: ['The door locks behind you.'] } };
+  assert.equal(voiceRequest(plan, paths, place).request.referenceText, ANCHOR_SCRIPT);
+  // Giving it a sample is the opt-in: the next narrate designs it again, on those words.
+  assert.equal(anchorScript({ design, sample: `  ${sample}\n` }), sample);
+  assert.equal(designedAnchor(paths, 'keeper', { design, sample }), null);
+  writeFileSync(files.json, JSON.stringify({ design, script: sample }));
+  assert.equal(designedAnchor(paths, 'keeper', { design, sample }).transcript, sample);
+  assert.equal(voiceRequest({ voices: { keeper: { design, sample } } }, paths, place).request.referenceText, sample, 'every line is cloned from the in-character recording');
+});

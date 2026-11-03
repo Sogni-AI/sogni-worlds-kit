@@ -144,7 +144,7 @@ export async function run(argv) {
     if (mature) doc.set('mature', true);
     if (brief.edits === 'premium') doc.set('edits', 'premium');
     doc.set('order', brief.order ?? (brief.paint ? 'free' : 'linear'));
-    if (brief.narration?.voice === 'design' && state.world.narrator) doc.set('voices', doc.createNode({ narrator: { design: state.world.narrator } }));
+    if (brief.narration?.voice === 'design' && state.world.narrator) doc.set('voices', doc.createNode({ narrator: { design: state.world.narrator, ...(state.world.narratorSample ? { sample: state.world.narratorSample } : {}) } }));
     if (brief.music && state.world.music) doc.set('music', doc.createNode({ prompt: state.world.music, seconds: brief.music.seconds ?? 120 }));
     if (brief.intro) doc.set('intro', doc.createNode(brief.intro));
     if (brief.map === false) doc.set('map', false);

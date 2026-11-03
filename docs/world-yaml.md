@@ -157,7 +157,8 @@ voices:
     clone: voices/me.m4a                # 10–30 s of clean speech that you own
     transcript: "Exactly what is said."
   guide:
-    design: "A warm, unhurried woman in her forties, close to the microphone."
+    design: "…"                         # who speaks: age, gender, register and pace, as the character sounds (an accent only when asked for)
+    sample: "…"                         # optional: about 15 s the character would say, in their own manner
     label: The guide                    # optional: the name shown with this voice's lines
 music:
   prompt: "…"                           # generated on Sogni with MiniMax Music 3: put tempo, key and mood here
@@ -171,11 +172,15 @@ music:
 Clone only a voice that is yours or that you have permission to use. A cloned
 voice needs the exact transcript of its recording.
 
-A designed voice is made once and then kept: `narrate` designs it on a fixed
-15-second passage (`voices/<name>.designed.wav`) and clones that recording for
-every place, so the narrator is the same person everywhere. Designing it afresh
-for each place would cast a different person each time. Change the `design`
-words and the voice is designed again.
+A designed voice is made once and then kept: `narrate` designs it speaking its
+`sample` (`voices/<name>.designed.wav`) and clones that recording for every place,
+so the narrator is the same person everywhere. Designing it afresh for each place
+would cast a different person each time. Every line is cloned in the register of
+that recording, so write the `sample` in character: two to four sentences (about
+15 seconds aloud) the character would say, the way they say it. Without one, the
+voice is designed on a fixed, calm guide's passage, and every line comes out in
+that register. Change the `design` or the `sample` and the voice is designed
+again; places already spoken keep the old voice until `narrate --retake <place>`.
 
 Generated music is instrumental and uses MiniMax Music 3, the best music model
 on Sogni. It takes tempo, key and metre from the prompt ("84 BPM, D major");
