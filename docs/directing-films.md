@@ -529,6 +529,18 @@ stills as any other, and it makes its own dialogue and sound.
   said after the action it should start). Short time ranges ("0–2 s: …, 2–4 s: …")
   hold the order too. Spoken lines use the dialogue form; the kit hands them to
   Seedance as quoted speech.
+- **Show speed as distance, not as a number.** Seedance renders a stated speed at a
+  fraction of it. A chase take written "about 90 mph" played at about 19 mph when its
+  roadside posts were timed (Sogni Meme World, 2026-11-03, "like 25mph tops"). Work out
+  what must pass in the shot (at 70 mph a 4 s shot covers 125 m: ten lane dashes, a
+  block, several streetlamps) and put those landmarks in the first still, near the
+  camera. Write their passing as time: "every streetlamp whips past, several each
+  second", "through the next intersection by 3.0 s". Film from low and close on a wide
+  lens with the roadside near the lens, or from a fixed camera the car crosses in under
+  a second. Judge a take by timing landmarks of known size, never by the blur in a
+  paused frame. A take that is right but slow can be played faster: each new frame
+  averages the frames it spans, up to about 4×, and about 1.3× when people move on
+  screen.
 - **Words only in quotes, no accents, no spoken-sounding cues.** Seedance can read
   any sentence aloud and can switch language. Sogni Meme World shipped two such takes
   (fixed 2026-10-25). A line asked "in his gentle Hungarian accent" came out as
