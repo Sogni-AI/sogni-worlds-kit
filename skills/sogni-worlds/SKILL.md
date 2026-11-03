@@ -60,6 +60,11 @@ Rules that matter even before you open AGENTS.md:
   sheet (24+), and for anything cut together, every join on both sides
   (`node world joins <video>`). A cut that breaks continuity (people, props, cars,
   eyelines, screen direction, light) is a defect (AGENTS.md › ground rule 13).
+- Check that the world stays physical: nothing appears or vanishes, drivers face
+  the wheel, people are in scale, props stay on their side, geography agrees across
+  cuts, moving shots move, and text reads. A fresh agent re-checks the stitched film.
+  Split reviews across parallel agents with sheets built in one pass; one agent keeps
+  the edit (AGENTS.md › ground rule 14).
 - A retake rewrites the direction that caused the defect.
 - Learn as you go: read `~/.config/sogni/lessons.md` before planning; add a dated
   line when the person corrects you or a take fails for a reason the docs miss

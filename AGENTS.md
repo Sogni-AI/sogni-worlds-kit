@@ -92,6 +92,27 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     at full size. A cut that breaks continuity is a defect even when each shot is
     perfect alone. Two shots in the same framing but a different place or time read
     as a jump: put a shot between them. Do this before the person sees anything.
+14. **Check that the world stays physical, and split the checking up.** A video model
+    draws whatever the prompt names, even when the still lacks it: "the cars pile into
+    a pillar" over a still with no pillar grows one down out of the sky. On every take,
+    check that:
+    - nothing appears, vanishes or grows;
+    - people sit the right way in vehicles (the driver faces the wheel);
+    - people are in scale with doors, windows and wheels;
+    - props stay on the same side in every angle;
+    - the skyline, bridges and direction of travel agree across cuts, and pursuers
+      stay behind;
+    - a shot that should move moves;
+    - every sign and plate reads correctly.
+
+    Then have a fresh agent with no stake in the takes run the same list over the
+    stitched film, before the person sees it. Work in parallel wherever it costs no
+    quality: build every contact sheet in one ffmpeg pass, then give each reviewer a
+    few shots with their ready sheets. One reviewer working through a whole film shot
+    by shot took 32 minutes; split up, it takes a few. Re-check only what changed since
+    the last review, and submit independent renders together, judging each as it
+    lands. One agent keeps the edit and the final call: helpers report what they find
+    and never change the cut.
 
 ## The workflow
 
