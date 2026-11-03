@@ -10,47 +10,102 @@ const good = {
   sound: 'The door creaks on its hinges; boots scuff across flagstones and rain drips from the ferns.',
 };
 const rules = issues => issues.filter(i => i.level === 'error').map(i => i.rule);
+const warned = issues => issues.filter(i => i.level === 'warn').map(i => i.rule);
 
 test('a well-formed direction has no errors', () => {
   assert.deepEqual(rules(lintDirection(good)), []);
 });
 
-test('negations, capitals, timestamps, extra shots and fades are errors', () => {
-  assert.ok(rules(lintDirection({ ...good, sound: 'Nothing but wind.' })).includes('negation'));
-  assert.ok(rules(lintDirection({ ...good, action: `${good.action} A sign reads EXIT.` })).includes('capitals'));
-  assert.ok(!rules(lintDirection({ ...good, action: `${good.action} A sign reads "EXIT".` })).includes('capitals'), 'lettering in quotes is fine');
+test('structure is an error: extra shots, dialogue markup, frames, a missing sound, text cut off mid-sentence', () => {
+  assert.ok(rules(lintDirection({ ...good, action: `${good.action} [Shot 2] A second shot.` })).includes('one-shot'));
+  assert.ok(rules(lintDirection({ ...good, action: `${good.action} She says <d>Hello.</d>` })).includes('dialogue'));
+  assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
+  assert.ok(rules(lintDirection({ ...good, sound: '' })).includes('sound'));
+  assert.ok(rules(lintDirection({ ...good, action: `${good.action} The camera turns toward the` })).includes('unfinished'));
+});
+
+test('rules that read English words are warnings: they name the words and the reason, and the writer decides', () => {
+  const only = (film, rule) => {
+    const issues = lintDirection(film);
+    assert.deepEqual(rules(issues), [], rule);
+    assert.ok(warned(issues).includes(rule), rule);
+  };
+  only({ ...good, sound: 'Nothing but wind.' }, 'negation');
+  only({ ...good, action: `${good.action} A man without a hat waves.` }, 'negation');
+  only({ ...good, action: `${good.action} A sign reads EXIT.` }, 'capitals');
+  only({ ...good, action: `${good.action} The NASA truck rolls by.` }, 'capitals');
+  assert.ok(!warned(lintDirection({ ...good, action: `${good.action} A sign reads "EXIT".` })).includes('capitals'), 'lettering in quotes is fine');
   const single = lintDirection({ ...good, action: `${good.action} A headline reads 'SINGER STRANGLED'.` }).find(i => i.rule === 'capitals');
   assert.match(single.message, /double quotation marks, never single ones: … that reads "SINGER STRANGLED"/, 'single quotes are named as the fix');
-  assert.ok(rules(lintDirection({ ...good, action: `${good.action} At 00:04.000 it turns.` })).includes('timestamps'));
-  assert.ok(rules(lintDirection({ ...good, action: `${good.action} [Shot 2] A second shot.` })).includes('one-shot'));
+  only({ ...good, action: `${good.action} At 00:04.000 it turns.` }, 'timestamps');
+  only({ ...good, action: good.action.replace('established by Picture 1', 'of the photo') }, 'opening');
+  only({ ...good, action: `${good.action} it turns.` }, 'sentences');
+  only({ ...good, sound: 'Soft piano music plays.' }, 'music');
+  only({ ...good, action: `${good.action} Behind them the doorway materializes out of nowhere.` }, 'materialize');
+});
+
+test('a clock time is checked only on H3, and never inside quoted lettering or speech', () => {
+  assert.ok(!warned(lintDirection({ ...good, action: `${good.action} A clock on the wall reads "10:30".` })).includes('timestamps'));
+  // Seedance follows time ranges well; they are encouraged in its films over 5 s.
+  const seedance = { ...good, model: 'seedance-2-5', frames: 145, action: `${good.action} 0:00–0:02: the door swings. 0:02–0:06: the camera passes through.` };
+  assert.ok(!warned(lintDirection(seedance)).includes('timestamps'));
+});
+
+test('music words: a warning unless the film is about music; birdsong is ambience', () => {
+  assert.ok(warned(lintDirection({ ...good, sound: 'Soft piano music plays.' })).includes('music'));
+  assert.ok(!warned(lintDirection({ ...good, sound: 'A guitarist strums and the crowd is singing.' }, 'Stay for the song')).includes('music'));
+  assert.ok(!warned(lintDirection({ ...good, sound: 'A tūī sings a gurgling phrase from the pines.' })).includes('music'));
+});
+
+test('a fade, dissolve or morph is an error only in a crossing; elsewhere it may be what was asked for', () => {
+  const morph = `${good.action} The man morphs into a wolf.`;
   assert.ok(rules(lintDirection({ ...good, action: `${good.action} The clearing dissolves into the sea.` })).includes('transition'));
-  assert.ok(rules(lintDirection({ ...good, action: good.action.replace('established by Picture 1', 'of the photo') })).includes('opening'));
+  for (const kind of ['moment', 'loop', 'reveal', 'back']) {
+    const issues = lintDirection({ ...good, kind, action: morph });
+    assert.deepEqual(rules(issues), [], kind);
+    assert.ok(warned(issues).includes('transition'), kind);
+  }
+  // A crossing the person asked to dissolve (a dream) records it before the first render.
+  const dream = lintDirection({ ...good, action: `${good.action} The clearing dissolves into the sea.`, allow: { transition: 'requested: the dream dissolves' } });
+  assert.deepEqual(rules(dream), []);
+  assert.ok(dream.some(i => i.rule === 'transition' && i.message.startsWith('allowed:')));
 });
 
-test('music words: an error unless the film is about music; birdsong is ambience', () => {
-  assert.ok(rules(lintDirection({ ...good, sound: 'Soft piano music plays.' })).includes('music'));
-  assert.ok(!rules(lintDirection({ ...good, sound: 'A guitarist strums and the crowd is singing.' }, 'Stay for the song')).includes('music'));
-  assert.ok(!rules(lintDirection({ ...good, sound: 'A tūī sings a gurgling phrase from the pines.' })).includes('music'));
-});
-
-test('bridge and tower routes are errors unless the structure is passed far off; allow records an exception', () => {
+test('bridge and tower routes are a warning, only when the camera is the one going through', () => {
   assert.equal(throughLattice('The camera travels out over the long suspension bridge, high above its deck.').length, 1);
   assert.equal(throughLattice('The camera glides forward high above the valley, the swing bridge far below.').length, 0);
+  assert.equal(throughLattice('The pickup races across the bridge as its tyres smoke.').length, 0, 'what a subject does is not the camera\'s route');
+  assert.equal(throughLattice('The camera glides past the clock tower toward the square.').length, 0, 'passing beside a tower goes around it');
   const route = { ...good, action: `${good.action} The camera glides along the bridge between its towers.` };
-  assert.ok(rules(lintDirection(route)).includes('lattice'));
+  const issues = lintDirection(route);
+  assert.deepEqual(rules(issues), []);
+  assert.match(issues.find(i => i.rule === 'lattice').message, /smeared on H3 \(one crossing, twice\); passing far below or to one side is safer/);
+  assert.ok(!warned(lintDirection({ ...route, model: 'seedance-2-5', frames: 145 })).includes('lattice'), 'measured on H3 only');
   const allowed = lintDirection({ ...route, allow: { lattice: 'approved take' } });
-  assert.deepEqual(rules(allowed), []);
   assert.ok(allowed.some(i => i.message.startsWith('allowed:')));
   assert.ok(rules(lintDirection({ ...good, allow: ['no-such-rule'] })).includes('allow'));
 });
 
-test('the kit locks the camera of loops and moments: no other camera is accepted; frames must be on the grid', () => {
+test('a loop or moment keeps the locked camera unless `camera` writes its own; frames must be on the grid', () => {
   // The kit writes the camera sentence itself, so a loop's direction no longer has to say "static".
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop' })), []);
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', camera: 'locked' })), []);
-  assert.ok(rules(lintDirection({ ...good, kind: 'loop', camera: 'sweep' })).includes('camera'));
+  assert.deepEqual(rules(lintDirection({ ...good, kind: 'crossing', camera: 'locked' })), [], 'an old plan that said locked on any film still lints');
+  const shake = 'The camera jolts with the impact and shakes, then is back on the exact framing of Picture 1 by the last frame.';
+  assert.deepEqual(lintDirection({ ...good, kind: 'moment', camera: shake }), []);
+  const unanchored = lintDirection({ ...good, kind: 'moment', camera: 'The camera shakes as the wall falls.' });
+  assert.deepEqual(rules(unanchored), []);
+  assert.match(unanchored.find(i => i.rule === 'camera').message, /exact framing of Picture 1/);
+  assert.ok(rules(lintDirection({ ...good, kind: 'crossing', camera: shake })).includes('camera'), 'a crossing\'s camera is in its action');
+  for (const camera of [42, 'sweep', 'handheld', '']) assert.ok(rules(lintDirection({ ...good, kind: 'loop', camera })).includes('camera'), `${JSON.stringify(camera)}: retired keywords and non-sentences stay errors`);
   assert.deepEqual(rules(lintDirection({ ...good, kind: 'loop', allow: ['static'] })), [], 'an old plan that allowed the retired rule still lints');
-  assert.ok(rules(lintDirection({ ...good, frames: 200 })).includes('frames'));
+});
+
+test('`landing` is false or a sentence', () => {
+  assert.deepEqual(rules(lintDirection({ ...good, landing: false })), []);
+  assert.deepEqual(rules(lintDirection({ ...good, landing: 'At full speed the car bursts into the framing of Picture 2.' })), []);
+  for (const landing of ['', 3, true, ['x']]) assert.ok(rules(lintDirection({ ...good, landing })).includes('landing'), JSON.stringify(landing));
+  assert.ok(rules(lintDirection({ ...good, landing: 'The car arrives in the framing of' })).includes('unfinished'), 'a cut-off landing is half a sentence in the prompt');
 });
 
 test('a loop or moment that turns a face away is a warning, never an error; a crossing is not checked', () => {
@@ -102,8 +157,9 @@ test('findings name the field and quote the words that set them off', () => {
   assert.match(negation.message, /"Nothing"/);
   const plan = { id: 'trip', title: 'T', canvas: '1152x768', order: 'free', voices: {},
     places: [{ id: 'a', still: 'stills/a.jpg', title: 'A', seen: 'x', objects: [{ id: 'door', label: 'Go', at: [0.5, 0.5], film: { ...good, sound: 'Nothing but wind.' } }] }] };
-  const finding = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).find(f => f.level === 'error');
+  const finding = lintPlan(plan, { dir: '/nonexistent' }, { checkFiles: false }).find(f => f.message.includes('"Nothing"'));
   assert.equal(finding.where, 'films.a-door.sound');
+  assert.equal(finding.level, 'warn');
 });
 
 test('a sound that fades is fine; a picture that fades or dissolves is not', () => {

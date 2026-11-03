@@ -3,16 +3,18 @@
 //
 //   id, title, subtitle, story, order (linear|free), start, canvas, contentFilter,
 //   mature (true for an 18+ world), edits (premium: GPT Image 2.5 for close looks and plates)
-//   voices:  { <name>: { clone: voices/x.m4a, transcript } | { design: "..." } }
+//   voices:  { <name>: { clone: voices/x.m4a, transcript } | { design: "...", sample: "what they would say" } }
 //   music:   { prompt, seconds } | { file, credit }
 //   places:  - id, photo, still, title, chapter, caption, seen,
 //              narration: { voice, lines: [...] },
-//              loop:      { frames, idea, action, sound },
+//              loop:      { frames, idea, action, sound, camera, landing },
 //              objects:   - id, label, hint, at: [x, y],
 //                           select: { positive: [[x, y]], negative: [[x, y]], box: [x0, y0, x1, y1] },
 //                           goes: <place id>   (omit for a moment that stays here),
 //                           shortcut: true|false,
-//                           film: { frames, idea, action, sound, camera, keyframes: [{ image, frame }],
+//                           film: { frames, idea, action, sound, keyframes: [{ image, frame }],
+//                                   landing (a sentence, or false; default: the kit's),
+//                                   camera (a loop or moment: locked, or a sentence),
 //                                   model (seedance-2-5 | seedance-2-5-uncensored; default MiniMax H3),
 //                                   pushIn: { at: [x, y], zoom, frames } (a crossing only) },
 //                           reveal: { paint, people, zoom, still, seen, line, done,
@@ -63,7 +65,7 @@ export const matureWorld = plan => Boolean(plan.mature) || /18\+/.test(plan.intr
 /**
  * Every film the plan asks for, in story order, each with the stills it
  * starts and ends on (`first`, `last`: paths inside the world's folder):
- *   loop      a living photograph: the place's still at both ends, a locked camera
+ *   loop      a living photograph: the place's still at both ends, a locked camera (or its own `camera`)
  *   crossing  a journey from one place's still to another's, caused by an object
  *   moment    something that happens here, caused by an object, ending back on the still
  *   reveal    an object's film into a close look (its reveal still), where the

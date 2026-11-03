@@ -97,6 +97,7 @@ places: []
 #            Live-action, cinematic, a wide shot begins in the position and framing established by Picture 1: ...
 #          sound: >
 #            The ferry horn sounds twice; engines churn the water.
+#          # landing: "..."              # optional: how it arrives on Picture 2, in place of the kit's sentence
 #      - id: letter
 #        label: Unfold the letter       # anything picked up, opened or read is a close look
 #        select:

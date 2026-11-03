@@ -65,9 +65,12 @@ test('lint warnings come back as "(warning)" problems; errors stay plain', () =>
   const place = context.places[0];
   const dark = film({ action: `${film().action} Darkness fills the view as it passes the door.` });
   const negation = film({ sound: 'Nothing but wind.' });
-  const problems = placeProblems({ title: 'A', loop, objects: [{ id: 'x', label: 'Go', hint: 'h', goes: 'b', film: dark }, { id: 'y', label: 'Go', hint: 'h', goes: '', film: negation }] }, { place, context, required: [] });
+  const markup = film({ action: `${film().action} The keeper says <d>Welcome.</d>` });
+  const problems = placeProblems({ title: 'A', loop, objects: [{ id: 'x', label: 'Go', hint: 'h', goes: 'b', film: dark }, { id: 'y', label: 'Go', hint: 'h', goes: '', film: negation }, { id: 'z', label: 'Go', hint: 'h', goes: '', film: markup }] }, { place, context, required: [] });
   assert.ok(problems.some(p => p.startsWith('(warning)') && /dark screen/.test(p)));
-  assert.ok(problems.some(p => !p.startsWith('(warning)') && /negation|state only what is there/.test(p)));
+  // A rule that reads English words is the writer's to weigh: it comes back, and never stops the answer.
+  assert.ok(problems.some(p => p.startsWith('(warning)') && /state only what is there/.test(p)));
+  assert.ok(problems.some(p => !p.startsWith('(warning)') && /<d>\[English\] the words<\/d>/.test(p)));
 });
 
 test('lint accepts endings, collectibles and intro; flags their misuse', () => {

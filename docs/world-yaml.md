@@ -219,7 +219,9 @@ loop:
 
 The camera is said by the kit, in fixed words, in front of the action: locked, for
 every loop and moment (one that has to land where it began and moves pushes in and
-back). directing-films.md › Loops says why.
+back). A loop or moment whose event would move a real camera (an impact, an
+explosion) writes its own instead, in `camera`: one sentence that comes back to the
+exact framing of Picture 1. directing-films.md › Loops says why.
 
 ## objects
 
@@ -311,6 +313,8 @@ film:
     - { image: keyframes/closer.jpg, frame: 48 }
   pushIn: { at: [0.72, 0.31], zoom: 2 }   # optional, a crossing only: it starts by moving onto this point
   model: seedance-2-5         # optional: Seedance 2.5 for this film (frames 121 = 5 s); leave it out for H3
+  landing: "…"                # optional: one sentence for how it arrives on Picture 2, in place of the kit's; false for none
+  camera: "…"                 # optional, a loop or moment only: its camera, in place of the locked one, back on Picture 1's framing
   allow: {}                   # optional: see below
 ```
 
@@ -325,23 +329,30 @@ premium, paid in tokens even on an Unlimited plan, whole seconds
 (`frames` = seconds × 24 + 1), no keyframes, and only on a 16:9, 4:3, 1:1, 3:4 or
 9:16 canvas (directing-films.md › Seedance 2.5).
 
-You write only `action` and `sound`. The kit wraps them in the exact document
+You write `action` and `sound`. The kit wraps them in the exact document
 MiniMax H3 expects: the alignment line that pins Picture 1 to the first frame
 and Picture 2 to the last, the `integrated_multimodal_description: [Shot 1]`,
-`overall_soundscape` and `non_diegetic_music: N/A` fields, and — if your action
-does not already land on Picture 2 — the landing sentence. `lint` enforces the
-rules that make films hold together; [directing-films.md](directing-films.md)
-explains each one. In short:
+`overall_soundscape` and `non_diegetic_music: N/A` fields, the camera sentence of
+a loop or moment, and the landing sentence ("By the last frame the camera arrives on
+the framing of Picture 2, …"). Write `landing` to say how this film arrives instead,
+or `landing: false` when the action already says it; a direction written before
+`landing` existed that ends on the old "… established by Picture 2 at the end of the
+shot" keeps its prompt as it was. `lint` refuses what would break a render and warns
+about words that often go wrong; [directing-films.md](directing-films.md) explains
+each rule. In short:
 
 - Open on Picture 1 ("…begins in / holds the position and framing established by Picture 1: …").
-- One continuous shot. Order events with words, never timestamps.
-- Only what is seen and heard, as positive facts: no "no", "not", "without".
-- No words in ALL CAPITALS (proper nouns are fine); writing the picture shows is named as what it reads: a sign that reads "EXIT".
+- One continuous shot. H3: order events with words. Seedance: time ranges such as
+  "0–2 s: …" are encouraged for clips over 5 s.
+- Only what is seen and heard, as positive facts: say what is there, not "no", "not", "without".
+- Writing the picture shows is named as what it reads, in double quotes: a sign that reads "EXIT".
 - Anyone who speaks has their words written in the action, `<d>[English] the words</d>`, one short line per speaker.
 - A crossing passes through something physical — a doorway, a cloud, water, a
-  reflection, a fogged lens — never a fade, dissolve or morph.
-- Pass bridges and towers far below or far to one side; never fly along them.
-- Loops and moments keep the locked camera the kit gives them.
+  reflection, a fogged lens — never a fade, dissolve or morph, unless the person
+  asked for one (record it in `allow`, below).
+- Keep the camera's route far below or to one side of bridges and towers.
+- Loops and moments keep the locked camera the kit gives them, unless the event
+  moves the camera (`camera`: a move that comes back).
 - Music only when the film is about music (the label, hint or idea says so).
 
 ## Coordinates, frames and canvases
@@ -357,16 +368,19 @@ explains each one. In short:
 
 ## Recording an exception: `allow`
 
-Some rules are heuristics. When a take that trips one was approved anyway,
-record the rule id and why, so the exception is visible rather than silent:
+Some rules are heuristics. When a take that trips one was approved anyway, or
+the person asked for exactly what a rule guards against (a dream that dissolves
+into the next place), record the rule id and why, so the exception is visible
+rather than silent. It is valid before the first render:
 
 ```yaml
 allow:
+  transition: "requested: a dream dissolve"
   lattice: "The camera walks the bridge deck on purpose; take 2 held together and was approved."
 ```
 
 An allowed finding still prints, as a warning marked "allowed". Rule ids:
 `frames`, `length`, `opening`, `one-shot`, `negation`, `capitals`,
 `timestamps`, `sound`, `dialogue`, `sentences`, `music`, `transition`,
-`materialize`, `lattice`, `dark-screen`, `static`, `keyframes`,
-`prompt-length`, `cause`, `unfinished`, `model`.
+`materialize`, `lattice`, `dark-screen`, `camera`, `landing`, `static`,
+`face-turn`, `keyframes`, `prompt-length`, `cause`, `unfinished`, `model`.

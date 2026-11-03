@@ -246,8 +246,11 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
 
 - `seen`: what is really in the picture, from looking at it at full size.
 - `title`, `chapter`, `caption`, from what the person told you.
-- `loop`: a living photograph (the whole frame gently alive, Foley). The kit locks
-  its camera; write only what moves inside the picture (docs/directing-films.md › Loops).
+- `loop`: a living photograph (the whole frame alive at the pace the place has,
+  Foley). The kit locks its camera; write only what moves inside the picture. A
+  loop or moment whose event would move a real camera (an impact, an explosion)
+  writes that move in `camera`, coming back to the still's framing
+  (docs/directing-films.md › Loops).
 - `objects`: two to four things to click. In a linear story, exactly one of them
   `goes` to the next place. Give each one a `label` (an action: "Duck through the
   round door"), a `hint`, an `at` point for the label (in open space just above the
@@ -261,7 +264,8 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
   narrator says its `line`, and the film runs backwards to put it down
   (docs/directing-films.md › Close looks). A collectible or figure the visitor
   handles is always one.
-- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`; for a
+- A `film` for each object: `idea` (one sentence), `action`, `sound`, `frames`, and
+  `landing` when its arrival needs its own words (docs/world-yaml.md › film); for a
   close look, `reveal: { paint, line, done }` (docs/world-yaml.md › reveal); for a
   figure, `figureLook`. Any writing a film shows is named in its action as what it
   reads, and anyone who speaks has their exact words written in it
@@ -284,7 +288,8 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
   every person keeps the one name the cast gives them, and no line gives a twist away
   before it lands (docs/writing-the-story.md).
 
-Then run `node world lint` and fix every error. For a made-up world, run
+Then run `node world lint` and fix every error. Read every warning too: fix it, or
+keep the words when they are what the person asked for. For a made-up world, run
 `node world story` too: an independent editor (a Sogni LLM) reads the plot and every
 word in order and lists what does not work yet. Rewrite every "fix" and run it again
 until none is left. A finding names the film, the field
@@ -366,7 +371,8 @@ A `stretch-step` on a Seedance take means the picture jumps in shape at its star
 end: compare the two frames it names. Reject on sight (the full list is
 docs/directing-films.md › Judging a take):
 dissolves or fades, morphs, hard cuts, writing that is not real words, a loop or
-moment whose camera pushes in and back (`camera-moves`), an object that vanishes
+moment whose camera pushes in and back when its plan doesn't write that move
+(`camera-moves`), an object that vanishes
 and comes back, a real person's face changing, smeared bridge or tower struts, music nobody asked for, a
 frozen tail, and a film that ignores what was clicked (the clicked thing must lead
 the film and do what its label says; a retake changes the route, never the cause).
@@ -488,8 +494,8 @@ reviewer: nothing you could have caught should reach them.
 3. **Screen every take and reject on sight** (docs/directing-films.md › Judging a
    take is the one list): every frame of its contact sheet, never a handful
    (ground rule 13). Reject a moment where nothing happens
-   (`little-happens`), a camera that moves (`camera-moves`) and a room that
-   rearranges itself. Rewrite the direction and retake, at most twice per film. A
+   (`little-happens`), a camera that moves when its plan doesn't write that move
+   (`camera-moves`) and a room that rearranges itself. Rewrite the direction and retake, at most twice per film. A
    film that still fails is cut, and its object goes with it.
 4. **Check every outline, close look and figure.** Read every piece of writing in
    every still and close look; each selection preview holds the named object and

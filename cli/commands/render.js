@@ -4,8 +4,8 @@ import { join } from 'node:path';
 import { parse } from '../index.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { filmsOf, readPlan } from '../lib/plan.js';
-import { canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS } from '../lib/h3.js';
-import { filmPrompt, fitStill, isSeedance, seedanceSeconds, shapeFor } from '../lib/seedance.js';
+import { canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS, writtenCamera } from '../lib/h3.js';
+import { directionWords, filmPrompt, fitStill, isSeedance, seedanceSeconds, shapeFor } from '../lib/seedance.js';
 import { pushInStart } from '../lib/pushin.js';
 import { lintPlan } from '../lib/lint.js';
 import { filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
@@ -122,7 +122,7 @@ export async function takeSpec(plan, paths, film, take, { seed } = {}) {
     start,
     journal: {
       film: film.id, take, kind: film.kind, from: film.from, to: film.to, object: film.object,
-      ...(ON_ONE_STILL.has(film.kind) ? { camera: 'locked' } : {}),
+      ...(ON_ONE_STILL.has(film.kind) ? { camera: writtenCamera(film) ?? 'locked' } : {}),
       model: render.model, width: render.width, height: render.height, delivered: render.output,
       ...(render.ratio ? { fitsCanvas: delivered(canvas) } : {}),
       frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)),
@@ -252,7 +252,8 @@ export async function run(argv) {
       // A changed push-in is a changed direction too: the film starts from another crop.
       const samePushIn = JSON.stringify(last?.journal.pushIn?.at ?? null) === JSON.stringify(entry.film.kind === 'crossing' ? entry.film.pushIn?.at ?? null : null)
         && (last?.journal.pushIn?.zoom ?? null) === (entry.film.kind === 'crossing' ? entry.film.pushIn?.zoom ?? null : null);
-      if (last && last.journal.prompt === filmPrompt(entry.film) && samePushIn) {
+      // The kit's own landing sentence changed in 2026-11; that alone is not a rewritten direction.
+      if (last && directionWords(last.journal.prompt) === directionWords(filmPrompt(entry.film)) && samePushIn) {
         throw new Error(`${entry.film.id}: its last take was rejected${last.verdict?.note ? ` ("${last.verdict.note}")` : ''} and the direction has not changed. A new seed rarely fixes a defect: rewrite the film's action or sound for what went wrong, or pass --same-direction`);
       }
     }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { assembleSeedancePrompt, filmPrompt, isSeedanceFrames, shapeFor } from '../cli/lib/seedance.js';
+import { assembleSeedancePrompt, filmPrompt, isSeedanceFrames, LAST, LOOP_LAST, shapeFor } from '../cli/lib/seedance.js';
 import { assemblePrompt, canvasByName, CANVASES } from '../cli/lib/h3.js';
 import { createRequest, filmBilling, takeSpec } from '../cli/commands/render.js';
 import { lintDirection, lintPlan } from '../cli/lib/lint.js';
@@ -40,13 +40,27 @@ test('the Seedance prompt keeps the plan’s words and says the kit’s markup t
   assert.ok(prompt.includes('says "Room 304." Then the barman drops the glass'), 'spoken lines are quoted speech');
   assert.ok(!/Picture [12]|<d>/.test(prompt));
   assert.ok(prompt.endsWith('\n\nSound: Glass shatters on tiles; a low murmur fills the bar.'));
-  assert.equal(prompt.split('established by the last frame at the end of the shot').length, 2, 'lands once');
+  assert.equal(prompt.split(LAST).length, 2, 'lands once');
   const loop = assembleSeedancePrompt({ kind: 'loop', action: 'A static shot holds the position and framing established by Picture 1: grass.', sound: 'Wind.' });
   assert.ok(loop.startsWith('The first frame and the last frame are the same photograph. The camera is locked off on a tripod'));
   assert.ok(!loop.includes('Picture 1'));
   // A film with no model is H3's, exactly as before.
   const h3 = { ...seedanceFilm(), model: undefined, frames: 141 };
   assert.equal(filmPrompt(h3), assemblePrompt(h3));
+});
+
+test('a Seedance film lands, and holds its camera, by the same fields as H3, in the words Seedance reads', () => {
+  for (const sentence of [LAST, LOOP_LAST]) assert.doesNotMatch(sentence, /settl|slow|eas(e|ing)|gentl|Picture/i);
+  const own = assembleSeedancePrompt(seedanceFilm({ landing: 'The glass is in pieces on the floor as the framing of Picture 2 arrives.' }));
+  assert.ok(own.includes('behind the counter. The glass is in pieces on the floor as the framing of the last frame arrives.\n\nSound:'));
+  assert.ok(!own.includes(LAST));
+  assert.ok(assembleSeedancePrompt(seedanceFilm({ landing: false })).includes('behind the counter.\n\nSound:'));
+  // A direction from before `landing` that ends on the old landing words keeps its prompt.
+  const old = assembleSeedancePrompt(seedanceFilm({ action: `${OPEN}The glass shatters, settling into the pose, spacing and composition established by Picture 2 at the end of the shot.` }));
+  assert.ok(old.includes('established by the last frame at the end of the shot.\n\nSound:') && !old.includes(LAST));
+  const shaken = assembleSeedancePrompt({ kind: 'moment', camera: 'The camera jolts as the floor heaves, then is back on the framing of Picture 1.', action: `${OPEN}The floor heaves.`, sound: 'A rumble.' });
+  assert.ok(shaken.startsWith('The first frame and the last frame are the same photograph. The camera jolts as the floor heaves, then is back on the framing of the first frame. Live-action'));
+  assert.ok(shaken.includes(`The floor heaves. ${LOOP_LAST}`));
 });
 
 test('lint: a Seedance film needs its frame grid, no keyframes and a canvas it fits; an unknown model is an error', () => {
@@ -178,4 +192,18 @@ test('build sizes a Seedance take onto the canvas; an H3 take is finished exactl
   const seedance = finishingOf(paths, plan, film, { sha: 'abc', journal: { model: 'seedance-2-5' } });
   assert.deepEqual(seedance.finishing.size, { width: 2688, height: 1536 });
   assert.equal(seedance.source, 'abc+fit 2688x1536');
+});
+
+test('a rejected film whose words did not change is still the same direction after the kit\'s landing sentence changed', async () => {
+  const { directionWords } = await import('../cli/lib/seedance.js');
+  const { EARLIER_LANDINGS } = await import('../cli/lib/h3.js');
+  for (const film of [{ ...seedanceFilm(), model: undefined, frames: 141 }, seedanceFilm(), { ...seedanceFilm(), kind: 'moment', model: undefined, frames: 141 }]) {
+    const now = filmPrompt(film);
+    // What the take was rendered with before 2026-11: the same words, ending on the earlier landing sentence.
+    const kit = film.kind === 'moment' ? EARLIER_LANDINGS[1] : EARLIER_LANDINGS[0];
+    const before = now.replace(/(By the last frame|At the end of the shot|Everything keeps moving)[^\n]*?shows\./, film.model ? kit.replace('Picture 2', 'the last frame') : kit);
+    assert.notEqual(before, now);
+    assert.equal(directionWords(before), directionWords(now), film.kind);
+    assert.notEqual(directionWords(filmPrompt({ ...film, sound: 'A different sound.' })), directionWords(now), 'new words are a new direction');
+  }
 });

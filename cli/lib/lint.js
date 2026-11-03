@@ -4,9 +4,13 @@
 //
 // The direction rules follow MiniMax's own H3 Base prompt guide and the
 // defects that got real takes rejected (docs/directing-films.md explains each).
+// Only structure is an error: the frame grid, the markup the models read
+// (one shot, dialogue), a field that is missing, cut off or the wrong type.
+// A rule that reads the meaning of English words is a warning: it names the
+// words and the reason, and the writer decides.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES } from './h3.js';
+import { CANVASES, isValidFrames, ON_ONE_STILL, PROMPT_LIMIT, VALID_FRAMES, writtenCamera } from './h3.js';
 import { filmPrompt, FILM_MODELS, isSeedance, isSeedanceFrames, SEEDANCE_FRAMES, shapeFor } from './seedance.js';
 import { pushInIssues } from './pushin.js';
 import { filmsOf, matureWorld, placeById } from './plan.js';
@@ -24,14 +28,15 @@ const MATERIALIZES = /\b(?:mirror|frame|door|doorway|portal)\b[^.!?\n]{0,40}\b(?
 const DARK_SCREEN = /\b(?:black|dark(?:ness)?)\b[^.!?\n]{0,65}\b(?:fills?|covers?|conceals?|hides?)\b[^.!?\n]{0,30}\b(?:lens|screen|frame|view)\b|\b(?:lens|screen|frame|view)\b[^.!?\n]{0,40}\b(?:goes|turns|becomes) (?:black|dark)\b/i;
 
 /**
- * Sentences whose camera runs onto, along, over or through a bridge, tower or
- * any lattice of struts. H3 flies such a route through the structure and the
- * struts smear across the lens (a real crossing failed this twice). Pass a
- * lattice far below or far to one side, or go around it.
+ * Sentences in which the camera itself runs onto, along, over or through a
+ * bridge, tower or any lattice of struts. H3 flew one such route through the
+ * structure and the struts smeared across the lens (one crossing, twice). A
+ * car or a person crossing a bridge is not the camera's route, and passing
+ * beside a tower goes around it, so neither is flagged.
  */
 const LATTICE = String.raw`(?:bridges?|towers?|struts?|girders?|gantry|gantries|scaffold(?:ing)?|pylons?|trusses|truss|mesh sides)`;
 const CAMERA_MOVES = String.raw`(?:glides?|flies|fly|travels?|pass(?:es)?|moves?|swoops?|drifts?|cross(?:es)?|races?|rushes|dives?|sweeps?|descends?|rises?|climbs?|cranes?|pushes|push|tracks?|follows?)`;
-const THROUGH = new RegExp(String.raw`\b${CAMERA_MOVES}\b(?:\s+[\w’'-]+){0,3}?\s+(?:onto|along|over|across|through|between|under|past)\b[^.,;:]*\b${LATTICE}`, 'i');
+const THROUGH = new RegExp(String.raw`\b(?:camera|drone)\b[^.!?]*?\b${CAMERA_MOVES}\b(?:\s+[\w’'-]+){0,3}?\s+(?:onto|along|over|across|through|between|under)\b[^.,;:]*\b${LATTICE}`, 'i');
 const CLEAR = /\bfar (?:below|beneath|off|away|to (?:the|one) (?:left|right|side))\b|\bin the distance\b/i;
 export const throughLattice = action => String(action).split(/(?<=[.!?])\s+/).filter(sentence => THROUGH.test(sentence) && !CLEAR.test(sentence));
 
@@ -50,22 +55,23 @@ const BIRDSONG = /(?<!\p{L})(?:birds?|songbirds?|tūī|tui|skylarks?|larks?|bell
  * as a warning, so the exception stays visible.
  */
 export const RULES = {
-  frames: 'frames on the H3 grid',
+  frames: 'frames on the H3 grid (whole seconds on Seedance)',
   length: 'enough description',
-  opening: 'opens on Picture 1',
+  opening: 'opens on Picture 1 (a warning)',
   'one-shot': 'one continuous shot',
-  negation: 'no negations',
-  capitals: 'no capitals',
-  timestamps: 'no timestamps',
+  negation: 'positive facts (a warning)',
+  capitals: 'lettering named in quotes, not in capitals (a warning)',
+  timestamps: 'an H3 film orders events with words (a warning)',
   sound: 'a soundscape',
   dialogue: 'dialogue markup',
-  sentences: 'capitalised sentences',
-  music: 'no unrequested music',
-  transition: 'no fades, dissolves or morphs',
-  materialize: 'no materializing props',
-  lattice: 'no routes through bridges or towers',
+  sentences: 'capitalised sentences (a warning)',
+  music: 'music only when the film is about it (a warning)',
+  transition: 'no fade, dissolve or morph from one place to another (a warning outside crossings)',
+  materialize: 'no materializing props (a warning)',
+  lattice: 'camera routes through bridges or towers (a warning)',
   'dark-screen': 'no dark-screen crossings',
-  camera: 'the kit locks the camera of loops and moments',
+  camera: 'a loop or moment keeps the locked camera, or writes its own',
+  landing: 'how a film arrives: the kit\'s sentence, its own, or none',
   static: 'retired: the kit now writes the camera of loops and moments (see camera)',
   'face-turn': 'faces stay put in loops and moments',
   cause: 'the clicked object starts the film',
@@ -150,51 +156,65 @@ export function lintDirection(film, concept = '') {
   const quote = match => `"${String(match).slice(0, 60)}"`;
 
   const seedance = isSeedance(film.model);
+  const crossing = !film.kind || film.kind === 'crossing';
+  const camera = writtenCamera(film);
+  const landing = typeof film.landing === 'string' ? film.landing.replace(/\s+/g, ' ').trim() : '';
+  // The film's own camera and landing sentences go into the prompt too: the same words rules read them.
+  if (camera) fields.camera = camera;
+  if (landing) fields.landing = landing;
   if (film.model !== undefined && film.model !== null && !FILM_MODELS.includes(film.model)) error('model', 'model', `model is one of ${FILM_MODELS.join(', ')}; leave it out for MiniMax H3 (got ${JSON.stringify(film.model)})`);
   if (seedance && !isSeedanceFrames(film.frames)) error('frames', 'frames', `a Seedance film lasts whole seconds: frames is seconds × 24 + 1, from ${SEEDANCE_FRAMES[0]} (4 s) to ${SEEDANCE_FRAMES.at(-1)} (30 s), such as 121 (5 s) or 145 (6 s) (got ${film.frames})`);
   else if (!seedance && !isValidFrames(film.frames)) error('frames', 'frames', `frames must be one of ${VALID_FRAMES.join(', ')} (got ${film.frames})`);
   if (action.length < 120) error('length', 'action', 'describe the motion in more detail (under 120 characters)');
   // A direction cut off mid-sentence (a writer's inner quote closed the string early) renders as half a film.
-  for (const [field, text] of [['action', action], ['sound', sound]]) {
+  for (const [field, text] of Object.entries(fields)) {
     if (!text || /[.!?…][”"’')\]]*$/.test(text)) continue;
     // An open quote, a comma or a word that cannot end a sentence means the text was cut off: half a film.
     const cut = /(["“(,:;]|\b(the|a|an|of|to|in|on|at|by|with|and|or|but|from|into|reading|says|said|as|that|its|his|her|their))$/i.test(text);
     (cut ? error : warn)('unfinished', field, `${quote(text.slice(-60))} — ${cut ? 'the text stops mid-sentence; finish it' : 'end the last sentence with a full stop'}`);
   }
-  if (!/established by Picture 1/.test(action)) error('opening', 'action', 'open on the first frame: "…, a wide shot begins in (or: holds) the position and framing established by Picture 1: …"');
+  if (!/established by Picture 1/.test(action)) warn('opening', 'action', 'open on the first frame: "…, a wide shot begins in (or: holds) the position and framing established by Picture 1: …"');
   const shot = /\[Shot [2-9]\]/.exec(action);
   if (shot) error('one-shot', 'action', `${quote(shot[0])} — keep one continuous shot`);
   for (const [field, text] of Object.entries(fields)) {
     const plain = unquoted(spoken(text));
     const negation = NEGATION.exec(plain);
-    if (negation) error('negation', field, `${quote(negation[0])} — state only what is there; a negation names the thing you do not want`);
+    if (negation) warn('negation', field, `${quote(negation[0])} — state only what is there; a negation names the thing you do not want, and the model may draw it`);
     const capitals = /\b[A-Z]{3,}\b/.exec(plain.replace(/\[English\]/g, ''));
     // Lettering in single quotes is the usual slip of a writer avoiding quotation marks inside JSON: say so.
     const single = capitals && new RegExp(`'[^'\\n]*\\b${capitals[0]}\\b[^'\\n]*'`).exec(plain);
-    if (single) error('capitals', field, `${quote(single[0])} — lettering goes in double quotation marks, never single ones: … that reads "${single[0].slice(1, -1)}"`);
-    else if (capitals) error('capitals', field, `${quote(capitals[0])} — no words in capitals; writing the picture shows is named as what it reads: a sign that reads "EXIT"`);
+    if (single) warn('capitals', field, `${quote(single[0])} — lettering goes in double quotation marks, never single ones: … that reads "${single[0].slice(1, -1)}"`);
+    else if (capitals) warn('capitals', field, `${quote(capitals[0])} — writing the picture shows is named as what it reads, in double quotes (a sign that reads "EXIT"); an acronym or a name in capitals is fine`);
     const lowerStart = /[.!?]\s+[a-z][\w’'-]*/.exec(plain);
-    if (lowerStart) error('sentences', field, `${quote(lowerStart[0].replace(/^[.!?]\s+/, ''))} — start every sentence with a capital letter`);
+    if (lowerStart) warn('sentences', field, `${quote(lowerStart[0].replace(/^[.!?]\s+/, ''))} — start every sentence with a capital letter`);
     const musical = spoken(text).replace(BIRDSONG, '');
     const music = MUSIC.exec(musical);
-    if (!MUSIC_CONCEPT.test(concept) && music) error('music', field, `${quote(music[0])} — describe dialogue, ambience and physical sounds only; this asks for music the film is not about`);
+    if (!MUSIC_CONCEPT.test(concept) && music) warn('music', field, `${quote(music[0])} — music in a film plays over the world's own score: keep it when music is part of what happens (the label, hint or idea can say so), else describe ambience and physical sounds`);
   }
-  const clock = /\b\d{1,2}:\d{2}(\.\d+)?\b/.exec(action);
-  if (clock) error('timestamps', 'action', `${quote(clock[0])} — no timestamps inside one shot; order events with words ("as it clears the crest…")`);
+  // H3 reads one continuous shot ordered in words; Seedance is helped by time ranges ("0–2 s: …"), so its films are not checked.
+  const clock = seedance ? null : /\b\d{1,2}:\d{2}(\.\d+)?\b/.exec(unquoted(spoken(action)));
+  if (clock) warn('timestamps', 'action', `${quote(clock[0])} — an H3 film is one continuous shot: order its events with words ("as it clears the crest…")`);
   if (!sound) error('sound', 'sound', 'describe the soundscape: ambience, physical sounds, non-verbal human sounds');
   if (/<d>/.test(sound)) error('dialogue', 'sound', 'spoken words belong in the action, never in the sound');
   const badDialogue = /<d>(?!\[English\] )/.exec(`${action}\n${sound}`);
   if (badDialogue) error('dialogue', /<d>(?!\[English\] )/.test(action) ? 'action' : 'sound', 'write every spoken line as <d>[English] the words</d>');
-  // What the picture does. A sound that "fades into the wind" is fine; a picture that fades or dissolves is not.
+  // What the picture does. A sound that "fades into the wind" is fine; a picture that fades or dissolves
+  // into another place is not. Inside one place, a ghost fading into the fog may be exactly what was asked.
   const transition = TRANSITION_WORDS.exec(spoken(action));
-  if (transition) error('transition', 'action', `${quote(transition[0])} — describe a physical crossing; fades, dissolves and morphs are rejected on sight`);
+  if (transition && crossing) error('transition', 'action', `${quote(transition[0])} — describe a physical crossing; a fade, dissolve or morph from one place to the next is rejected on sight. If the person asked for one (a dream, a flashback), record it: allow: { transition: "requested: …" }`);
+  else if (transition) warn('transition', 'action', `${quote(transition[0])} — fine when it is what happens in the picture and the person asked for it (the man morphs into a wolf); a picture that dissolves into another picture is rejected on sight`);
   const materializes = MATERIALIZES.exec(spoken(action));
-  if (materializes) error('materialize', 'action', `${quote(materializes[0])} — the object that carries the crossing must already be in the picture; it cannot materialize`);
-  for (const sentence of throughLattice(action)) error('lattice', 'action', `"${sentence.slice(0, 90)}…" — route the camera far below, far to one side or around the structure; flying along or through a bridge or tower smears its struts`);
+  if (materializes) warn('materialize', 'action', `${quote(materializes[0])} — the object that carries the crossing must already be in the picture; a prop that materializes reads as a trick`);
+  for (const sentence of seedance ? [] : throughLattice(action)) warn('lattice', 'action', `"${sentence.slice(0, 90)}…" — camera routes through a lattice of struts have smeared on H3 (one crossing, twice); passing far below or to one side is safer`);
   const dark = DARK_SCREEN.exec(spoken(action));
   if (dark) warn('dark-screen', 'action', `${quote(dark[0])} — a dark screen is not a physical crossing: keep the occluding surface and its moving edge visible`);
-  // The kit locks the camera of every loop and moment; there is no other choice to make.
-  if (film.camera !== undefined && film.camera !== null && film.camera !== 'locked') error('camera', 'camera', `the kit locks the camera of loops and moments; remove camera (got ${JSON.stringify(film.camera)})`);
+  // A loop or moment keeps the locked camera the kit writes, unless it says in `camera` what its camera does instead.
+  if (film.camera !== undefined && film.camera !== null && film.camera !== 'locked') {
+    if (!camera) error('camera', 'camera', `camera is locked (the default), or a sentence saying what the camera does and how it comes back to the framing of Picture 1; earlier keywords such as sweep and handheld are retired (got ${JSON.stringify(film.camera)})`);
+    else if (!ON_ONE_STILL.has(film.kind)) error('camera', 'camera', `only a loop or a moment takes \`camera\`; a ${film.kind ?? 'film'}'s camera is written in its action`);
+    else if (!/\bPicture 1\b/.test(camera)) warn('camera', 'camera', `a ${film.kind} starts and ends on one still, so its camera comes back: end the sentence on the exact framing of Picture 1 ("… and is back on the exact framing of Picture 1 by the last frame")`);
+  }
+  if (film.landing !== undefined && film.landing !== null && film.landing !== false && !landing) error('landing', 'landing', `landing is false (the action already says how the film arrives) or a sentence saying how it arrives on Picture 2 (got ${JSON.stringify(film.landing)})`);
   const faceTurn = ON_ONE_STILL.has(film.kind) ? FACE_TURN.exec(spoken(action)) : null;
   if (faceTurn) warn('face-turn', 'action', `${quote(faceTurn[0])} — a ${film.kind} starts and ends on the photograph, so a face seen there is seen at both ends; turning a head away and back is where a real face drifts. Keep the head where it is and animate small things (breathing, a blink, hair in the wind, a slight smile), or keep the person still`);
   const keyframes = film.keyframes ?? [];

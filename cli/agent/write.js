@@ -169,9 +169,9 @@ export function placeProblems(answer, { place, context, required }) {
     const kind = object.goes ? 'crossing' : object.reveal?.paint ? 'reveal' : 'moment';
     const cause = object.film ? clickCauses(object, object.film) : null;
     if (cause) problems.push(`object "${object.id}" film action: ${cause}. Its first motion after the opening description must be ${object.target || object.label} doing what the label promises`);
+    // Errors must be fixed; warnings go back as "(warning)": worth another look, never a reason to stop.
     for (const f of lintDirection({ ...object.film, kind }, `${object.label} ${object.hint} ${object.film?.idea}`)) {
-      if (f.level === 'error') problems.push(`object "${object.id}" film ${f.field}: ${f.message}`);
-      else if (['face-turn', 'dark-screen'].includes(f.rule)) problems.push(`(warning) object "${object.id}" film ${f.field}: ${f.message}`);
+      problems.push(`${f.level === 'error' ? '' : '(warning) '}object "${object.id}" film ${f.field}: ${f.message}`);
     }
   }
   for (const route of required) {
@@ -183,8 +183,7 @@ export function placeProblems(answer, { place, context, required }) {
   if (answer.chapter && words(answer.chapter).length && words(answer.chapter).every(w => words(answer.title).includes(w))) problems.push(`the chapter "${answer.chapter}" only repeats the title; make it the where or when (for example "Hobbiton · Matamata" or "Night one"), or leave it ""`);
   if (context.mechanics?.collectibles && place.collectible && !place.ending && !answer.objects?.some(o => o.collect)) problems.push(`one object must be the collectible "${place.collectible}" with "collect": true`);
   for (const f of lintDirection({ ...answer.loop, frames: 192, kind: 'loop' }, answer.loop?.idea ?? '')) {
-    if (f.level === 'error') problems.push(`loop ${f.field}: ${f.message}`);
-    else if (['face-turn', 'dark-screen'].includes(f.rule)) problems.push(`(warning) loop ${f.field}: ${f.message}`);
+    problems.push(`${f.level === 'error' ? '' : '(warning) '}loop ${f.field}: ${f.message}`);
   }
   return problems;
 }

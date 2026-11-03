@@ -85,9 +85,10 @@ click leads (`goes`), and a direction for every film. The craft is in
 
 ### 4. Checks before spending
 
-`lint` checks the plan's structure (ids, destinations, points, frame counts) and
-the wording of every film direction against the rules MiniMax's model was trained
-on. `quote` prices everything not yet rendered.
+`lint` refuses a plan whose structure would break a render (ids, destinations,
+points, frame counts, dialogue markup) and warns about wording in film directions
+that often goes wrong with the models; the writer decides each warning. `quote`
+prices everything not yet rendered.
 
 ### 5. Objects
 

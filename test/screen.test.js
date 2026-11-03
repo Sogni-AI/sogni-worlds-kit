@@ -141,6 +141,11 @@ test('a loop whose camera pushes in and back is flagged; a locked one and a brie
   // A slide held for a second is a move too.
   const slide = path.map(p => ({ ...p, zoom: 0, shift: 0.08 }));
   assert.equal(cameraMoves(slide).flags.length, 1);
+  // A plan that writes its own camera is still measured; the note says to judge the move against that sentence.
+  const written = cameraMoves(slide, { written: 'The camera shakes with the impact, then is back on the framing of Picture 1.' }).flags;
+  assert.equal(written.length, 1);
+  assert.match(written[0].message, /writes its own camera \("The camera shakes with the impact/);
+  assert.doesNotMatch(cameraMoves(slide).flags[0].message, /writes its own camera/);
 });
 
 test('the change strips centre on where a picture turns into another', async () => {

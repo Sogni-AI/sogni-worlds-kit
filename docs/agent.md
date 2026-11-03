@@ -169,8 +169,9 @@ in a fixed JSON shape, checks the answer, and sends any problems back to the
 model in plain words until it is right:
 
 - **Every film direction is linted inside the loop** with the same linter as
-  `node world lint`, so a direction with a fade, a negation or a dark-screen
-  crossing never reaches the plan.
+  `node world lint`: an error (a crossing that fades, broken dialogue markup, a
+  direction cut off) never reaches the plan, and each warning (a negation, a
+  dark-screen crossing) goes back to the model to weigh.
 - **A self-review pass** checks what a linter can't: does the clicked object cause
   the film, does a far crossing pass through something physical, does the arrival
   match the destination, does every label fit the picture, is every moment a real

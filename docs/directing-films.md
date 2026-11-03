@@ -11,7 +11,7 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 - Writing a direction — the `action` field, with a real example
 - Writing sound — the `sound` field
 - Crossings: how to get from one picture to another (and diving into a map)
-- Loops: living photographs — read before writing a loop's camera
+- Loops: living photographs — read before writing a loop's or moment's `camera`
 - Moments and surprises
 - Close looks: reveals — read before writing any moment
 - Writing in pictures
@@ -28,9 +28,9 @@ three official worlds on [worlds.sogni.ai](https://worlds.sogni.ai).
 
 | Kind | Starts on | Ends on | Camera | What it is |
 | --- | --- | --- | --- | --- |
-| **loop** | this place's still | the same still | locked (the kit says so) | The photograph comes alive: water moves, people breathe and shift. Plays whenever you are here. |
+| **loop** | this place's still | the same still | locked (the kit says so), unless `camera` writes a move that comes back | The photograph comes alive: water moves, people breathe and shift. Plays whenever you are here. |
 | **crossing** | this place's still | the next place's still | moves | A journey caused by something in the picture: a door, a boat, a guitar, a breath on the lens. |
-| **moment** | this place's still | the same still | locked (the kit says so) | Something happens here (a parrot lands on the car mirror) and the scene returns to rest. |
+| **moment** | this place's still | the same still | locked (the kit says so), unless `camera` writes a move that comes back | Something happens here (a parrot lands on the car mirror) and the scene returns to rest. |
 | **reveal** | this place's still | the object's close look | moves in | The object is picked up, turned over, opened, or the person turns to answer: the film lands on a close look and the world holds there. |
 | **back** | the close look | this place's still | moves out | When the visitor is done looking, the object is put down and the place resumes. The kit makes it by playing the film in backwards, unless you write one. |
 
@@ -64,7 +64,8 @@ offered, on purpose.
 Your agent writes two fields per film: `action` (what we see) and `sound` (what
 we hear). The kit wraps them in the exact document MiniMax's model was trained
 on: the alignment line, `[Shot 1]`, the landing sentence and
-`non_diegetic_music: N/A`. Don't write those parts yourself.
+`non_diegetic_music: N/A`. Don't write those parts into the action; a film whose
+arrival needs its own words says them in `landing` (below).
 
 The shape of every `action`:
 
@@ -86,8 +87,17 @@ The shape of every `action`:
    or a corner the pictures show, or they walk, drive or are carried in. Say which;
    left unsaid, they tend to fade or pop in where they stand. Between far-apart
    places, the boundary the camera passes through does that work. The kit then adds
-   "The camera settles into the pose, spacing and composition established by
-   Picture 2 at the end of the shot."
+   the landing sentence: "By the last frame the camera arrives on the framing of
+   Picture 2, with everyone and everything in the places and poses Picture 2
+   shows." (A loop or a moment gets "Everything keeps moving to the last frame and
+   arrives back on the places and poses Picture 2 shows.") It says where the film
+   arrives, not that it slows: a chase keeps its speed into the last frame. When
+   the arrival needs its own words, write them in `landing`, one sentence that
+   lands on Picture 2 ("Still at full speed, the car bursts out of the tunnel into
+   the framing of Picture 2."); `landing: false` adds nothing, for an action that
+   already says how it arrives. A direction written before `landing` existed that
+   ends on the kit's old words ("… established by Picture 2 at the end of the
+   shot") keeps exactly the prompt it had.
 
 A real crossing from The Long White Cloud ("Into the sound hole", 294 frames):
 
@@ -160,9 +170,10 @@ another.
   a guitar, a fogged lens wiped clean. Across open air the model blends the two
   pictures instead: a dissolve.
 - **Never a fade, a dissolve, a cut or a morph**, unless the person asks for one (a
-  flashback, a dream). A dark screen isn't a boundary either: "darkness fills the
-  view" becomes a fade to black. Keep the occluding surface and its moving edge
-  visible. When the start picture shows no way out, carry the change with something
+  flashback, a dream). When they do, say so in the plan before the first render:
+  `allow: { transition: "requested: a dream dissolve" }`. A dark screen isn't a
+  boundary either: "darkness fills the view" becomes a fade to black. Keep the
+  occluding surface and its moving edge visible. When the start picture shows no way out, carry the change with something
   already in it passing close to the lens: a waiter who is in the room crossing in
   front of the camera, its curtain drawn across the frame, its door swinging shut, a
   character in it stepping past.
@@ -177,9 +188,11 @@ another.
   worlds, including ours. If the label and the film disagree, fix one of them, and
   `lint` warns when the clicked thing is missing from the film's first sentences
   (rule `cause`).
-- **Stay clear of lattices.** Routes onto, along or through bridges, towers, pylons
-  or anything made of struts smear into grey bands. Pass them far below, far off to
-  one side, or go around them.
+- **Keep the camera clear of lattices.** A camera route onto, along or through a
+  bridge, a tower, pylons or anything made of struts has smeared into grey bands on
+  H3 (one crossing, twice). Passing far below or far to one side is safer, and
+  `lint` warns (rule `lattice`). A car or a person crossing a bridge is not the
+  camera's route.
 - **Geography first.** Show how you get there: through the door, over the ridge,
   down through the cloud. Spectacle doesn't replace a route.
 - **The way out is in the start picture.** The door, the stairs or the window the
@@ -276,22 +289,30 @@ A loop is the photograph breathing. It plays whenever the visitor is at that pla
   moment and tells the model the two pictures are one photograph. Write only what
   moves inside the picture, opening on "a wide shot holds the position and framing
   established by Picture 1".
-- **Every loop and moment is locked.** A push in, a pull back, a pan or a drift
+- **Locked unless the event moves it.** A push in, a pull back, a pan or a drift
   is never a loop: if a place needs one, it is a close look (the camera moves in
   and holds there). A slow look across a wide scene was tried on thirteen takes of
-  one street. Timed words ("out until 4 seconds, back by 8, easing in and out")
-  made it ease well, but any pan shows street the still does not have, so the
+  one street on H3. Timed words ("out until 4 seconds, back by 8, easing in and
+  out") made it ease well, but any pan shows street the still does not have, so the
   model painted it, and every gentle pan gave the new shopfronts signs in made-up
   letters; saying the signs were plain made the camera swing a quarter to a third
   of the frame to show them. A sweep needs real picture beyond the frame, so it is
-  not offered.
+  not offered. When what happens in a moment would move a real camera (an impact,
+  an explosion, the ground heaving), write that in the film's `camera`: one
+  sentence, said instead of the locked one, that comes back to the framing it left:
+  "The camera shakes as if handheld at the impact, then settles back on the exact
+  framing of Picture 1." Only a move that returns works here; a camera that travels
+  belongs in a crossing or a close look.
 - **Screening measures it.** `node world screen` maps the first frame onto every
   quarter second and flags `camera-moves` when a loop or moment zooms 4%, or slides
   3%, for a second; or when the picture stops matching
   its first frame at all for longer than that (a push-in that doubles the picture).
-  Look at the frames it names; a yo-yo is rejected, and the retake keeps the camera.
-- **The whole frame is alive**, not one waterfall. Grass combs in the wind, cloud
-  shadows slide, people shift their weight, water moves. Too subtle reads as broken.
+  Look at the frames it names. On a locked camera a yo-yo is rejected, and the
+  retake keeps the camera; with a written `camera`, reject a move the sentence
+  doesn't ask for, or one that doesn't come back.
+- **The whole frame is alive**, not one waterfall, at the pace the place has
+  (calm water laps; a storm thrashes). Grass combs in the wind, cloud shadows
+  slide, people shift their weight, water moves. Too subtle reads as broken.
 - **Everything returns to where it started.** The same still is at both ends, so any
   moved prop or person must be back in place by the end.
 - **Foley on every loop.** 192 frames (8 s) is the standard length; a shorter
@@ -301,9 +322,10 @@ A loop is the photograph breathing. It plays whenever the visitor is at that pla
 
 ## Moments and surprises
 
-A moment is a small event caused by an object: the kea that lands on the red car's
-wing mirror, admires itself, and yanks the rubber seal. The same still is at both
-ends and the camera stays locked.
+A moment is an event caused by an object, at the size and intensity the world calls
+for: the kea that lands on the red car's wing mirror, admires itself, and yanks the
+rubber seal. The same still is at both ends, and the camera stays locked unless the
+event moves it (`camera`, Loops above).
 
 Plan a few surprises per world, and cause each one with something really in the
 picture. Keep them rare enough to stay surprising.
@@ -608,8 +630,9 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
   change strips (`take-<n>.change-<k>.jpg`), sixteen consecutive frames where the
   picture changes fastest, because a crossfade often lasts a quarter of a second,
   less than the gap between two contact-sheet frames;
-- in a loop or a moment, a camera that pushes in and back, pans or drifts
-  (screening says `camera-moves`; look at the frames it names);
+- in a loop or a moment, a camera that pushes in and back, pans or drifts when its
+  `camera` doesn't ask for it, or a written move that doesn't come back (screening
+  says `camera-moves`; look at the frames it names);
 - in a close look's film, anything that would look wrong running backwards (rain or
   smoke rising, someone walking or speaking backwards), unless it has its own back;
 - an object that vanishes, appears from nowhere, or is thrown back into place so the
@@ -666,29 +689,36 @@ person.
 
 ## What the linter checks
 
-`node world lint` refuses a plan with:
+`node world lint` refuses a plan (an error; `render` won't start) only for what
+would make the render wrong or wasted:
 
-- a direction missing the Picture 1 opening;
-- more than one shot, clock times inside the shot, or words in capitals;
-- negations ("no", "never", "without");
-- music words (unless the idea is about music);
-- fade, dissolve or morph words, props that "materialize", or darkness that "fills
-  the view";
-- lower-case sentence starts, or a direction too short to carry motion;
-- a route through a bridge or tower;
-- a `camera` other than locked (the kit locks every loop and moment);
+- frames off the 124 + 17n grid (a Seedance film: whole seconds, seconds × 24 + 1),
+  or a prompt over 7,000 characters;
+- more than one shot (`[Shot 2]`), spoken words outside `<d>[English] …</d>` or in
+  the `sound`, a missing `sound`, a direction too short to carry motion, or text
+  cut off mid-sentence;
+- a fade, dissolve or morph in a crossing, unless the plan records that the person
+  asked for it (`allow: { transition: "requested: …" }`);
+- a `camera` that is neither `locked` nor a sentence, or a written one on anything
+  but a loop or a moment; a `landing` that is neither `false` nor a sentence;
 - a reveal on an object that goes somewhere, with neither a painted still nor a
   `paint` description, a `zoom` outside 1–3, or a place named like the close look
   (`<place>-<object>`);
 - two films with one id;
-- frames off the 124 + 17n grid (a Seedance film: whole seconds, seconds × 24 + 1),
-  or a prompt over 7,000 characters;
 - a `model` the kit does not render, a Seedance film with keyframes or on a canvas
   Seedance has no shape for, or a `pushIn` on anything but a crossing.
 
-It warns (and still lets the plan through) when a loop or moment turns a head away
-("turns her head", "looks away", "glances over his shoulder"), and when a film's
-first sentences after the opening picture never name the clicked thing (rule
-`cause`: the label and the object id are the words it looks for).
+It warns, and still lets the plan through, about words that are often a mistake but
+sometimes exactly what was asked: a direction missing the Picture 1 opening;
+negations ("no", "never", "without"); words in capitals; a lower-case sentence
+start; clock times in an H3 film; music words when the label, hint and idea aren't
+about music; a fade, dissolve or morph in a loop, moment or close look; a prop that
+"materializes"; darkness that "fills the view"; a camera routed through a bridge or
+tower on H3; a written `camera` that never says it comes back to Picture 1; a loop
+or moment that turns a head away ("turns her head", "looks away", "glances over his
+shoulder"); and a film whose first sentences after the opening picture never name
+the clicked thing (rule `cause`: the label and the object id are the words it looks
+for). Read each one: fix it, or keep the words when they are what the person asked
+for.
 
 The linter catches words. It can't see the film, so the review still decides.

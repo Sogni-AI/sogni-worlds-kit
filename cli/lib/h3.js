@@ -92,43 +92,90 @@ export function alignmentLine(frames, keyframeFrames = [], { samePicture = false
 
 /** The phrase every direction opens from, tying the first frame to Picture 1. */
 export const OPENING = 'begins in the position and framing established by Picture 1';
-/** Appended to a crossing's direction when it does not already land on Picture 2. */
-export const LANDING = 'The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot.';
-/** Loops and moments start and end on the same still: the motion settles, not the camera. */
-export const LOOP_LANDING = 'The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot.';
+/**
+ * The sentence the kit ends a crossing (or a close look's film) with, unless the
+ * film writes its own `landing`. It says where the shot arrives, not that it
+ * slows: a chase keeps its speed into the last frame.
+ */
+export const LANDING = 'By the last frame the camera arrives on the framing of Picture 2, with everyone and everything in the places and poses Picture 2 shows.';
+/** Loops and moments start and end on the same still: everything keeps moving and comes back. */
+export const LOOP_LANDING = 'Everything keeps moving to the last frame and arrives back on the places and poses Picture 2 shows.';
+/**
+ * Directions written before films had a `landing` field end on the kit's old
+ * landing sentence ("… established by Picture 2 at the end of the shot") in
+ * their own words. Those keep exactly the prompt they always had: the kit adds
+ * nothing after them.
+ */
+export const OLD_LANDING = /established by Picture 2/;
+/** The kit's own landing sentences until 2026-11. They slowed every film into its last frame ("settles"). */
+export const EARLIER_LANDINGS = Object.freeze([
+  'The camera settles into the pose, spacing and composition established by Picture 2 at the end of the shot.',
+  'The motion settles into the pose, spacing and composition established by Picture 2 at the end of the shot.',
+]);
 
 /** Films that start and end on one still: the place's loop and its moments. */
 export const ON_ONE_STILL = new Set(['loop', 'moment']);
 
 /**
  * What the camera does in a film that starts and ends on one still, said by
- * the kit rather than by each direction: nothing. Any move such a film makes
- * has to be undone before it lands, so a push-in becomes a push-in and a
- * pull-back, a slow dolly yo-yo nobody asked for. A pan across a wide scene
- * was tried as a choice (thirteen takes): timed words made it ease out and back,
- * but whatever it panned onto was painted past the still's edge, signs in
- * made-up letters included, so every loop and moment is locked.
+ * the kit rather than by each direction, unless the film writes its own
+ * `camera`: nothing. Any move such a film makes has to be undone before it
+ * lands, so a push-in becomes a push-in and a pull-back, a slow dolly yo-yo
+ * nobody asked for. A pan across a wide scene was tried (thirteen takes of one
+ * street on H3): timed words made it ease out and back, but whatever it panned
+ * onto was painted past the still's edge, signs in made-up letters included.
+ * So the locked camera is the default, and a film whose event moves the camera
+ * (an impact, an explosion, a quake) says how in `camera`.
  */
 export const LOCKED_CAMERA = 'The camera is locked off on a tripod and holds the exact framing of Picture 1 for the entire shot, at the same distance, height, angle and size; the edges of the frame stay where Picture 1 has them, and only the life inside the picture moves.';
+
+const flat = text => String(text ?? '').replace(/\s+/g, ' ').trim();
+
+/**
+ * A film's own camera sentence: `camera` written as words. A single word is
+ * not one: `locked` is the default, and the keywords earlier kits knew
+ * (`handheld`, `sweep`) were retired for the locked camera, so a plan that
+ * still has one keeps the locked sentence (and lint names it).
+ */
+export const writtenCamera = film => {
+  const camera = typeof film?.camera === 'string' ? flat(film.camera) : '';
+  return /\s/.test(camera) ? camera : null;
+};
+
+/** The camera sentence in front of a loop's or moment's action: the film's own, or locked. */
+export const cameraSentence = film => writtenCamera(film) ?? LOCKED_CAMERA;
+
+/**
+ * The sentence after the action: the film's own `landing`, none for
+ * `landing: false`, none for a direction that already ends on the old landing
+ * words, else the kit's.
+ */
+export function landingSentence(film, { kit, old = OLD_LANDING }) {
+  if (film.landing === false) return '';
+  if (typeof film.landing === 'string' && film.landing.trim()) return flat(film.landing);
+  return old.test(flat(film.action)) ? '' : kit;
+}
 
 /**
  * The full document sent to H3, assembled from a film's `action` (what the
  * camera and the picture do, as one continuous shot) and `sound` (what is
- * heard). Agents write only those two; the format around them is fixed here.
- * A loop or a moment also gets the locked camera sentence in front of the action.
+ * heard). Agents write those two, and may write `landing` (how it arrives) and,
+ * for a loop or a moment, `camera`; the format around them is fixed here.
  */
-export function assemblePrompt({ kind, frames, action, sound, keyframes = [] }) {
+export function assemblePrompt(film) {
+  const { kind, frames, action, sound, keyframes = [] } = film;
   const oneStill = ON_ONE_STILL.has(kind);
-  const landing = oneStill ? LOOP_LANDING : LANDING;
-  let body = String(action ?? '').replace(/\s+/g, ' ').trim();
-  if (!/established by Picture 2/.test(body)) body = `${body} ${landing}`;
-  if (oneStill) body = `${LOCKED_CAMERA} ${body}`;
+  const body = [
+    oneStill ? cameraSentence(film) : '',
+    flat(action),
+    landingSentence(film, { kit: oneStill ? LOOP_LANDING : LANDING }),
+  ].filter(Boolean).join(' ');
   return [
     alignmentLine(frames, keyframes.map(k => k.frame), { samePicture: oneStill }),
     '',
     `integrated_multimodal_description: [Shot 1] ${body}`,
     '',
-    `overall_soundscape: ${String(sound ?? '').replace(/\s+/g, ' ').trim()}`,
+    `overall_soundscape: ${flat(sound)}`,
     '',
     'non_diegetic_music: N/A',
   ].join('\n');

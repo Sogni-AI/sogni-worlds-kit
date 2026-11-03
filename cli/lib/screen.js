@@ -400,9 +400,10 @@ export function cameraPath(small, large) {
 /**
  * A loop or a moment whose locked camera moves: a zoom of 4% or a slide of 3%, held for a second of samples the
  * measurement trusts (unsure ones neither count nor break a run). One flag
- * says what was measured and where to look; the eyes decide.
+ * says what was measured and where to look; the eyes decide. `written` is the
+ * film's own camera sentence, when its plan gives one instead of the locked camera.
  */
-export function cameraMoves(path) {
+export function cameraMoves(path, { written = null } = {}) {
   const limit = CAMERA_LIMIT;
   const sure = path.filter(p => !p.unsure);
   // The longest run of trusted samples in a row that pass the test.
@@ -430,7 +431,7 @@ export function cameraMoves(path) {
     if (lost.length < CAMERA_LOST) return { flags: [], metrics };
     return {
       flags: [{ code: 'camera-moves', severity: 'warn', frame: lost[Math.floor(lost.length / 2)].frame, at: time(lost[Math.floor(lost.length / 2)].frame),
-        message: `From ${time(lost[0].frame)} s to ${time(lost.at(-1).frame)} s the picture matches its first frame at no small zoom or slide: the camera has gone far from its framing (a big push-in), or something fills the view. Look at it at full size; a locked camera keeps the frame of the still` }],
+        message: `From ${time(lost[0].frame)} s to ${time(lost.at(-1).frame)} s the picture matches its first frame at no small zoom or slide: the camera has gone far from its framing (a big push-in), or something fills the view. Look at it at full size; ${written ? `its plan writes its own camera ("${written.slice(0, 80)}"), so check this is that move and that it is back on the still's framing by the end` : 'a locked camera keeps the frame of the still'}` }],
       metrics,
     };
   }
@@ -440,7 +441,7 @@ export function cameraMoves(path) {
     slid || peak.shift >= limit.shift ? `slides about ${Math.round(peak.shift * 100)}% of the frame` : null].filter(Boolean).join(' and ');
   return {
     flags: [{ code: 'camera-moves', severity: 'warn', frame: peak.frame, at: time(peak.frame),
-      message: `The camera ${what} between ${time(run[0].frame)} s and ${time(run.at(-1).frame)} s and has to come back to land on the same still. Compare frame 0 with frame ${peak.frame} at full size: if the edges of the picture moved, it is the yo-yo a locked camera must not make (docs/directing-films.md › Loops)` }],
+      message: `The camera ${what} between ${time(run[0].frame)} s and ${time(run.at(-1).frame)} s and has to come back to land on the same still. Compare frame 0 with frame ${peak.frame} at full size: ${written ? `its plan writes its own camera ("${written.slice(0, 80)}"), so reject only a move that sentence does not ask for, or one that does not come back` : 'if the edges of the picture moved, it is the yo-yo a locked camera must not make'} (docs/directing-films.md › Loops)` }],
     metrics,
   };
 }
@@ -652,7 +653,7 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
   // A film on one still: does its camera stay where its plan put it? (Takes from before the
   // kit recorded a camera were asked for a static one.)
   if (ON_ONE_STILL.has(journal.kind)) {
-    const camera = cameraMoves(cameraPath(frames, await greyFrames(video, W * 2, H * 2)));
+    const camera = cameraMoves(cameraPath(frames, await greyFrames(video, W * 2, H * 2)), { written: journal.camera && journal.camera !== 'locked' ? journal.camera : null });
     flags.push(...camera.flags);
     Object.assign(motion.metrics, camera.metrics);
   } else motion.metrics.changes = changeStretches(frames);
