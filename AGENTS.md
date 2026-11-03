@@ -113,6 +113,19 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     the last review, and submit independent renders together, judging each as it
     lands. One agent keeps the edit and the final call: helpers report what they find
     and never change the cut.
+15. **Every speaking character keeps one voice: write a voice bible before the first
+    talking film.** For each character who speaks on camera, record exactly one
+    reference clip (their own recording, or the approved take of a designed voice)
+    and one fixed wording. Put "Jean's voice is exactly @Audio1." once near the top
+    of the prompt, and "Jean, in his own voice exactly @Audio1," before each of his
+    lines. Every film that character speaks in uses that clip and those words
+    verbatim; delivery ("quietly", "through gritted teeth") goes after the tag.
+    Never describe a recurring voice in fresh words, and never add an accent or
+    language ("plain American English") that the approved films don't have: the
+    model follows the words and drifts away from the reference, so a character
+    sounds like a different person from film to film. Before a new line, read how
+    the approved films worded that voice. Judge the result by ear: play the new line
+    right after an approved one.
 
 ## The workflow
 
