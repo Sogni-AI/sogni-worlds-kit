@@ -560,27 +560,40 @@ export function stderrOf(command, args) {
   });
 }
 
-/** A contact sheet with each frame's time: 8 frames, 4×2, spread over the take or the frames given (up to 16, 4×4, for a stretch shown frame by frame). */
+/**
+ * A contact sheet with each frame's time. A whole take gets at least 24 frames, 6 across, and at least three a second
+ * over a longer take (up to 72): eight frames hid morphs, swapped cars, missing passengers and jumps that a person saw at
+ * once (Mark, 2026-11-02: "a major major major detriment to quality"). Frames given in `at` (a stretch shown frame by
+ * frame, an opening strip; up to 16) keep 4 across.
+ */
+export const SHEET_MIN_FRAMES = 24;
+export const SHEET_PER_SECOND = 3;
+export function sheetFrames(count, fps = FPS) {
+  const n = Math.min(count, 72, Math.max(SHEET_MIN_FRAMES, Math.ceil((count / (fps || FPS)) * SHEET_PER_SECOND)));
+  return Array.from({ length: n }, (_, i) => Math.round(i * (count - 1) / Math.max(1, n - 1)));
+}
+
 export async function contactSheet(video, out, { frames, tileWidth = 480, at = null } = {}) {
   const info = await probe(video);
   const count = frames ?? info.frames;
-  const picks = (at ?? Array.from({ length: 8 }, (_, i) => Math.round(i * (count - 1) / 7))).slice(0, 16).map(frame => Math.min(count - 1, Math.max(0, frame)));
-  const rows = Math.ceil(picks.length / 4);
+  const picks = (at ? at.slice(0, 16) : sheetFrames(count, info.fps)).map(frame => Math.min(count - 1, Math.max(0, frame)));
+  const columns = at ? 4 : 6;
+  const rows = Math.ceil(picks.length / columns);
   const tileHeight = Math.round(tileWidth * info.height / Math.max(1, info.width) / 2) * 2;
   const decoded = await framesAt(video, picks, tileWidth, tileHeight);
   const images = picks.map(frame => decoded.get(frame));
   const label = (text) => Buffer.from(`<svg width="${tileWidth}" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="black" fill-opacity="0.6"/><text x="8" y="20" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="white">${text}</text></svg>`);
   const composite = [];
   images.forEach((image, i) => {
-    const left = (i % 4) * tileWidth, top = Math.floor(i / 4) * tileHeight;
+    const left = (i % columns) * tileWidth, top = Math.floor(i / columns) * tileHeight;
     composite.push({ input: image, left, top });
     composite.push({ input: label(`${time(picks[i]).toFixed(2)} s · frame ${picks[i]}`), left, top });
   });
   try {
-    await sharp({ create: { width: tileWidth * 4, height: tileHeight * rows, channels: 3, background: '#000' } }).composite(composite).jpeg({ quality: 85 }).toFile(out);
+    await sharp({ create: { width: tileWidth * columns, height: tileHeight * rows, channels: 3, background: '#000' } }).composite(composite).jpeg({ quality: 85 }).toFile(out);
   } catch {
     // Text needs a font; without one, the sheet still shows the frames.
-    await sharp({ create: { width: tileWidth * 4, height: tileHeight * rows, channels: 3, background: '#000' } })
+    await sharp({ create: { width: tileWidth * columns, height: tileHeight * rows, channels: 3, background: '#000' } })
       .composite(composite.filter((_, i) => i % 2 === 0)).jpeg({ quality: 85 }).toFile(out);
   }
   return picks;

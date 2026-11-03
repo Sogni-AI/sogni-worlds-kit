@@ -56,6 +56,10 @@ Rules that matter even before you open AGENTS.md:
   missing historical charges (docs/project-spending.md).
 - Never edit a still or use a video frame as one.
 - Look at every picture at full size before writing about it.
+- Judge video from many frames, never a handful: every frame of a take's contact
+  sheet (24+), and for anything cut together, every join on both sides
+  (`node world joins <video>`). A cut that breaks continuity (people, props, cars,
+  eyelines, screen direction, light) is a defect (AGENTS.md › ground rule 13).
 - A retake rewrites the direction that caused the defect.
 - Learn as you go: read `~/.config/sogni/lessons.md` before planning; add a dated
   line when the person corrects you or a take fails for a reason the docs miss

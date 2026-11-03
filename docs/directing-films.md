@@ -587,7 +587,9 @@ it adds business you didn't ask for.
 ## Judging a take
 
 `node world screen` flags likely problems automatically. Your agent should then
-look at the contact sheet and at each flagged moment at full size. A fast camera
+look at every frame of the contact sheet (24 or more, at least three a second;
+never judge a take from a handful of frames) and at each flagged moment at full
+size. A fast camera
 move is only a "check" note: look at it for smearing or a hidden cut. Screening
 can't read lettering, so read every sign, patch, logo and number plate on the
 sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "reason"`):
@@ -620,7 +622,17 @@ sheet yourself. **Reject on sight** (`node world reject [world] <film> <take> "r
 - a Seedance take whose picture jumps in shape at its start or end (screening says
   `stretch-step`; compare the two frames it names at full size);
 - a film that ignores what was clicked: the clicked thing plays no part, or the
-  film does something other than its label promises.
+  film does something other than its label promises;
+- in anything cut together from several takes (a trailer, a teaser, a multi-shot
+  scene), a join that breaks continuity. Run `node world joins <video>` and, at
+  every cut, compare the three frames on each side and the last and first frames
+  at full size. Check that the same people are on the same sides, with the same
+  props and wardrobe. A vehicle keeps its model, lights, mirrors on both doors,
+  plate and passengers. Eyelines point at whoever is being spoken to, and motion
+  keeps its screen direction. Characters are where the last shot left them, and
+  traffic keeps to its lanes. Light and time of day hold. Two shots in the same
+  framing but a different place or time read as a jump, so put a shot between
+  them.
 
 Everything else goes to the person on `node world review`. Only a person approves
 a take.

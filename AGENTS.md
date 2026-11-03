@@ -81,6 +81,17 @@ screen and assemble. They approve the plan, judge the films and decide what ship
     https://github.com/Sogni-AI/sogni-worlds-kit/issues/new?template=lesson.yml.
     Accepted lessons land in these docs and reach every kit through
     `node world update`; once the docs say the same thing, delete the local line.
+13. **Judge video from many frames, never a handful.** A few frames spread over a
+    take hide the faults people see at once: a face or car that morphs, a passenger
+    who vanishes, a prop that comes back, an eyeline aimed at the wrong person,
+    traffic flipping direction. For every take, look at every frame on its contact
+    sheet (24 or more, at least three a second) and open the flagged frames at full
+    size. For anything cut together from several takes (a trailer, a preview loop,
+    a multi-shot scene, a recut), run `node world joins <video>` and look at every
+    join: the three frames before and after each cut, and the last and first frames
+    at full size. A cut that breaks continuity is a defect even when each shot is
+    perfect alone. Two shots in the same framing but a different place or time read
+    as a jump: put a shot between them. Do this before the person sees anything.
 
 ## The workflow
 
@@ -295,8 +306,9 @@ take twice. If it's interrupted, run it again and it resumes. While a render run
 node world screen
 ```
 
-For every new take, open its contact sheet (`renders/<film>/take-<n>.sheet.jpg`)
-and every flagged moment. For a crossing or moment, also open its opening strip
+For every new take, open its contact sheet (`renders/<film>/take-<n>.sheet.jpg`:
+24 frames or more, at least three a second) and look at every frame on it, then
+open every flagged moment. For a crossing or moment, also open its opening strip
 (`take-<n>.opening.jpg`, the first 2.7 s): the clicked thing has to move, or be
 moved, first. For every film between two pictures (a crossing, a reveal, the film
 back), open its change strips (`take-<n>.change-<k>.jpg`): sixteen consecutive
@@ -379,7 +391,8 @@ Tell the person how to host it (docs/hosting.md).
 
 **Prefer video link previews when suitable.** Reuse an approved, representative
 opening loop or teaser; watch it for quality, spoilers, a clean seam and sound
-that matches its picture. With a known public HTTPS address, `node world export
+that matches its picture. A teaser cut from several films gets `node world joins`
+on the finished file, and every join is checked (ground rule 13). With a known public HTTPS address, `node world export
 --url <address>` automatically generates Open Graph video tags, an X Player
 Card and a video-only iframe when the opening loop qualifies. Keep the JPEG
 poster; without a qualifying loop or public URL, use the image card. Never
@@ -439,7 +452,8 @@ reviewer: nothing you could have caught should reach them.
    reveals (pick, seen) → render --canary → screen → render --skip-canary → screen →
    narrate → music → figures --cutouts → figures → build --drafts.
 3. **Screen every take and reject on sight** (docs/directing-films.md › Judging a
-   take is the one list), including a moment where nothing happens
+   take is the one list): every frame of its contact sheet, never a handful
+   (ground rule 13). Reject a moment where nothing happens
    (`little-happens`), a camera that moves (`camera-moves`) and a room that
    rearranges itself. Rewrite the direction and retake, at most twice per film. A
    film that still fails is cut, and its object goes with it.
