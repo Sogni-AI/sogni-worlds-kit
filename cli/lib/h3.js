@@ -94,8 +94,10 @@ export function alignmentLine(frames, keyframeFrames = [], { samePicture = false
 export const OPENING = 'begins in the position and framing established by Picture 1';
 /**
  * The sentence the kit ends a crossing (or a close look's film) with, unless the
- * film writes its own `landing`. It says where the shot arrives, not that it
- * slows: a chase keeps its speed into the last frame.
+ * film writes its own `landing`. It says where the shot arrives and asks
+ * nothing about speed. On a same-seed A/B of one slow crossing (2026-11-03) it
+ * landed on Picture 2 as closely as the old "settles into" sentence, and H3
+ * eased into the last frame either way.
  */
 export const LANDING = 'By the last frame the camera arrives on the framing of Picture 2, with everyone and everything in the places and poses Picture 2 shows.';
 /** Loops and moments start and end on the same still: everything keeps moving and comes back. */

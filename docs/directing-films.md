@@ -91,11 +91,13 @@ The shape of every `action`:
    Picture 2, with everyone and everything in the places and poses Picture 2
    shows." (A loop or a moment gets "Everything keeps moving to the last frame and
    arrives back on the places and poses Picture 2 shows.") It says where the film
-   arrives, not that it slows: a chase keeps its speed into the last frame. When
-   the arrival needs its own words, write them in `landing`, one sentence that
-   lands on Picture 2 ("Still at full speed, the car bursts out of the tunnel into
-   the framing of Picture 2."); `landing: false` adds nothing, for an action that
-   already says how it arrives. A direction written before `landing` existed that
+   arrives and asks nothing about speed. H3 still tends to ease into its last
+   frame by itself: a same-seed test of one slow crossing slowed the same way
+   with the old "settles into" sentence and with this one. When the arrival
+   matters, write it in `landing`, one sentence that lands on Picture 2 ("Still
+   at full speed, the car bursts out of the tunnel into the framing of
+   Picture 2."); `landing: false` adds nothing, for an action that already says
+   how it arrives. A direction written before `landing` existed that
    ends on the kit's old words ("… established by Picture 2 at the end of the
    shot") keeps exactly the prompt it had.
 
