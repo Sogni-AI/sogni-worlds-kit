@@ -550,6 +550,16 @@ stills as any other, and it makes its own dialogue and sound.
   resizes each still to that shape (for a 16:9 world, a squeeze of 1.6%, never a
   crop) and build sizes the film back onto the canvas: on the kit's own test take the
   film's first and last frames lined up with their stills to within 0.03%.
+- **Stills plus references.** One request can't both pin frames and take
+  references: BytePlus refuses a pinned first or last frame beside any reference
+  image, video or audio, which is why the kit's Seedance films carry none. A film
+  that needs both (character sheets, or a source video to follow) states its still
+  instead: the still goes in as a reference, and the action says "@ImageN is the
+  first frame of this video: identical composition, framing and lighting, every
+  person in the same place and outfit". On a Seedance 2.5 edit of a crowd shot
+  (Sogni Recast, 2026-11-04) frame 1 came back with every named character in place,
+  within 0.5% of the still's zoom. That is close, not pinned (FLF lands within
+  0.03%), so every film that needs no reference stays in FLF.
 - **Spell out the order and the cause.** Write events in the order they happen and
   say what causes what: "She says…, then the glass slips from his hand", "Only after
   he speaks, the lantern drifts down". Seedance swaps events left unordered (a line
