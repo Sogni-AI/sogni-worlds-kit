@@ -29,9 +29,12 @@
   },
   "devDependencies": {
     "@google/model-viewer": "^4.3.1",
-    "clawhub": "0.23.3",
+    "clawhub": "0.24.1",
     "three": "^0.183.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.1"
+  },
+  "overrides": {
+    "undici@7": "7.30.1"
   }
 }
