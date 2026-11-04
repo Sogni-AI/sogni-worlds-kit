@@ -15,7 +15,7 @@
     "dev": "vite --config player/vite.config.ts",
     "build:player": "vite build --config player/vite.config.ts",
     "typecheck": "tsc -p player/tsconfig.json --noEmit",
-    "test": "node --test \"test/*.test.js\"",
+    "test": "node scripts/isolated-temp.mjs --test \"test/*.test.js\"",
     "check": "npm run typecheck && npm test && node world lint-examples",
     "check:player": "node test/player-playback.mjs",
     "publish:clawhub": "node scripts/publish-clawhub.mjs",
