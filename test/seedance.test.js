@@ -12,7 +12,10 @@ import { filmsOf } from '../cli/lib/plan.js';
 import { quoteFilm } from '../cli/lib/sogni.js';
 import { edgeStretch, STRETCH_STEP } from '../cli/lib/screen.js';
 import { finishFilm } from '../cli/lib/finish.js';
-import { finishingOf } from '../cli/commands/build.js';
+import { buildWorld, finishingOf } from '../cli/commands/build.js';
+import { validateWorld } from '../cli/lib/worldjson.js';
+import { recordVerdict } from '../cli/lib/takes.js';
+import { sha256File, writeJson } from '../cli/lib/files.js';
 import { probe } from '../cli/lib/media.js';
 import { tempDir, pathsAt, syntheticVideo } from './helpers.js';
 
@@ -179,21 +182,44 @@ test('screen: a film whose middle is drawn wider than its pinned ends is a stret
   assert.ok(edgeStretch(frames(n)).worst.stretch < 0.001);
 });
 
-test('build sizes a Seedance take onto the canvas; an H3 take is finished exactly as before', async () => {
-  const dir = tempDir('seedance-fit');
-  const input = join(dir, 'take.mp4');
-  await syntheticVideo(input, { source: 'testsrc2=size=SIZE:rate=24', seconds: 1, size: '192x108' });
-  const fitted = await finishFilm(input, join(dir, 'out.mp4'), join(dir, 'out-720.mp4'), { size: { width: 224, height: 128 } });
-  assert.deepEqual([fitted.width, fitted.height], [224, 128]);
-  const half = await probe(join(dir, 'out-720.mp4'));
-  assert.deepEqual([half.width, half.height], [112, 64]);
+test('build ships a Seedance film at its own size, marked fill; an H3 film exactly as before', async () => {
+  const dir = tempDir('seedance-native');
   const paths = pathsAt(dir, 'w');
-  const plan = { canvas: '1344x768' };
+  mkdirSync(paths.stills, { recursive: true });
+  await sharp({ create: { width: 224, height: 128, channels: 3, background: '#335577' } }).jpeg().toFile(join(paths.stills, 'a.jpg'));
+  await sharp({ create: { width: 224, height: 128, channels: 3, background: '#aa7733' } }).jpeg().toFile(join(paths.stills, 'b.jpg'));
+  // A 16:9 world (1.75): an H3 film at the world's shape, a Seedance crossing at its own 16:9 (1.78).
+  const plan = { id: 'w', title: 'W', canvas: '1344x768', order: 'linear', voices: {}, music: null, places: [
+    { id: 'a', title: 'A', still: 'stills/a.jpg', loop: { frames: 124, action: 'x', sound: 'y' },
+      objects: [{ id: 'door', label: 'Go', at: [0.5, 0.5], goes: 'b', film: { model: 'seedance-2-5', frames: 49, action: 'x', sound: 'y' } }] },
+    { id: 'b', title: 'B', still: 'stills/b.jpg', objects: [] },
+  ] };
+  const take = async (film, size, journal) => {
+    const video = join(paths.renders, film, 'take-1.mp4');
+    await syntheticVideo(video, { source: 'testsrc2=size=SIZE:rate=24', seconds: 1, size });
+    const sha = sha256File(video);
+    writeJson(join(paths.renders, film, 'take-1.json'), { film, take: 1, status: 'completed', sha256: sha, ...journal });
+    recordVerdict(paths, sha, { film, take: 1, verdict: 'approved', by: 'you' });
+  };
+  await take('a-loop', '224x128', { kind: 'loop' });
+  await take('a-door', '192x108', { kind: 'crossing', model: 'seedance-2-5', finalizes: 1 });
+  const quiet = { step() {}, ok() {}, warn() {}, info() {}, fail() {}, title() {}, next() {}, dim() {} };
+  const { world, issues } = await buildWorld({ paths, plan, say: quiet });
+  assert.deepEqual(issues, []);
+  assert.deepEqual(world.aspect, { width: 2688, height: 1536 });
+  const [a] = world.places;
+  assert.equal(a.loop.fill, undefined, 'an H3 film at the world\'s shape is described as before');
+  assert.deepEqual([a.hotspots[0].film.fill, a.hotspots[0].rewind.fill], [true, true]);
+  const shipped = await probe(join(paths.build, a.hotspots[0].film.src));
+  assert.deepEqual([shipped.width, shipped.height], [192, 108], 'never enlarged onto the canvas');
+  const half = await probe(join(paths.build, a.hotspots[0].film.src720));
+  assert.deepEqual([half.width, half.height], [96, 54]);
+  // The finishing key is the take alone, as for H3; a push-in is still added to it.
   const film = { kind: 'crossing', first: 'stills/a.jpg', from: 'a' };
-  assert.equal(finishingOf(paths, plan, film, { sha: 'abc', journal: {} }).source, 'abc', 'an H3 take keeps its manifest key: nothing is rebuilt');
-  const seedance = finishingOf(paths, plan, film, { sha: 'abc', journal: { model: 'seedance-2-5' } });
-  assert.deepEqual(seedance.finishing.size, { width: 2688, height: 1536 });
-  assert.equal(seedance.source, 'abc+fit 2688x1536');
+  assert.deepEqual(finishingOf(paths, plan, film, { sha: 'abc', journal: { model: 'seedance-2-5' } }), { finishing: {}, source: 'abc' });
+  assert.match(finishingOf(paths, plan, film, { sha: 'abc', journal: { model: 'seedance-2-5', pushIn: { at: [0.5, 0.5], zoom: 2 } } }).source, /^abc\+push-in /);
+  // world.json: `fill` is true or absent.
+  assert.deepEqual(validateWorld({ ...world, places: [{ ...a, loop: { ...a.loop, fill: false } }, world.places[1]] }).filter(i => i.includes('fill')), ['places[a].loop.fill: true, or left out']);
 });
 
 test('a rejected film whose words did not change is still the same direction after the kit\'s landing sentence changed', async () => {

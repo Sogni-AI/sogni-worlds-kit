@@ -274,7 +274,7 @@ export function awaitingFilms(plan, paths) {
 
 function describe(journal) {
   const parts = [];
-  // A Seedance take arrives at its own size (build sizes it onto the canvas); an H3 take at twice its canvas.
+  // A Seedance take arrives at its own size (the player fits it to the world's frame); an H3 take at twice its canvas.
   if (journal.delivered) parts.push(`${journal.delivered.width}×${journal.delivered.height}`);
   else if (journal.width && journal.height) parts.push(`${journal.width * 2}×${journal.height * 2}`);
   if (/^seedance-/.test(journal.model ?? '')) parts.push(journal.model);

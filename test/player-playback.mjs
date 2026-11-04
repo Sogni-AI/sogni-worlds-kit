@@ -17,6 +17,12 @@
 //  5. skip-no-range / reveal-no-range: a partly downloaded crossing or close
 //               look can be skipped when the host returns HTTP 200 to Range.
 //  6. review-build: bulk approval confirms the exact built takes; Cancel saves nothing.
+//  7. native    A world built by the kit mixing MiniMax H3 films at the world's
+//               2K shape with Seedance films at their own 1080p (never
+//               enlarged): every handover between them, on a desktop screen and
+//               a phone held sideways, shows the same picture on both sides (no
+//               jump, letterbox or layout shift; the blurred backdrop too), with
+//               no console errors. The same world without `fill` must fail.
 //
 //   npm run check:player                 builds the player and runs every check
 //   node test/player-playback.mjs --player <dir> [--only join,pause]
@@ -35,7 +41,10 @@ import { ffmpeg } from '../cli/lib/media.js';
 import { runVite } from '../cli/lib/player.js';
 import { validateWorld } from '../cli/lib/worldjson.js';
 import { startReviewServer } from '../cli/commands/review.js';
-import { readVerdicts } from '../cli/lib/takes.js';
+import { readVerdicts, recordVerdict } from '../cli/lib/takes.js';
+import { buildWorld } from '../cli/commands/build.js';
+import { MODEL } from '../cli/lib/h3.js';
+import { findCuts, joinsReport } from '../cli/lib/joins.js';
 import { sha256File, writeJson } from '../cli/lib/files.js';
 import { pathsAt } from './helpers.js';
 
@@ -140,16 +149,21 @@ const WATCH = `(() => {
 })();`;
 
 /** A fresh page in its own browser context (its own cache), with the watch installed and the network counted. */
-async function openPage(devtools, { throttle = null } = {}) {
+async function openPage(devtools, { throttle = null, viewport = { width: 1280, height: 800, scale: 1, mobile: false } } = {}) {
   const { browserContextId } = await devtools.send('Target.createBrowserContext');
   const { targetId } = await devtools.send('Target.createTarget', { url: 'about:blank', browserContextId });
   const { sessionId } = await devtools.send('Target.attachToTarget', { targetId, flatten: true });
   const send = (method, params) => devtools.send(method, params, sessionId);
   const requests = new Map();
   const loaded = new Set();
+  // Every error the page reports: thrown, logged with console.error, or a failed load.
+  const errors = [];
   devtools.on(message => {
     if (message.sessionId !== sessionId) return;
     const { method, params } = message;
+    if (method === 'Runtime.exceptionThrown') errors.push(params.exceptionDetails?.exception?.description ?? params.exceptionDetails?.text);
+    else if (method === 'Runtime.consoleAPICalled' && params.type === 'error') errors.push(params.args.map(a => a.value ?? a.description).join(' '));
+    else if (method === 'Log.entryAdded' && params.entry.level === 'error') errors.push(`${params.entry.text} ${params.entry.url ?? ''}`.trim());
     if (method === 'Network.requestWillBeSent') requests.set(params.requestId, { url: params.request.url, type: params.type, received: [] });
     else if (method === 'Network.dataReceived') requests.get(params.requestId)?.received.push([Date.now(), params.encodedDataLength || params.dataLength]);
     else if (method === 'Network.loadingFinished') { const r = requests.get(params.requestId); if (r) r.finished = true; }
@@ -158,7 +172,10 @@ async function openPage(devtools, { throttle = null } = {}) {
   await send('Page.enable');
   await send('Network.enable');
   await send('Runtime.enable');
-  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+  await send('Log.enable');
+  await send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: viewport.scale, mobile: viewport.mobile,
+    ...(viewport.mobile ? { screenOrientation: { type: viewport.width > viewport.height ? 'landscapePrimary' : 'portraitPrimary', angle: viewport.width > viewport.height ? 90 : 0 } } : {}) });
+  if (viewport.mobile) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: WATCH });
   if (throttle) await send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: throttle * 125_000, uploadThroughput: throttle * 125_000 });
   const evaluate = async expression => {
@@ -167,6 +184,7 @@ async function openPage(devtools, { throttle = null } = {}) {
     return result.value;
   };
   const page = {
+    send, sessionId, errors,
     evaluate,
     async open(url) {
       loaded.clear();
@@ -248,6 +266,195 @@ async function makeWorld(dir) {
   writeFileSync(join(dir, 'world.json'), JSON.stringify(world, null, 2));
 }
 
+/**
+ * A world the kit's own build makes, on a 16:9 canvas (2688×1536 stills):
+ *   A: an H3 loop, and a Seedance crossing east to B
+ *   B: a Seedance loop, and an H3 crossing south to C
+ *   C: an H3 loop, and a Seedance crossing west to A (Back plays its Seedance rewind)
+ * Its stills are sharp grids, so a picture drawn at another place or scale is a
+ * large difference. A Seedance take is its stills squeezed to 1920×1080, as
+ * they are sent to Seedance; every film holds its first and last picture for
+ * 1.5 s, so a handover compares the same picture on both sides.
+ */
+async function makeNativeWorld(dir) {
+  const paths = pathsAt(dir, 'native-check');
+  mkdirSync(paths.stills, { recursive: true });
+  const W = 2688, H = 1536;
+  const colours = { a: ['#1d4e89', '#f2c14e'], b: ['#7a1f3d', '#9ee493'], c: ['#2b2d42', '#ef8354'] };
+  for (const [id, [ground, ink]] of Object.entries(colours)) {
+    const lines = [];
+    for (let x = 0; x <= W; x += 96) lines.push(`<rect x="${x - 3}" y="0" width="6" height="${H}" fill="${ink}"/>`);
+    for (let y = 0; y <= H; y += 96) lines.push(`<rect x="0" y="${y - 3}" width="${W}" height="6" fill="${ink}"/>`);
+    const marks = [[0.08, 0.1], [0.92, 0.1], [0.08, 0.9], [0.92, 0.9], [0.5, 0.5], [0.3, 0.62], [0.71, 0.37]]
+      .map(([x, y], i) => `<circle cx="${x * W}" cy="${y * H}" r="${60 + i * 9}" fill="none" stroke="#fff" stroke-width="10"/>`);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="${ground}"/>${lines.join('')}${marks.join('')}</svg>`;
+    await sharp(Buffer.from(svg)).png().toFile(join(paths.stills, `${id}.png`));
+  }
+  const H3 = { width: W, height: H }, SEEDANCE = { width: 1920, height: 1080 };
+  const take = async (film, size, model, tone, inputs, graph) => {
+    const video = join(paths.renders, film, 'take-1.mp4');
+    mkdirSync(join(paths.renders, film), { recursive: true });
+    await ffmpeg([...inputs.flatMap(still => ['-loop', '1', '-framerate', '24', '-t', '2.5', '-i', join(paths.stills, `${still}.png`)]),
+      '-f', 'lavfi', '-i', `sine=f=${tone}:sample_rate=48000`, '-filter_complex', graph(`scale=${size.width}:${size.height}:flags=lanczos,setsar=1,format=yuv420p`),
+      '-map', '[v]', '-map', `${inputs.length}:a`, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '14', '-r', '24', '-c:a', 'aac', '-shortest', video]);
+    const sha = sha256File(video);
+    writeJson(join(paths.renders, film, 'take-1.json'), { film, take: 1, status: 'completed', sha256: sha, model, ...(model === MODEL ? {} : { finalizes: 1 }) });
+    recordVerdict(paths, sha, { film, take: 1, verdict: 'approved', by: 'you' });
+  };
+  const loop = (film, size, model, still, tone) => take(film, size, model, tone, [still, still], fit => `[0:v]${fit}[p];[1:v]${fit}[q];[p][q]concat=n=2:v=1:a=0[v]`);
+  // 1.5 s of the first picture, a 1 s fade, 1.5 s of the last (an xfade of two 2.5 s stills).
+  const crossing = (film, size, model, from, to, tone) => take(film, size, model, tone, [from, to], fit => `[0:v]${fit}[p];[1:v]${fit}[q];[p][q]xfade=transition=fade:duration=1:offset=1.5[v]`);
+  await Promise.all([
+    loop('a-loop', H3, MODEL, 'a', 300), loop('b-loop', SEEDANCE, 'seedance-2-5', 'b', 340), loop('c-loop', H3, MODEL, 'c', 380),
+    crossing('a-east', SEEDANCE, 'seedance-2-5', 'a', 'b', 420), crossing('b-south', H3, MODEL, 'b', 'c', 460), crossing('c-west', SEEDANCE, 'seedance-2-5', 'c', 'a', 500),
+  ]);
+  const place = (id, title, loopModel, object) => ({ id, title, still: `stills/${id}.png`, loop: { ...(loopModel ? { model: loopModel } : {}), frames: 120, action: 'x', sound: 'y' }, objects: [object] });
+  const plan = { id: 'native-check', title: 'Native check', canvas: '1344x768', order: 'free', voices: {}, music: null, places: [
+    place('a', 'Place A', null, { id: 'east', label: 'East to B', at: [0.5, 0.45], goes: 'b', film: { model: 'seedance-2-5', frames: 97 } }),
+    place('b', 'Place B', 'seedance-2-5', { id: 'south', label: 'South to C', at: [0.5, 0.45], goes: 'c', film: { frames: 97 } }),
+    place('c', 'Place C', null, { id: 'west', label: 'West to A', at: [0.5, 0.45], goes: 'a', film: { model: 'seedance-2-5', frames: 97 } }),
+  ] };
+  const quiet = { step() {}, ok() {}, warn() {}, info() {}, fail() {}, title() {}, next() {}, dim() {} };
+  const { world, issues, delivery } = await buildWorld({ paths, plan, say: quiet });
+  if (issues.length || delivery.length) throw new Error(`the native world did not build: ${[...issues, ...delivery].join('; ')}`);
+  // The same world as a player without `fill` would show it: the control the check must catch.
+  const strip = value => (Array.isArray(value) ? value.map(strip) : value && typeof value === 'object'
+    ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'fill').map(([key, v]) => [key, strip(v)])) : value);
+  writeFileSync(join(paths.build, 'world-nofill.json'), JSON.stringify(strip(world), null, 2));
+  return world;
+}
+
+/** The picture's layout: the frame, the layer on top in it, and the blurred backdrop behind. */
+const GEOMETRY = `(() => {
+  const box = e => { const b = e.getBoundingClientRect(); return [b.x, b.y, b.width, b.height].map(v => Math.round(v * 100) / 100); };
+  const frame = document.querySelector('.frame');
+  const top = [...frame.querySelectorAll('video.on')].filter(v => getComputedStyle(v).visibility === 'visible').at(-1);
+  const back = document.querySelector('.backdrop video.on');
+  return { frame: box(frame), dpr: devicePixelRatio,
+    layer: top ? { box: box(top), fit: getComputedStyle(top).objectFit, size: [top.videoWidth, top.videoHeight], src: (top.getAttribute('src') || '').split('/').pop() } : null,
+    backdrop: back ? { box: box(back), fit: getComputedStyle(back).objectFit } : null };
+})()`;
+
+/** The picture alone: the player's controls and labels hidden, and every handover timed. */
+const PICTURE_ONLY = `(() => {
+  const style = document.createElement('style');
+  style.textContent = '#app > :not(.backdrop):not(.frame), .frame > .overlay { visibility: hidden !important; }';
+  document.head.append(style);
+  window.__handovers = [];
+  new MutationObserver(records => { for (const r of records) if (r.target.matches('.frame video.film')) window.__handovers.push({ t: Date.now(), on: r.target.classList.contains('on') }); })
+    .observe(document.querySelector('.frame'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+})()`;
+
+/** Mean absolute difference (0–255) of two screenshots inside `rect` (device pixels), or outside it. */
+async function difference(a, b, rect, { outside = false } = {}) {
+  const [pa, pb] = await Promise.all([a, b].map(png => sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true })));
+  const { width, height } = pa.info;
+  let sum = 0, n = 0;
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    const inside = x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h;
+    if (inside === outside) continue;
+    const i = (y * width + x) * 3;
+    sum += Math.abs(pa.data[i] - pb.data[i]) + Math.abs(pa.data[i + 1] - pb.data[i + 1]) + Math.abs(pa.data[i + 2] - pb.data[i + 2]);
+    n += 3;
+  }
+  return n ? sum / n : 0;
+}
+
+/**
+ * Above this, the two sides of a handover are not the same picture. Measured: the right picture
+ * differs by 1.5 to 5.6 (codec noise, and two sources of different sizes resampled to one screen),
+ * a Seedance film misfit by its 1.6% squeeze by 13.6 to 17.7.
+ */
+const SAME_PICTURE = 8;
+
+/** Both sides of each handover: the picture and the backdrop compared, and the layout on each side. */
+async function compare(pairs) {
+  const results = [];
+  for (const [a, b] of pairs) {
+    const { frame, dpr } = a.geometry;
+    const rect = { x: Math.round(frame[0] * dpr) + 2, y: Math.round(frame[1] * dpr) + 2, w: Math.round(frame[2] * dpr) - 4, h: Math.round(frame[3] * dpr) - 4 };
+    const shifted = JSON.stringify(a.geometry.frame) !== JSON.stringify(b.geometry.frame);
+    // No letterbox and no shift: the picture on top fills exactly the frame on both sides.
+    const unfilled = [a, b].filter(side => JSON.stringify(side.geometry.layer?.box) !== JSON.stringify(side.geometry.frame));
+    results.push({ from: a.label, to: b.label, frame: await difference(a.png, b.png, rect), backdrop: await difference(a.png, b.png, rect, { outside: true }),
+      shifted, unfilled: unfilled.map(side => side.label), fits: [a, b].map(side => `${side.geometry.layer?.size.join('×')} ${side.geometry.layer?.fit}`) });
+  }
+  return results;
+}
+
+/**
+ * Walk the native world once at one screen size: every crossing and Back.
+ * Either screenshot the picture on both sides of each handover, or
+ * screencast the whole walk for `node world joins`: never both at once, since
+ * a full-size screenshot on a 3× screen puts cropped frames into the screencast.
+ */
+async function nativeWalk(devtools, url, view, out, { record = false } = {}) {
+  mkdirSync(out, { recursive: true });
+  const page = await openPage(devtools, { viewport: view });
+  const cast = [];
+  const stop = devtools.on(message => {
+    if (message.sessionId !== page.sessionId || message.method !== 'Page.screencastFrame') return;
+    cast.push({ t: message.params.metadata.timestamp, data: message.params.data, metadata: message.params.metadata });
+    void page.send('Page.screencastFrameAck', { sessionId: message.params.sessionId });
+  });
+  try {
+    await begin(page, url);
+    await page.evaluate(PICTURE_ONLY);
+    if (record) await page.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: view.width, maxHeight: view.height, everyNthFrame: 1 });
+    const shot = async label => {
+      if (record) return null;
+      const geometry = await page.evaluate(GEOMETRY);
+      const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
+      const png = Buffer.from(data, 'base64');
+      writeFileSync(join(out, `${String(shots++).padStart(2, '0')} ${label}.png`), png);
+      return { label, geometry, png };
+    };
+    let shots = 0;
+    const filmStart = s => s.film && s.film.t > 0.15 && s.film.t < 1.0;
+    const filmEnd = s => s.film && Number.isFinite(s.film.duration) && s.film.t > s.film.duration - 1.2 && s.film.t < s.film.duration - 0.3;
+    const pairs = [];
+    await sleep(600);
+    let before = await shot('A at rest (H3 loop)');
+    const legs = [['East to B', 'Place B', 'B at rest (Seedance loop)'], ['South to C', 'Place C', 'C at rest (H3 loop)'], ['West to A', 'Place A', 'A at rest (H3 loop)'], ['← Back', 'Place C', 'C at rest (H3 loop)']];
+    for (const [go, place, rest] of legs) {
+      if (go === '← Back') await page.click(go); else await page.spot(go);
+      try { await until(page, filmStart, 30_000, `${go} to start`); }
+      catch (error) { throw new Error(`${error.message}; videos: ${JSON.stringify(await page.evaluate(`[...document.querySelectorAll('video')].map(v => ({ c: v.className, src: (v.getAttribute('src') || '').split('/').pop(), rs: v.readyState, ns: v.networkState, err: v.error?.message ?? v.error?.code ?? null, t: v.currentTime, p: v.paused }))`))}`); }
+      const first = await shot(`${go} first picture`);
+      if (!record) pairs.push([before, first]);
+      await until(page, filmEnd, 30_000, `${go} to reach its last picture`);
+      const last = await shot(`${go} last picture`);
+      await until(page, s => atRest(s) && s.place === place, 30_000, `${place}`);
+      await sleep(500);
+      before = await shot(rest);
+      if (!record) pairs.push([last, before]);
+    }
+    if (!record) return { results: await compare(pairs), errors: [...page.errors] };
+    await page.send('Page.stopScreencast');
+    const handovers = await page.evaluate('window.__handovers');
+    // The walk as a film, for `node world joins` at every handover.
+    const recording = join(out, 'walk.mp4');
+    const list = cast.map((frame, i) => {
+      const file = join(out, 'cast', `${String(i).padStart(5, '0')}.jpg`);
+      mkdirSync(join(out, 'cast'), { recursive: true });
+      writeFileSync(file, Buffer.from(frame.data, 'base64'));
+      return `file '${file}'\nduration ${Math.max(0.001, (cast[i + 1]?.t ?? frame.t + 0.04) - frame.t).toFixed(4)}`;
+    });
+    writeFileSync(join(out, 'cast.txt'), list.join('\n'));
+    writeFileSync(join(out, 'cast.json'), JSON.stringify(cast.map(frame => ({ ...frame.metadata, bytes: frame.data.length })), null, 1));
+    // Chrome sends some frames in device pixels (2532×1170 for a 3× phone) and the rest in CSS pixels: one size for all.
+    await ffmpeg(['-f', 'concat', '-safe', '0', '-i', join(out, 'cast.txt'), '-vf', `scale=${view.width}:${view.height}:flags=lanczos,setsar=1,fps=24`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', recording]);
+    rmSync(join(out, 'cast'), { recursive: true, force: true });
+    const at = handovers.map(h => h.t / 1000 - cast[0].t).filter(t => t > 0);
+    const joins = await joinsReport(recording, { out: join(out, 'joins'), at });
+    const cuts = await findCuts(recording);
+    return { errors: [...page.errors], handovers: at.length, joins, cuts: cuts.map(f => +(f / 24).toFixed(2)), recording };
+  } finally {
+    stop();
+    await page.close();
+  }
+}
+
 /** The player at /, the world at /world/, with byte ranges (video seeks need them). */
 function serve(playerDir, worldDir) {
   const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.mp4': 'video/mp4', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -290,6 +497,41 @@ async function begin(page, url) {
 }
 
 const CHECKS = {
+  /** Native-size Seedance films beside H3 films: the same picture across every handover, on desktop and a phone held sideways. */
+  async native(devtools, url) {
+    const dir = join(root, 'world', 'native');
+    if (!existsSync(join(dir, 'build', 'world.json'))) await makeNativeWorld(dir);
+    const worldAt = file => { const page = new URL(url); page.searchParams.set('world', new URL(`/world/native/build/${file}`, page.origin).href); return page.href; };
+    const views = [{ name: 'desktop', width: 1280, height: 800, scale: 1, mobile: false }, { name: 'phone-sideways', width: 844, height: 390, scale: 3, mobile: true }];
+    const lines = [];
+    let ok = true;
+    for (const view of views) {
+      const shots = await nativeWalk(devtools, worldAt('world.json'), view, join(root, 'native-evidence', view.name));
+      const recorded = await nativeWalk(devtools, worldAt('world.json'), view, join(root, 'native-evidence', `${view.name}-recording`), { record: true });
+      const walk = { ...shots, ...recorded, errors: [...shots.errors, ...recorded.errors] };
+      const worst = Math.max(...walk.results.map(r => r.frame));
+      const bad = walk.results.filter(r => r.frame > SAME_PICTURE || r.backdrop > SAME_PICTURE || r.shifted || r.unfilled.length);
+      // A film not at the world's shape (2688×1536, or its half copy) is a native Seedance film: it must be stretched.
+      const native = walk.results.flatMap(r => r.fits).filter(fit => { const [w, h] = fit.split(' ')[0].split('×').map(Number); return w * 1536 !== h * 2688; });
+      const nativeFill = native.length > 0 && native.every(fit => fit.endsWith('fill'));
+      const passed = !bad.length && !walk.errors.length && !walk.cuts.length && nativeFill;
+      ok &&= passed;
+      lines.push(`${view.name} ${view.width}×${view.height}@${view.scale}x: ${walk.results.length} handovers, picture differs by at most ${worst.toFixed(2)}/255 `
+        + `(backdrop ${Math.max(...walk.results.map(r => r.backdrop)).toFixed(2)}), ${walk.results.filter(r => r.shifted).length} layout shifts, `
+        + `${walk.results.filter(r => r.unfilled.length).length} letterboxed, ${walk.cuts.length} hard cuts in the recording, ${walk.errors.length} console errors`
+        + (bad.length ? `; not the same picture: ${bad.map(r => `${r.from} → ${r.to} (${r.frame.toFixed(1)}, backdrop ${r.backdrop.toFixed(1)}${r.shifted ? ', shifted' : ''}${r.unfilled.length ? ', letterboxed' : ''})`).join('; ')}` : '')
+        + (walk.errors.length ? `; errors: ${walk.errors.slice(0, 3).join(' | ')}` : '') + (walk.cuts.length ? `; cuts at ${walk.cuts.join(', ')} s` : '') + (nativeFill ? '' : '; a 1920×1080 film was not stretched to the frame'));
+      for (const r of walk.results) lines.push(`    ${r.from} → ${r.to}: ${r.frame.toFixed(2)} (backdrop ${r.backdrop.toFixed(2)}) [${r.fits.join(' → ')}]`);
+    }
+    // The control: the same native files without `fill` (drawn like every other film) must show the jump.
+    const control = { ...await nativeWalk(devtools, worldAt('world-nofill.json'), views[0], join(root, 'native-evidence', 'control-without-fill')),
+      ...await nativeWalk(devtools, worldAt('world-nofill.json'), views[0], join(root, 'native-evidence', 'control-without-fill-recording'), { record: true }) };
+    const caught = control.results.filter(r => r.frame > SAME_PICTURE).length;
+    if (!caught) ok = false;
+    lines.push(`control without fill: ${caught} of ${control.results.length} handovers jump (worst ${Math.max(...control.results.map(r => r.frame)).toFixed(2)}/255), ${control.cuts.length} hard cuts in its recording${caught ? '' : ' — the check cannot see a jump'}`);
+    return { ok, detail: lines.join('\n  ') };
+  },
+
   /** The creator may cancel bulk approval; confirming approves only the build's selected take. */
   async 'review-build'(devtools) {
     const paths = pathsAt(join(root, 'review-world'));

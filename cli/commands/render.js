@@ -85,7 +85,8 @@ export function filmsToRender(plan, paths, { only = [], canary = false } = {}) {
  * What a film is rendered with: its model, the size it is rendered at and the
  * size it arrives at. MiniMax H3 (the default) renders the canvas and delivers
  * twice it; Seedance renders its own shape nearest the canvas (`draft` is its
- * 480p size, what a take is rendered at first), and build sizes it onto the canvas.
+ * 480p size, what a take is rendered at first); it ships at that size and the
+ * player fits it to the world's frame.
  */
 export function filmRender(film, canvas) {
   if (!isSeedance(film.model)) return { model: MODEL, width: canvas.width, height: canvas.height, output: delivered(canvas) };

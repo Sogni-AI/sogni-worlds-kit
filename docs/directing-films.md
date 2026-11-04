@@ -548,8 +548,10 @@ stills as any other, and it makes its own dialogue and sound.
   It takes no keyframes. The world's canvas must be within 2% of a shape Seedance
   renders (16:9, 4:3, 1:1, 3:4, 9:16), so a 3:2 or 2:3 world can't use it. The kit
   resizes each still to that shape (for a 16:9 world, a squeeze of 1.6%, never a
-  crop) and build sizes the film back onto the canvas: on the kit's own test take the
-  film's first and last frames lined up with their stills to within 0.03%.
+  crop). The film ships at its own 1080p size, never enlarged, and the player
+  stretches it back onto the world's frame, so it lines up with the stills: on the
+  kit's own test take the film's first and last frames lined up with their stills to
+  within 0.03%.
 - **Stills plus references.** One request can't both pin frames and take
   references: BytePlus refuses a pinned first or last frame beside any reference
   image, video or audio, which is why the kit's Seedance films carry none. A film

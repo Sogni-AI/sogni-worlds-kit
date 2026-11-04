@@ -91,9 +91,10 @@ and the films start and end on video frames.
 
 | Field | Required | Meaning |
 | --- | --- | --- |
-| `src` | yes | The full-size film (the 2K-class two-stage delivery), H.264 MP4: CRF 23 capped at 12 Mbps for 2K (8 Mbps up to 1080 px, 4.5 Mbps up to 768 px, buffer twice the cap), a keyframe every 2 s, fast start. |
+| `src` | yes | The full-size film (the 2K-class two-stage delivery, or a Seedance film's own 1080p), H.264 MP4: CRF 23 capped at 12 Mbps for 2K (8 Mbps up to 1080 px, 4.5 Mbps up to 768 px, buffer twice the cap), a keyframe every 2 s, fast start. |
 | `src720` | | An exact half-size copy for phones and slow connections (the player's 720p setting), under its own size's cap. |
 | `seconds` | | Its length. Informational. |
+| `fill` | | `true` when the film is at its own size and shape, not the world's: a Seedance film ships at its 1080p size (never enlarged), within 2% of the world's shape. The player stretches it onto the world's frame, undoing the squeeze its stills were rendered with, so it lines up with the stills. Left out, the film is at the world's shape. |
 
 A crossing's first frame is its place's still and its last frame is the landing
 place's still. The player cuts straight from the film's last frame to the landing

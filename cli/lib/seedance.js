@@ -26,8 +26,9 @@ export const SEEDANCE_LOOP_FRAMES = 121;
  * The 1080p shapes Seedance 2.5 renders. A world's canvas can use Seedance
  * when its shape is within ASPECT_TOLERANCE of one of them: each still is
  * resized to that shape (a squeeze of at most 2%, too small to see) before it
- * is sent, and `build` sizes the film back onto the world's canvas, so the film
- * and the stills line up exactly. A 3:2 or 2:3 world is 11% away from any of
+ * is sent. The film ships at that size, never enlarged, and the player stretches
+ * it back onto the world's frame (world.json `fill`), so the film and the stills
+ * line up exactly. A 3:2 or 2:3 world is 11% away from any of
  * them: a squeeze that size changes how people look, so it is refused.
  *
  * `draft` is the 480p size of the same shape, from Sogni's own size list for

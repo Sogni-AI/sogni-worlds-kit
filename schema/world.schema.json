@@ -68,7 +68,8 @@
       "properties": {
         "src": { "type": "string", "description": "The full-size film (2K class): H.264 MP4, CRF 23 capped by size (12 Mbps at 2K), a keyframe every 2 s, fast start." },
         "src720": { "type": "string", "description": "An exact half-size copy for phones and slow connections, under its own size's cap." },
-        "seconds": { "type": "number" }
+        "seconds": { "type": "number" },
+        "fill": { "const": true, "description": "The film is at its own size and shape (a Seedance film at 1080p), not the world's: the player stretches it onto the world's frame, undoing the squeeze its stills were rendered with, so it lines up with the stills. Left out, the film is at the world's shape." }
       }
     },
     "place": {

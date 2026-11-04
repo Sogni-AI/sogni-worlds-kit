@@ -635,7 +635,7 @@ export async function screenTake({ video, journal, fromStill, toStill, sheetPath
   if (expected && (info.width !== expected.width || info.height !== expected.height)) {
     flags.push({ code: 'size', severity: 'error', message: `The film is ${info.width}×${info.height}; a two-stage render of a ${journal.width}×${journal.height} canvas arrives as ${expected.width}×${expected.height}` });
   }
-  // A Seedance film is sized onto the canvas by build, so only its shape has to be the one asked for.
+  // A Seedance film is fitted to the world's frame by the player, so only its shape has to be the one asked for.
   if (seedance && journal.width && journal.height && Math.abs(Math.log((info.width / info.height) / (journal.width / journal.height))) > 0.01) {
     flags.push({ code: 'size', severity: 'error', message: `The film is ${info.width}×${info.height}, another shape than the ${journal.width}×${journal.height} it was asked for: build would stretch it` });
   }

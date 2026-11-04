@@ -24,6 +24,14 @@ button { font: inherit; color: inherit; }
   filter: blur(30px) brightness(0.5) saturate(1.1);
 }
 .backdrop video { visibility: hidden; }
+/* Behind a film at its own shape (.layer.fill below): the same picture the still's cover draws, the
+   world's shape covering the screen. Only while such a film is behind the frame. */
+.backdrop.fill { container-type: size; }
+.backdrop.fill video {
+  inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); object-fit: fill; height: auto; aspect-ratio: var(--ratio);
+  width: max(112vw, calc(112dvh * var(--ratio)));
+  width: max(112cqw, calc(112cqh * var(--ratio)));
+}
 .backdrop video.on { visibility: visible; }
 
 .frame {
@@ -34,6 +42,9 @@ button { font: inherit; color: inherit; }
   background: #000;
 }
 .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* A film at its own shape (a Seedance film at 1080p, within 2% of the world's): stretched onto the
+   frame, which undoes the squeeze its stills were rendered with, so it lines up with them exactly. */
+.layer.fill { object-fit: fill; }
 /* Layers switch instantly: a place and the film that leaves or reaches it share the same frame. */
 .loop, .film { visibility: hidden; }
 .loop.on, .film.on { visibility: visible; }

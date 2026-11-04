@@ -162,7 +162,10 @@ normalises a file you own.
 `build` takes the newest approved take of every film and:
 
 - levels its sound to the world's one scene level (−22 LUFS, six under the narrator)
-- sizes a Seedance film onto the canvas, and puts a crossing's push-in in front of it
+- keeps every film at the size it was rendered (a Seedance film stays 1080p, never
+  enlarged; world.json marks it `fill` and the player stretches it onto the world's
+  frame, undoing the squeeze its stills were sent with), and puts a crossing's
+  push-in in front of it
 - encodes a 2K file and an exact half-size copy for phones through Sogni's
   streaming profile: H.264, CRF 23 with the bitrate capped by size (12 Mbps at
   2K, 4.5 Mbps for the half-size copy of a 3:2 world), a keyframe every 2 s, fast start

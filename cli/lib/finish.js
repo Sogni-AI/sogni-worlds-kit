@@ -42,27 +42,25 @@ export async function loudnormFilter(input, { lufs, truePeak = FILM_TRUE_PEAK, l
 }
 
 /**
- * Encode an approved take for the web: full size and exactly half size, its
- * sound at `lufs`. `size` sizes a film rendered at another size (Seedance's
- * own shape) onto the world's canvas, so it lines up with the stills exactly.
- * `pushIn` ({ still, at, zoom, frames }) puts a crossing's push-in in front of
- * the film: from the whole still onto the crop the film was rendered from, its
- * sound starting with the film.
+ * Encode an approved take for the web at its own size (a render is never
+ * enlarged) and at exactly half size, its sound at `lufs`. A film rendered at
+ * another shape than the world (Seedance's own 1080p shape) is fitted to the
+ * world's frame by the player (world.json `fill`). `pushIn` ({ still, at,
+ * zoom, frames }) puts a crossing's push-in in front of the film: from the
+ * whole still onto the crop the film was rendered from, drawn at the film's
+ * size, its sound starting with the film.
  */
-export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = null, pushIn = null } = {}) {
+export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, pushIn = null } = {}) {
   const info = await probe(input);
   mkdirSync(dirname(out), { recursive: true });
   const level = info.audioChannels ? await loudnormFilter(input, { lufs }) : null;
-  const target = size ?? { width: info.width, height: info.height };
-  const resize = target.width !== info.width || target.height !== info.height;
+  const target = { width: info.width, height: info.height };
   const audio = info.audioChannels ? [...(level ? ['-af', level] : []), ...AUDIO] : ['-an'];
   // The lossless master: the picture exactly as it is served, the sound finished. Both sizes are encoded from it.
   const master = join(dirname(out), `.master-${basename(out)}`);
   try {
-    if (!resize && !pushIn) {
+    if (!pushIn) {
       await ffmpeg(['-i', input, ...LOSSLESS, ...audio, master]);
-    } else if (!pushIn) {
-      await ffmpeg(['-i', input, '-vf', `scale=${target.width}:${target.height}:flags=lanczos,setsar=1`, ...LOSSLESS, ...audio, master]);
     } else {
       const fit = `scale=${target.width}:${target.height}:flags=lanczos`;
       const work = join(dirname(out), `.pushin-${basename(out, '.mp4')}`);
@@ -87,7 +85,7 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, size = 
   } finally {
     rmSync(master, { force: true });
   }
-  if (!resize && !pushIn) return { width: info.width, height: info.height, seconds: +info.seconds.toFixed(3), frames: info.frames };
+  if (!pushIn) return { width: info.width, height: info.height, seconds: +info.seconds.toFixed(3), frames: info.frames };
   const done = await probe(out);
   return { width: done.width, height: done.height, seconds: +done.seconds.toFixed(3), frames: done.frames };
 }

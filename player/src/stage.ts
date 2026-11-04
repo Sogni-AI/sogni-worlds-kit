@@ -96,7 +96,7 @@ export class Stage {
     this.handovers++;
     this.setStill(place);
     this.hideFilm();
-    if (place.loop) await this.deck.start(localOrRemote(pick(place.loop, this.quality)));
+    if (place.loop) await this.deck.start(localOrRemote(pick(place.loop, this.quality)), Boolean(place.loop.fill));
     else {
       this.deck.stop();
       this.follow(null);
@@ -111,10 +111,11 @@ export class Stage {
   async play(film: Film, landing: Place) {
     // Get the landing ready while the film plays (in the quality it ends in).
     const landingLoop = () => (landing.loop ? localOrRemote(pick(landing.loop, this.quality)) : null);
-    await this.roll(film, () => { if (landingLoop()) this.deck.load(landingLoop()!); });
+    const fill = Boolean(landing.loop?.fill);
+    await this.roll(film, () => { if (landingLoop()) this.deck.load(landingLoop()!, fill); });
     this.setStill(landing);
     const loopSrc = landingLoop();
-    this.handOver(loopSrc ? await this.deck.start(loopSrc) : false);
+    this.handOver(loopSrc ? await this.deck.start(loopSrc, fill) : false);
   }
 
   /**
@@ -164,6 +165,7 @@ export class Stage {
     this.filmIndex = 1 - this.filmIndex;
     const video = this.film;
     this.playing = film;
+    video.classList.toggle('fill', Boolean(film.fill));
     setSource(video, localOrRemote(pick(film, this.quality)));
     video.currentTime = 0;
     this.applyVolume();
@@ -336,6 +338,7 @@ export class Stage {
     const src = video.getAttribute('src') || video.currentSrc || '';
     // Loops repeat in the backdrop on their own; films play once.
     this.backdropVideo.loop = video !== this.film;
+    this.backdropVideo.parentElement?.classList.toggle('fill', video.classList.contains('fill'));
     setSource(this.backdropVideo, src);
     this.backdropVideo.currentTime = video.currentTime;
     void this.backdropVideo.play().then(() => this.backdropVideo.classList.add('on'), () => undefined);

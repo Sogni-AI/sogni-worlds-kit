@@ -15,10 +15,11 @@ function extra(object, allowed, where, issues) {
 function film(value, where, issues, { nullable = false } = {}) {
   if (value === null && nullable) return;
   if (!isObject(value)) { issues.push(`${where}: must be an object with "src"`); return; }
-  extra(value, ['src', 'src720', 'seconds'], where, issues);
+  extra(value, ['src', 'src720', 'seconds', 'fill'], where, issues);
   if (!isString(value.src)) issues.push(`${where}.src: required`);
   if (value.src720 !== undefined && !isString(value.src720)) issues.push(`${where}.src720: must be a path`);
   if (value.seconds !== undefined && !(typeof value.seconds === 'number' && value.seconds > 0)) issues.push(`${where}.seconds: must be a positive number`);
+  if (value.fill !== undefined && value.fill !== true) issues.push(`${where}.fill: true, or left out`);
 }
 
 /**

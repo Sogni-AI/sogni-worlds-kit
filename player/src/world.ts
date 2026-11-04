@@ -1,7 +1,8 @@
 // world.json: the finished world (format reference: docs/world-json.md).
 // Media paths are relative to the world.json file, or absolute URLs.
 
-export type Film = { src: string; src720?: string; seconds?: number };
+/** `fill`: the film is at its own shape (a Seedance film at 1080p), stretched onto the world's frame to line up with the stills. */
+export type Film = { src: string; src720?: string; seconds?: number; fill?: boolean };
 export type Outline = { width: number; height: number; path: string };
 export type Hotspot = {
   id: string;

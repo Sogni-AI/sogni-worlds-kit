@@ -79,6 +79,8 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
 
   const films = new Map();
   const missing = [];
+  // The world's shape: what its stills are, and what the player's frame is.
+  const shape = plan.canvas ? delivered(canvasByName(String(plan.canvas))) : null;
   const unapproved = [];
   for (const film of filmsOf(plan)) {
     const takes = listTakes(paths, film.id, verdicts, notes, film);
@@ -94,7 +96,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (sha256File(take.files.video) !== take.sha) throw new Error(`${film.id} take ${take.take} no longer matches the file that was rendered (SHA-256 changed)`);
     const base = join(out, 'films', film.id);
     const main = `${base}.mp4`, half = `${base}-720.mp4`;
-    // A Seedance take is sized onto the canvas; a take rendered from a push-in's crop gets its push-in in front.
+    // A take rendered from a push-in's crop gets its push-in in front.
     const { finishing, source } = finishingOf(paths, plan, film, take);
     let info = manifest[`films/${film.id}.mp4`]?.info;
     if (!fresh(`films/${film.id}.mp4`, source, [main, half]) || !info) {
@@ -108,7 +110,12 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       manifest[`films/${film.id}.mp4`].lufs = FILM_LUFS;
       writeJson(manifestPath, manifest);
     }
-    const entry = { film, take, info, src: rel(out, main), src720: rel(out, half), rewind: null };
+    // Shipped at its own size, never enlarged: a film at another shape than the world (Seedance's
+    // own 1080p) is fitted to the world's frame by the player, so it lines up with the stills.
+    const fill = Boolean(shape) && info.width * shape.height !== info.height * shape.width;
+    // A Seedance film's size (no longer enlarged to the canvas): a film back reversed from it is made again at that size.
+    const sized = isSeedance(take.journal.model) ? `+${info.width}x${info.height}` : '';
+    const entry = { film, take, info, src: rel(out, main), src720: rel(out, half), rewind: null, sized, ...(fill ? { fill } : {}) };
     if (film.kind === 'crossing') {
       const back = `${base}-rewind.mp4`, back720 = `${base}-rewind-720.mp4`;
       if (!fresh(`films/${film.id}-rewind.mp4`, source, [back, back720])) {
@@ -121,7 +128,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
         manifest[`films/${film.id}-rewind.mp4`].lufs = FILM_LUFS;
         writeJson(manifestPath, manifest);
       }
-      entry.rewind = { src: rel(out, back), src720: rel(out, back720), seconds: info.seconds };
+      entry.rewind = { src: rel(out, back), src720: rel(out, back720), seconds: info.seconds, ...(fill ? { fill } : {}) };
     }
     films.set(film.id, entry);
   }
@@ -180,14 +187,14 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       const loop = films.get(loopId(place.id));
       const base = join(out, 'films', backId(place.id, object.id));
       const [main, half] = [`${base}.mp4`, `${base}-720.mp4`];
-      const source = `${entry.take.sha}+${loop?.take.sha ?? 'own'}`;
+      const source = `${entry.take.sha}+${loop?.take.sha ?? 'own'}${entry.sized}`;
       if (!fresh(`films/${backId(place.id, object.id)}.mp4`, source, [main, half]) || manifest[`films/${backId(place.id, object.id)}.mp4`]?.lufs !== FILM_LUFS) {
         say.step(`Reversing ${key} to put it back`);
         await rewindFilm(join(out, entry.src), main, half, { sound: loop ? join(out, loop.src) : 'forward' });
         manifest[`films/${backId(place.id, object.id)}.mp4`] = { source, recipe: RECIPE, lufs: FILM_LUFS };
         writeJson(manifestPath, manifest);
       }
-      back = { src: rel(out, main), src720: rel(out, half), info: entry.info };
+      back = { src: rel(out, main), src720: rel(out, half), info: entry.info, ...(entry.fill ? { fill: true } : {}) };
     }
     const source = worldFile(paths, reveal.still, `places.${place.id}.objects.${object.id}.reveal.still`);
     if (!existsSync(source)) throw new Error(`${key}: the reveal still ${reveal.still} is missing. Run: node world reveals`);
@@ -211,7 +218,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       spoken = { lines: [{ text: String(reveal.line) }] };
       missing.push({ film: `the reveal line of ${key}`, kind: 'narration', state: 'unrendered' });
     }
-    reveals[key] = clean({ still: rel(out, target), narration: spoken, done: reveal.done || undefined, back: { src: back.src, src720: back.src720, seconds: back.info.seconds } });
+    reveals[key] = clean({ still: rel(out, target), narration: spoken, done: reveal.done || undefined, back: { src: back.src, src720: back.src720, seconds: back.info.seconds, ...(back.fill ? { fill: true } : {}) } });
   }
 
   // A place's own track (a file the person has the rights to) in place of the world's while they are there.
@@ -253,9 +260,8 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
 
   // The world.
   const linear = (plan.order ?? 'linear') === 'linear';
-  const canvas = plan.canvas ? delivered(canvasByName(String(plan.canvas))) : null;
   const firstFilm = [...films.values()][0]?.info;
-  const aspect = canvas ?? (firstFilm ? { width: firstFilm.width, height: firstFilm.height } : { width: stillSize.width, height: stillSize.height });
+  const aspect = shape ?? (firstFilm ? { width: firstFilm.width, height: firstFilm.height } : { width: stillSize.width, height: stillSize.height });
   // Figures: the mesh and a small icon of each collectible that has one (node world figures).
   const figures = {};
   for (const place of plan.places) for (const object of place.objects) {
@@ -291,7 +297,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
         collect: object.collect && !object.goes ? true : undefined,
         figure: figures[filmId(place.id, object.id)],
         details: object.details ? clean({ title: object.details.title, text: object.details.text, facts: object.details.facts }) : undefined,
-        film: { src: entry.src, src720: entry.src720, seconds: entry.info.seconds },
+        film: { src: entry.src, src720: entry.src720, seconds: entry.info.seconds, ...(entry.fill ? { fill: true } : {}) },
         reveal: reveals[filmId(place.id, object.id)],
         rewind: object.goes ? entry.rewind : undefined,
       }));
@@ -302,7 +308,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       chapter: place.chapter || undefined,
       caption: place.caption || undefined,
       still: stills[place.id],
-      loop: loop ? { src: loop.src, src720: loop.src720, seconds: loop.info.seconds } : null,
+      loop: loop ? { src: loop.src, src720: loop.src720, seconds: loop.info.seconds, ...(loop.fill ? { fill: true } : {}) } : null,
       narration: narration[place.id] ?? null,
       ending: place.ending ? clean({ kind: place.ending.kind, title: place.ending.title, text: place.ending.text || undefined }) : undefined,
       music: placeMusic[place.id],
@@ -381,17 +387,16 @@ function report({ world, issues, delivery = [], missing, deadEnds, unreachable, 
 
 /**
  * How a take is finished beyond the usual encode, and the manifest's key for
- * it: the take's hash alone for an H3 take as rendered (so worlds built before
- * stay as they are), with what was added for the rest. The push-in is the one
+ * it: the take's hash alone for a take as rendered, at its own size (so worlds
+ * built before stay as they are), with the push-in added for the rest. The push-in is the one
  * the take was rendered from (its receipt), never the plan's, which may have
  * changed since.
  */
 export function finishingOf(paths, plan, film, take) {
   const finishing = {};
-  if (isSeedance(take.journal.model) && plan.canvas) finishing.size = delivered(canvasByName(String(plan.canvas)));
   const pushIn = film.kind === 'crossing' ? take.journal.pushIn : null;
   if (pushIn) finishing.pushIn = { ...pushIn, still: worldFile(paths, film.first, `places.${film.from}.still`) };
-  const extra = [finishing.size ? `fit ${finishing.size.width}x${finishing.size.height}` : null, pushIn ? `push-in ${JSON.stringify(pushIn)}` : null].filter(Boolean);
+  const extra = pushIn ? [`push-in ${JSON.stringify(pushIn)}`] : [];
   return { finishing, source: extra.length ? `${take.sha}+${extra.join('+')}` : take.sha };
 }
 

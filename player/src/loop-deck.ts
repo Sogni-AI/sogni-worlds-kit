@@ -46,10 +46,11 @@ export class LoopDeck {
     return this.running ? this.videos[this.current] : null;
   }
 
-  /** Point both elements at a loop, paused on its first frame, hidden. */
-  load(src: string) {
+  /** Point both elements at a loop, paused on its first frame, hidden. `fill`: see Film. */
+  load(src: string, fill = false) {
     this.src = src;
     for (const video of this.videos) {
+      video.classList.toggle('fill', fill);
       setSource(video, src);
       if (!this.running) video.currentTime = 0;
     }
@@ -59,9 +60,9 @@ export class LoopDeck {
    * Start from the first frame; resolves once that frame is on screen (true),
    * or after a lap's wait on a slow link (false: shown, with no frame yet).
    */
-  async start(src: string): Promise<boolean> {
+  async start(src: string, fill = false): Promise<boolean> {
     this.stop();
-    this.load(src);
+    this.load(src, fill);
     this.running = true;
     const video = this.videos[this.current];
     video.currentTime = 0;
