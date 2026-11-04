@@ -1,11 +1,21 @@
 // Shared test helpers: throwaway world folders and tiny synthetic films.
-import { mkdtempSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { worldPaths } from '../cli/lib/paths.js';
 import { ffmpeg } from '../cli/lib/media.js';
 
-export const tempDir = prefix => mkdtempSync(join(process.env.SOGNI_WORLD_TEST_TMP || tmpdir(), `sogni-world-${prefix}-`));
+// Throwaway folders are removed when the test file's process exits. They were never deleted: the delivery tests alone
+// left 60 folders (2.4 GiB of films) in the system temp folder in a day, which helped fill a 3.6 TB disk on 2026-11-04.
+const tempDirs = [];
+process.on('exit', () => {
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
+export const tempDir = prefix => {
+  const dir = mkdtempSync(join(process.env.SOGNI_WORLD_TEST_TMP || tmpdir(), `sogni-world-${prefix}-`));
+  tempDirs.push(dir);
+  return dir;
+};
 
 /** The same layout as worlds/<id>/, rooted anywhere. */
 export function pathsAt(dir, id = 'test') {
