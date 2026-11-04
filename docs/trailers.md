@@ -47,6 +47,11 @@ ffmpeg, and the mistakes that cost real trailers a retake. Build the world first
   `references/models.md` › When a cloned line sounds flat has the commands and the
   prompt. The rules for cloning a voice apply (AGENTS.md, ground rule 8). Check
   every word with speech-to-text and judge the voice by ear.
+- Prove an added music cue in the finished file. A sting can meter loud and still be
+  silent: one cut from a soundtrack was 98% 34 Hz rumble, which laptop and phone
+  speakers can't play, so turning it up changed nothing anyone could hear. Compare the
+  level above 200 Hz with the same moment without the cue, and check what the source
+  really is before touching its level.
 - Level the finished trailer for the web, about −14 LUFS, true peak under −1 dB.
 
 ## Picture
