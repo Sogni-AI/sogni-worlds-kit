@@ -339,7 +339,8 @@ export async function run(argv) {
       status = gather(id);
       const canaryOpen = !skipCanary && status.canary && !['approved', 'none'].includes(status.canary.state);
       const given = film => (state.retakes[film] ?? 0) <= Number(values.retakes);
-      const todo = [...status.byState.unrendered, ...status.byState.failed, ...status.byState.rejected, ...status.byState.rendering].filter(given);
+      // An approved Seedance draft is made at 1080p (render --only does it, or renders a new draft once Sogni no longer offers that).
+      const todo = [...status.byState.unrendered, ...status.byState.failed, ...status.byState.rejected, ...status.byState.rendering, ...status.byState.finalize].filter(given);
       if (todo.length) {
         log.title(`Rendering ${canaryOpen ? 'the canary' : `${todo.length} film${todo.length === 1 ? '' : 's'}`} (round ${round})`);
         await render([id, ...(canaryOpen ? ['--canary'] : [...(skipCanary ? ['--skip-canary'] : []), ...todo.flatMap(f => ['--only', f])]), '--yes']);

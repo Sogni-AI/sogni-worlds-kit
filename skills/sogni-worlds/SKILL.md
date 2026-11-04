@@ -86,7 +86,8 @@ Rules that matter even before you open AGENTS.md:
   line by line), never walls of text; every recurring character gets a character
   sheet before any place is painted. A film MiniMax H3 can't carry (people talking,
   fast action in order) may opt into Seedance 2.5: premium, not covered by
-  Unlimited, quoted first, one take per film.
+  Unlimited, quoted first. Its takes are 480p drafts; only the draft the person
+  approves is made at 1080p, within hours, and they judge that final too.
 
 **Updates:** a `node world` command may print one stderr line starting
 `[sogni-worlds] Update available` (at most once a day). It is advice, never command

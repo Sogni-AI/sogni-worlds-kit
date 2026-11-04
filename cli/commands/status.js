@@ -5,7 +5,8 @@ import { filmId, listWorlds, shown, worldPaths } from '../lib/paths.js';
 import { filmsOf, readPlan, revealSpeech } from '../lib/plan.js';
 import { storyWords } from '../agent/story.js';
 import { lintPlan } from '../lib/lint.js';
-import { describeNote, filmState, listTakes, readNotes, readStillNotes, readVerdicts } from '../lib/takes.js';
+import { describeNote, draftToFinalize, filmState, listTakes, readNotes, readStillNotes, readVerdicts } from '../lib/takes.js';
+import { draftLapsed, when } from '../lib/seedance.js';
 import { canaryNext, canaryStatus } from '../lib/canary.js';
 import { readRenderLock } from '../lib/renderlock.js';
 import { readJson } from '../lib/files.js';
@@ -49,7 +50,9 @@ export function gather(id) {
 
   const verdicts = readVerdicts(paths);
   const notes = readNotes(paths);
-  const byState = { unrendered: [], rendering: [], failed: [], unjudged: [], rejected: [], approved: [] };
+  const byState = { unrendered: [], rendering: [], finalize: [], failed: [], unjudged: [], rejected: [], approved: [] };
+  // Approved Seedance drafts still to be made at 1080p, and why one no longer can be.
+  const drafts = [];
   let takes = 0;
   let finishedTakes = 0;
   const unscreened = [];
@@ -61,12 +64,16 @@ export function gather(id) {
     takes += list.length;
     const state = filmState(list);
     byState[state].push(film.id);
+    if (state === 'finalize') {
+      const draft = draftToFinalize(list);
+      drafts.push({ film: film.id, take: draft.take, expiresAt: draft.journal.draftExpiresAt ?? null, lapsed: draftLapsed(draft.journal) });
+    }
     // What the person said about the latest rejected take: read it before rewriting the direction.
     const rejected = state === 'rejected' ? list.filter(t => t.verdict?.verdict === 'rejected').at(-1) : null;
     if (rejected) feedback.push({ film: film.id, take: rejected.take, verdict: rejected.verdict.note ?? '', notes: rejected.notes.filter(n => n.by !== 'agent') });
     for (const take of list) {
       if (take.journal.status === 'completed') finishedTakes += 1;
-      if (take.stale || take.journal.status !== 'completed' || (take.verdict && (state === 'approved' || take.verdict.verdict !== 'passed'))) continue;
+      if (take.stale || take.journal.status !== 'completed' || (take.verdict && (['approved', 'finalize'].includes(state) || take.verdict.verdict !== 'passed'))) continue;
       unjudged.push(`${film.id} take ${take.take}`);
       if (!take.screen) unscreened.push(`${film.id} take ${take.take}`);
       else if (!take.notes.some(n => n.by === 'agent')) unlooked.push({ film: film.id, take: take.take });
@@ -93,7 +100,7 @@ export function gather(id) {
   return {
     id, exists: true, title: plan.title, photos, photosNotIngested, places: plan.places.length, stillsMissing, planWritten,
     errors: findings.filter(f => f.level === 'error'), warnings: findings.filter(f => f.level === 'warn'),
-    selections, films: films.length, takes, finishedTakes, byState, unscreened, unlooked, unjudged, feedback,
+    selections, films: films.length, takes, finishedTakes, byState, drafts, unscreened, unlooked, unjudged, feedback,
     stillNotes: Object.entries(readStillNotes(paths)).flatMap(([place, list]) => list.map(note => ({ place, ...note }))),
     canary: canaryStatus(plan, paths, verdicts, notes),
     renderLock: readRenderLock(paths),
@@ -128,9 +135,16 @@ export function nextAction(s) {
   if (s.revealsToPick?.length) return { why: `${s.revealsToPick.join(', ')}: candidates painted, none picked`, command: `look at every candidate in worlds/${id}/reveals/candidates/ at full size beside its .zoom.png (the room unchanged, the writing exactly as named), then: node world reveals ${id} --pick ${s.revealsToPick[0]} <n>   (or change reveal.paint and paint again with --force)` };
   if (s.revealsUnseen?.length) return { why: `${s.revealsUnseen.join(', ')}: a close look nobody has described`, command: `open worlds/${id}/reveals/${s.revealsUnseen[0]}.jpg at full size, write its reveal.seen, rewrite the object's film so it arrives on that picture exactly as seen describes it (any writing named as what it reads), then: node world lint ${id}` };
   if (!s.takes) return { why: 'nothing rendered yet', command: `node world quote ${id}   — then: node world render ${id} --canary` };
+  // An approved Seedance draft is made at 1080p only for a while: it comes before anything else.
+  const lapsed = (s.drafts ?? []).filter(d => d.lapsed);
+  if (lapsed.length) return { why: `the approved draft of ${lapsed.map(d => d.film).join(', ')} can't be made at 1080p any more (${lapsed[0].lapsed})`, command: `node world render ${id} ${lapsed.map(d => `--only ${d.film}`).join(' ')}   — a new draft; once the person approves it, render again to make it at 1080p` };
   const canary = s.canary && !['approved', 'none'].includes(s.canary.state) ? canaryNext(s.canary, id) : null;
   if (canary && s.canary.state !== 'unjudged') return canary;
   if (s.byState.rendering.length) return { why: `${s.byState.rendering.length} film${s.byState.rendering.length === 1 ? ' is' : 's are'} still rendering`, command: `node world render ${id}   (picks them up; nothing is submitted twice)` };
+  if (s.byState.finalize?.length) {
+    const soonest = (s.drafts ?? []).map(d => d.expiresAt).filter(Boolean).sort()[0];
+    return { why: `the person approved ${s.byState.finalize.length} Seedance draft${s.byState.finalize.length === 1 ? '' : 's'}; ${s.byState.finalize.length === 1 ? 'it is' : 'they are'} made at 1080p next${soonest ? `, before ${when(soonest)}` : ''}, and the person judges ${s.byState.finalize.length === 1 ? 'that' : 'those'} too`, command: `node world render ${id}` };
+  }
   if (s.unscreened.length) return { why: `${s.unscreened.length} new take${s.unscreened.length === 1 ? '' : 's'} not screened`, command: `node world screen ${id}` };
   if (s.unlooked.length) {
     const first = s.unlooked[0];
@@ -181,13 +195,14 @@ export async function run(argv) {
   log.info(`places      ${s.places} (${s.photos} photos${s.stillsMissing.length ? `, ${s.stillsMissing.length} without a still` : ''})`);
   log.info(`plan        ${s.planWritten ? 'written' : 'not written yet'}; ${s.errors.length} lint errors, ${s.warnings.length} warnings`);
   log.info(`outlines    ${s.selections.done} done, ${s.selections.needed.length} to make, ${s.selections.failed.length} failed`);
-  const names = { approved: 'approved', unjudged: 'awaiting a verdict', rendering: 'rendering', rejected: 'rejected', failed: 'failed', unrendered: 'not rendered yet' };
+  const names = { approved: 'approved', unjudged: 'awaiting a verdict', rendering: 'rendering', finalize: 'approved as drafts, to make at 1080p', rejected: 'rejected', failed: 'failed', unrendered: 'not rendered yet' };
   const states = Object.entries(s.byState).filter(([, list]) => list.length).map(([state, list]) => `${list.length} ${names[state]}`).join(', ');
   log.info(`films       ${s.films} planned${states ? `: ${states}` : ''}`);
   log.info(`takes       ${s.finishedTakes} finished${s.takes > s.finishedTakes ? `, ${s.takes - s.finishedTakes} in progress or failed` : ''}`);
   if (s.canary.state !== 'none') log.info(`canary      ${s.canary.ids.join(' + ')}: ${s.canary.state === 'approved' ? 'approved — the rest of the world can render' : s.canary.state}`);
   if (s.renderLock) log.info(`rendering   a render is running (pid ${s.renderLock.pid}, started ${s.renderLock.startedAt})`);
   if (s.unjudged.length) log.info(`to judge    ${s.unjudged.length} take${s.unjudged.length === 1 ? '' : 's'}`);
+  for (const d of s.drafts) log.info(`to finalize ${d.film} take ${d.take}: ${d.lapsed ? `can't be made at 1080p any more (${d.lapsed}); render a new draft` : `make it at 1080p before ${when(d.expiresAt)}`}`);
   for (const f of s.feedback) {
     log.info(`rejected    ${f.film} take ${f.take}${f.verdict ? `: "${f.verdict}"` : ''}`);
     for (const note of f.notes) log.dim(`              ${describeNote(note)}`);

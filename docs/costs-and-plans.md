@@ -29,11 +29,15 @@ prices them at today's rates; as of 2026-11).
 **Seedance 2.5**, the premium model a film can opt into for dialogue and fast
 action (directing-films.md › Seedance 2.5), costs about **148 Spark per second**
 (about $0.74; Seedance 2.5 Uncensored about 171, $0.85) at 1080p: a 5-second film is
-739 Spark, about $3.70 (as of 2026-10; an Unlimited Pro account was charged about
-10% less on the kit's own test take). **No Unlimited plan covers it**: those films
-are paid from the token balance even when the plan pays for everything else, and
-`node world quote` lists them on their own line. One take per film, and a retake
-only after its cause is fixed.
+739 Spark, about $3.70. Every take is first a **480p draft** at about 27 Spark a
+second (about $0.13; Uncensored 31, $0.15): 134 Spark, about $0.67, for 5 seconds.
+Only the draft the person approves is made at 1080p, billed as its own final. So a
+5-second film that takes two drafts costs about $1.34 in drafts plus $3.70 for its
+final (as of 2026-11; an Unlimited Pro account was charged about 10% less on the
+kit's own test film: 96 Spark for a 4-second draft, 532 for its final). **No
+Unlimited plan covers it**: those films are paid from the token balance even when
+the plan pays for everything else, and `node world quote` lists each one's draft
+and final on their own lines. Retake a draft only after its cause is fixed.
 
 **A world**: plan on one loop plus one or two crossings or moments per place, so
 about 2.5 films per place and around $2 of first takes per place. Retakes roughly

@@ -332,7 +332,8 @@ film from the whole map instead (directing-films.md › A map, and diving into i
 `model` is `seedance-2-5` or `seedance-2-5-uncensored`, for the shots H3 can't carry:
 premium, paid in tokens even on an Unlimited plan, whole seconds
 (`frames` = seconds × 24 + 1), no keyframes, and only on a 16:9, 4:3, 1:1, 3:4 or
-9:16 canvas (directing-films.md › Seedance 2.5).
+9:16 canvas. Its takes render as 480p drafts; the one the person approves is made at
+1080p from the draft itself (directing-films.md › Seedance 2.5).
 
 You write `action` and `sound`. The kit wraps them in the exact document
 MiniMax H3 expects: the alignment line that pins Picture 1 to the first frame

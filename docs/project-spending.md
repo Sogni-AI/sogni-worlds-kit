@@ -15,7 +15,9 @@ It is private project bookkeeping; `build` and `export` do not publish it.
   last successful approved build. A trim, rewind, HD copy or phone copy adds no
   new generation cost. If one attempt supplied several used excerpts, it counts
   once. A later build replaces this selection; retired attempts stay in lifetime
-  spend. Images, speech, music and LLMs remain in the project total.
+  spend. Images, speech, music and LLMs remain in the project total. A Seedance
+  film's used cost is its 1080p final plus the 480p draft it was made from; the
+  report lists drafts and finals apart (`sogni:seedance-2-5 draft` and `… final`).
 - **All clips:** every recorded video attempt, including used clips and rerolls.
 - **Cash paid:** actual purchases allocated to this project. Buying tokens is
   funding; consuming them is usage. Never add these two totals together.

@@ -281,7 +281,8 @@ Fill in `worlds/<id>/world.yaml` (reference: docs/world-yaml.md; craft:
   in its own designed voice and captioned with its `label`. Never a wall of text.
 - A film H3 can't carry (people talking to each other, fast action where one thing
   causes the next) may opt into Seedance 2.5 with `model: seedance-2-5`: premium,
-  not covered by Unlimited, one take per film (docs/directing-films.md › Seedance 2.5).
+  not covered by Unlimited. Its takes render as 480p drafts at about a fifth of the
+  price, and only the draft the person approves is made at 1080p (docs/directing-films.md › Seedance 2.5).
   Where the canvas and budget allow Seedance, a dive from a map into a district is one
   Seedance film from the whole map to the district's street-level still, aimed at a
   landmark the map shows, and the district then sits where the film lands
@@ -339,7 +340,9 @@ node world render --canary
 ```
 
 Tell the person the quote first, and say the Seedance line on its own: those films
-are paid from their token balance even on an Unlimited plan. A 2K film takes a few
+are paid from their token balance even on an Unlimited plan. Each Seedance film is
+quoted twice: its 480p draft, and its 1080p final, which is made only from the draft
+the person approves. A 2K film takes a few
 minutes to around fifteen to render. `render` records every take before paying for it and never submits the same
 take twice. If it's interrupted, run it again and it resumes. While a render runs,
 `node world next` says so (with its pid): wait for it rather than starting another.
@@ -400,6 +403,21 @@ on its frame in `review/marks/`.
 
 Wait for their verdicts. Until both canary films are approved, a plain `render`
 refuses to start anything else.
+
+**Seedance films are judged twice: the draft, then its final.** Every Seedance take
+is a 480p draft, so iterate on drafts: a retake is another draft, and nothing is
+rendered at 1080p to judge a direction. When the person approves a draft, `next`
+says `node world render`: it makes that same video at 1080p from the draft itself
+(the same motion, timing, words and sound, billed again), and the person judges
+the final on the review page too, beside the draft. Build ships only approved
+finals. Sogni offers a draft's final only for a few hours after the draft finishes
+(three hours as of 2026-11; `render` prints the deadline and `status` lists it), so
+ask for the review soon after the drafts land, and render the finals as soon as
+they are approved. When a deadline has passed, `render` stops and says so: render a
+new draft with `--only <film>` for the person to approve. A fresh 1080p render of
+the same words would be a different video, not the one they approved. Judge motion,
+timing, words and sound on the draft; small lettering and fine detail in faces only
+resolve at 1080p, so look at those again on the final.
 
 ### 8. Retakes and the rest
 
@@ -514,7 +532,9 @@ reviewer: nothing you could have caught should reach them.
    sound, every ending reachable, nothing said twice.
 6. **Hand over honestly.** The world stays a draft (`build --drafts`) until the
    person approves its films on `node world review`, individually or with
-   **Approve this build’s takes** after playing the whole draft. Before hosting
+   **Approve this build’s takes** after playing the whole draft. Its Seedance films
+   play as 480p drafts until then; once the person approves one, render its 1080p
+   final for them to judge. Before hosting
    or gallery submission, build without `--drafts` and export again; unchanged
    films are not re-encoded. Tell them what you rejected
    and why, what you cut, and what you could not fix, and give them the review

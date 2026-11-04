@@ -29,13 +29,16 @@ export const SEEDANCE_LOOP_FRAMES = 121;
  * is sent, and `build` sizes the film back onto the world's canvas, so the film
  * and the stills line up exactly. A 3:2 or 2:3 world is 11% away from any of
  * them: a squeeze that size changes how people look, so it is refused.
+ *
+ * `draft` is the 480p size of the same shape, from Sogni's own size list for
+ * Seedance 2.5 (as of 2026-11): every take is rendered at it first, as a draft.
  */
 export const SHAPES = Object.freeze([
-  { ratio: '16:9', width: 1920, height: 1080 },
-  { ratio: '4:3', width: 1664, height: 1248 },
-  { ratio: '1:1', width: 1440, height: 1440 },
-  { ratio: '3:4', width: 1248, height: 1664 },
-  { ratio: '9:16', width: 1080, height: 1920 },
+  { ratio: '16:9', width: 1920, height: 1080, draft: { width: 854, height: 480 } },
+  { ratio: '4:3', width: 1664, height: 1248, draft: { width: 752, height: 560 } },
+  { ratio: '1:1', width: 1440, height: 1440, draft: { width: 640, height: 640 } },
+  { ratio: '3:4', width: 1248, height: 1664, draft: { width: 560, height: 752 } },
+  { ratio: '9:16', width: 1080, height: 1920, draft: { width: 480, height: 854 } },
 ]);
 export const ASPECT_TOLERANCE = 0.02;
 
@@ -47,7 +50,34 @@ export function shapeFor(canvas) {
     const off = Math.abs(Math.log(aspect / (shape.width / shape.height)));
     if (!best || off < best.off) best = { ...shape, off };
   }
-  return best && best.off <= Math.log(1 + ASPECT_TOLERANCE) ? { ratio: best.ratio, width: best.width, height: best.height } : null;
+  return best && best.off <= Math.log(1 + ASPECT_TOLERANCE) ? { ratio: best.ratio, width: best.width, height: best.height, draft: best.draft } : null;
+}
+
+/*
+ * Drafts. Every Seedance take is rendered as a 480p draft (`seedanceDraft`),
+ * priced like any 480p take, so a film is judged and retaken cheaply. The take
+ * the person approves is then finalized: Sogni renders that same video again
+ * at 1080p (`seedanceDraftJobId`) from the draft's own prompt, stills, length,
+ * seed and sound. Only a take submitted as a draft can be finalized, only for a
+ * while after it finished (Sogni says until when), and each finalize is billed.
+ */
+
+/** A take rendered as a draft, to be finalized at 1080p once approved. */
+export const isDraft = journal => journal?.seedanceDraft === true;
+
+/** A date as the person reads it. */
+export const when = iso => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+
+/**
+ * Why a draft can't be finalized now, in plain words, or null when it can.
+ * Sogni reports the deadline with the finished draft; without one there is
+ * nothing to finalize.
+ */
+export function draftLapsed(journal, now = Date.now()) {
+  const deadline = Date.parse(journal?.draftExpiresAt ?? '');
+  if (!journal?.draftJobId || !Number.isFinite(deadline)) return 'Sogni did not report it as a draft that can be made at 1080p';
+  if (deadline <= now) return `it could be made at 1080p only until ${when(journal.draftExpiresAt)}`;
+  return null;
 }
 
 /** A still, resized to the shape Seedance renders (never cropped), as the bytes to send. */

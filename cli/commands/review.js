@@ -13,6 +13,7 @@ import { shown } from '../lib/paths.js';
 import { reviewPage } from '../lib/review-page.js';
 import { readJson, sha256File } from '../lib/files.js';
 import { mediaRefs } from '../lib/worldjson.js';
+import { draftLapsed, isDraft, when } from '../lib/seedance.js';
 import { nextStep } from './status.js';
 
 export const summary = 'Open your review page: approve, reject or pass each new take';
@@ -94,7 +95,10 @@ async function handle(request, response, context) {
     const body = JSON.parse(await readBody(request));
     const message = approveBuild(context.loadPlan(), context.paths, body);
     response.writeHead(message ? 400 : 200, { 'content-type': 'text/plain' });
-    response.end(message ?? 'Approved. Build again without --drafts, then export and update your host. Unchanged films are not re-encoded.');
+    const drafts = !message && (body.takes ?? []).some(entry => isDraft(listTakes(context.paths, entry.film).find(t => t.sha === entry.sha)?.journal));
+    response.end(message ?? (drafts
+      ? 'Approved. The Seedance drafts among them are made at 1080p next (node world next in the terminal), and you judge those finals here. Then build again without --drafts, export and update your host.'
+      : 'Approved. Build again without --drafts, then export and update your host. Unchanged films are not re-encoded.'));
     return;
   }
   if (request.method === 'POST' && url.pathname === '/mark') {
@@ -274,6 +278,12 @@ function describe(journal) {
   if (journal.delivered) parts.push(`${journal.delivered.width}×${journal.delivered.height}`);
   else if (journal.width && journal.height) parts.push(`${journal.width * 2}×${journal.height * 2}`);
   if (/^seedance-/.test(journal.model ?? '')) parts.push(journal.model);
+  // A Seedance take is a 480p draft; the one approved is made again at 1080p, its final.
+  if (isDraft(journal)) {
+    const lapsed = draftLapsed(journal);
+    parts.push(lapsed ? `480p draft: ${lapsed}, so approving it means a new draft` : `480p draft: approve it to have it made at 1080p (until ${when(journal.draftExpiresAt)})`);
+  }
+  if (journal.finalizes) parts.push(`the 1080p final of draft take ${journal.finalizes}`);
   if (journal.pushIn) parts.push(`starts from a ${journal.pushIn.zoom}× crop; build adds the push-in onto it`);
   if (journal.frames) parts.push(`${(journal.frames / 24).toFixed(2)} s`);
   if (journal.seed !== undefined && journal.seed !== null) parts.push(`seed ${journal.seed}`);

@@ -112,10 +112,18 @@ A film with `model: seedance-2-5` is sent to Seedance 2.5 instead, in the same
 first-and-last-frame mode: each still resized (never cropped) to the Seedance shape
 nearest the canvas, the direction with its spoken lines as quoted speech, whole
 seconds, its own sound, paid in tokens. A crossing with a `pushIn` is rendered from
-a crop of its first still around that point.
+a crop of its first still around that point. Every Seedance take is a 480p draft
+(`seedanceDraft`). Once the person approves one, `render` makes its final: the same
+video at 1080p, which Sogni renders from the draft's own stills, words, length, seed
+and sound (`seedanceDraftJobId`, nothing else sent). The final is a new take whose
+receipt names its draft (`finalizes`); the person judges it, and build ships only
+approved finals. A draft can be finalized only until the deadline Sogni reports with
+it (its receipt's `draftExpiresAt`); after that `render` refuses and asks for a new
+draft.
 
 `--canary` renders just the first crossing, the first loop, the first close look and
-the first Seedance film, so you judge the quality before paying for the rest.
+the first Seedance film (its draft, then once approved its final), so you judge the
+quality before paying for the rest.
 
 ### 7–8. Judging
 

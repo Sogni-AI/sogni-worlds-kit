@@ -372,13 +372,18 @@ export async function downloadResult(client, result, { contentType = 'video/mp4'
   return { bytes, job };
 }
 
-/** Quote one film before it is submitted. */
-export async function quoteFilm(client, { model, width, height, frames, keyframes = 0, tokenType, billingMode }) {
+/**
+ * Quote one film before it is submitted. A Seedance take passes its stage:
+ * `seedanceDraft` (a 480p draft) or `seedanceDraftJobId` (the 1080p final of
+ * that draft, which Sogni prices from the draft itself).
+ */
+export async function quoteFilm(client, { model, width, height, frames, keyframes = 0, tokenType, billingMode, seedanceDraft, seedanceDraftJobId }) {
   // Seedance renders whole seconds (frames = seconds × 24 + 1); H3 counts frames on its own grid.
   const seedance = /^seedance-/.test(model);
   const quote = await client.projects.estimateVideoCost({
     model, tokenType, width, height, duration: seedance ? (frames - 1) / 24 : frames / 24, fps: 24, numberOfMedia: 1,
     ...(seedance ? { referenceImageCount: 0 } : { steps: 4, referenceImageCount: 2, keyframeCount: keyframes }), network: 'fast', billingMode,
+    ...(seedanceDraft ? { seedanceDraft: true } : {}), ...(seedanceDraftJobId ? { seedanceDraftJobId } : {}),
   });
   return {
     spark: Number(quote.spark),

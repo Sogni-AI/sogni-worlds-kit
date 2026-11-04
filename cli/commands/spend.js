@@ -54,6 +54,9 @@ export async function run(argv) {
     for (const [name, t] of [['Project usage', report.project], ['Used clips', report.clips.used], ['All clips', report.clips.allAttempts]]) {
       for (const [currency, value] of Object.entries(t.currencies)) console.log(`  ${name} · ${currency}: ${value}`);
     }
+    // Seedance takes are 480p drafts, and the approved ones are made again at 1080p: two charges, shown apart.
+    const stages = Object.entries(report.models).filter(([name]) => / (draft|final)$/.test(name));
+    if (stages.length) console.log(`Seedance, drafts and finals: ${stages.map(([name, t]) => line(name.replace(/^sogni:/, ''), t)).join('; ')}`);
     if (report.project.planValueUSD !== '0') console.log(`Covered by subscription: ${money(report.project.planValueUSD)} of plan value, excluded from usage charges.`);
     console.log(`Cash paid for funding: ${money(report.funding.cashUSD)}. Credits received: ${money(report.funding.creditValueUSD)} declared value${report.funding.creditsWithoutUSDValue ? `; ${report.funding.creditsWithoutUSDValue} receipts have no USD value` : ''}.`);
     for (const [currency, value] of Object.entries(report.funding.currencies)) console.log(`  ${currency}: ${value}`);

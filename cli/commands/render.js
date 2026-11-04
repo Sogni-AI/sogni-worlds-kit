@@ -5,10 +5,10 @@ import { parse } from '../index.js';
 import { resolveWorldId, shown, worldFile } from '../lib/paths.js';
 import { filmsOf, readPlan } from '../lib/plan.js';
 import { canvasByName, delivered, FPS, GUIDANCE, MODEL, NETWORK, ON_ONE_STILL, secondsOf, STEPS, writtenCamera } from '../lib/h3.js';
-import { directionWords, filmPrompt, fitStill, isSeedance, seedanceSeconds, shapeFor } from '../lib/seedance.js';
+import { directionWords, draftLapsed, filmPrompt, fitStill, isDraft, isSeedance, seedanceSeconds, shapeFor, when } from '../lib/seedance.js';
 import { pushInStart } from '../lib/pushin.js';
 import { lintPlan } from '../lib/lint.js';
-import { filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
+import { draftToFinalize, filmState, listTakes, nextTake, takeFiles } from '../lib/takes.js';
 import { canaryFilms, canaryGate, canaryStatus } from '../lib/canary.js';
 import { readJson, sha256, writeJson } from '../lib/files.js';
 import { probe } from '../lib/media.js';
@@ -24,12 +24,19 @@ export const usage = `node world render [world] [options]
   a verdict or already rendering), records each take before paying for it, and
   picks up where an interrupted run stopped. Nothing is ever submitted twice.
 
+  A Seedance film is rendered as a 480p draft. Once the person approves a
+  draft on the review page, render makes that same video at 1080p (its final),
+  which the person then judges too. A draft can be made at 1080p only for a
+  few hours after it finished; after that, render a new draft (--only).
+
   --canary            render only the canary: the first crossing, the first
                       loop, the first close look and the first Seedance film in
                       story order. The rest of the world waits until a person
                       approves them on the review page.
   --only <film>       render just this film (repeat for more); also retakes an
-                      approved or unjudged film.
+                      approved or unjudged film. A Seedance film whose approved
+                      draft can still be made at 1080p gets its final; one whose
+                      draft can't any more gets a new draft.
   --dry-run           quote and print the exact requests; nothing is sent.
   --yes               go ahead when paying with tokens and the quote is above
                       SOGNI_MAX_SPARK (show the quote to whoever pays first).
@@ -71,20 +78,20 @@ export function filmsToRender(plan, paths, { only = [], canary = false } = {}) {
     return all.filter(entry => ids.includes(entry.film.id));
   }
   // A close look not painted yet holds its films back: there is no picture to land on.
-  return all.filter(entry => (entry.film.first && entry.film.last) && ['unrendered', 'failed', 'rejected', 'rendering'].includes(entry.state));
+  return all.filter(entry => (entry.film.first && entry.film.last) && ['unrendered', 'failed', 'rejected', 'rendering', 'finalize'].includes(entry.state));
 }
 
 /**
  * What a film is rendered with: its model, the size it is rendered at and the
  * size it arrives at. MiniMax H3 (the default) renders the canvas and delivers
- * twice it; Seedance renders its own shape nearest the canvas, and build sizes
- * it onto the canvas.
+ * twice it; Seedance renders its own shape nearest the canvas (`draft` is its
+ * 480p size, what a take is rendered at first), and build sizes it onto the canvas.
  */
 export function filmRender(film, canvas) {
   if (!isSeedance(film.model)) return { model: MODEL, width: canvas.width, height: canvas.height, output: delivered(canvas) };
   const shape = shapeFor(canvas);
   if (!shape) throw new Error(`${film.id}: Seedance renders 16:9, 4:3, 1:1, 3:4 and 9:16; this world's ${canvas.width}x${canvas.height} canvas is none of them, so this film stays on MiniMax H3`);
-  return { model: film.model, width: shape.width, height: shape.height, output: { width: shape.width, height: shape.height }, ratio: shape.ratio };
+  return { model: film.model, width: shape.width, height: shape.height, output: { width: shape.width, height: shape.height }, ratio: shape.ratio, draft: shape.draft };
 }
 
 /** Seedance is never covered by an Unlimited plan: its takes always pay in tokens. */
@@ -109,13 +116,16 @@ export async function takeSpec(plan, paths, film, take, { seed } = {}) {
   // A crossing that leaves through a small part of its picture starts from a crop of it (build adds the push-in).
   const pushIn = film.kind === 'crossing' && film.pushIn ? { at: film.pushIn.at, zoom: film.pushIn.zoom, ...(film.pushIn.frames ? { frames: film.pushIn.frames } : {}) } : null;
   const start = pushIn ? await pushInStart(refs[0].file, pushIn, delivered(canvas)) : null;
-  // What is sent: the stills themselves, or for Seedance each resized (never cropped) to its shape.
+  // What is sent: the stills themselves, or for Seedance each resized (never cropped) to its 1080p
+  // shape, also for a 480p draft: its final at 1080p is made from the draft's own pictures.
   for (const ref of refs) {
     const picture = ref.role === 'first' && start ? start : ref.bytes;
     ref.send = render.ratio ? await fitStill(picture, render) : picture;
   }
   const prompt = filmPrompt(film);
   const chosenSeed = seed ?? (take === 1 && Number.isInteger(film.seed) ? film.seed : randomInt(1, 2 ** 31 - 1));
+  // A Seedance take is a draft at 480p; the approved one is made at 1080p afterwards (finalSpec).
+  const size = render.draft ?? render;
   return {
     canvas,
     refs,
@@ -123,7 +133,8 @@ export async function takeSpec(plan, paths, film, take, { seed } = {}) {
     journal: {
       film: film.id, take, kind: film.kind, from: film.from, to: film.to, object: film.object,
       ...(ON_ONE_STILL.has(film.kind) ? { camera: writtenCamera(film) ?? 'locked' } : {}),
-      model: render.model, width: render.width, height: render.height, delivered: render.output,
+      model: render.model, width: size.width, height: size.height, delivered: render.draft ?? render.output,
+      ...(render.draft ? { seedanceDraft: true } : {}),
       ...(render.ratio ? { fitsCanvas: delivered(canvas) } : {}),
       frames: film.frames, seconds: Number(secondsOf(film.frames).toFixed(3)),
       ...(render.ratio ? {} : { steps: STEPS }), fps: FPS, seed: chosenSeed,
@@ -138,9 +149,51 @@ export async function takeSpec(plan, paths, film, take, { seed } = {}) {
   };
 }
 
+/**
+ * A take that makes an approved Seedance draft at 1080p. Sogni renders it from
+ * the draft's own prompt, stills, length, seed and sound, so its receipt is the
+ * draft's, at the 1080p size of the draft's shape.
+ */
+export function finalSpec(plan, paths, film, take, draft) {
+  const canvas = canvasOf(plan);
+  const shape = shapeFor(canvas);
+  const { journal: d } = draft;
+  // A push-in's crop, as the draft was sent it: screen compares the final's first frame with it.
+  const start = d.pushIn && existsSync(draft.files.start) ? readFileSync(draft.files.start) : null;
+  return {
+    canvas,
+    refs: [],
+    start,
+    journal: {
+      film: film.id, take, kind: d.kind, from: d.from, to: d.to, object: d.object, ...(d.camera ? { camera: d.camera } : {}),
+      model: d.model, width: shape.width, height: shape.height, delivered: { width: shape.width, height: shape.height }, fitsCanvas: delivered(canvas),
+      frames: d.frames, seconds: d.seconds, fps: FPS, seed: d.seed,
+      prompt: d.prompt, promptSha256: d.promptSha256, references: d.references, ...(d.pushIn ? { pushIn: d.pushIn } : {}),
+      contentFilter: d.contentFilter,
+      finalizes: draft.take, seedanceDraftJobId: d.draftJobId, draftProjectId: d.projectId,
+    },
+  };
+}
+
+/** What a Seedance take asks of Sogni, for its request and its quote alike: a draft, or the final of one. */
+export const stageOf = journal => (journal.finalizes ? { seedanceDraftJobId: journal.seedanceDraftJobId } : isDraft(journal) ? { seedanceDraft: true } : {});
+
+/** Why a render refuses to start when approved drafts can no longer be made at 1080p, and what to do. */
+export function lapsedMessage(id, lapsed) {
+  return `Nothing was rendered: ${lapsed.length === 1 ? 'a draft the person approved' : 'drafts the person approved'} can't be made at 1080p any more.\n`
+    + lapsed.map(d => `  ${d.film} take ${d.take}: ${d.why}\n`).join('')
+    + `  Render a new draft: node world render ${id} ${lapsed.map(d => `--only ${d.film}`).join(' ')}\n`
+    + '  Then the person approves it on the review page, and render makes it at 1080p before its deadline (render prints it when the draft finishes).';
+}
+
 /** The exact projects.create request for a take. */
 export function createRequest(spec, billing) {
   const { journal, refs } = spec;
+  // A final names its draft and nothing else: Sogni refuses any input the draft already set.
+  if (journal.finalizes) {
+    return { type: 'video', modelId: journal.model, positivePrompt: '', network: NETWORK, tokenType: billing.tokenType, billingMode: billing.mode,
+      disableNSFWFilter: journal.contentFilter === 'off', numberOfMedia: 1, seedanceDraftJobId: journal.seedanceDraftJobId, outputFormat: 'mp4' };
+  }
   const first = refs.find(ref => ref.role === 'first').send;
   const last = refs.find(ref => ref.role === 'last').send;
   const common = {
@@ -148,10 +201,10 @@ export function createRequest(spec, billing) {
     network: NETWORK, tokenType: billing.tokenType, billingMode: billing.mode,
     disableNSFWFilter: journal.contentFilter === 'off', numberOfMedia: 1, seed: journal.seed, fps: FPS,
   };
-  // Seedance: first-and-last-frame (no task type, no loose references), its own sound, whole seconds.
+  // Seedance: first-and-last-frame (no task type, no loose references), its own sound, whole seconds, as a 480p draft.
   if (isSeedance(journal.model)) {
     return { ...common, width: journal.width, height: journal.height, duration: seedanceSeconds(journal.frames), generateAudio: true,
-      outputFormat: 'mp4', referenceImage: first, referenceImageEnd: last };
+      outputFormat: 'mp4', referenceImage: first, referenceImageEnd: last, ...stageOf(journal) };
   }
   const keyframes = refs.filter(ref => ref.role === 'keyframe');
   return {
@@ -169,6 +222,13 @@ export const printable = request => JSON.parse(JSON.stringify(request, (key, val
   if (value?.type === 'Buffer' && Array.isArray(value.data)) return describeBytes(Buffer.from(value.data));
   return value;
 }));
+
+/**
+ * What Sogni stored about a finished draft (the job record `downloadResult`
+ * reads): the job id that makes it at 1080p (`seedanceDraftJobId`) and the
+ * deadline for that.
+ */
+export const draftReport = job => ({ draftJobId: job.imgID ?? null, draftExpiresAt: job.result?.seedanceDraftExpiresAt ?? null });
 
 /** A submit whose outcome is unknown: Sogni may have the job, so it must never be sent again. */
 export class UnknownOutcomeError extends Error {}
@@ -195,6 +255,49 @@ export async function submitTake({ create, refusals, journal, journalPath }) {
   const submitted = { ...journal, projectId: project.id, status: 'submitted', submittedAt: new Date().toISOString() };
   writeJson(journalPath, submitted);
   return submitted;
+}
+
+/**
+ * What a run does for each film it selected: pick up a take still rendering,
+ * make an approved Seedance draft at 1080p, or render a new take. `lapsed`
+ * lists approved drafts Sogni no longer offers at 1080p: a plain run refuses
+ * them, and --only (`only`) renders a new draft instead.
+ */
+export function planWork(selected, { only = false, sameDirection = false } = {}) {
+  const work = [];
+  const lapsed = [];
+  for (const entry of selected) {
+    const pending = entry.takes.find(t => ['submitting', 'submitted'].includes(t.journal.status));
+    if (pending) {
+      if (!pending.journal.projectId) {
+        throw new Error(`${entry.film.id} take ${pending.take} was being submitted when the last run stopped, so whether Sogni received it is unknown. Look for it at https://app.sogni.ai (project history). If it is not there, delete ${shown(pending.files.journal)} and render again`);
+      }
+      work.push({ ...entry, resume: pending });
+      continue;
+    }
+    // An approved Seedance draft is made at 1080p while Sogni still offers it. After that only a
+    // new draft helps, and only when asked for by name.
+    const draft = entry.state === 'finalize' ? draftToFinalize(entry.takes) : null;
+    if (draft) {
+      const why = draftLapsed(draft.journal);
+      if (!why) { work.push({ ...entry, take: nextTake(entry.takes), finalizes: draft }); continue; }
+      if (!only) { lapsed.push({ film: entry.film.id, take: draft.take, why }); continue; }
+      log.warn(`${entry.film.id}: the approved draft (take ${draft.take}) can't be made at 1080p any more (${why}), so this renders a new draft for the person to judge`);
+    }
+    if (['approved', 'unjudged'].includes(entry.state) && !only) continue;
+    if (entry.state === 'rejected' && !sameDirection) {
+      const last = entry.takes.filter(t => t.journal.status === 'completed').at(-1);
+      // A changed push-in is a changed direction too: the film starts from another crop.
+      const samePushIn = JSON.stringify(last?.journal.pushIn?.at ?? null) === JSON.stringify(entry.film.kind === 'crossing' ? entry.film.pushIn?.at ?? null : null)
+        && (last?.journal.pushIn?.zoom ?? null) === (entry.film.kind === 'crossing' ? entry.film.pushIn?.zoom ?? null : null);
+      // The kit's own landing sentence changed in 2026-11; that alone is not a rewritten direction.
+      if (last && directionWords(last.journal.prompt) === directionWords(filmPrompt(entry.film)) && samePushIn) {
+        throw new Error(`${entry.film.id}: its last take was rejected${last.verdict?.note ? ` ("${last.verdict.note}")` : ''} and the direction has not changed. A new seed rarely fixes a defect: rewrite the film's action or sound for what went wrong, or pass --same-direction`);
+      }
+    }
+    work.push({ ...entry, take: nextTake(entry.takes) });
+  }
+  return { work, lapsed };
 }
 
 async function pool(items, size, worker) {
@@ -236,34 +339,13 @@ export async function run(argv) {
     if (refusal) throw new Error(refusal);
   }
 
-  const work = [];
-  for (const entry of selected) {
-    const pending = entry.takes.find(t => ['submitting', 'submitted'].includes(t.journal.status));
-    if (pending) {
-      if (!pending.journal.projectId) {
-        throw new Error(`${entry.film.id} take ${pending.take} was being submitted when the last run stopped, so whether Sogni received it is unknown. Look for it at https://app.sogni.ai (project history). If it is not there, delete ${shown(pending.files.journal)} and render again`);
-      }
-      work.push({ ...entry, resume: pending });
-      continue;
-    }
-    if (['approved', 'unjudged'].includes(entry.state) && !values.only) continue;
-    if (entry.state === 'rejected' && !values['same-direction']) {
-      const last = entry.takes.filter(t => t.journal.status === 'completed').at(-1);
-      // A changed push-in is a changed direction too: the film starts from another crop.
-      const samePushIn = JSON.stringify(last?.journal.pushIn?.at ?? null) === JSON.stringify(entry.film.kind === 'crossing' ? entry.film.pushIn?.at ?? null : null)
-        && (last?.journal.pushIn?.zoom ?? null) === (entry.film.kind === 'crossing' ? entry.film.pushIn?.zoom ?? null : null);
-      // The kit's own landing sentence changed in 2026-11; that alone is not a rewritten direction.
-      if (last && directionWords(last.journal.prompt) === directionWords(filmPrompt(entry.film)) && samePushIn) {
-        throw new Error(`${entry.film.id}: its last take was rejected${last.verdict?.note ? ` ("${last.verdict.note}")` : ''} and the direction has not changed. A new seed rarely fixes a defect: rewrite the film's action or sound for what went wrong, or pass --same-direction`);
-      }
-    }
-    work.push({ ...entry, take: nextTake(entry.takes) });
-  }
+  const { work, lapsed } = planWork(selected, { only: Boolean(values.only), sameDirection: Boolean(values['same-direction']) });
+  if (lapsed.length) throw new Error(lapsedMessage(id, lapsed));
 
   const seed = values.seed !== undefined ? Number(values.seed) : undefined;
   if (seed !== undefined && (!Number.isInteger(seed) || seed < 0)) throw new Error('--seed is a whole number');
   const specs = new Map();
-  for (const w of work.filter(w => !w.resume)) specs.set(w.film.id, await takeSpec(plan, paths, w.film, w.take, { seed }));
+  for (const w of work.filter(w => !w.resume)) specs.set(w.film.id, w.finalizes ? finalSpec(plan, paths, w.film, w.take, w.finalizes) : await takeSpec(plan, paths, w.film, w.take, { seed }));
 
   const session = await connect({ worldDir: paths.dir });
   const { client, billing } = session;
@@ -279,16 +361,17 @@ export async function run(argv) {
     let fairUse = null;
     for (const w of work.filter(w => !w.resume)) {
       const spec = specs.get(w.film.id);
-      const paying = filmBilling(w.film, billing);
-      const quote = await quoteFilm(client, { model: spec.journal.model, width: spec.journal.width, height: spec.journal.height, frames: w.film.frames,
-        keyframes: spec.refs.filter(r => r.role === 'keyframe').length, tokenType: paying.tokenType, billingMode: paying.mode });
+      const paying = filmBilling(spec.journal, billing);
+      const quote = await quoteFilm(client, { model: spec.journal.model, width: spec.journal.width, height: spec.journal.height, frames: spec.journal.frames,
+        keyframes: spec.refs.filter(r => r.role === 'keyframe').length, tokenType: paying.tokenType, billingMode: paying.mode, ...stageOf(spec.journal) });
       spec.journal.quote = quote;
       totalSpark += quote.spark;
       totalUsd += quote.usd;
       if (paying.mode !== 'subscription') paidSpark += quote.spark;
       fairUse = quote.dailyFairUsePct ?? fairUse;
-      const premium = isSeedance(spec.journal.model) ? `  ${spec.journal.model}, paid in tokens` : '';
-      log.info(`${w.film.id.padEnd(32)} take ${w.take}  ${w.film.frames} frames (${secondsOf(w.film.frames).toFixed(2)} s)  ${quote.spark.toFixed(0)} Spark (${usd(quote.usd)})${premium}`);
+      const stage = spec.journal.finalizes ? ` 1080p final of take ${spec.journal.finalizes}` : isDraft(spec.journal) ? ' 480p draft' : '';
+      const premium = isSeedance(spec.journal.model) ? `  ${spec.journal.model}${stage}, paid in tokens` : '';
+      log.info(`${w.film.id.padEnd(32)} take ${w.take}  ${spec.journal.frames} frames (${secondsOf(spec.journal.frames).toFixed(2)} s)  ${quote.spark.toFixed(0)} Spark (${usd(quote.usd)})${premium}`);
     }
     for (const w of work.filter(w => w.resume)) log.info(`${w.film.id.padEnd(32)} take ${w.resume.take}  resuming ${w.resume.journal.projectId}`);
     const newCount = work.filter(w => !w.resume).length;
@@ -306,7 +389,7 @@ export async function run(argv) {
       for (const w of work.filter(w => !w.resume)) {
         const spec = specs.get(w.film.id);
         log.title(`${w.film.id} take ${w.take} — request (not sent)`);
-        console.log(JSON.stringify(printable(createRequest(spec, filmBilling(w.film, billing))), null, 2));
+        console.log(JSON.stringify(printable(createRequest(spec, filmBilling(spec.journal, billing))), null, 2));
       }
       log.ok('Dry run: nothing was submitted');
       return 0;
@@ -332,7 +415,7 @@ export async function run(argv) {
           } else {
             files = takeFiles(paths, w.film.id, w.take);
             const spec = specs.get(w.film.id);
-            const paying = filmBilling(w.film, billing);
+            const paying = filmBilling(spec.journal, billing);
             journal = { ...spec.journal, billing: { mode: paying.mode, tokenType: paying.tokenType, tier: session.tier }, username: session.username,
               appId: session.appId, pid: process.pid, sdk: sdkVersion(), projectId: null, status: 'submitting', startedAt: new Date().toISOString(), output: `take-${w.take}.mp4` };
             // Reserve the take before paying: a second run can never submit it twice.
@@ -376,10 +459,15 @@ export async function run(argv) {
             workerStartTime: job.startTime ?? null, workerEndTime: job.endTime ?? null,
             paymentModel: job.paymentModel ?? result.paymentModel ?? null,
             sha256: sha256(bytes), bytes: bytes.length, probe: probed,
+            ...(isDraft(journal) ? draftReport(job) : {}),
           };
           writeJson(files.journal, journal);
           results.completed.push(label);
           log.ok(`${label}: ${shown(files.video)} (${(bytes.length / 1e6).toFixed(1)} MB, ${journal.elapsedSeconds}s${probed ? `, ${probed.width}×${probed.height}, ${probed.frames} frames` : ''})`);
+          if (isDraft(journal)) {
+            const why = draftLapsed(journal);
+            log.dim(why ? `${label}: a 480p draft, but ${why}: if the person approves it, render a new draft (--only)` : `${label}: a 480p draft. If the person approves it, render makes it at 1080p; Sogni offers that until ${when(journal.draftExpiresAt)}`);
+          }
         } catch (error) {
           if (error instanceof RefusedError) {
             if (journal?.status !== 'failed' && files) {

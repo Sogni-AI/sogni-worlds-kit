@@ -195,7 +195,8 @@ Sogni's decentralized GPU network through your one API key:
 One more, optional and not open: a film H3 can't carry (people talking to each
 other, fast action) can opt into **Seedance 2.5**, which makes its own dialogue and
 sound. It is premium and paid per second even on Unlimited, so a world uses it only
-where it earns its price ([directing-films.md › Seedance 2.5](docs/directing-films.md#seedance-25-the-films-h3-cant-carry)).
+where it earns its price. Its takes render as 480p drafts at about a fifth of the
+price, and only the draft you approve is made at 1080p ([directing-films.md › Seedance 2.5](docs/directing-films.md#seedance-25-the-films-h3-cant-carry)).
 
 No coding agent? Two more open models can be the agent: DeepSeek V4 Flash writes,
 judges and screens, and Qwen 3.6 points at the things to click

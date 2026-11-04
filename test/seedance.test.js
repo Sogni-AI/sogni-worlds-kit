@@ -26,7 +26,7 @@ test('Seedance fits the canvases within 2% of its shapes; 3:2 and 2:3 are refuse
   assert.deepEqual(CANVASES.map(c => [c.name, shape(c.name)]), [
     ['16:9', '16:9'], ['3:2', null], ['4:3', '4:3'], ['1:1', '1:1'], ['3:4', '3:4'], ['2:3', null], ['9:16', '9:16'],
   ]);
-  assert.deepEqual(shapeFor(canvasByName('16:9')), { ratio: '16:9', width: 1920, height: 1080 });
+  assert.deepEqual(shapeFor(canvasByName('16:9')), { ratio: '16:9', width: 1920, height: 1080, draft: { width: 854, height: 480 } });
 });
 
 test('Seedance films last whole seconds, 4 to 30: seconds × 24 + 1 frames', () => {
@@ -92,7 +92,7 @@ test('the canary adds the first Seedance film, so one is judged before the rest 
   assert.deepEqual(canaryFilms(plan).map(f => f.id), ['a-door', 'a-loop', 'a-talk']);
 });
 
-test('a Seedance take: its stills resized (never cropped) to its shape, first-and-last-frame, its own sound, paid in tokens', async () => {
+test('a Seedance take: a 480p draft of its stills resized (never cropped) to its 1080p shape, first-and-last-frame, its own sound, paid in tokens', async () => {
   const paths = pathsAt(tempDir('seedance-take'), 'bar');
   mkdirSync(paths.stills, { recursive: true });
   for (const [name, colour] of [['bar', '#335577'], ['street', '#aa7733']]) {
@@ -102,12 +102,13 @@ test('a Seedance take: its stills resized (never cropped) to its shape, first-an
   const film = { id: 'bar-glass', from: 'bar', to: 'street', object: 'glass', first: 'stills/bar.jpg', last: 'stills/street.jpg', ...seedanceFilm(), seed: 7 };
   const spec = await takeSpec(plan, paths, film, 1);
   assert.equal(spec.journal.model, 'seedance-2-5');
-  assert.deepEqual([spec.journal.width, spec.journal.height], [1920, 1080]);
+  assert.deepEqual([spec.journal.width, spec.journal.height], [854, 480], 'rendered as a 480p draft');
+  assert.equal(spec.journal.seedanceDraft, true);
   assert.deepEqual(spec.journal.fitsCanvas, { width: 2688, height: 1536 }, 'build sizes it back onto the canvas');
   assert.equal(spec.journal.steps, undefined);
   for (const ref of spec.refs) {
     const meta = await sharp(ref.send).metadata();
-    assert.deepEqual([meta.width, meta.height], [1920, 1080], ref.role);
+    assert.deepEqual([meta.width, meta.height], [1920, 1080], `${ref.role}: the final at 1080p is made from the draft's own pictures`);
   }
   const subscription = { mode: 'subscription', tokenType: 'spark', tier: 'unlimited_pro' };
   assert.deepEqual(filmBilling(film, subscription), { ...subscription, mode: 'tokens' }, 'no plan covers Seedance');
@@ -116,6 +117,7 @@ test('a Seedance take: its stills resized (never cropped) to its shape, first-an
   assert.equal(request.modelId, 'seedance-2-5');
   assert.equal(request.billingMode, 'tokens');
   assert.equal(request.duration, 5);
+  assert.deepEqual([request.width, request.height, request.seedanceDraft], [854, 480, true]);
   assert.equal(request.generateAudio, true);
   assert.equal(request.seedanceTaskType, undefined, 'first-and-last-frame takes no task type');
   for (const key of ['referenceImageUrls', 'keyframes', 'steps', 'guidance', 'frames', 'sizePreset']) assert.equal(request[key], undefined, key);

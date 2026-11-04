@@ -238,7 +238,7 @@ export function spendingReport(dir) {
   };
   for (const a of unique.values()) {
     add(all, a);
-    const key = `${a.provider}:${a.model ?? 'unknown'}`;
+    const key = `${a.provider}:${a.model ?? 'unknown'}${a.seedance ? ` ${a.seedance}` : ''}`;
     add(models[key] ??= total(), a);
     if (a.kind === 'video') { add(clips, a); if (used.has(`${a.provider}:${a.projectId}`)) add(usedClips, a); }
   }
@@ -372,7 +372,9 @@ export function trackSpending(client, dir, { warn = text => console.error(text) 
   const create = projects.create.bind(projects);
   projects.create = async (...args) => {
     const request = args[0];
-    const a = ledger.begin({ kind: request.type ?? 'image', model: request.modelId, currency: request.tokenType ?? 'spark', billingMode: request.billingMode ?? 'auto' });
+    // A Seedance draft and the 1080p final made from it are separate charges, told apart in the report.
+    const seedance = request.seedanceDraft === true ? { seedance: 'draft' } : request.seedanceDraftJobId ? { seedance: 'final' } : {};
+    const a = ledger.begin({ kind: request.type ?? 'image', model: request.modelId, currency: request.tokenType ?? 'spark', billingMode: request.billingMode ?? 'auto', ...seedance });
     let project;
     try { project = await create(...args); }
     catch (error) { ledger.update(a, { status: 'submission-uncertain', errorCode: error?.code ?? null }); throw error; }

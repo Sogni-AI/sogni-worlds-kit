@@ -21,7 +21,7 @@ export function canaryFilms(plan) {
 }
 
 // When canary films are in different states, the one that most needs doing is reported.
-const PRECEDENCE = ['rendering', 'failed', 'rejected', 'unrendered', 'unjudged'];
+const PRECEDENCE = ['rendering', 'finalize', 'failed', 'rejected', 'unrendered', 'unjudged'];
 
 /**
  * Where the canary stands: `approved`, or the first state still in the way,
@@ -40,6 +40,7 @@ export function canaryNext(status, id) {
   switch (status.state) {
     case 'approved': case 'none': return null;
     case 'rendering': return { why: 'the canary is still rendering', command: `node world render ${id} --canary   (picks it up; nothing is submitted twice)` };
+    case 'finalize': return { why: `the person approved the canary's Seedance draft (${status.waiting.join(', ')}); it is made at 1080p next, and they judge that too`, command: `node world render ${id} --canary` };
     case 'unrendered': return { why: 'the canary is not rendered yet', command: `node world quote ${id}   — then: node world render ${id} --canary` };
     case 'failed': return { why: `the canary (${status.waiting.join(', ')}) failed to render`, command: `node world render ${id} ${only}` };
     case 'rejected': return { why: `the canary (${status.waiting.join(', ')}) was rejected`, command: `read what the person said first (node world status ${id} lists their verdict and area notes; open each area note's picture), then rewrite that film's direction in world.yaml for what went wrong, then: node world render ${id} ${only}` };

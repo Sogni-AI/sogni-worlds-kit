@@ -10,7 +10,7 @@ import { resolveWorldId, shown, filmId, loopId, backId, worldFile } from '../lib
 import { readJson, writeJson, sha256File } from '../lib/files.js';
 import { listTakes, approvedTake, filmState, readVerdicts, readNotes } from '../lib/takes.js';
 import { canvasByName, delivered } from '../lib/h3.js';
-import { isSeedance } from '../lib/seedance.js';
+import { isDraft, isSeedance } from '../lib/seedance.js';
 import { finishFilm, rewindFilm, relevelFilm, cleanPartials, FILM_LUFS } from '../lib/finish.js';
 import { validateWorld, mediaRefs, FORMAT } from '../lib/worldjson.js';
 import { deliveryIssues, writeServedStill, writeIcon, writeSocialCard, WEB_AUDIO, SOCIAL } from '../lib/delivery.js';
@@ -83,6 +83,8 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
   for (const film of filmsOf(plan)) {
     const takes = listTakes(paths, film.id, verdicts, notes, film);
     let take = approvedTake(takes);
+    // An approved Seedance draft (480p) is not a finished film until it is made at 1080p.
+    if (take && isDraft(take.journal)) take = null;
     if (!take && drafts) {
       take = draftTake(takes);
       if (take) unapproved.push(`${film.id} take ${take.take}`);
@@ -335,7 +337,8 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     if (!unapproved.length) {
       const served = new Set(mediaRefs(world));
       const clips = [...films.values()].filter(entry => served.has(entry.src));
-      recordSelection(paths.dir, 'build:clips', clips.map(entry => entry.take.journal.projectId).filter(Boolean), { unidentified: clips.filter(entry => !entry.take.journal.projectId).length });
+      // A Seedance final's cost includes the draft it was made from.
+      recordSelection(paths.dir, 'build:clips', clips.flatMap(entry => [entry.take.journal.projectId, entry.take.journal.draftProjectId]).filter(Boolean), { unidentified: clips.filter(entry => !entry.take.journal.projectId).length });
     }
   }
 
@@ -365,7 +368,8 @@ function report({ world, issues, delivery = [], missing, deadEnds, unreachable, 
   log.ok(`${shown(join(out, 'world.json'))}: ${count(world.places.length, 'place', 'places')}, ${count(hotspots, 'thing to click', 'things to click')}, ${count(loops, 'living photograph', 'living photographs')} (${count(films, 'film', 'films')} finished)`);
   if (missing.length) {
     log.warn(`Not in the world yet (${missing.length}):`);
-    for (const m of missing) log.info(`${m.film} — ${m.state}`);
+    const states = { finalize: 'approved as a 480p draft, not yet made at 1080p: node world render' };
+    for (const m of missing) log.info(`${m.film} — ${states[m.state] ?? m.state}`);
   }
   if (unapproved.length) log.warn(`A draft: ${unapproved.length} film${unapproved.length === 1 ? ' has' : 's have'} no approved take yet and use${unapproved.length === 1 ? 's' : ''} the newest unrejected one (${unapproved.join(', ')}). A draft cannot be submitted to the gallery. Before hosting, approve individually or use "Approve this build’s takes" on node world review ${id}, then build again without --drafts. Unchanged films are not re-encoded.`);
   const endings = new Set(world.places.filter(p => p.ending).map(p => p.id));

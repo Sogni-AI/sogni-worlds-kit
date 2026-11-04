@@ -539,8 +539,10 @@ stills as any other, and it makes its own dialogue and sound.
   action where one thing causes the next, several named characters in one shot.
   Keep loops, quiet crossings and the rest on H3: it renders native 2K, an Unlimited
   plan covers it, and Seedance renders 1080p at about nine times the price per second
-  (as of 2026-10: 148 Spark a second, about $0.74; Uncensored 171, about $0.85; no
-  Unlimited plan covers either, so they are paid from the token balance).
+  (as of 2026-11: 148 Spark a second, about $0.74; Uncensored 171, about $0.85; no
+  Unlimited plan covers either, so they are paid from the token balance). Its 480p
+  drafts (below) cost about a fifth of that: 27 Spark a second, about $0.13
+  (Uncensored 31, about $0.15).
 - **Its fields.** The same `action` and `sound`, checked by the same rules. Its
   `frames` are whole seconds, seconds × 24 + 1: 121 is 5 s, 145 is 6 s (4 to 30 s).
   It takes no keyframes. The world's canvas must be within 2% of a shape Seedance
@@ -590,10 +592,22 @@ stills as any other, and it makes its own dialogue and sound.
   recurring voice drifts between films: listen to each new line beside the
   approved ones, and keep a character's description the same in every film they
   speak in.
-- **One take per film.** Every take costs its full price. Render one, judge it, and
-  retake only after changing the words, the stills or whatever caused the failure.
-  The canary includes the world's first Seedance film, so one is judged before the
-  rest are paid for.
+- **Drafts first, then one final.** Every Seedance take is rendered as a 480p draft.
+  Judge it, and retake only after changing the words, the stills or whatever caused
+  the failure: each retake is another draft. When the person approves a draft,
+  `render` makes that same video at 1080p (its final) from the draft itself: the
+  same stills, words, length, seed and sound, never sent again. On the kit's test
+  film the draft and its final matched frame for frame, the final sharp at 1080p
+  (2026-11-04). The person judges the final too, and build ships only approved
+  finals. Only a take rendered as a draft can be made at 1080p, only for a while
+  after it finishes (three hours as of 2026-11: `render` prints the deadline and
+  `node world status` lists it), and each final is billed. Past the deadline,
+  `render` stops: render a new draft (`render --only <film>`). A fresh 1080p render
+  of the same words would be a different video. Judge motion, timing, words and
+  sound on the draft; small lettering and fine detail in faces only resolve at
+  1080p, so look at those again on the final. The canary includes the world's first
+  Seedance film, its draft and then its final, so both are judged before the rest
+  are paid for.
 - **Refusals.** The provider's content policy refuses some real faces and some
   content (code 5061, nothing charged), and standard Seedance's own check refuses
   some prompts. If the film is what the person asked for, render it on

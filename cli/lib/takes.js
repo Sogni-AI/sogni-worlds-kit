@@ -18,6 +18,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { readJson, sha256File, writeJson } from './files.js';
 import { ROOT } from './paths.js';
+import { isDraft } from './seedance.js';
 
 export const VERDICTS = ['approved', 'rejected', 'passed'];
 
@@ -152,20 +153,36 @@ export const nextTake = takes => (takes.at(-1)?.take ?? 0) + 1;
  *   approved    a take was approved (the newest approved take is used)
  *   unjudged    a finished take awaits a verdict (screened or not)
  *   rendering   a take was submitted and has not finished
+ *   finalize    the approved take is a Seedance draft, still to be made at 1080p
  *   failed      the newest take failed and nothing better exists
  *   rejected    every finished take was rejected: rewrite the direction, then render again
  *   unrendered  no take yet
  */
 export function filmState(allTakes) {
   const takes = allTakes.filter(t => !t.stale);
-  if (takes.some(t => t.verdict?.verdict === 'approved')) return 'approved';
-  if (takes.some(t => t.journal.status === 'completed' && (!t.verdict || t.verdict.verdict === 'passed'))) return 'unjudged';
+  const picked = approvedTake(takes);
+  if (picked && !isDraft(picked.journal)) return 'approved';
+  // A take passed over waits again only while nothing is approved.
+  if (takes.some(t => t.journal.status === 'completed' && (!t.verdict || (!picked && t.verdict.verdict === 'passed')))) return 'unjudged';
   if (takes.some(t => ['submitting', 'submitted'].includes(t.journal.status))) return 'rendering';
+  if (draftToFinalize(takes)) return 'finalize';
   const latest = takes.at(-1);
   if (!latest) return 'unrendered';
   if (latest.journal.status === 'failed') return 'failed';
   return 'rejected';
 }
 
-/** The take a build uses: the newest approved one. */
+/** The take a build uses: the newest approved one (a Seedance draft is finalized first). */
 export const approvedTake = takes => takes.filter(t => !t.stale && t.verdict?.verdict === 'approved').at(-1) ?? null;
+
+/**
+ * The approved Seedance draft still to be made at 1080p: the film's newest
+ * approved take when it is a draft that no final has been made of, or is being
+ * made of. A final that failed leaves its draft waiting.
+ */
+export function draftToFinalize(allTakes) {
+  const takes = allTakes.filter(t => !t.stale);
+  const picked = approvedTake(takes);
+  if (!picked || !isDraft(picked.journal)) return null;
+  return takes.some(t => t.journal.finalizes === picked.take && t.journal.status !== 'failed') ? null : picked;
+}
