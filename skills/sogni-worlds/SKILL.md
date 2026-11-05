@@ -20,6 +20,11 @@ metadata:
 Everything happens inside the Sogni Worlds Kit, a repository with a command-line
 pipeline, a player and the full instructions.
 
+An MCP connection supplies its advertised tools, not this pipeline or its
+local files. The Kit already uses Sogni's SDK directly. For connection choices
+and hosted availability, see [the MCP guide](https://docs.sogni.ai/agents/mcp/);
+continue to use the Kit for planning, review, build and export.
+
 1. **Find or fetch the kit.** If the current folder (or a parent) has `world.js` and
    `AGENTS.md` mentioning "Sogni Worlds", you are in it: run
    `node world update --check` once per session. Otherwise fetch it where the
