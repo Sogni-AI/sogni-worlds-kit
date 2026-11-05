@@ -112,6 +112,24 @@ updates and withdrawal in [My worlds](https://worlds.sogni.ai/?view=mine).
 
 Lost at any point? `node world next` prints the one thing to do now.
 
+## How MCP fits
+
+The Kit connects directly to Sogni through its SDK and uses your account's
+existing billing, including eligible Unlimited coverage. No MCP server is
+needed to run `node world`.
+
+For MCP clients, the [Creative Agent Skill's local MCP server](https://github.com/Sogni-AI/sogni-creative-agent-skill#connecting-with-mcp)
+provides creative tools on your computer. The separate
+[hosted MCP guide](https://docs.sogni.ai/agents/mcp/) describes remote generation,
+its current availability and connection requirements. Hosted MCP cannot run the
+Kit's commands or assemble a playable world. Building, reviewing and exporting
+still happens in this repository with its local files, Node.js and ffmpeg.
+
+Follow [AGENTS.md](AGENTS.md) and `node world next` for the whole workflow.
+Media made outside the Kit must be downloaded, reviewed and recorded in the
+world's [spending ledger](docs/project-spending.md), including rerolls. Connecting
+MCP does not load the Worlds skill, approve takes, or publish a world.
+
 ## Get the Unlimited plan
 
 A world is dozens of native 2K films, and that's where a plan pays off.

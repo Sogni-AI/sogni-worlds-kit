@@ -553,6 +553,11 @@ reviewer: nothing you could have caught should reach them.
 
 ## Tools beyond the pipeline: the Sogni Creative Agent Skill
 
+MCP connection choices are covered in [How MCP fits](README.md#how-mcp-fits).
+The Kit uses Sogni's SDK directly. A hosted MCP connection cannot run this local
+pipeline, load its instructions, approve takes or export the player; keep using
+`node world next` to drive those stages.
+
 The kit's commands cover a world end to end. For anything else, use the
 Sogni Creative Agent Skill (`sogni-agent`, installed by `node world setup`). It
 uses the same API key and plan. Useful here:
