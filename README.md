@@ -54,6 +54,16 @@ Open the URL it prints. No account needed.
 
 ## Build your own
 
+Find the [`sogni-worlds` skill on skills.sh](https://www.skills.sh/sogni-ai/sogni-worlds-kit/sogni-worlds),
+or install its instructions into your agent's current project:
+
+```bash
+npx --yes skills@1.7.6 add Sogni-AI/sogni-worlds-kit --skill sogni-worlds
+```
+
+Choose your agent when prompted. This installs the skill instructions; building
+a world also needs this Kit checkout and the setup below.
+
 You need Node 22.12+, [ffmpeg](https://ffmpeg.org/download.html), a
 [Sogni account and API key](https://dashboard.sogni.ai/api-key), and a coding agent.
 
