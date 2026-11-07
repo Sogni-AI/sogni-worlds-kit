@@ -59,7 +59,8 @@ export function trackingSource(info) {
 
 /** Verify the delivered artifact against the worker's stored selection receipt. */
 export function validateTrackingReceipt(job, bytes, sourceSha256, source) {
-  const receipt = job?.provenance ?? job;
+  // Live SDK Job objects expose provenance; projects.get returns RawJob.result.
+  const receipt = job?.provenance ?? job?.result ?? job;
   if (!receipt || receipt.sourceVideoSha256 !== sourceSha256 || receipt.sha256 !== sha256(bytes) ||
       receipt.maskWidth !== source.width || receipt.maskHeight !== source.height || receipt.maskFrames !== source.frames ||
       !Number.isFinite(receipt.maskFps) || Math.abs(receipt.maskFps - source.fps) > 1e-6) {

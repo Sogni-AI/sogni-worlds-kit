@@ -26,7 +26,7 @@ function fixture(t) {
   const session = { billing: { tokenType: 'spark', mode: 'subscription' }, appId: 'test-track',
     client: { projects: { create: async p => { sent.push(p); return { id: 'ONE' }; } } } };
   const refusals = { creating: fn => fn() };
-  const deps = { wait: async () => ({ id: 'ONE' }), download: async () => ({ bytes, job }),
+  const deps = { wait: async () => ({ id: 'ONE' }), download: async () => ({ bytes, job: { id: 'ONE-0', imgID: 'MASK', result: job } }),
     trace: async () => ({ width: 16, height: 16, fps: 2, frames: ['M1 1L3 1L3 3Z', 'M8 1L10 1L10 3Z'] }) };
   return { dir, paths, task, bytes, job, sent, session, refusals, deps };
 }
@@ -122,8 +122,24 @@ test('simultaneous requests cannot both reserve the same paid attempt', async t 
 test('wrong source, wrong downloaded hash and timing drift fail before outline publication', t => {
   const f = fixture(t);
   for (const change of [{ sourceVideoSha256: 'other' }, { sha256: 'bad' }, { maskFrames: 3 }, { maskFps: 24 }]) {
-    assert.throws(() => validateTrackingReceipt({ ...f.job, ...change }, f.bytes, f.task.sourceSha256, f.task.source), /does not match/);
+    const invalid = { ...f.job, ...change };
+    for (const job of [invalid, { result: invalid }, { provenance: invalid }]) {
+      assert.throws(() => validateTrackingReceipt(job, f.bytes, f.task.sourceSha256, f.task.source), /does not match/);
+    }
   }
+});
+
+test('stored RawJob.result and live SDK Job.provenance validate the same attested bytes', t => {
+  const f = fixture(t);
+  for (const job of [{ id: 'ONE-0', imgID: 'MASK', result: f.job }, { provenance: f.job }]) {
+    assert.deepEqual(validateTrackingReceipt(job, f.bytes, f.task.sourceSha256, f.task.source), f.job);
+  }
+});
+
+test('an invalid live receipt cannot fall through to a different stored receipt', t => {
+  const f = fixture(t);
+  assert.throws(() => validateTrackingReceipt({ provenance: { ...f.job, sha256: 'wrong' }, result: f.job },
+    f.bytes, f.task.sourceSha256, f.task.source), /does not match/);
 });
 
 test('an input symlink cannot upload a file outside its world', t => {
