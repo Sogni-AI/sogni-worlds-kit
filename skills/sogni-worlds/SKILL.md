@@ -2,7 +2,7 @@
 name: sogni-worlds
 description: Build a world with the Sogni Worlds Kit — an interactive, cinematic, click-through world painted from a concept or made from the user's photos (each place comes alive; clicking an object plays a MiniMax H3 film to the next place; narration, music, fatal choices, endings and 3D collectibles). Use when the user asks to build, plan, render, review, publish or submit a world to the Sogni Worlds public gallery, a photo world, an interactive travel story, a choose-your-own-adventure video story or a click-through adventure from photos or from an idea, or mentions worlds.sogni.ai or the Sogni Worlds Kit.
 metadata:
-  version: "0.3.3"
+  version: "0.4.0"
   homepage: https://github.com/Sogni-AI/sogni-worlds-kit
   openclaw:
     emoji: "🌍"
@@ -55,6 +55,9 @@ Rules that matter even before you open AGENTS.md:
   on that page. Never confirm for them. Then build without `--drafts` and export
   before hosting or submitting; drafts keep their badge and cannot be submitted.
 - Quote before spending (`node world quote`), and render the canary before the rest.
+- To follow a moving clickable object in an approved loop, use `node world track`
+  (quote first with `--quote`). Inspect it in the built player before export.
+  The Kit's `docs/tracking-objects.md` explains selection and resumable requests.
 - Keep lifetime spending in the world's ledger (`node world spend`). Kit calls
   record themselves; import external attempts, rerolls and completed funding
   receipts as you go. Keep vendor credits separate from cash and usage, and flag

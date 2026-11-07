@@ -12,6 +12,7 @@ import { greyFrames, correlation } from '../cli/lib/screen.js';
 import { validateWorld, mediaEntries } from '../cli/lib/worldjson.js';
 import { measureFilm, fastStart } from '../cli/lib/delivery.js';
 import { tempDir, pathsAt, syntheticVideo } from './helpers.js';
+import { videoSelectionHash, videoSelectionPrompt } from '../cli/lib/video-selection.js';
 
 const quiet = { step() {}, ok() {}, warn() {}, info() {}, fail() {}, title() {}, next() {}, dim() {} };
 
@@ -39,7 +40,7 @@ test('build assembles a playable world from approved takes only', async () => {
       { id: 'a', title: 'Place A', still: 'stills/a.png', caption: 'Hello', narration: { lines: ['Hello.', 'This is A.'] },
         loop: { frames: 124, action: 'x', sound: 'y' },
         objects: [
-          { id: 'door', label: 'Open the door', at: [0.4, 0.5], goes: 'b', film: { frames: 124 } },
+          { id: 'door', label: 'Open the door', at: [0.4, 0.5], select: { positive: [[0.4, 0.5]] }, goes: 'b', film: { frames: 124 } },
           { id: 'bird', label: 'Watch the bird', at: [0.8, 0.2], film: { frames: 124 } },
         ] },
       { id: 'b', title: 'Place B', still: 'stills/b.jpg', music: { file: 'music/b.wav', credit: 'Mine' },
@@ -47,12 +48,21 @@ test('build assembles a playable world from approved takes only', async () => {
     ],
   };
   const pan = 'testsrc2=size=640x240:rate=24,crop=192:128:x=t*40:y=40';
-  await take(paths, 'a-loop', 1, { kind: 'loop', seconds: 2, source: 'testsrc2=size=SIZE:rate=24', verdict: 'approved' });
+  const loopSha = await take(paths, 'a-loop', 1, { kind: 'loop', seconds: 2, source: 'testsrc2=size=SIZE:rate=24', verdict: 'approved' });
   await take(paths, 'a-door', 1, { kind: 'crossing', seconds: 2, source: pan, verdict: 'rejected' });
   await take(paths, 'a-door', 2, { kind: 'crossing', seconds: 5, source: pan, verdict: 'approved' });
   await take(paths, 'a-bird', 1, { kind: 'moment', seconds: 2, source: 'testsrc2=size=SIZE:rate=24', tone: 660 });
   await take(paths, 'b-path', 1, { kind: 'crossing', seconds: 3, source: pan, verdict: 'approved' });
   writeJson(join(paths.selections, 'a-door.json'), { outline: { width: 1536, height: 1024, path: 'M10 10L100 10L100 100Z' } });
+  const select = plan.places[0].objects[0].select;
+  const prompt = videoSelectionPrompt(select);
+  const track = { width: 96, height: 64, fps: 24, frames: Array.from({ length: 48 }, (_, i) => 'M' + i + ' 0L90 0L90 60Z') };
+  const outlines = 'a-door-11111111-1111-4111-8111-111111111111.outlines.json';
+  const outlineFile = join(paths.selections, 'video', outlines);
+  writeJson(outlineFile, track);
+  writeJson(join(paths.selections, 'a-door.video.json'), { status: 'completed', sourceSha256: loopSha, prompt,
+    source: { width: 96, height: 64, frames: 48, fps: 24 }, inputsHash: videoSelectionHash(loopSha, prompt),
+    outlines, outlinesSha256: sha256File(outlineFile), projectId: 'video-selection-one' });
   mkdirSync(join(paths.audio, 'narration'), { recursive: true });
   await ffmpeg(['-f', 'lavfi', '-i', 'sine=f=220:sample_rate=24000', '-t', '2', join(paths.audio, 'narration', 'a.mp3')]);
   writeJson(join(paths.audio, 'narration', 'a.json'), { status: 'completed', mp3: 'a.mp3',
@@ -89,12 +99,14 @@ test('build assembles a playable world from approved takes only', async () => {
   assert.equal(a.hotspots[0].to, 'b');
   assert.equal(a.hotspots[0].next, true);
   assert.equal(a.hotspots[0].outline.path, 'M10 10L100 10L100 100Z');
+  assert.deepEqual(a.hotspots[0].outlineTrack, track, 'the exact approved loop gets its frame-aligned outlines');
   assert.equal(a.narration.src, 'audio/narration-a.mp3');
   assert.equal(a.narration.lines[1].start, 1.0);
   assert.deepEqual(b.hotspots[0].at, [0.3, 0.6], 'label falls back to the first SAM click');
   assert.equal(b.hotspots[0].next, true, 'the last place leads back to the first');
   assert.ok(result.missing.some(m => m.film === 'a-bird' && m.state === 'unjudged'));
   assert.deepEqual(readSpending(paths.dir).selections['build:clips'].projectIds, ['sogni:a-door-2', 'sogni:a-loop-1', 'sogni:b-path-1']);
+  assert.deepEqual(readSpending(paths.dir).selections['build:tracking'].projectIds, ['sogni:video-selection-one']);
 
   // The approved take (5 s), not the rejected one (2 s), finished at full and half size.
   const door = await probe(join(paths.build, a.hotspots[0].film.src));
@@ -112,8 +124,12 @@ test('build assembles a playable world from approved takes only', async () => {
 
   // A second build re-encodes nothing.
   const steps = [];
+  select.positive = [[0.9, 0.5]];
   await buildWorld({ paths, plan, say: { ...quiet, step: text => steps.push(text) } });
   assert.deepEqual(steps, []);
+  const rebuilt = JSON.parse(readFileSync(join(paths.build, 'world.json'), 'utf8'));
+  assert.equal(rebuilt.places[0].hotspots[0].outlineTrack, undefined, 'changed clicks cannot silently reuse stale tracking');
+  assert.deepEqual(readSpending(paths.dir).selections['build:tracking'].projectIds, []);
 });
 
 test('build: a close look ships its still, its line and its film back; a loop sits under the narrator, a film at the voice', async () => {

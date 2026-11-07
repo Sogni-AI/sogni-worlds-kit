@@ -497,6 +497,45 @@ async function begin(page, url) {
 }
 
 const CHECKS = {
+  /** SAM video paths follow the visible loop's clock, then stop during a crossing. */
+  async tracking(devtools, url) {
+    const file = join(root, 'world', 'world.json');
+    const world = JSON.parse(readFileSync(file, 'utf8'));
+    const shapes = ['M120 180L240 180L240 300Z', 'M360 180L480 180L480 300Z', 'M600 180L720 180L720 300Z'];
+    world.places[0].hotspots[0].outlineTrack = { width: 960, height: 540, fps: 24,
+      frames: Array.from({ length: 72 }, (_, i) => shapes[Math.floor(i / 24)]) };
+    writeJson(join(root, 'world', 'tracking.json'), world);
+    const at = new URL(url);
+    at.searchParams.set('world', new URL('/world/tracking.json', at.origin).href);
+    const page = await openPage(devtools);
+    try {
+      await begin(page, at.href);
+      const samples = [];
+      for (const time of [0.1, 1.1, 2.1, 0.1]) {
+        const sample = await page.evaluate(`(async () => {
+          const video = document.querySelector('.frame video.loop.on');
+          if (!video) throw new Error('no visible loop');
+          video.pause();
+          await new Promise(done => { video.addEventListener('seeked', done, { once: true }); video.currentTime = ${time}; });
+          await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+          return [...document.querySelectorAll('.hotspot:first-child svg path')].map(p => p.getAttribute('d'));
+        })()`);
+        samples.push(sample);
+        if (!sample.length || sample.some(d => d !== shapes[Math.floor(time)])) {
+          return { ok: false, detail: 'path did not follow loop time ' + time + ': ' + JSON.stringify(sample) };
+        }
+      }
+      await page.evaluate(`document.querySelector('.hotspot:first-child svg path').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
+      await until(page, s => s.inFilm, 10_000, 'the tracked crossing');
+      const hidden = await page.evaluate(`document.querySelector('.hotspots').hidden`);
+      await page.click('Skip');
+      await until(page, s => atRest(s) && s.place === 'Hall', 30_000, 'the hall');
+      const staticSpot = await page.evaluate(`document.querySelectorAll('.hotspots:not([hidden]) .hotspot').length`);
+      const ok = hidden && staticSpot === 1 && !page.errors.length;
+      return { ok, detail: 'four frame-clock seeks including wrap; all SVG hit paths aligned; click reached Hall; static hotspot retained; ' + page.errors.length + ' errors' };
+    } finally { await page.close(); }
+  },
+
   /** Native-size Seedance films beside H3 films: the same picture across every handover, on desktop and a phone held sideways. */
   async native(devtools, url) {
     const dir = join(root, 'world', 'native');

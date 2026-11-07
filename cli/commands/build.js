@@ -18,6 +18,7 @@ import { ffmpeg } from '../lib/media.js';
 import { figureFiles } from '../lib/figures.js';
 import { wantsFigure } from './figures.js';
 import { recordSelection } from '../lib/spending.js';
+import { usableTracking } from '../lib/video-selection.js';
 
 export const summary = 'Assemble the playable world (build/world.json) from your approved takes';
 export const usage = `node world build [world] [--force] [--drafts]
@@ -275,6 +276,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
     await writeIcon(files.cutout, icon);
     figures[key] = { model: rel(out, model), icon: rel(out, icon), name: object.figureName ?? figureName(object.label ?? object.id) };
   }
+  const trackedProjects = [];
   const places = plan.places.map(place => {
     const loop = films.get(loopId(place.id));
     const hotspots = [];
@@ -283,6 +285,9 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       if (!entry || reveals[filmId(place.id, object.id)] === null) continue;
       const selectionPath = join(paths.selections, `${place.id}-${object.id}.json`);
       const selection = existsSync(selectionPath) ? readJson(selectionPath) : null;
+      const outlineTrack = object.select && loop?.take?.sha
+        ? usableTracking(paths, filmId(place.id, object.id), loop.take.sha, object.select) ?? undefined : undefined;
+      if (outlineTrack) trackedProjects.push(readJson(join(paths.selections, filmId(place.id, object.id) + '.video.json')).projectId);
       const at = object.at ?? object.select?.positive?.[0] ?? null;
       const isNext = linear && Boolean(object.goes) && object.goes === nextPlaceId(plan, place.id);
       hotspots.push(clean({
@@ -291,6 +296,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
         hint: object.hint,
         at: at ? [clamp01(at[0]), clamp01(at[1])] : [0.5, 0.5],
         outline: selection?.outline ? { width: selection.outline.width, height: selection.outline.height, path: selection.outline.path } : null,
+        outlineTrack,
         to: object.goes ?? null,
         next: object.goes ? isNext : undefined,
         shortcut: object.goes ? Boolean(object.shortcut ?? (linear && !isNext)) && !isNext : undefined,
@@ -345,6 +351,7 @@ export async function buildWorld({ paths, plan, force = false, drafts = false, s
       const clips = [...films.values()].filter(entry => served.has(entry.src));
       // A Seedance final's cost includes the draft it was made from.
       recordSelection(paths.dir, 'build:clips', clips.flatMap(entry => [entry.take.journal.projectId, entry.take.journal.draftProjectId]).filter(Boolean), { unidentified: clips.filter(entry => !entry.take.journal.projectId).length });
+      recordSelection(paths.dir, 'build:tracking', trackedProjects.filter(Boolean), { unidentified: trackedProjects.filter(id => !id).length });
     }
   }
 

@@ -319,6 +319,15 @@ grabbed) and run `node world select` again: an object whose clicks changed is
 outlined again by itself. `select --only <place>-<object>` redoes one outline even
 when its clicks didn't change.
 
+For an object that moves in an approved place loop, use `node world track --only
+<place>-<object> --quote`, then the same command without `--quote`. This runs SAM 3
+video on the exact approved loop, one selected object per request, and saves
+moving click targets. Build and play the result to inspect the outline throughout
+the loop, including occlusions and its wrap. It never changes the still or film;
+existing worlds keep fixed outlines until tracking is requested. Interrupted
+requests resume the same project; never bypass an uncertain submit by deleting
+its receipt. Details: [tracking objects](docs/tracking-objects.md).
+
 Then make the close looks, in this order (`node world next` walks you through it):
 `node world reveals` crops each place's still around the object and edits in only
 what `reveal.paint` describes, three candidates each, with a `room kept` score.

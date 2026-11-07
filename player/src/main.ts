@@ -49,6 +49,7 @@ class Player {
     this.figures = figuresOf(world);
     this.hotspots = new Hotspots(this.stage.overlay, world, spot => void this.go(spot),
       spot => this.collection.has(`${this.place?.id}/${spot.id}`), spot => this.played.has(`${this.place?.id}/${spot.id}`));
+    this.hotspots.followLoop(() => this.stage.loopVideo);
     this.narration = new Narration(root, world);
     this.music = new Music(world.music, world);
     this.stage.onStall = (stalled, loaded) => this.ui.slow(stalled ? { loaded, quality: this.stage.quality } : null);

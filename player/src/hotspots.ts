@@ -15,6 +15,13 @@ export class Hotspots {
   private readonly layer: HTMLElement;
   /** The visitor hid the labels in this place by clicking the open picture. */
   private labelsHidden = false;
+  private animation = 0;
+  private loopVideo: () => HTMLVideoElement | null = () => null;
+
+  /** Follow the visible loop element, including the handoff to its next lap. */
+  followLoop(source: () => HTMLVideoElement | null) {
+    this.loopVideo = source;
+  }
 
   constructor(
     overlay: HTMLElement,
@@ -68,7 +75,9 @@ export class Hotspots {
   }
 
   render(place: Place) {
+    cancelAnimationFrame(this.animation);
     this.layer.replaceChildren();
+    const tracks: { track: NonNullable<Hotspot['outlineTrack']>; paths: SVGPathElement[]; frame: number }[] = [];
     for (const spot of place.hotspots) {
       const group = el('div', 'hotspot');
       const light = (on: boolean) => group.classList.toggle('lit', on);
@@ -82,23 +91,28 @@ export class Hotspots {
         });
       };
 
-      if (spot.outline) {
+      const track = spot.outlineTrack;
+      const outline = track ? { width: track.width, height: track.height, path: track.frames[0] ?? '' } : spot.outline;
+      if (outline) {
+        const paths: SVGPathElement[] = [];
         const svg = document.createElementNS(SVG, 'svg');
-        svg.setAttribute('viewBox', `0 0 ${spot.outline.width} ${spot.outline.height}`);
+        svg.setAttribute('viewBox', '0 0 ' + outline.width + ' ' + outline.height);
         svg.setAttribute('preserveAspectRatio', 'none');
         svg.classList.add('outline');
         const traced = (className?: string) => {
           const path = document.createElementNS(SVG, 'path');
-          path.setAttribute('d', spot.outline!.path);
+          path.setAttribute('d', outline.path);
           path.setAttribute('fill-rule', 'evenodd');
           if (className) path.classList.add(className);
           clickable(path);
           svg.append(path);
+          paths.push(path);
         };
         // A wide invisible stroke under a small outline: 22 px of margin all round.
-        if (outlineCoverage(spot.outline) < SMALL_OUTLINE) traced('hit');
+        if (outlineCoverage(outline) < SMALL_OUTLINE) traced('hit');
         traced();
         group.append(svg);
+        if (track) tracks.push({ track, paths, frame: 0 });
       }
 
       const label = el('button', 'label');
@@ -123,9 +137,26 @@ export class Hotspots {
     // Each place starts with every label showing.
     this.setLabels(true);
     requestAnimationFrame(() => this.keepClear());
+    if (tracks.length) {
+      const tick = () => {
+        if (this.layer.hidden) return;
+        const time = this.loopVideo()?.currentTime ?? 0;
+        for (const item of tracks) {
+          const frame = Math.min(item.track.frames.length - 1,
+            Math.max(0, Math.floor((Number.isFinite(time) ? time : 0) * item.track.fps + 1e-6)));
+          if (frame !== item.frame) {
+            for (const path of item.paths) path.setAttribute('d', item.track.frames[frame] ?? '');
+            item.frame = frame;
+          }
+        }
+        this.animation = requestAnimationFrame(tick);
+      };
+      this.animation = requestAnimationFrame(tick);
+    }
   }
 
   hide() {
+    cancelAnimationFrame(this.animation);
     this.layer.hidden = true;
   }
 
