@@ -1,6 +1,6 @@
 {
   "name": "sogni-worlds-kit",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "private": true,
   "description": "Build an interactive, cinematic choose-your-own-adventure world you click through, from a concept alone or from your photos, with your own coding agent, the Sogni Creative Agent Skill and a Sogni API key.",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "check:clawhub": "node scripts/publish-clawhub.mjs --check"
   },
   "dependencies": {
-    "@sogni-ai/sogni-client": "^5.74.0",
+    "@sogni-ai/sogni-client": "5.79.0",
     "exif-reader": "^2.0.3",
     "sharp": "^0.35.5",
     "yaml": "^2.9.1"

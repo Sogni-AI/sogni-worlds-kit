@@ -91,6 +91,11 @@ export class Stage {
     return [...this.deck.videos, ...this.films, this.backdropVideo];
   }
 
+  /** The loop currently visible, including its two-element lap handoff. */
+  get loopVideo(): HTMLVideoElement | null {
+    return this.deck.visible;
+  }
+
   /** Show a place at once: its still, then its living loop from the first frame. */
   async show(place: Place) {
     this.handovers++;

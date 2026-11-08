@@ -184,7 +184,9 @@ Details: [docs/costs-and-plans.md](docs/costs-and-plans.md).
   photos, colour-managed and cropped once to the film shape. Every film starts and
   ends on those exact pixels.
 - **Clickable objects.** Segment Anything 3 turns a click on the boat into an
-  outline of the boat.
+  outline of the boat. After approving a place loop, `node world track` can
+  follow the boat through the video so its clickable outline moves with it.
+  [Track moving objects](docs/tracking-objects.md).
 - **Films.** FastH3 first-and-last-frame, two-stage, delivered at 2K with its own
   generated sound. A *crossing* goes from one still to the next, a *loop* makes a
   still breathe, and a *moment* is something that happens and returns.
@@ -269,7 +271,7 @@ collectible figures: [docs/agent.md](docs/agent.md).
 | --- | --- | --- |
 | Set up | `node world setup` · `doctor` · `update` | API key, plan, skill install, health check, get the newest kit |
 | Plan | `new` · `ingest` · `lint` · `story` · `plan` · `quote` | Create a world, make stills, check the plan, have an editor read a made-up story, show the plan, price it |
-| Make | `select` · `render` · `figures` · `narrate` · `music` | Outlines, films, 3D collectibles, voice, score |
+| Make | `select` · `render` · `track` · `figures` · `narrate` · `music` | Outlines, films, moving click targets, 3D collectibles, voice, score |
 | Judge | `screen` · `joins` · `audit-clicks` · `note` · `reject` · `review` | Automatic checks, every cut of a stitched film on both sides, does each film answer its click, agent notes, your verdicts and area notes |
 | Finish | `build` · `play` · `export` · `submit` | Assemble, play, host and submit to the community gallery |
 | Where am I? | `status` · `next` · `spend` | Progress, the next step, and lifetime spending |

@@ -30,6 +30,20 @@ test('a complete world is valid', () => {
   assert.deepEqual(validateWorld(good()), []);
 });
 
+test('moving outlines require a loop and complete finite frame timing', () => {
+  const world = good(), place = world.places[0], spot = place.hotspots[0];
+  const track = { width: 960, height: 544, fps: 24, frames: ['M0 0L10 0L10 10Z', ''] };
+  spot.outlineTrack = track;
+  assert.deepEqual(validateWorld(world), [], 'an empty mask frame is an occlusion');
+  for (const broken of [{ fps: 0 }, { width: 1.5 }, { frames: [] }, { frames: [null] }, { frames: Array(901).fill('') }]) {
+    spot.outlineTrack = { ...track, ...broken };
+    assert.ok(validateWorld(world).some(x => x.includes('outlineTrack')), JSON.stringify(broken).slice(0, 100));
+  }
+  spot.outlineTrack = track;
+  place.loop = null;
+  assert.ok(validateWorld(world).some(x => x.includes('outlineTrack')));
+});
+
 test('every broken rule is reported', () => {
   const world = good();
   world.format = 'other';

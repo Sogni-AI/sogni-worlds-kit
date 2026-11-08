@@ -52,3 +52,15 @@ export async function probe(path) {
     audioChannels: audio?.channels ?? 0,
   };
 }
+
+/** Tracking must agree with admission: decoded frames and average frame rate. */
+export async function probeTrackingVideo(path) {
+  const out = await run(FFPROBE, ['-v', 'error', '-count_frames', '-show_entries',
+    'stream=codec_type,width,height,nb_read_frames,avg_frame_rate:format=duration', '-of', 'json', path]);
+  const data = JSON.parse(out.toString('utf8'));
+  const video = data.streams?.find(stream => stream.codec_type === 'video');
+  const [num, den] = String(video?.avg_frame_rate ?? '0/1').split('/').map(Number);
+  return { width: video?.width ?? 0, height: video?.height ?? 0,
+    frames: Number(video?.nb_read_frames ?? 0), fps: den ? num / den : 0,
+    seconds: Number(data.format?.duration ?? 0) };
+}

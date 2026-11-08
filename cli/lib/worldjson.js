@@ -114,7 +114,7 @@ export function validateWorld(world) {
     for (const [i, hotspot] of place.hotspots.entries()) {
       const at = `${where}.hotspots[${isObject(hotspot) && hotspot.id ? hotspot.id : i}]`;
       if (!isObject(hotspot)) { issues.push(`${at}: must be an object`); continue; }
-      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'to', 'next', 'shortcut', 'collect', 'figure', 'details', 'film', 'reveal', 'rewind'], at, issues);
+      extra(hotspot, ['id', 'label', 'hint', 'at', 'outline', 'outlineTrack', 'to', 'next', 'shortcut', 'collect', 'figure', 'details', 'film', 'reveal', 'rewind'], at, issues);
       if (!isString(hotspot.id)) issues.push(`${at}.id: required`);
       else if (hotspotIds.has(hotspot.id)) issues.push(`${at}: id appears twice in this place`);
       hotspotIds.add(hotspot.id);
@@ -127,6 +127,17 @@ export function validateWorld(world) {
         const outline = hotspot.outline;
         if (!isObject(outline) || !(outline.width > 0) || !(outline.height > 0) || !isString(outline.path)) issues.push(`${at}.outline: { width, height, path }`);
         else extra(outline, ['width', 'height', 'path'], `${at}.outline`, issues);
+      }
+      if (hotspot.outlineTrack !== undefined) {
+        const track = hotspot.outlineTrack;
+        if (!isObject(track) || !Number.isSafeInteger(track.width) || track.width <= 0 ||
+            !Number.isSafeInteger(track.height) || track.height <= 0 || !Number.isFinite(track.fps) || track.fps <= 0 ||
+            !Array.isArray(track.frames) || !track.frames.length || track.frames.length > 900 || track.frames.some(p => typeof p !== 'string')) {
+          issues.push(at + '.outlineTrack: positive width/height/fps and 1-900 frame paths');
+        } else {
+          extra(track, ['width', 'height', 'fps', 'frames'], at + '.outlineTrack', issues);
+          if (!place.loop) issues.push(at + '.outlineTrack: needs the place loop it follows');
+        }
       }
       if (hotspot.to !== undefined && hotspot.to !== null && !ids.has(hotspot.to)) issues.push(`${at}.to: "${hotspot.to}" is not a place`);
       for (const key of ['next', 'shortcut', 'collect']) if (hotspot[key] !== undefined && typeof hotspot[key] !== 'boolean') issues.push(`${at}.${key}: true or false`);

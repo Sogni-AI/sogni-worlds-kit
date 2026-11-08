@@ -4,12 +4,15 @@
 /** `fill`: the film is at its own shape (a Seedance film at 1080p), stretched onto the world's frame to line up with the stills. */
 export type Film = { src: string; src720?: string; seconds?: number; fill?: boolean };
 export type Outline = { width: number; height: number; path: string };
+/** One exact outline per frame of the place loop; an occluded object has an empty path. */
+export type OutlineTrack = { width: number; height: number; fps: number; frames: string[] };
 export type Hotspot = {
   id: string;
   label: string;
   hint?: string;
   at: [number, number];
   outline?: Outline | null;
+  outlineTrack?: OutlineTrack;
   /** The place a crossing lands on; null or absent for a moment that returns here. */
   to?: string | null;
   next?: boolean;

@@ -142,6 +142,18 @@
           "description": "The object's traced SAM 3 outline: an SVG path in a width × height coordinate space that covers the whole picture.",
           "properties": { "width": { "type": "number" }, "height": { "type": "number" }, "path": { "type": "string" } }
         },
+        "outlineTrack": {
+          "type": "object",
+          "required": ["width", "height", "fps", "frames"],
+          "additionalProperties": false,
+          "description": "SAM 3 video outlines aligned to the exact place loop, one path per source frame. Empty paths hide an occluded object.",
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 },
+            "fps": { "type": "number", "exclusiveMinimum": 0 },
+            "frames": { "type": "array", "minItems": 1, "maxItems": 900, "items": { "type": "string" } }
+          }
+        },
         "to": { "type": ["string", "null"], "description": "The place this crossing lands on; null for a moment that returns here." },
         "next": { "type": "boolean", "description": "In a story told in order, this is the way to the next stop." },
         "shortcut": { "type": "boolean", "description": "A crossing that jumps out of the story's order, offered as an easter egg." },
