@@ -47,6 +47,25 @@ function unfinishedAttempt(paths, key) {
   return pending[0] ?? null;
 }
 
+/** Expired owner history is definitive only when all three lookups agree. */
+async function expiredMissingProject(projects, journal, statusError) {
+  const submittedAt = Date.parse(journal.submittedAt ?? journal.startedAt);
+  if (statusError?.status !== 404 || !Number.isFinite(submittedAt) || Date.now() - submittedAt < 24 * 60 * 60_000) return false;
+  if (!Array.isArray(projects.trackedProjects) || projects.trackedProjects.some(project => project.id === journal.projectId)) return false;
+  if (typeof projects.listProjectsElsewhere !== 'function' || typeof projects.get !== 'function') return false;
+  try {
+    const live = await projects.listProjectsElsewhere();
+    if (!Array.isArray(live) || live.some(project => project.id === journal.projectId)) return false;
+    try {
+      return (await projects.get(journal.projectId)) == null;
+    } catch (error) {
+      return error?.status === 404;
+    }
+  } catch {
+    return false; // A failed lookup never authorizes replacement work.
+  }
+}
+
 /** One real worker request, or collection of the exact already submitted job. */
 export async function trackObject(task, session, refusals, { redo = false, wait = waitForProject, download = downloadResult, trace = maskVideoOutlines } = {}) {
   const { paths, key, select, source, sourceSha256, prompt, inputsHash } = task;
@@ -99,7 +118,7 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
         tokenType: session.billing.tokenType, billingMode: session.billing.mode,
         network: 'fast', disableNSFWFilter: true,
       }));
-      save({ ...journal, status: 'submitted', projectId: project.id, pid: process.pid, appId: session.appId });
+      save({ ...journal, status: 'submitted', projectId: project.id, submittedAt: new Date().toISOString(), pid: process.pid, appId: session.appId });
     }
     const result = await wait(session.client, { project, projectId: journal.projectId, ownerPid: journal.pid }, { refusals, timeoutMs: 10 * 60_000 });
     const { bytes, job } = await download(session.client, result, { contentType: 'video/mp4' });
@@ -126,11 +145,15 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
       try {
         const status = await session.client.projects.getStatus(journal.projectId);
         if (status.finished === true && ['completed', 'failed', 'canceled'].includes(status.status)) terminal = status.status;
-      } catch { /* Keep the existing project resumable when its state is unknown. */ }
+      } catch (statusError) {
+        if (await expiredMissingProject(session.client.projects, journal, statusError)) terminal = 'expired';
+        // Otherwise keep the existing project resumable: its state is unknown.
+      }
     }
     save({ ...journal, ...(terminal || error instanceof RefusedError || (!submissionStarted && !journal.projectId) ? { status: 'failed' } : {}),
       ...(terminal ? { projectStatus: terminal } : {}),
       lastError: safeError(error).message, checkedAt: new Date().toISOString() });
+    if (terminal === 'expired') throw new Error(`Project ${journal.projectId} has expired without an available result. Its receipt is retained; change the selection or use --redo to request another mask.`);
     throw error;
   }
 }

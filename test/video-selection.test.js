@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, symlinkSync, unlinkSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, symlinkSync, unlinkSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run, FFMPEG, probeTrackingVideo } from '../cli/lib/media.js';
 import { readJson, sha256 } from '../cli/lib/files.js';
 import { trackObject } from '../cli/commands/track.js';
+import { waitForProject } from '../cli/lib/sogni.js';
+import { ApiError } from '@sogni-ai/sogni-client';
 import { maskVideoOutlines, trackingSourceFile, usableTracking, validateTrackingReceipt,
   videoSelectionAction, videoSelectionHash, videoSelectionPrompt } from '../cli/lib/video-selection.js';
 
@@ -30,6 +32,104 @@ function fixture(t) {
     trace: async () => ({ width: 16, height: 16, fps: 2, frames: ['M1 1L3 1L3 3Z', 'M8 1L10 1L10 3Z'] }) };
   return { dir, paths, task, bytes, job, sent, session, refusals, deps };
 }
+
+function ageTrackingAttempt(f, startedAt) {
+  const pointer = join(f.paths.selections, f.task.key + '.video.json');
+  const journal = { ...readJson(pointer), startedAt };
+  delete journal.submittedAt; // Existing 0.4.0 receipts recorded only startedAt.
+  writeFileSync(pointer, JSON.stringify(journal));
+  for (const name of readdirSync(join(f.paths.selections, 'video')).filter(name => name.endsWith('.attempt.json'))) {
+    writeFileSync(join(f.paths.selections, 'video', name), JSON.stringify(journal));
+  }
+}
+
+test('an accepted project missing from both owner lookups after 24 hours permits an explicit new attempt', async t => {
+  const f = fixture(t);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps,
+    wait: async () => { throw new Error('connection interrupted'); } }), /connection interrupted/);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  const reads = [];
+  Object.assign(f.session.client.projects, {
+    trackedProjects: [],
+    listProjectsElsewhere: async () => { reads.push('live'); return []; },
+    get: async () => { reads.push('v1'); return null; },
+    getStatus: async () => { reads.push('v2'); throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); },
+  });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps,
+    wait: (client, project, options) => waitForProject(client, project, { ...options, sleep: async () => {} }) }), /expired.*--redo/);
+  const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'failed');
+  assert.equal(journal.projectStatus, 'expired');
+  assert.equal(f.sent.length, 1, 'classifying expiry never submits replacement work');
+  assert.equal(reads.filter(x => x === 'v2').length, 1, 'one owner-scoped status lookup');
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, f.deps), /previous job failed/);
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, redo: true });
+  assert.equal(f.sent.length, 2, 'a second project requires the explicit redo');
+});
+
+test('expiry recovery accepts a legacy 404 and permits changed selection only after confirming absence', async t => {
+  const f = fixture(t);
+  const interrupted = async () => { throw new Error('connection interrupted'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /connection interrupted/);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  const missing = () => { throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); };
+  Object.assign(f.session.client.projects, { trackedProjects: [], listProjectsElsewhere: async () => [], getStatus: missing, get: missing });
+  await assert.rejects(trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals,
+    { ...f.deps, wait: interrupted, redo: true }), /expired.*--redo/);
+  assert.equal(f.sent.length, 1, 'neither changed clicks nor redo abandons the existing attempt during recovery');
+  assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).projectStatus, 'expired');
+  await trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals, f.deps);
+  assert.equal(f.sent.length, 2);
+});
+
+test('age alone or an incomplete owner lookup never permits replay', async t => {
+  const missing = async () => { throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); };
+  const unavailable = async () => { throw new ApiError(503, { status: 'error', errorCode: 503, message: 'unknown' }); };
+  const cases = [
+    { name: 'younger than 24 hours', age: new Date(Date.now() - 23 * 60 * 60_000).toISOString() },
+    { name: 'unknown submission time', age: 'invalid' },
+    { name: 'future timestamp', age: new Date(Date.now() + 60_000).toISOString() },
+    { name: 'live in this app', projects: { trackedProjects: [{ id: 'ONE' }] } },
+    { name: 'live in another app', projects: { listProjectsElsewhere: async () => [{ id: 'ONE', appId: 'earlier' }] } },
+    { name: 'unknown live response', projects: { listProjectsElsewhere: async () => ({}) } },
+    { name: 'live lookup unavailable', projects: { listProjectsElsewhere: unavailable } },
+    { name: 'status lookup unavailable', projects: { getStatus: unavailable } },
+    { name: 'status lookup forbidden', projects: { getStatus: async () => { throw new ApiError(403, { status: 'error', errorCode: 403, message: 'forbidden' }); } } },
+    { name: 'legacy lookup unavailable', projects: { get: unavailable } },
+    { name: 'stored result exists', projects: { get: async () => ({ id: 'ONE', status: 'completed' }) } },
+    { name: 'unknown legacy response', projects: { get: async () => [] } },
+  ];
+  for (const item of cases) await t.test(item.name, async t => {
+    const f = fixture(t);
+    const interrupted = async () => { throw new Error('wait interrupted'); };
+    await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+    ageTrackingAttempt(f, item.age ?? new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+    Object.assign(f.session.client.projects, { trackedProjects: [], listProjectsElsewhere: async () => [], getStatus: missing, get: async () => null }, item.projects);
+    await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+    assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).status, 'submitted');
+    await assert.rejects(trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals,
+      { ...f.deps, wait: interrupted, redo: true }), /wait interrupted/);
+    assert.equal(f.sent.length, 1);
+  });
+});
+
+test('an old start time never expires a recently accepted project', async t => {
+  const f = fixture(t);
+  const interrupted = async () => { throw new Error('wait interrupted'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  const pointer = join(f.paths.selections, f.task.key + '.video.json');
+  const current = readJson(pointer);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  for (const file of [pointer, ...readdirSync(join(f.paths.selections, 'video')).filter(n => n.endsWith('.attempt.json')).map(n => join(f.paths.selections, 'video', n))]) {
+    writeFileSync(file, JSON.stringify({ ...readJson(file), submittedAt: current.submittedAt }));
+  }
+  let liveReads = 0;
+  Object.assign(f.session.client.projects, { trackedProjects: [], listProjectsElsewhere: async () => { liveReads += 1; return []; },
+    getStatus: async () => { throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); }, get: async () => null });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  assert.equal(readJson(pointer).status, 'submitted');
+  assert.equal(liveReads, 0, 'a recent acceptance never triggers expiry lookups');
+});
 
 test('video prompts retain clicks and choose one object without image-only controls', () => {
   const prompt = videoSelectionPrompt({ text: 'lamp', instances: 12, box: [0, 0, 1, 1] }, 12, 2);
@@ -106,10 +206,14 @@ test('a dropped submission stays reserved, even with --redo, and never charges t
   const f = fixture(t);
   f.session.client.projects.create = async () => { f.sent.push('one attempt'); throw new Error('connection closed'); };
   await assert.rejects(trackObject(f.task, f.session, f.refusals, f.deps), /connection closed/);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  let statusReads = 0;
+  f.session.client.projects.getStatus = async () => { statusReads += 1; throw new Error('must not look up an unknown submit'); };
   await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, redo: true }), /unknown outcome/);
   await assert.rejects(trackObject({ ...f.task, inputsHash: 'f'.repeat(64) }, f.session, f.refusals, f.deps), /unknown outcome/);
   assert.equal(f.sent.length, 1);
   assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).status, 'submitting');
+  assert.equal(statusReads, 0);
 });
 
 test('malformed coordinates fail before a paid attempt is reserved', () => {

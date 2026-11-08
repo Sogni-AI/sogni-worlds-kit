@@ -50,6 +50,11 @@ submission stops with a message: keep its receipt and reconcile the project
 before making another request. Changing the clicks cannot bypass that record.
 If an older selection already has a submitted project, it is collected first.
 
+If a submitted project is over 24 hours old and Sogni confirms it is no longer
+live and has no stored result, the Kit marks its receipt expired and stops.
+Change the selection or run again with `--redo` to request another mask; the
+old receipt stays on disk. A failed lookup alone never permits another request.
+
 Receipts live at `selections/<place>-<object>.video.json`, with numbered attempt
 records, source hashes, the delivered mask and frame paths under
 `selections/video/`. The Kit verifies the downloaded bytes against the worker's
