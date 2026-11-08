@@ -7,7 +7,7 @@ import { filmId, loopId, resolveWorldId, shown } from '../lib/paths.js';
 import { readJson, sha256, sha256File, writeJson } from '../lib/files.js';
 import { approvedTake, listTakes } from '../lib/takes.js';
 import { acquireRenderLock } from '../lib/renderlock.js';
-import { probe } from '../lib/media.js';
+import { probeTrackingVideo } from '../lib/media.js';
 import { connect, describeBilling, downloadResult, RefusedError, safeError, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log } from '../lib/log.js';
 import { maskVideoOutlines, SAM_VIDEO_MODEL, trackingArtifactsAvailable, trackingAttempt, trackingSource, trackingSourceFile,
@@ -119,7 +119,17 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
   } catch (error) {
     // A network failure after submission leaves the exact project resumable.
     // A failed/uncertain submit keeps its reservation, including with --redo.
-    save({ ...journal, ...(error instanceof RefusedError || (!submissionStarted && !journal.projectId) ? { status: 'failed' } : {}),
+    // One owner-scoped lookup distinguishes a confirmed terminal project from
+    // an interrupted wait. A lookup error or unknown state never permits replay.
+    let terminal = null;
+    if (journal.projectId && session.client.projects.getStatus) {
+      try {
+        const status = await session.client.projects.getStatus(journal.projectId);
+        if (status.finished === true && ['completed', 'failed', 'canceled'].includes(status.status)) terminal = status.status;
+      } catch { /* Keep the existing project resumable when its state is unknown. */ }
+    }
+    save({ ...journal, ...(terminal || error instanceof RefusedError || (!submissionStarted && !journal.projectId) ? { status: 'failed' } : {}),
+      ...(terminal ? { projectStatus: terminal } : {}),
       lastError: safeError(error).message, checkedAt: new Date().toISOString() });
     throw error;
   }
@@ -141,7 +151,7 @@ export async function run(argv) {
     if (!take || take.journal.status !== 'completed') throw new Error(place.id + ': approve its completed loop before tracking');
     const sourceFile = trackingSourceFile(paths, take.files.video), sourceSha256 = sha256File(sourceFile);
     if (sourceSha256 !== take.sha) throw new Error(place.id + ': the loop changed after its approval');
-    const source = trackingSource(await probe(sourceFile));
+    const source = trackingSource(await probeTrackingVideo(sourceFile));
     for (const object of selected) {
       const key = filmId(place.id, object.id);
       if (!validKey(key)) throw new Error('Use ordinary place and object ids for video tracking');

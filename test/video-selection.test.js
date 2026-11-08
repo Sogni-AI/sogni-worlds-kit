@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, symlinkSync, unlinkSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { run, FFMPEG } from '../cli/lib/media.js';
+import { run, FFMPEG, probeTrackingVideo } from '../cli/lib/media.js';
 import { readJson, sha256 } from '../cli/lib/files.js';
 import { trackObject } from '../cli/commands/track.js';
 import { maskVideoOutlines, trackingSourceFile, usableTracking, validateTrackingReceipt,
@@ -45,6 +45,43 @@ test('video prompts retain clicks and choose one object without image-only contr
 test('an uncertain submit cannot be bypassed by --redo; submitted work resumes', () => {
   assert.equal(videoSelectionAction({ status: 'submitting' }, 'same', { redo: true }), 'unknown');
   assert.equal(videoSelectionAction({ status: 'submitted', projectId: 'ONE' }, 'changed', { redo: true }), 'resume');
+});
+
+test('a confirmed failed project permits a new attempt only after redo or changed clicks', async t => {
+  const f = fixture(t);
+  f.session.client.projects.getStatus = async () => ({ status: 'failed', finished: true });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: async () => { throw new Error('project failed'); } }), /project failed/);
+  assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).status, 'failed');
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, f.deps), /previous job failed/);
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, redo: true });
+  assert.equal(f.sent.length, 2);
+});
+
+test('a terminal completed transfer can be collected again or explicitly redone', async t => {
+  const f = fixture(t);
+  f.session.client.projects.getStatus = async () => ({ status: 'completed', finished: true });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, download: async () => { throw new Error('download failed'); } }), /download failed/);
+  await trackObject(f.task, f.session, f.refusals, f.deps);
+  assert.equal(f.sent.length, 1);
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, redo: true });
+  assert.equal(f.sent.length, 2);
+});
+
+test('an unknown lookup or a still-running project cannot authorize replay', async t => {
+  for (const lookup of [async () => { throw new Error('lookup unavailable'); }, async () => ({ status: 'running', finished: false })]) {
+    const f = fixture(t);
+    f.session.client.projects.getStatus = lookup;
+    await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: async () => { throw new Error('wait expired'); } }), /wait expired/);
+    await trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals, { ...f.deps, redo: true });
+    assert.equal(f.sent.length, 1);
+  }
+});
+
+test('tracking receipt uses the same fractional-fps tolerance as admission', t => {
+  const f = fixture(t);
+  assert.doesNotThrow(() => validateTrackingReceipt({ ...f.job, maskFps: 2.0005 }, f.bytes, f.task.sourceSha256, f.task.source));
+  assert.throws(() => validateTrackingReceipt({ ...f.job, maskFps: 2.002 }, f.bytes, f.task.sourceSha256, f.task.source));
+  assert.throws(() => videoSelectionPrompt(f.task.select, 0, 1), /object index 0/);
 });
 
 test('one paid job saves moving outlines, subsequent calls skip and builds bind the exact loop', async t => {
@@ -161,6 +198,9 @@ test('the actual decoder preserves every mask frame, movement and source timing'
   await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-f', 'rawvideo', '-pixel_format', 'gray', '-video_size', '16x16', '-framerate', '2', '-i', 'pipe:0',
     '-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-pix_fmt', 'yuv444p', file], { input: pixels });
   const track = await maskVideoOutlines(file, { width: 16, height: 16, frames: 2, fps: 2 });
+  const info = await probeTrackingVideo(file);
+  assert.equal(info.frames, 2);
+  assert.equal(info.fps, 2);
   assert.equal(track.frames.length, 2);
   assert.notEqual(track.frames[0], track.frames[1]);
   assert.equal(track.fps, 2);

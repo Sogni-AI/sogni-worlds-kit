@@ -6,7 +6,7 @@ import { isAbsolute, join, relative, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { maskOutline } from './outline.js';
 import { sha256, sha256File } from './files.js';
-import { FFMPEG, probe } from './media.js';
+import { FFMPEG, probeTrackingVideo } from './media.js';
 import { samPrompt } from '../commands/select.js';
 
 export const SAM_VIDEO_MODEL = 'sam3_video_segment_fp16';
@@ -26,6 +26,7 @@ export function videoSelectionPrompt(select, frameIndex = 0, objectIndex = 0) {
   if (!Number.isSafeInteger(frameIndex) || frameIndex < 0 || frameIndex >= MAX_TRACK_FRAMES) throw new Error('Use a zero-based source frame below 900');
   if (!Number.isSafeInteger(objectIndex) || objectIndex < 0 || objectIndex > 31) throw new Error('Use an object index from 0 to 31');
   const { maxInstances, applyMask, ...prompt } = samPrompt(select);
+  if (!prompt.text && objectIndex !== 0) throw new Error('Point and single-box selections require object index 0');
   return { ...prompt, frameIndex, objectIndex, output: 'mask', edges: 'hard' };
 }
 
@@ -36,6 +37,7 @@ export const videoSelectionHash = (sourceSha256, prompt, cleanup) =>
 export function videoSelectionAction(previous, inputsHash, { redo = false } = {}) {
   if (previous?.status === 'submitting' && !previous.projectId) return 'unknown';
   if (previous?.status === 'submitted' && previous.projectId) return 'resume';
+  if (previous?.status === 'failed' && previous.projectStatus === 'completed' && previous.projectId && previous.inputsHash === inputsHash && !redo) return 'resume';
   if (!previous || previous.inputsHash !== inputsHash || redo) return 'track';
   return previous.status === 'completed' ? 'skip' : 'failed';
 }
@@ -63,7 +65,7 @@ export function validateTrackingReceipt(job, bytes, sourceSha256, source) {
   const receipt = job?.provenance ?? job?.result ?? job;
   if (!receipt || receipt.sourceVideoSha256 !== sourceSha256 || receipt.sha256 !== sha256(bytes) ||
       receipt.maskWidth !== source.width || receipt.maskHeight !== source.height || receipt.maskFrames !== source.frames ||
-      !Number.isFinite(receipt.maskFps) || Math.abs(receipt.maskFps - source.fps) > 1e-6) {
+      !Number.isFinite(receipt.maskFps) || Math.abs(receipt.maskFps - source.fps) > 0.001) {
     throw new Error('The video mask receipt does not match the uploaded loop, downloaded bytes and source timing');
   }
   return receipt;
@@ -73,9 +75,9 @@ export function validateTrackingReceipt(job, bytes, sourceSha256, source) {
  * Decode one mask frame at a time. Backpressure bounds memory to a frame plus a
  * pipe chunk; the original resolution and every source frame are preserved.
  */
-export async function maskVideoOutlines(file, source, cleanup = {}, { probeVideo = probe } = {}) {
+export async function maskVideoOutlines(file, source, cleanup = {}, { probeVideo = probeTrackingVideo } = {}) {
   const info = trackingSource(await probeVideo(file));
-  if (info.width !== source.width || info.height !== source.height || info.frames !== source.frames || Math.abs(info.fps - source.fps) > 1e-6) {
+  if (info.width !== source.width || info.height !== source.height || info.frames !== source.frames || Math.abs(info.fps - source.fps) > 0.001) {
     throw new Error('The downloaded mask does not have the source geometry and timing');
   }
   const child = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', file, '-map', '0:v:0', '-vsync', '0', '-pix_fmt', 'gray', '-f', 'rawvideo', 'pipe:1'], { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -136,7 +138,7 @@ export function usableTracking(paths, key, sourceSha256, select) {
   if (sha256File(path) !== receipt.outlinesSha256) throw new Error('Video outlines changed after tracking; run world track again');
   const track = JSON.parse(readFileSync(path, 'utf8'));
   if (!Array.isArray(track.frames) || track.frames.length !== source.frames || track.width !== source.width ||
-      track.height !== source.height || !Number.isFinite(track.fps) || Math.abs(track.fps - source.fps) > 1e-6 || track.frames.some(x => typeof x !== 'string')) {
+      track.height !== source.height || !Number.isFinite(track.fps) || Math.abs(track.fps - source.fps) > 0.001 || track.frames.some(x => typeof x !== 'string')) {
     throw new Error('Video outlines do not match their tracking receipt');
   }
   return track;
