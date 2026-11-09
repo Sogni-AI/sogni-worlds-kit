@@ -541,21 +541,74 @@ test('tracing version 1 keeps every piece and hole of the mask, as Kit 0.4.0 did
   assert.equal(rings(track.frames[0]), 4, 'figure, its hole, the far piece and the speck');
 });
 
-test('tracing version 2 fills held props and drops specks, and the still selection drops pieces away from the object', async t => {
+test('tracing version 2 fills held props, drops specks and pieces far from the object', async t => {
   const { file, source } = await cleanupFixture(t);
   const cleaned = await maskVideoOutlines(file, source, {}, { version: 2 });
-  assert.equal(rings(cleaned.frames[0]), 2, 'the hole is filled and the speck is gone; the far piece is 18% of the figure, so it stays');
-  const near = await maskVideoOutlines(file, source, {}, { version: 2, near: [8 / 64, 8 / 64, 32 / 64, 32 / 64] });
-  assert.equal(rings(near.frames[0]), 1, 'only the figure, filled');
-  assert.equal(near.frames[0], near.frames[1]);
-  const kept = await maskVideoOutlines(file, source, { holeRatio: 0 }, { version: 2 });
-  assert.equal(rings(kept.frames[0]), 3, 'a world can still keep holes with select.cleanup');
+  assert.equal(rings(cleaned.frames[0]), 1, 'the 6x6 hole (7% of the figure) is filled; the far piece and the speck are gone');
+  assert.equal(cleaned.frames[0], cleaned.frames[1]);
+  const kept = await maskVideoOutlines(file, source, { near: false }, { version: 2 });
+  assert.equal(rings(kept.frames[0]), 2, 'near: false keeps the far piece (the speck stays under 16 px²)');
+  const holes = await maskVideoOutlines(file, source, { near: false, holeRatio: 0 }, { version: 2 });
+  assert.equal(rings(holes.frames[0]), 3, 'a world can keep holes with select.cleanup');
+  const still = await maskVideoOutlines(file, source, {}, { version: 2, near: [48 / 64, 48 / 64, 58 / 64, 58 / 64] });
+  assert.equal(rings(still.frames[0]), 2, 'a piece on the approved still selection stays even far from the main piece');
   await assert.rejects(maskVideoOutlines(file, source, {}, { version: 9 }), /Unknown outline tracing version/);
+});
+
+// A 128x128 frame: a 64x64 figure, a 6x6 piece beside it (0.9% of the figure, within reach of it), and a 4x4 piece
+// 5 px beyond the figure's edge (within NEAR_MARGIN, 10 px here) but large enough to pass the island rule only
+// because it is 16 px² against 1.2% of 4096 = 49: so it is dropped by the island rule, not by distance.
+async function islandFixture(t, extra) {
+  const dir = mkdtempSync(join(tmpdir(), 'sogni-mask-island-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const S = 128, pixels = Buffer.alloc(S * S * 2);
+  const fill = (f, x0, y0, x1, y1) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) pixels[f * S * S + y * S + x] = 255; };
+  for (const f of [0, 1]) { fill(f, 16, 16, 80, 80); extra(fill, f); }
+  const file = join(dir, 'mask.mp4');
+  await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-f', 'rawvideo', '-pixel_format', 'gray', '-video_size', `${S}x${S}`, '-framerate', '2', '-i', 'pipe:0',
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-pix_fmt', 'yuv444p', file], { input: pixels });
+  return { file, source: { width: S, height: S, frames: 2, fps: 2 } };
+}
+
+test('pieces under 1.2% of the main one are dropped even beside it', async t => {
+  const { file, source } = await islandFixture(t, (fill, f) => fill(f, 84, 30, 90, 36));
+  assert.equal(rings((await maskVideoOutlines(file, source, {}, { version: 2 })).frames[0]), 1, '36 px² is under 1.2% of 4096');
+  assert.equal(rings((await maskVideoOutlines(file, source, { keepRatio: 0 }, { version: 2 })).frames[0]), 2);
+});
+
+test('a piece within reach of the main one stays; beyond reach it goes', async t => {
+  // 10x10 pieces (100 px² = 2.4%): one 6 px beyond the figure's right edge (within 10 px), one 30 px beyond.
+  const { file, source } = await islandFixture(t, (fill, f) => { fill(f, 86, 30, 96, 40); fill(f, 110, 60, 120, 70); });
+  assert.equal(rings((await maskVideoOutlines(file, source, {}, { version: 2 })).frames[0]), 2, 'the figure and the near piece');
 });
 
 test('a still selection outline gives its normalized box', () => {
   assert.deepEqual(outlineBox({ width: 200, height: 100, path: 'M20 10L60 10L60 50L20 50Z' }), [0.1, 0.1, 0.3, 0.5]);
   for (const bad of [null, { width: 0, height: 1, path: 'M0 0L1 1L1 0Z' }, { width: 10, height: 10, path: '' }, { width: 10, height: 10, path: 'M5 5L5 5L5 5Z' }]) assert.equal(outlineBox(bad), null);
+});
+
+test('collecting an interrupted track traces with the version and still box it was submitted with', async t => {
+  const f = fixture(t);
+  const options = [];
+  const trace = async (file, source, cleanup, o) => { options.push(o); return f.deps.trace(); };
+  await assert.rejects(trackObject({ ...f.task, near: [0.2, 0.2, 0.6, 0.6] }, f.session, f.refusals, { ...f.deps, wait: async () => { throw new Error('wait interrupted'); } }), /wait interrupted/);
+  const done = await trackObject(f.task, f.session, f.refusals, { ...f.deps, trace });
+  assert.equal(done.traceVersion, TRACE_VERSION);
+  assert.deepEqual(options[0], { version: TRACE_VERSION, near: [0.2, 0.2, 0.6, 0.6] });
+  // Its outlines lost later: re-traced with the same version and box.
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, trace });
+  assert.deepEqual(options[1], { version: TRACE_VERSION, near: [0.2, 0.2, 0.6, 0.6] });
+  assert.equal(f.sent.length, 1);
+});
+
+test('collecting an interrupted Kit 0.4.0 track traces it as 0.4.0 did', async t => {
+  const f = fixture(t);
+  const options = [];
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: async () => { throw new Error('wait interrupted'); } }), /wait interrupted/);
+  editTrackingAttempt(f, journal => { delete journal.traceVersion; delete journal.near; });
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, trace: async (file, source, cleanup, o) => { options.push(o); return f.deps.trace(); } });
+  assert.deepEqual(options[0], { version: 1, near: null });
 });
 
 test('new tracking records its tracing version and still box; an older receipt is re-traced as it was made', async t => {

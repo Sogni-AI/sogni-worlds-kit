@@ -247,8 +247,12 @@ export async function run(argv) {
       if (prompt.frameIndex >= source.frames) throw new Error('The selected frame is outside ' + place.id + "'s loop");
       const inputsHash = videoSelectionHash(sourceSha256, prompt, object.select.cleanup);
       // The approved still selection of the same clicks bounds where the object can be (its outline's box).
-      const still = existsSync(join(paths.selections, key + '.json')) ? readJson(join(paths.selections, key + '.json')) : null;
-      const near = still?.status === 'completed' && JSON.stringify(still.prompt) === JSON.stringify(samPrompt(object.select)) ? outlineBox(still.outline) : null;
+      // A missing, stale or unreadable still selection only means less cleanup, never a failed run.
+      let near = null;
+      try {
+        const still = existsSync(join(paths.selections, key + '.json')) ? readJson(join(paths.selections, key + '.json')) : null;
+        if (still?.status === 'completed' && JSON.stringify(still.prompt) === JSON.stringify(samPrompt(object.select))) near = outlineBox(still.outline);
+      } catch { near = null; }
       const previous = unfinishedAttempt(paths, key) ?? latestAttempt(paths, key, inputsHash);
       const action = videoSelectionAction(previous?.journal, inputsHash, { redo: values.redo });
       if (action === 'unknown') throw new Error(key + ': the last submit has an unknown outcome; reconcile it before tracking again');

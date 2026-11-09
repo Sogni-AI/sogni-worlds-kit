@@ -15,18 +15,21 @@ export const SAM_VIDEO_MODEL = 'sam3_video_segment_fp16';
  * How a delivered mask becomes moving outlines, by version. A receipt records its version, so a later
  * default never traces an existing track differently.
  *   1 (Kit 0.4.0): every pixel of the mask, specks and holes included.
- *   2: what a click target needs. Pieces away from the object's approved still selection are dropped (with
- *      `near`), as are pieces under 1.2% of the main one, so flecks elsewhere in the scene never flash on and
- *      off; enclosed holes smaller than the object are filled, so a prop a figure holds stays clickable; specks
- *      under 16 px² are not drawn. Measured on 28 Meme World loops (2026-11-08): the flecks independent
- *      reviewers saw were all under 1% of their object; the smallest real second piece was 2.4%.
+ *   2: what a click target needs. Per frame, pieces under 1.2% of the main one are dropped, and so is any piece
+ *      far from both the main piece and the object's approved still selection (NEAR_MARGIN of the frame's longer
+ *      side around either), so flecks elsewhere in the scene never flash on and off while a travelling object keeps
+ *      its pieces. Holes up to a fifth of the object are filled, so a prop a figure holds stays clickable (held
+ *      props measured 7-15% of their figure) while a larger opening such as a ring's stays open. Specks under 16 px²
+ *      are not drawn. Measured on 28 Meme World loops (2026-11-08): the flecks independent reviewers saw were all
+ *      under 1% of their object; the smallest real second piece was 2.4%.
+ *   select.cleanup overrides keepRatio, holeRatio and minArea; `near: false` keeps pieces wherever they are.
  */
 export const TRACE_CLEANUP = Object.freeze({
   1: Object.freeze({ keepRatio: 0, holeRatio: 0, minArea: 0 }),
-  2: Object.freeze({ keepRatio: 0.012, holeRatio: 1, minArea: 16 }),
+  2: Object.freeze({ keepRatio: 0.012, holeRatio: 0.2, minArea: 16 }),
 });
 export const TRACE_VERSION = 2;
-/** Room for the object to travel beyond its still selection's box, as a fraction of the frame's longer side. */
+/** How far a kept piece may sit from the main piece or the still selection's box, as a fraction of the frame's longer side. */
 export const NEAR_MARGIN = 0.08;
 
 /** The normalized box [x0, y0, x1, y1] of an approved still outline ({ width, height, path }), or null. */
@@ -34,33 +37,44 @@ export function outlineBox(outline) {
   if (!outline || !(outline.width > 0) || !(outline.height > 0) || typeof outline.path !== 'string') return null;
   const n = (outline.path.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
   if (n.length < 6 || n.length % 2 || !n.every(Number.isFinite)) return null;
-  const xs = n.filter((_, i) => i % 2 === 0), ys = n.filter((_, i) => i % 2 === 1);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let i = 0; i < n.length; i += 2) { x0 = Math.min(x0, n[i]); x1 = Math.max(x1, n[i]); y0 = Math.min(y0, n[i + 1]); y1 = Math.max(y1, n[i + 1]); }
   const clamp = v => Math.min(1, Math.max(0, v));
-  const box = [clamp(Math.min(...xs) / outline.width), clamp(Math.min(...ys) / outline.height),
-    clamp(Math.max(...xs) / outline.width), clamp(Math.max(...ys) / outline.height)];
+  const box = [clamp(x0 / outline.width), clamp(y0 / outline.height), clamp(x1 / outline.width), clamp(y1 / outline.height)];
   return box[0] < box[2] && box[1] < box[3] ? box : null;
 }
 
-/** Clear every 4-connected piece of a binary frame whose bounds miss `box` (pixels, inclusive). */
-export function dropPiecesAway(pixels, width, height, [bx0, by0, bx1, by1]) {
-  const seen = new Uint8Array(pixels.length), stack = [], members = [];
+/**
+ * Clear every 4-connected piece of a binary frame that touches neither `box` (the still selection, pixels, already
+ * widened; may be null) nor the frame's largest piece widened by `margin` pixels. The largest piece always stays.
+ */
+export function dropPiecesAway(pixels, width, height, box, margin) {
+  const label = new Int32Array(pixels.length).fill(-1), stack = [], pieces = [];
   for (let start = 0; start < pixels.length; start++) {
-    if (!pixels[start] || seen[start]) continue;
-    let x0 = width, y0 = height, x1 = -1, y1 = -1;
-    stack.push(start); seen[start] = 1; members.length = 0;
+    if (!pixels[start] || label[start] >= 0) continue;
+    const id = pieces.length;
+    let x0 = width, y0 = height, x1 = -1, y1 = -1, area = 0;
+    stack.push(start); label[start] = id;
     while (stack.length) {
       const p = stack.pop(), x = p % width, y = (p - x) / width;
-      members.push(p);
+      area++;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-      if (x > 0 && pixels[p - 1] && !seen[p - 1]) { seen[p - 1] = 1; stack.push(p - 1); }
-      if (x < width - 1 && pixels[p + 1] && !seen[p + 1]) { seen[p + 1] = 1; stack.push(p + 1); }
-      if (y > 0 && pixels[p - width] && !seen[p - width]) { seen[p - width] = 1; stack.push(p - width); }
-      if (y < height - 1 && pixels[p + width] && !seen[p + width]) { seen[p + width] = 1; stack.push(p + width); }
+      if (x > 0 && pixels[p - 1] && label[p - 1] < 0) { label[p - 1] = id; stack.push(p - 1); }
+      if (x < width - 1 && pixels[p + 1] && label[p + 1] < 0) { label[p + 1] = id; stack.push(p + 1); }
+      if (y > 0 && pixels[p - width] && label[p - width] < 0) { label[p - width] = id; stack.push(p - width); }
+      if (y < height - 1 && pixels[p + width] && label[p + width] < 0) { label[p + width] = id; stack.push(p + width); }
     }
-    if (x1 < bx0 || x0 > bx1 || y1 < by0 || y0 > by1) for (const p of members) pixels[p] = 0;
+    pieces.push({ x0, y0, x1, y1, area });
   }
+  if (pieces.length < 2) return pixels;
+  const main = pieces.reduce((a, b) => (b.area > a.area ? b : a));
+  const near = [main.x0 - margin, main.y0 - margin, main.x1 + margin, main.y1 + margin];
+  const touches = (q, [bx0, by0, bx1, by1]) => !(q.x1 < bx0 || q.x0 > bx1 || q.y1 < by0 || q.y0 > by1);
+  const keep = pieces.map(q => q === main || touches(q, near) || (box && touches(q, box)));
+  for (let p = 0; p < pixels.length; p++) if (label[p] >= 0 && !keep[label[p]]) pixels[p] = 0;
   return pixels;
 }
+
 export const MAX_TRACK_FRAMES = 900;
 
 export function videoSelectionPrompt(select, frameIndex = 0, objectIndex = 0) {
@@ -132,8 +146,10 @@ export async function maskVideoOutlines(file, source, cleanup = {}, { probeVideo
   const base = TRACE_CLEANUP[version];
   if (!base) throw new Error('Unknown outline tracing version ' + version);
   const margin = NEAR_MARGIN * Math.max(source.width, source.height);
-  const nearPx = near && version >= 2 ? [near[0] * source.width - margin, near[1] * source.height - margin,
+  const keepAway = version < 2 || cleanup.near === false;
+  const stillPx = near ? [near[0] * source.width - margin, near[1] * source.height - margin,
     near[2] * source.width + margin, near[3] * source.height + margin] : null;
+  const { near: _near, ...outlineCleanup } = cleanup;
   const info = trackingSource(await probeVideo(file));
   if (info.width !== source.width || info.height !== source.height || info.frames !== source.frames || Math.abs(info.fps - source.fps) > 0.001) {
     throw new Error('The downloaded mask does not have the source geometry and timing');
@@ -154,8 +170,8 @@ export async function maskVideoOutlines(file, source, cleanup = {}, { probeVideo
       while (pending.length >= frameBytes) {
         if (frames.length >= source.frames) throw new Error('Mask decoding returned too many frames');
         const pixels = Uint8Array.from(pending.subarray(0, frameBytes), x => x >= 128 ? 1 : 0);
-        if (nearPx) dropPiecesAway(pixels, source.width, source.height, nearPx);
-        const outline = maskOutline({ pixels, width: source.width, height: source.height }, { ...base, ...cleanup });
+        if (!keepAway) dropPiecesAway(pixels, source.width, source.height, stillPx, margin);
+        const outline = maskOutline({ pixels, width: source.width, height: source.height }, { ...base, ...outlineCleanup });
         frames.push(outline.path);
         pending = pending.subarray(frameBytes);
       }
