@@ -258,18 +258,24 @@ export async function run(argv) {
       // outlines missing beside an intact mask are traced again locally, before any sign-in.
       todo.push({ paths, key, select: object.select, sourceFile, sourceSha256, source, prompt, inputsHash,
         sourceTake: { film: film.id, take: take.take, sha256: take.sha }, collect: action === 'resume' || action === 'skip',
-        local: action === 'skip' && maskIntact(paths, previous.journal), previous });
+        local: action === 'skip' && maskIntact(paths, previous.journal) });
     }
   }
   if (!todo.length) { log.ok('Every selected object already has video tracking for its current approved loop'); return 0; }
   const release = acquireRenderLock(paths, todo.map(t => t.key));
   let session, refusals;
   try {
-    for (const task of todo.filter(t => t.local)) {
-      const retraced = await retraceFromMask(paths, task.key, task.previous);
-      if (retraced) log.ok(task.key + ': moving outlines traced again from its mask on disk; no request');
-    }
     const remote = todo.filter(t => !t.local);
+    for (const task of todo.filter(t => t.local)) {
+      if (values.quote) { log.info(task.key + ': its outlines would be traced again from its mask on disk; no request'); continue; }
+      // Read the receipt again under the lock: another run may have changed it since the scan.
+      const current = unfinishedAttempt(paths, task.key) ?? latestAttempt(paths, task.key, task.inputsHash);
+      const action = videoSelectionAction(current?.journal, task.inputsHash, { redo: values.redo });
+      if (action === 'skip' && trackingArtifactsAvailable(paths, current.journal)) { log.ok(task.key + ': already tracked'); continue; }
+      const retraced = action === 'skip' ? await retraceFromMask(paths, task.key, current) : null;
+      if (retraced) log.ok(task.key + ': moving outlines traced again from its mask on disk; no request');
+      else remote.push(task); // Whatever it needs now goes through the ordinary collection path.
+    }
     if (!remote.length) { log.next('node world build ' + id); return 0; }
     session = await connect({ worldDir: paths.dir }); refusals = watchRefusals(session.client);
     log.step('Signed in as ' + session.username + '. Billing: ' + describeBilling(session.billing));

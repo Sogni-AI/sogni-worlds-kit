@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readdirSync, symlinkSync, unlinkSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, symlinkSync, unlinkSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run, FFMPEG, probeTrackingVideo } from '../cli/lib/media.js';
 import { readJson, sha256 } from '../cli/lib/files.js';
-import { trackObject } from '../cli/commands/track.js';
+import { retraceFromMask, trackObject } from '../cli/commands/track.js';
 import { waitForProject } from '../cli/lib/sogni.js';
 import { ApiError } from '@sogni-ai/sogni-client';
 import { maskVideoOutlines, trackingSourceFile, usableTracking, validateTrackingReceipt,
@@ -269,6 +269,21 @@ test('receipt artifact names are checked before re-tracing writes anything', asy
   await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: offline, download: offline }), /Invalid tracking artifact names/);
   assert.ok(!readdirSync(f.dir).includes('escape.outlines.json'));
   assert.ok(!readdirSync(join(f.dir, '..')).includes('escape.outlines.json'));
+});
+
+test('re-tracing refuses a selections folder linked outside the world', async t => {
+  const f = fixture(t);
+  const done = await trackObject(f.task, f.session, f.refusals, f.deps);
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  const outside = mkdtempSync(join(tmpdir(), 'sogni-outside-'));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const video = join(f.paths.selections, 'video');
+  for (const name of readdirSync(video)) writeFileSync(join(outside, name), readFileSync(join(video, name)));
+  rmSync(video, { recursive: true });
+  symlinkSync(outside, video);
+  const previous = { file: join(video, readdirSync(outside).find(n => n.endsWith('.attempt.json'))), journal: readJson(join(f.paths.selections, f.task.key + '.video.json')) };
+  await assert.rejects(retraceFromMask(f.paths, f.task.key, previous, f.deps.trace), /inside this world/);
+  assert.ok(!readdirSync(outside).some(n => n.endsWith('.outlines.json')), 'nothing written through the link');
 });
 
 test('a changed mask on disk is never traced: the mask is fetched again from its project instead', async t => {
