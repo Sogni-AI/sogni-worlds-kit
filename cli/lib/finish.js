@@ -72,7 +72,12 @@ export async function finishFilm(input, out, out720, { lufs = FILM_LUFS, pushIn 
         // One colour space on both sides of the join (a still's RGB as BT.709 limited range, the film's own), or the push-in shifts colour where the film takes over.
         const tags = 'setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709';
         const graph = [`[0:v]scale=out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1,${tags}[a]`, `[1:v]${fit}:out_range=tv,setsar=1,format=yuv420p,${tags}[b]`, `[a][b]concat=n=2:v=1:a=0[v]`];
-        if (info.audioChannels) graph.push(`[1:a]adelay=${lead}:all=1,apad${level ? `,${level}` : ''}[aud]`);
+        // The sound is padded with silence to a second past the picture's end (push-in plus film), then -shortest cuts
+        // it at the picture's last frame. Never a bare apad: it never ends, and ffmpeg 6.0 and 6.1 do not stop it with
+        // -shortest behind a filter graph, so the build wrote the master for hours (ffmpeg 8 and 9 do stop it). Padded
+        // only to the picture's end, ffmpeg 6 ends on the sound and drops the film's last frame.
+        const picture = count / 24 + info.frames / info.fps;
+        if (info.audioChannels) graph.push(`[1:a]adelay=${lead}:all=1,apad=whole_dur=${(picture + 1).toFixed(3)}${level ? `,${level}` : ''}[aud]`);
         await ffmpeg(['-framerate', '24', '-i', join(work, '%03d.png'), '-i', input, '-filter_complex', graph.join(';'), '-map', '[v]',
           ...(info.audioChannels ? ['-map', '[aud]', '-shortest', ...AUDIO] : ['-an']), ...LOSSLESS, master]);
       } finally {
