@@ -1,5 +1,11 @@
 # Track a moving clickable object
 
+> **November 2026:** new tracks clean their moving outlines for clicking (stray
+> flecks dropped, held props kept clickable; details below). Tracks made before
+> this keep their outlines unchanged. To trace a new track exactly as before, set
+> the object's `select.cleanup` to `{ keepRatio: 0, holeRatio: 0, minArea: 0,
+> near: false }`.
+
 SAM 3 video follows a selected object through a place loop. The player uses its
 outline at the current video frame, so the click target moves with the object.
 Tracking is optional: fixed outlines from `node world select` keep working.
