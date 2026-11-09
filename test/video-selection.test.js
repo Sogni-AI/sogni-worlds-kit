@@ -246,7 +246,9 @@ test('a completed receipt with nothing on disk stays complete on a temporary err
   unlinkSync(join(f.paths.selections, 'video', done.outlines));
   Object.assign(f.session.client.projects, allMissing, { getStatus: rateLimited });
   const busy = async () => { throw new ApiError(429, { status: 'error', errorCode: 429, message: 'rate limited' }); };
-  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: busy }), /tracking finished.*nothing is paid for again/);
+  const kept = await trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: busy });
+  assert.equal(kept.maskFetch.outlinesMissing, true, 'a warning, never a stop for the rest of the run');
+  assert.equal(usableTracking(f.paths, f.task.key, f.task.sourceSha256, f.task.select), null, 'the build falls back to the fixed outline');
   let journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
   assert.equal(journal.status, 'completed', 'a finished project is never demoted to submitted');
   assert.equal(journal.expiredAt, undefined);
@@ -257,6 +259,40 @@ test('a completed receipt with nothing on disk stays complete on a temporary err
   assert.equal(journal.status, 'failed');
   assert.ok(journal.expiredAt);
   assert.equal(f.sent.length, 1);
+});
+
+test('receipt artifact names are checked before re-tracing writes anything', async t => {
+  const f = fixture(t);
+  await trackObject(f.task, f.session, f.refusals, f.deps);
+  editTrackingAttempt(f, journal => { journal.outlines = '../../escape.outlines.json'; });
+  const offline = async () => { throw new Error('no network call is allowed here'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: offline, download: offline }), /Invalid tracking artifact names/);
+  assert.ok(!readdirSync(f.dir).includes('escape.outlines.json'));
+  assert.ok(!readdirSync(join(f.dir, '..')).includes('escape.outlines.json'));
+});
+
+test('a changed mask on disk is never traced: the mask is fetched again from its project instead', async t => {
+  const f = fixture(t);
+  const done = await trackObject(f.task, f.session, f.refusals, f.deps);
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  writeFileSync(join(f.paths.selections, 'video', done.mask), 'a different mask');
+  let traced = 0, waited = 0;
+  const receipt = await trackObject(f.task, f.session, f.refusals, { ...f.deps,
+    wait: async (...args) => { waited += 1; return f.deps.wait(...args); }, trace: async (...args) => { traced += 1; return f.deps.trace(...args); } });
+  assert.equal(waited, 1, 'collected from the existing project');
+  assert.equal(traced, 1, 'traced once, from the re-fetched mask');
+  assert.equal(receipt.maskSha256, sha256(f.bytes));
+  assert.equal(f.sent.length, 1);
+});
+
+test('collecting an older receipt without an account records the account that collected it', async t => {
+  const f = fixture(t);
+  const interrupted = async () => { throw new Error('wait interrupted'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  legacyTrackingAttempt(f, new Date().toISOString());
+  const receipt = await trackObject(f.task, f.session, f.refusals, f.deps);
+  assert.equal(receipt.status, 'completed');
+  assert.equal(receipt.submittedBy, 'tester');
 });
 
 test('a receipt without an account takes the signed-in account once Sogni answers for its project', async t => {

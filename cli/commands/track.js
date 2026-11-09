@@ -73,6 +73,28 @@ async function expiredMissingProject(projects, journal, statusError, username) {
   }
 }
 
+const artifactNamesValid = receipt => /^[a-z0-9_-]+\.mask\.mp4$/.test(receipt.mask ?? '') && /^[a-z0-9_-]+\.outlines\.json$/.test(receipt.outlines ?? '');
+
+/**
+ * Trace a completed receipt's missing outlines again from its unchanged mask on
+ * disk: no request and no sign-in. Returns the updated receipt, or null when
+ * there is nothing to trace from (or nothing missing).
+ */
+export async function retraceFromMask(paths, key, previous, trace = maskVideoOutlines) {
+  const done = previous.journal;
+  // Receipt names reach the file system only after the same checks every other write uses.
+  if (!artifactNamesValid(done)) throw new Error('Invalid tracking artifact names');
+  if (existsSync(paths.selections)) trackingSourceFile(paths, paths.selections);
+  const videoDir = join(paths.selections, 'video');
+  if (existsSync(videoDir)) trackingSourceFile(paths, videoDir);
+  if (!maskIntact(paths, done) || outlinesIntact(paths, done)) return null;
+  const outlineFile = join(videoDir, done.outlines);
+  writeJson(outlineFile, await trace(join(videoDir, done.mask), done.source, done.cleanup ?? {}));
+  const retraced = { ...done, outlinesSha256: sha256File(outlineFile), retracedAt: new Date().toISOString(), maskFetch: undefined };
+  writeJson(previous.file, retraced); writeJson(join(paths.selections, key + '.video.json'), retraced);
+  return retraced;
+}
+
 /** One real worker request, or collection of the exact already submitted job. */
 export async function trackObject(task, session, refusals, { redo = false, wait = waitForProject, download = downloadResult, trace = maskVideoOutlines } = {}) {
   const { paths, key, select, source, sourceSha256, prompt, inputsHash } = task;
@@ -87,20 +109,16 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
   let previous = unfinishedAttempt(paths, key) ?? latestAttempt(paths, key, inputsHash);
   let action = videoSelectionAction(previous?.journal, inputsHash, { redo });
   if (action === 'unknown') throw new Error(key + ': the last submit has an unknown outcome. Reconcile that project before making another request');
-  // A completed receipt is never demoted. Missing outlines are traced again from
-  // the mask on disk without a request; a missing mask is fetched again from the
-  // same project, and while the outlines are intact a failed fetch is only a warning.
+  // A completed receipt stays complete unless its project is confirmed expired (with nothing left on disk).
+  // Missing outlines are traced again from the mask on disk without a request; a
+  // missing mask is fetched again from the same project, and a failed fetch is a
+  // warning that never stops the run.
   let completedReceipt = null;
   if (action === 'skip') {
     const done = previous.journal;
     if (trackingArtifactsAvailable(paths, done)) return done;
-    if (maskIntact(paths, done)) {
-      const outlineFile = join(paths.selections, 'video', done.outlines);
-      writeJson(outlineFile, await trace(join(paths.selections, 'video', done.mask), done.source, done.cleanup ?? {}));
-      const retraced = { ...done, outlinesSha256: sha256File(outlineFile), retracedAt: new Date().toISOString(), maskFetch: undefined };
-      writeJson(previous.file, retraced); writeJson(pointer, retraced);
-      return retraced;
-    }
+    const retraced = await retraceFromMask(paths, key, previous, trace);
+    if (retraced) return retraced;
     if (!done.projectId) throw new Error('The completed tracking receipt has no recoverable project');
     completedReceipt = done;
     action = 'resume';
@@ -190,10 +208,10 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
     }
     if (completedReceipt) {
       // Neither outlines nor mask are on disk and the project could not be read
-      // now. The tracking still finished: keep the receipt complete and try again later.
-      save({ ...completedReceipt, maskFetch: fetchFailed, checkedAt });
-      throw new Error(`${key}: its tracking finished, but its outlines and mask are missing and could not be fetched again from ` +
-        `project ${journal.projectId} (${fetchFailed.error}). Run world track again later; nothing is paid for again.`);
+      // now. The tracking still finished: keep the receipt complete, warn, and let
+      // the run carry on; a later run tries the same project again.
+      save({ ...completedReceipt, maskFetch: { ...fetchFailed, outlinesMissing: true }, checkedAt });
+      return journal;
     }
     save({ ...journal, ...(terminal || error instanceof RefusedError || (!submissionStarted && !journal.projectId) ? { status: 'failed' } : {}),
       ...(terminal ? { projectStatus: terminal } : {}),
@@ -230,18 +248,32 @@ export async function run(argv) {
       const action = videoSelectionAction(previous?.journal, inputsHash, { redo: values.redo });
       if (action === 'unknown') throw new Error(key + ': the last submit has an unknown outcome; reconcile it before tracking again');
       if (action === 'skip' && trackingArtifactsAvailable(paths, previous.journal)) continue;
-      // Collecting an existing project (or its missing files) makes no new request.
+      // Only the mask is gone and one fetch already failed: the outlines are in
+      // use, so later runs do not keep asking Sogni for it.
+      if (action === 'skip' && previous.journal.maskFetch && !previous.journal.maskFetch.outlinesMissing && outlinesIntact(paths, previous.journal)) {
+        log.info(key + ': its mask file is missing (a fetch failed ' + previous.journal.maskFetch.failedAt + '); its outlines are in use');
+        continue;
+      }
+      // Collecting an existing project (or its missing files) makes no new request;
+      // outlines missing beside an intact mask are traced again locally, before any sign-in.
       todo.push({ paths, key, select: object.select, sourceFile, sourceSha256, source, prompt, inputsHash,
-        sourceTake: { film: film.id, take: take.take, sha256: take.sha }, collect: action === 'resume' || action === 'skip' });
+        sourceTake: { film: film.id, take: take.take, sha256: take.sha }, collect: action === 'resume' || action === 'skip',
+        local: action === 'skip' && maskIntact(paths, previous.journal), previous });
     }
   }
   if (!todo.length) { log.ok('Every selected object already has video tracking for its current approved loop'); return 0; }
   const release = acquireRenderLock(paths, todo.map(t => t.key));
   let session, refusals;
   try {
+    for (const task of todo.filter(t => t.local)) {
+      const retraced = await retraceFromMask(paths, task.key, task.previous);
+      if (retraced) log.ok(task.key + ': moving outlines traced again from its mask on disk; no request');
+    }
+    const remote = todo.filter(t => !t.local);
+    if (!remote.length) { log.next('node world build ' + id); return 0; }
     session = await connect({ worldDir: paths.dir }); refusals = watchRefusals(session.client);
     log.step('Signed in as ' + session.username + '. Billing: ' + describeBilling(session.billing));
-    for (const task of todo) {
+    for (const task of remote) {
       if (task.collect) { log.info(task.key + ': collecting its existing tracking project; no new request'); continue; }
       const quote = await session.client.projects.estimateVideoCost({ model: SAM_VIDEO_MODEL, width: task.source.width,
         height: task.source.height, duration: task.source.frames / task.source.fps, fps: task.source.fps,
@@ -251,9 +283,12 @@ export async function run(argv) {
       log.info(task.key + ': ' + task.source.frames + ' frames, $' + usd.toFixed(4) + ' estimate');
     }
     if (values.quote) return 0;
-    for (const task of todo) {
+    for (const task of remote) {
       const receipt = await trackObject(task, session, refusals, { redo: values.redo });
-      if (receipt.maskFetch) {
+      if (receipt.maskFetch?.outlinesMissing) {
+        log.warn(task.key + ': its tracking finished, but its outlines and mask are missing and could not be fetched again (' +
+          receipt.maskFetch.error + '). A later run tries again; nothing is paid for again. The build leaves this object without tracking until then.');
+      } else if (receipt.maskFetch) {
         log.warn(task.key + ': its moving outlines are intact and still used, but its mask file is missing and could not be ' +
           'fetched again (' + receipt.maskFetch.error + '). Sogni may no longer keep it; restore the file from a backup if you need it.');
       } else log.ok(task.key + ': ' + receipt.source.frames + ' moving outlines saved');

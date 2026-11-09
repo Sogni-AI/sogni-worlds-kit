@@ -150,6 +150,8 @@ export function usableTracking(paths, key, sourceSha256, select) {
   const prompt = videoSelectionPrompt(select, receipt.prompt?.frameIndex, receipt.prompt?.objectIndex);
   if (receipt.inputsHash !== videoSelectionHash(sourceSha256, prompt, select.cleanup)) return null;
   if (typeof receipt.outlines !== 'string' || !/^[a-z0-9_-]+-[a-f0-9-]+\.outlines\.json$/.test(receipt.outlines)) throw new Error('Invalid video outline receipt');
+  // A missing outlines file leaves the object on its fixed outline until world track restores it.
+  if (!existsSync(join(paths.selections, 'video', receipt.outlines))) return null;
   const path = trackingSourceFile(paths, join(paths.selections, 'video', receipt.outlines));
   if (sha256File(path) !== receipt.outlinesSha256) throw new Error('Video outlines changed after tracking; run world track again');
   const track = JSON.parse(readFileSync(path, 'utf8'));
