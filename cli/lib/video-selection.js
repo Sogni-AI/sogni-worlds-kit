@@ -154,7 +154,7 @@ export async function maskVideoOutlines(file, source, cleanup = {}, { probeVideo
   if (info.width !== source.width || info.height !== source.height || info.frames !== source.frames || Math.abs(info.fps - source.fps) > 0.001) {
     throw new Error('The downloaded mask does not have the source geometry and timing');
   }
-  const child = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', file, '-map', '0:v:0', '-vsync', '0', '-pix_fmt', 'gray', '-f', 'rawvideo', 'pipe:1'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', file, '-map', '0:v:0', '-fps_mode', 'passthrough', '-pix_fmt', 'gray', '-f', 'rawvideo', 'pipe:1'], { stdio: ['ignore', 'pipe', 'pipe'] });
   let stderr = '', pending = Buffer.alloc(0);
   child.stderr.on('data', b => { stderr = (stderr + b).slice(-4000); });
   const ended = new Promise((resolve, reject) => {

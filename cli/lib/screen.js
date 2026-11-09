@@ -608,7 +608,7 @@ export async function framesAt(video, frames, width, height) {
   const wanted = [...new Set(frames)].sort((a, b) => a - b);
   const scale = width ? `,scale=${width}:${height}:flags=lanczos` : '';
   const bytes = await run(FFMPEG, ['-v', 'error', '-nostdin', '-i', video, '-vf', `select='${wanted.map(n => `eq(n\\,${n})`).join('+')}'${scale}`,
-    '-vsync', 'vfr', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-q:v', '2', '-']);
+    '-fps_mode', 'vfr', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-q:v', '2', '-']);
   // Split the stream at each JPEG's start-of-image marker (FF D8 FF).
   const starts = [];
   for (let i = 0; i + 2 < bytes.length; i++) if (bytes[i] === 0xff && bytes[i + 1] === 0xd8 && bytes[i + 2] === 0xff) starts.push(i);
@@ -619,7 +619,7 @@ export async function framesAt(video, frames, width, height) {
 /** One frame of a video as an encoded image (JPEG), optionally resized. */
 export async function frameImage(video, frame, width, height) {
   const scale = width ? `,scale=${width}:${height}:flags=lanczos` : '';
-  const bytes = await run(FFMPEG, ['-v', 'error', '-nostdin', '-i', video, '-vf', `select=eq(n\\,${frame})${scale}`, '-vsync', 'vfr', '-frames:v', '1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-q:v', '2', '-']);
+  const bytes = await run(FFMPEG, ['-v', 'error', '-nostdin', '-i', video, '-vf', `select=eq(n\\,${frame})${scale}`, '-fps_mode', 'vfr', '-frames:v', '1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-q:v', '2', '-']);
   return bytes;
 }
 
