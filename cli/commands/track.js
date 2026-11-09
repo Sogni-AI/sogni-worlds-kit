@@ -274,7 +274,8 @@ export async function run(argv) {
       if (action === 'skip' && trackingArtifactsAvailable(paths, current.journal)) { log.ok(task.key + ': already tracked'); continue; }
       const retraced = action === 'skip' ? await retraceFromMask(paths, task.key, current) : null;
       if (retraced) log.ok(task.key + ': moving outlines traced again from its mask on disk; no request');
-      else remote.push(task); // Whatever it needs now goes through the ordinary collection path.
+      // Whatever it needs now goes through the ordinary path, labelled (and priced) from the receipt read under the lock.
+      else remote.push({ ...task, collect: action === 'resume' || action === 'skip' });
     }
     if (!remote.length) { log.next('node world build ' + id); return 0; }
     session = await connect({ worldDir: paths.dir }); refusals = watchRefusals(session.client);
