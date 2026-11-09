@@ -10,7 +10,8 @@ import { acquireRenderLock } from '../lib/renderlock.js';
 import { probeTrackingVideo } from '../lib/media.js';
 import { connect, describeBilling, downloadResult, RefusedError, safeError, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log } from '../lib/log.js';
-import { maskIntact, maskVideoOutlines, outlinesIntact, SAM_VIDEO_MODEL, trackingArtifactsAvailable, trackingAttempt, trackingSource, trackingSourceFile,
+import { samPrompt } from './select.js';
+import { maskIntact, maskVideoOutlines, outlineBox, outlinesIntact, SAM_VIDEO_MODEL, TRACE_VERSION, trackingArtifactsAvailable, trackingAttempt, trackingSource, trackingSourceFile,
   validateTrackingReceipt, videoSelectionAction, videoSelectionHash, videoSelectionPrompt } from '../lib/video-selection.js';
 
 export const summary = 'Track clickable objects through approved place loops with SAM 3 video';
@@ -89,7 +90,7 @@ export async function retraceFromMask(paths, key, previous, trace = maskVideoOut
   if (existsSync(videoDir)) trackingSourceFile(paths, videoDir);
   if (!maskIntact(paths, done) || outlinesIntact(paths, done)) return null;
   const outlineFile = join(videoDir, done.outlines);
-  writeJson(outlineFile, await trace(join(videoDir, done.mask), done.source, done.cleanup ?? {}));
+  writeJson(outlineFile, await trace(join(videoDir, done.mask), done.source, done.cleanup ?? {}, { version: done.traceVersion ?? 1, near: done.near ?? null }));
   const retraced = { ...done, outlinesSha256: sha256File(outlineFile), retracedAt: new Date().toISOString(), maskFetch: undefined };
   writeJson(previous.file, retraced); writeJson(join(paths.selections, key + '.video.json'), retraced);
   return retraced;
@@ -132,7 +133,8 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
     const files = trackingAttempt(paths, key);
     file = join(paths.selections, 'video', key + '-' + inputsHash + '-' + ((previous?.number ?? 0) + 1) + '.attempt.json');
     journal = { key, model: SAM_VIDEO_MODEL, prompt, inputsHash, sourceSha256, source,
-      sourceTake: task.sourceTake, cleanup: select.cleanup ?? null, status: 'submitting', startedAt: new Date().toISOString(),
+      sourceTake: task.sourceTake, cleanup: select.cleanup ?? null, traceVersion: TRACE_VERSION, near: task.near ?? null,
+      status: 'submitting', startedAt: new Date().toISOString(),
       attempt: files.attempt, mask: basename(files.mask), outlines: basename(files.outlines) };
     // An immutable numbered claim closes the simultaneous-submit race. An
     // existing claim is inspected on the next invocation, never overwritten.
@@ -168,7 +170,7 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
     const tmp = maskFile + '.' + randomUUID() + '.next';
     writeFileSync(tmp, bytes);
     renameSync(tmp, maskFile);
-    const outlines = await trace(maskFile, journal.source, journal.cleanup ?? {});
+    const outlines = await trace(maskFile, journal.source, journal.cleanup ?? {}, { version: journal.traceVersion ?? 1, near: journal.near ?? null });
     const outlineFile = join(paths.selections, 'video', journal.outlines);
     writeJson(outlineFile, outlines);
     // The account that collects a project owns it (receipts from Kit 0.4.0 did not record one).
@@ -244,6 +246,9 @@ export async function run(argv) {
       const prompt = videoSelectionPrompt(object.select, Number(values.frame), Number(values['object-index']));
       if (prompt.frameIndex >= source.frames) throw new Error('The selected frame is outside ' + place.id + "'s loop");
       const inputsHash = videoSelectionHash(sourceSha256, prompt, object.select.cleanup);
+      // The approved still selection of the same clicks bounds where the object can be (its outline's box).
+      const still = existsSync(join(paths.selections, key + '.json')) ? readJson(join(paths.selections, key + '.json')) : null;
+      const near = still?.status === 'completed' && JSON.stringify(still.prompt) === JSON.stringify(samPrompt(object.select)) ? outlineBox(still.outline) : null;
       const previous = unfinishedAttempt(paths, key) ?? latestAttempt(paths, key, inputsHash);
       const action = videoSelectionAction(previous?.journal, inputsHash, { redo: values.redo });
       if (action === 'unknown') throw new Error(key + ': the last submit has an unknown outcome; reconcile it before tracking again');
@@ -256,7 +261,7 @@ export async function run(argv) {
       }
       // Collecting an existing project (or its missing files) makes no new request;
       // outlines missing beside an intact mask are traced again locally, before any sign-in.
-      todo.push({ paths, key, select: object.select, sourceFile, sourceSha256, source, prompt, inputsHash,
+      todo.push({ paths, key, select: object.select, sourceFile, sourceSha256, source, prompt, inputsHash, near,
         sourceTake: { film: film.id, take: take.take, sha256: take.sha }, collect: action === 'resume' || action === 'skip',
         local: action === 'skip' && maskIntact(paths, previous.journal) });
     }

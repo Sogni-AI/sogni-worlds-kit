@@ -8,7 +8,7 @@ import { readJson, sha256 } from '../cli/lib/files.js';
 import { retraceFromMask, trackObject } from '../cli/commands/track.js';
 import { waitForProject } from '../cli/lib/sogni.js';
 import { ApiError } from '@sogni-ai/sogni-client';
-import { maskVideoOutlines, trackingSourceFile, usableTracking, validateTrackingReceipt,
+import { maskVideoOutlines, outlineBox, TRACE_VERSION, trackingSourceFile, usableTracking, validateTrackingReceipt,
   videoSelectionAction, videoSelectionHash, videoSelectionPrompt } from '../cli/lib/video-selection.js';
 
 function fixture(t) {
@@ -518,6 +518,60 @@ test('an input symlink cannot upload a file outside its world', t => {
   const link = join(f.dir, 'escape.mp4');
   symlinkSync(privateFile, link);
   assert.throws(() => trackingSourceFile(f.paths, link), /inside this world/);
+});
+
+// A 64x64 two-frame mask: a 24x24 figure with an enclosed 6x6 hole (a held prop), a 10x10 piece far away (a fleck
+// elsewhere in the scene, 18% of the figure) and a 4x3 speck (12 px²).
+async function cleanupFixture(t) {
+  const dir = mkdtempSync(join(tmpdir(), 'sogni-mask-cleanup-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const S = 64, pixels = Buffer.alloc(S * S * 2);
+  const fill = (f, x0, y0, x1, y1, v = 255) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) pixels[f * S * S + y * S + x] = v; };
+  for (const f of [0, 1]) { fill(f, 8, 8, 32, 32); fill(f, 17, 17, 23, 23, 0); fill(f, 48, 48, 58, 58); fill(f, 50, 6, 54, 9); }
+  const file = join(dir, 'mask.mp4');
+  await run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-f', 'rawvideo', '-pixel_format', 'gray', '-video_size', `${S}x${S}`, '-framerate', '2', '-i', 'pipe:0',
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '0', '-pix_fmt', 'yuv444p', file], { input: pixels });
+  return { file, source: { width: S, height: S, frames: 2, fps: 2 } };
+}
+const rings = path => (path.match(/M/g) ?? []).length;
+
+test('tracing version 1 keeps every piece and hole of the mask, as Kit 0.4.0 did', async t => {
+  const { file, source } = await cleanupFixture(t);
+  const track = await maskVideoOutlines(file, source);
+  assert.equal(rings(track.frames[0]), 4, 'figure, its hole, the far piece and the speck');
+});
+
+test('tracing version 2 fills held props and drops specks, and the still selection drops pieces away from the object', async t => {
+  const { file, source } = await cleanupFixture(t);
+  const cleaned = await maskVideoOutlines(file, source, {}, { version: 2 });
+  assert.equal(rings(cleaned.frames[0]), 2, 'the hole is filled and the speck is gone; the far piece is 18% of the figure, so it stays');
+  const near = await maskVideoOutlines(file, source, {}, { version: 2, near: [8 / 64, 8 / 64, 32 / 64, 32 / 64] });
+  assert.equal(rings(near.frames[0]), 1, 'only the figure, filled');
+  assert.equal(near.frames[0], near.frames[1]);
+  const kept = await maskVideoOutlines(file, source, { holeRatio: 0 }, { version: 2 });
+  assert.equal(rings(kept.frames[0]), 3, 'a world can still keep holes with select.cleanup');
+  await assert.rejects(maskVideoOutlines(file, source, {}, { version: 9 }), /Unknown outline tracing version/);
+});
+
+test('a still selection outline gives its normalized box', () => {
+  assert.deepEqual(outlineBox({ width: 200, height: 100, path: 'M20 10L60 10L60 50L20 50Z' }), [0.1, 0.1, 0.3, 0.5]);
+  for (const bad of [null, { width: 0, height: 1, path: 'M0 0L1 1L1 0Z' }, { width: 10, height: 10, path: '' }, { width: 10, height: 10, path: 'M5 5L5 5L5 5Z' }]) assert.equal(outlineBox(bad), null);
+});
+
+test('new tracking records its tracing version and still box; an older receipt is re-traced as it was made', async t => {
+  const f = fixture(t);
+  const versions = [];
+  const trace = async (file, source, cleanup, options) => { versions.push(options); return f.deps.trace(); };
+  const done = await trackObject({ ...f.task, near: [0.1, 0.1, 0.5, 0.5] }, f.session, f.refusals, { ...f.deps, trace });
+  assert.equal(done.traceVersion, TRACE_VERSION);
+  assert.deepEqual(done.near, [0.1, 0.1, 0.5, 0.5]);
+  assert.deepEqual(versions[0], { version: TRACE_VERSION, near: [0.1, 0.1, 0.5, 0.5] });
+  // A receipt from Kit 0.4.0 (no version) whose outlines went missing is traced again with version 1.
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  editTrackingAttempt(f, journal => { delete journal.traceVersion; delete journal.near; });
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, trace });
+  assert.deepEqual(versions[1], { version: 1, near: null });
+  assert.equal(f.sent.length, 1);
 });
 
 test('the actual decoder preserves every mask frame, movement and source timing', async t => {

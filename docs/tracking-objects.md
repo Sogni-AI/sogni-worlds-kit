@@ -68,6 +68,15 @@ command fetches the mask again from the same project; when Sogni no longer has
 it, the command warns and carries on with the other objects. Restore the file
 from a backup if you need it.
 
+The moving outline is traced for clicking, not for compositing: pieces of the mask
+away from the object's approved still selection are dropped, as are pieces under
+1.2% of the main one, so a fleck elsewhere in the scene never flashes on and off;
+holes smaller than the object are filled, so a prop a figure holds stays
+clickable; specks under 16 px² are not drawn. The delivered mask under
+`selections/video/` is kept exactly as Sogni returned it. A world can change any
+of this per object with `select.cleanup` (for example `holeRatio: 0` keeps holes).
+Tracks made before this rule keep the outlines they were traced with.
+
 Receipts live at `selections/<place>-<object>.video.json`, with numbered attempt
 records, source hashes, the delivered mask and frame paths under
 `selections/video/`. The Kit verifies the downloaded bytes against the worker's
