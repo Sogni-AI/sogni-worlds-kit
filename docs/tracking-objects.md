@@ -53,7 +53,18 @@ If an older selection already has a submitted project, it is collected first.
 If a submitted project is over 24 hours old and Sogni confirms it is no longer
 live and has no stored result, the Kit marks its receipt expired and stops.
 Change the selection or run again with `--redo` to request another mask; the
-old receipt stays on disk. A failed lookup alone never permits another request.
+old receipt stays on disk, with what was known before the expiry kept beside it.
+A failed lookup alone never permits another request. Sogni only answers these
+lookups for the account that submitted the project, so the Kit records that
+account and expires a receipt only while you are signed in as it. A receipt
+from another account, or one made before the Kit recorded accounts, stays
+submitted: sign in as its account to collect it.
+
+When tracking is complete and only its mask file has gone missing, the outlines
+keep working in the build. `node world track` fetches the mask again from the
+same project; if Sogni no longer has it, the receipt stays complete and the
+message says so. Restore the file from a backup if you need it; there is
+nothing to pay for again.
 
 Receipts live at `selections/<place>-<object>.video.json`, with numbered attempt
 records, source hashes, the delivered mask and frame paths under

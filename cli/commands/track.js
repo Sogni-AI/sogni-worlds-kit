@@ -10,7 +10,7 @@ import { acquireRenderLock } from '../lib/renderlock.js';
 import { probeTrackingVideo } from '../lib/media.js';
 import { connect, describeBilling, downloadResult, RefusedError, safeError, waitForProject, watchRefusals } from '../lib/sogni.js';
 import { log } from '../lib/log.js';
-import { maskVideoOutlines, SAM_VIDEO_MODEL, trackingArtifactsAvailable, trackingAttempt, trackingSource, trackingSourceFile,
+import { maskVideoOutlines, outlinesIntact, SAM_VIDEO_MODEL, trackingArtifactsAvailable, trackingAttempt, trackingSource, trackingSourceFile,
   validateTrackingReceipt, videoSelectionAction, videoSelectionHash, videoSelectionPrompt } from '../lib/video-selection.js';
 
 export const summary = 'Track clickable objects through approved place loops with SAM 3 video';
@@ -47,10 +47,17 @@ function unfinishedAttempt(paths, key) {
   return pending[0] ?? null;
 }
 
-/** Expired owner history is definitive only when all three lookups agree. */
-async function expiredMissingProject(projects, journal, statusError) {
-  const submittedAt = Date.parse(journal.submittedAt ?? journal.startedAt);
-  if (statusError?.status !== 404 || !Number.isFinite(submittedAt) || Date.now() - submittedAt < 24 * 60 * 60_000) return false;
+/**
+ * A project is expired only when it was submitted over 24 hours ago by the
+ * account signed in now, and that account's status lookup (404), live project
+ * lists and stored record all lack it. Every lookup is scoped to the current
+ * account, so a receipt that does not record its submitting account (Kit 0.4.0
+ * and earlier) or names another account never expires automatically.
+ */
+async function expiredMissingProject(projects, journal, statusError, username) {
+  if (typeof journal.submittedBy !== 'string' || !journal.submittedBy || journal.submittedBy !== username) return false;
+  const submittedAt = Date.parse(journal.submittedAt);
+  if (statusError?.status !== 404 || !Number.isFinite(submittedAt) || Date.now() - submittedAt <= 24 * 60 * 60_000) return false;
   if (!Array.isArray(projects.trackedProjects) || projects.trackedProjects.some(project => project.id === journal.projectId)) return false;
   if (typeof projects.listProjectsElsewhere !== 'function' || typeof projects.get !== 'function') return false;
   try {
@@ -80,9 +87,13 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
   let previous = unfinishedAttempt(paths, key) ?? latestAttempt(paths, key, inputsHash);
   let action = videoSelectionAction(previous?.journal, inputsHash, { redo });
   if (action === 'unknown') throw new Error(key + ': the last submit has an unknown outcome. Reconcile that project before making another request');
+  // A completed receipt whose outlines are intact stays completed (and in use)
+  // while its missing mask is fetched again; a failed fetch never demotes it.
+  let completedReceipt = null;
   if (action === 'skip') {
     if (trackingArtifactsAvailable(paths, previous.journal)) return previous.journal;
     if (!previous.journal.projectId) throw new Error('The completed tracking receipt has no recoverable project');
+    if (outlinesIntact(paths, previous.journal)) completedReceipt = previous.journal;
     action = 'resume';
   }
   if (action === 'failed') throw new Error(key + ': the previous job failed. Change its selection or use --redo after checking the failure');
@@ -118,7 +129,8 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
         tokenType: session.billing.tokenType, billingMode: session.billing.mode,
         network: 'fast', disableNSFWFilter: true,
       }));
-      save({ ...journal, status: 'submitted', projectId: project.id, submittedAt: new Date().toISOString(), pid: process.pid, appId: session.appId });
+      save({ ...journal, status: 'submitted', projectId: project.id, submittedAt: new Date().toISOString(),
+        submittedBy: session.username ?? null, pid: process.pid, appId: session.appId });
     }
     const result = await wait(session.client, { project, projectId: journal.projectId, ownerPid: journal.pid }, { refusals, timeoutMs: 10 * 60_000 });
     const { bytes, job } = await download(session.client, result, { contentType: 'video/mp4' });
@@ -133,27 +145,41 @@ export async function trackObject(task, session, refusals, { redo = false, wait 
     const outlineFile = join(paths.selections, 'video', journal.outlines);
     writeJson(outlineFile, outlines);
     save({ ...journal, status: 'completed', completedAt: new Date().toISOString(), maskSha256: sha256(bytes),
-      outlinesSha256: sha256File(outlineFile), provenance: proof });
+      outlinesSha256: sha256File(outlineFile), provenance: proof, maskFetch: undefined });
     return journal;
   } catch (error) {
     // A network failure after submission leaves the exact project resumable.
     // A failed/uncertain submit keeps its reservation, including with --redo.
     // One owner-scoped lookup distinguishes a confirmed terminal project from
     // an interrupted wait. A lookup error or unknown state never permits replay.
-    let terminal = null;
+    if (completedReceipt) {
+      // Only the mask file is missing: the outlines keep working and nothing
+      // needs to be paid for again. Record the failed fetch beside the receipt.
+      save({ ...completedReceipt, maskFetch: { failedAt: new Date().toISOString(), error: safeError(error).message } });
+      throw new Error(`${key}: its moving outlines are intact and still used, but the mask file ${journal.mask} is missing and ` +
+        `could not be fetched again from project ${journal.projectId} (${safeError(error).message}). ` +
+        'Restore that file from a backup, or run world track again later to retry the download.');
+    }
+    let terminal = null, expired = false;
     if (journal.projectId && session.client.projects.getStatus) {
       try {
         const status = await session.client.projects.getStatus(journal.projectId);
         if (status.finished === true && ['completed', 'failed', 'canceled'].includes(status.status)) terminal = status.status;
       } catch (statusError) {
-        if (await expiredMissingProject(session.client.projects, journal, statusError)) terminal = 'expired';
+        expired = await expiredMissingProject(session.client.projects, journal, statusError, session.username);
         // Otherwise keep the existing project resumable: its state is unknown.
       }
     }
+    const checkedAt = new Date().toISOString();
+    if (expired) {
+      // Expiry is recorded beside, never over, what was known before it.
+      save({ ...journal, status: 'failed', expiredAt: checkedAt, checkedAt,
+        expiry: { reason: 'no live project and no stored result over 24 hours after submission', error: safeError(error).message } });
+      throw new Error(`Project ${journal.projectId} has expired without an available result. Its receipt is retained; change the selection or use --redo to request another mask.`);
+    }
     save({ ...journal, ...(terminal || error instanceof RefusedError || (!submissionStarted && !journal.projectId) ? { status: 'failed' } : {}),
       ...(terminal ? { projectStatus: terminal } : {}),
-      lastError: safeError(error).message, checkedAt: new Date().toISOString() });
-    if (terminal === 'expired') throw new Error(`Project ${journal.projectId} has expired without an available result. Its receipt is retained; change the selection or use --redo to request another mask.`);
+      lastError: safeError(error).message, checkedAt });
     throw error;
   }
 }

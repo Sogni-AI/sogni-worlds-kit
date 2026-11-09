@@ -25,7 +25,7 @@ function fixture(t) {
   const bytes = Buffer.from('delivered mask'), job = { sha256: sha256(bytes), sourceVideoSha256: sourceSha256,
     maskWidth: 16, maskHeight: 16, maskFrames: 2, maskFps: 2 };
   const sent = [];
-  const session = { billing: { tokenType: 'spark', mode: 'subscription' }, appId: 'test-track',
+  const session = { billing: { tokenType: 'spark', mode: 'subscription' }, appId: 'test-track', username: 'tester',
     client: { projects: { create: async p => { sent.push(p); return { id: 'ONE' }; } } } };
   const refusals = { creating: fn => fn() };
   const deps = { wait: async () => ({ id: 'ONE' }), download: async () => ({ bytes, job: { id: 'ONE-0', imgID: 'MASK', result: job } }),
@@ -33,14 +33,24 @@ function fixture(t) {
   return { dir, paths, task, bytes, job, sent, session, refusals, deps };
 }
 
-function ageTrackingAttempt(f, startedAt) {
+/** Rewrite the pointer and every attempt record (as an older or interrupted run left them). */
+function editTrackingAttempt(f, edit) {
   const pointer = join(f.paths.selections, f.task.key + '.video.json');
-  const journal = { ...readJson(pointer), startedAt };
-  delete journal.submittedAt; // Existing 0.4.0 receipts recorded only startedAt.
-  writeFileSync(pointer, JSON.stringify(journal));
-  for (const name of readdirSync(join(f.paths.selections, 'video')).filter(name => name.endsWith('.attempt.json'))) {
-    writeFileSync(join(f.paths.selections, 'video', name), JSON.stringify(journal));
+  for (const file of [pointer, ...readdirSync(join(f.paths.selections, 'video')).filter(n => n.endsWith('.attempt.json')).map(n => join(f.paths.selections, 'video', n))]) {
+    const journal = readJson(file);
+    edit(journal);
+    writeFileSync(file, JSON.stringify(journal));
   }
+}
+
+/** Age an attempt's submission; it keeps the account that submitted it unless a test removes it. */
+function ageTrackingAttempt(f, submittedAt) {
+  editTrackingAttempt(f, journal => { journal.submittedAt = submittedAt; });
+}
+
+/** A Kit 0.4.0 receipt: start time only, no submission time or account. */
+function legacyTrackingAttempt(f, startedAt) {
+  editTrackingAttempt(f, journal => { journal.startedAt = startedAt; delete journal.submittedAt; delete journal.submittedBy; });
 }
 
 test('an accepted project missing from both owner lookups after 24 hours permits an explicit new attempt', async t => {
@@ -59,7 +69,10 @@ test('an accepted project missing from both owner lookups after 24 hours permits
     wait: (client, project, options) => waitForProject(client, project, { ...options, sleep: async () => {} }) }), /expired.*--redo/);
   const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
   assert.equal(journal.status, 'failed');
-  assert.equal(journal.projectStatus, 'expired');
+  assert.equal(journal.submittedBy, 'tester');
+  assert.ok(Date.parse(journal.expiredAt) > 0, 'expiry is its own field');
+  assert.equal(journal.projectStatus, undefined, 'expiry never overwrites what was known');
+  assert.equal(journal.lastError, 'connection interrupted', 'the earlier error is kept');
   assert.equal(f.sent.length, 1, 'classifying expiry never submits replacement work');
   assert.equal(reads.filter(x => x === 'v2').length, 1, 'one owner-scoped status lookup');
   await assert.rejects(trackObject(f.task, f.session, f.refusals, f.deps), /previous job failed/);
@@ -77,7 +90,7 @@ test('expiry recovery accepts a legacy 404 and permits changed selection only af
   await assert.rejects(trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals,
     { ...f.deps, wait: interrupted, redo: true }), /expired.*--redo/);
   assert.equal(f.sent.length, 1, 'neither changed clicks nor redo abandons the existing attempt during recovery');
-  assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).projectStatus, 'expired');
+  assert.ok(readJson(join(f.paths.selections, f.task.key + '.video.json')).expiredAt);
   await trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals, f.deps);
   assert.equal(f.sent.length, 2);
 });
@@ -118,17 +131,112 @@ test('an old start time never expires a recently accepted project', async t => {
   const interrupted = async () => { throw new Error('wait interrupted'); };
   await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
   const pointer = join(f.paths.selections, f.task.key + '.video.json');
-  const current = readJson(pointer);
-  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
-  for (const file of [pointer, ...readdirSync(join(f.paths.selections, 'video')).filter(n => n.endsWith('.attempt.json')).map(n => join(f.paths.selections, 'video', n))]) {
-    writeFileSync(file, JSON.stringify({ ...readJson(file), submittedAt: current.submittedAt }));
-  }
+  editTrackingAttempt(f, journal => { journal.startedAt = new Date(Date.now() - 25 * 60 * 60_000).toISOString(); });
   let liveReads = 0;
   Object.assign(f.session.client.projects, { trackedProjects: [], listProjectsElsewhere: async () => { liveReads += 1; return []; },
     getStatus: async () => { throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); }, get: async () => null });
   await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
   assert.equal(readJson(pointer).status, 'submitted');
   assert.equal(liveReads, 0, 'a recent acceptance never triggers expiry lookups');
+});
+
+const DAY = 24 * 60 * 60_000;
+const notFound = async () => { throw new ApiError(404, { status: 'error', errorCode: 404, message: 'not found' }); };
+const rateLimited = async () => { throw new ApiError(429, { status: 'error', errorCode: 429, message: 'rate limited' }); };
+/** Every owner lookup says the project is gone: only the guards under test can keep it. */
+const allMissing = { trackedProjects: [], listProjectsElsewhere: async () => [], getStatus: notFound, get: async () => null };
+
+test('expiry needs over 24 hours: exactly 24 hours keeps the project, one millisecond more expires it', async t => {
+  const start = Date.parse('2026-11-08T10:00:00.000Z');
+  t.mock.timers.enable({ apis: ['Date'], now: start });
+  const f = fixture(t);
+  const interrupted = async () => { throw new Error('wait interrupted'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).submittedAt, new Date(start).toISOString());
+  Object.assign(f.session.client.projects, allMissing);
+  t.mock.timers.setTime(start + DAY);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  assert.equal(readJson(join(f.paths.selections, f.task.key + '.video.json')).status, 'submitted');
+  t.mock.timers.setTime(start + DAY + 1);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /expired/);
+  assert.equal(f.sent.length, 1);
+});
+
+test('a forward clock jump, a missing time, rate limits or another account never expire a project', async t => {
+  const cases = [
+    { name: 'clock jumped 48 hours ahead, status lookup unavailable', jump: 2 * DAY, projects: { getStatus: async () => { throw new ApiError(503, { status: 'error', errorCode: 503, message: 'unavailable' }); } } },
+    { name: 'clock jumped 48 hours ahead, project still live elsewhere', jump: 2 * DAY, projects: { listProjectsElsewhere: async () => [{ id: 'ONE' }] } },
+    { name: 'both timestamps absent', edit: j => { delete j.submittedAt; delete j.startedAt; } },
+    { name: 'Kit 0.4.0 receipt without an account', legacy: true },
+    { name: 'receipt without an account', edit: j => { delete j.submittedBy; } },
+    { name: 'submitted by another account', edit: j => { j.submittedBy = 'someone-else'; } },
+    { name: 'signed in without a username', username: null },
+    { name: 'status lookup rate limited', projects: { getStatus: rateLimited } },
+    { name: 'live lookup rate limited', projects: { listProjectsElsewhere: rateLimited } },
+    { name: 'stored record rate limited', projects: { get: rateLimited } },
+  ];
+  for (const item of cases) await t.test(item.name, async t => {
+    const f = fixture(t);
+    const interrupted = async () => { throw new Error('wait interrupted'); };
+    await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+    const old = new Date(Date.now() - 25 * 60 * 60_000).toISOString();
+    if (item.legacy) legacyTrackingAttempt(f, old);
+    else if (!item.jump) ageTrackingAttempt(f, old);
+    if (item.edit) editTrackingAttempt(f, item.edit);
+    if (item.jump) t.mock.timers.enable({ apis: ['Date'], now: Date.now() + item.jump });
+    if ('username' in item) f.session.username = item.username;
+    Object.assign(f.session.client.projects, allMissing, item.projects);
+    await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+    const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+    assert.equal(journal.status, 'submitted');
+    assert.equal(journal.expiredAt, undefined);
+    await assert.rejects(trackObject({ ...f.task, inputsHash: 'e'.repeat(64) }, f.session, f.refusals,
+      { ...f.deps, wait: interrupted, redo: true }), /wait interrupted/);
+    assert.equal(f.sent.length, 1, 'neither --redo nor changed clicks replace an unexpired project');
+  });
+});
+
+test('a completed receipt missing only its mask keeps its outlines in use and is never demoted', async t => {
+  const f = fixture(t);
+  const done = await trackObject(f.task, f.session, f.refusals, f.deps);
+  unlinkSync(join(f.paths.selections, 'video', done.mask));
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  Object.assign(f.session.client.projects, allMissing);
+  const gone = async () => { throw new Error('result no longer stored'); };
+  const error = await trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: gone }).then(() => null, e => e);
+  assert.match(error.message, /outlines are intact and still used.*mask file.*could not be fetched again.*retry the download/);
+  assert.doesNotMatch(error.message, /--redo/);
+  const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'completed');
+  assert.equal(journal.outlinesSha256, done.outlinesSha256);
+  assert.equal(journal.expiredAt, undefined);
+  assert.match(journal.maskFetch.error, /no longer stored/);
+  assert.equal(usableTracking(f.paths, f.task.key, f.task.sourceSha256, f.task.select).frames.length, 2, 'the build keeps using the outlines');
+  assert.equal(f.sent.length, 1);
+  // A later run that can reach the result restores the mask without a new project.
+  const restored = await trackObject(f.task, f.session, f.refusals, f.deps);
+  assert.equal(restored.status, 'completed');
+  assert.equal(restored.maskFetch, undefined);
+  assert.equal(f.sent.length, 1);
+});
+
+test('expiring a failed transfer of a completed project keeps its status and error beside the expiry', async t => {
+  const f = fixture(t);
+  f.session.client.projects.getStatus = async () => ({ finished: true, status: 'completed' });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, download: async () => { throw new Error('transfer reset'); } }), /transfer reset/);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  Object.assign(f.session.client.projects, allMissing);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: async () => { throw new Error('result no longer stored'); } }), /expired.*--redo/);
+  const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'failed');
+  assert.equal(journal.projectStatus, 'completed');
+  assert.equal(journal.lastError, 'transfer reset');
+  assert.ok(Date.parse(journal.expiredAt) > 0);
+  assert.match(journal.expiry.error, /no longer stored/);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, f.deps), /previous job failed/);
+  assert.equal(f.sent.length, 1);
+  await trackObject(f.task, f.session, f.refusals, { ...f.deps, redo: true });
+  assert.equal(f.sent.length, 2, 'only an explicit redo requests another mask');
 });
 
 test('video prompts retain clicks and choose one object without image-only controls', () => {

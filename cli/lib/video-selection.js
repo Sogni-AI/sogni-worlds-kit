@@ -37,6 +37,8 @@ export const videoSelectionHash = (sourceSha256, prompt, cleanup) =>
 export function videoSelectionAction(previous, inputsHash, { redo = false } = {}) {
   if (previous?.status === 'submitting' && !previous.projectId) return 'unknown';
   if (previous?.status === 'submitted' && previous.projectId) return 'resume';
+  // An expired project has nothing left to collect: only a changed selection or --redo asks again.
+  if (previous?.status === 'failed' && previous.expiredAt) return previous.inputsHash !== inputsHash || redo ? 'track' : 'failed';
   if (previous?.status === 'failed' && previous.projectStatus === 'completed' && previous.projectId && previous.inputsHash === inputsHash && !redo) return 'resume';
   if (!previous || previous.inputsHash !== inputsHash || redo) return 'track';
   return previous.status === 'completed' ? 'skip' : 'failed';
@@ -115,6 +117,13 @@ export function trackingAttempt(paths, key) {
   const attempt = randomUUID();
   const base = key + '-' + attempt;
   return { attempt, mask: join(paths.selections, 'video', base + '.mask.mp4'), outlines: join(paths.selections, 'video', base + '.outlines.json') };
+}
+
+/** The traced outlines a build uses are present and unchanged (the mask may still be missing). */
+export function outlinesIntact(paths, receipt) {
+  if (!/^[a-z0-9_-]+\.outlines\.json$/.test(receipt.outlines ?? '') || typeof receipt.outlinesSha256 !== 'string') return false;
+  const outlines = join(paths.selections, 'video', receipt.outlines);
+  return existsSync(outlines) && sha256File(outlines) === receipt.outlinesSha256;
 }
 
 /** Lost local output is collected from its existing paid project, not regenerated. */
