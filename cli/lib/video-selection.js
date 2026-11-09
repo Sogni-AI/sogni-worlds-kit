@@ -119,6 +119,13 @@ export function trackingAttempt(paths, key) {
   return { attempt, mask: join(paths.selections, 'video', base + '.mask.mp4'), outlines: join(paths.selections, 'video', base + '.outlines.json') };
 }
 
+/** The delivered mask is present and unchanged, so its outlines can be traced again without a request. */
+export function maskIntact(paths, receipt) {
+  if (!/^[a-z0-9_-]+\.mask\.mp4$/.test(receipt.mask ?? '') || typeof receipt.maskSha256 !== 'string') return false;
+  const mask = join(paths.selections, 'video', receipt.mask);
+  return existsSync(mask) && sha256File(mask) === receipt.maskSha256;
+}
+
 /** The traced outlines a build uses are present and unchanged (the mask may still be missing). */
 export function outlinesIntact(paths, receipt) {
   if (!/^[a-z0-9_-]+\.outlines\.json$/.test(receipt.outlines ?? '') || typeof receipt.outlinesSha256 !== 'string') return false;

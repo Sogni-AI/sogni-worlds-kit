@@ -57,14 +57,16 @@ old receipt stays on disk, with what was known before the expiry kept beside it.
 A failed lookup alone never permits another request. Sogni only answers these
 lookups for the account that submitted the project, so the Kit records that
 account and expires a receipt only while you are signed in as it. A receipt
-from another account, or one made before the Kit recorded accounts, stays
-submitted: sign in as its account to collect it.
+from another account stays submitted: sign in as its account to collect it. A
+receipt made before the Kit recorded accounts takes the signed-in account the
+first time Sogni answers for its project.
 
-When tracking is complete and only its mask file has gone missing, the outlines
-keep working in the build. `node world track` fetches the mask again from the
-same project; if Sogni no longer has it, the receipt stays complete and the
-message says so. Restore the file from a backup if you need it; there is
-nothing to pay for again.
+Completed tracking is never asked for again. If its outlines file is missing,
+`node world track` traces it again from the mask on disk without a request. If
+only the mask is missing, the outlines keep working in the build and the
+command fetches the mask again from the same project; when Sogni no longer has
+it, the command warns and carries on with the other objects. Restore the file
+from a backup if you need it.
 
 Receipts live at `selections/<place>-<object>.video.json`, with numbered attempt
 records, source hashes, the delivered mask and frame paths under

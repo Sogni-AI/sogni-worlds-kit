@@ -203,9 +203,10 @@ test('a completed receipt missing only its mask keeps its outlines in use and is
   ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
   Object.assign(f.session.client.projects, allMissing);
   const gone = async () => { throw new Error('result no longer stored'); };
-  const error = await trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: gone }).then(() => null, e => e);
-  assert.match(error.message, /outlines are intact and still used.*mask file.*could not be fetched again.*retry the download/);
-  assert.doesNotMatch(error.message, /--redo/);
+  // A lost mask is a warning, never a stop: the rest of a run continues.
+  const returned = await trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: gone });
+  assert.equal(returned.status, 'completed');
+  assert.match(returned.maskFetch.error, /no longer stored/);
   const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
   assert.equal(journal.status, 'completed');
   assert.equal(journal.outlinesSha256, done.outlinesSha256);
@@ -218,6 +219,73 @@ test('a completed receipt missing only its mask keeps its outlines in use and is
   assert.equal(restored.status, 'completed');
   assert.equal(restored.maskFetch, undefined);
   assert.equal(f.sent.length, 1);
+});
+
+test('missing outlines are traced again from the mask on disk without any request', async t => {
+  const f = fixture(t);
+  const done = await trackObject(f.task, f.session, f.refusals, f.deps);
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  editTrackingAttempt(f, journal => { journal.maskFetch = { failedAt: 'earlier', error: 'stale' }; });
+  const offline = async () => { throw new Error('no network call is allowed here'); };
+  Object.assign(f.session.client.projects, { getStatus: offline, get: offline, listProjectsElsewhere: offline });
+  let traced = 0;
+  const receipt = await trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: offline, download: offline,
+    trace: async (...args) => { traced += 1; return f.deps.trace(...args); } });
+  assert.equal(traced, 1);
+  assert.equal(receipt.status, 'completed');
+  assert.equal(receipt.maskFetch, undefined, 'a stale failed fetch is cleared');
+  assert.ok(receipt.retracedAt);
+  assert.equal(usableTracking(f.paths, f.task.key, f.task.sourceSha256, f.task.select).frames.length, 2);
+  assert.equal(f.sent.length, 1);
+});
+
+test('a completed receipt with nothing on disk stays complete on a temporary error and expires only when gone', async t => {
+  const f = fixture(t);
+  const done = await trackObject(f.task, f.session, f.refusals, f.deps);
+  unlinkSync(join(f.paths.selections, 'video', done.mask));
+  unlinkSync(join(f.paths.selections, 'video', done.outlines));
+  Object.assign(f.session.client.projects, allMissing, { getStatus: rateLimited });
+  const busy = async () => { throw new ApiError(429, { status: 'error', errorCode: 429, message: 'rate limited' }); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: busy }), /tracking finished.*nothing is paid for again/);
+  let journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'completed', 'a finished project is never demoted to submitted');
+  assert.equal(journal.expiredAt, undefined);
+  ageTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  Object.assign(f.session.client.projects, allMissing);
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: busy }), /expired.*--redo/);
+  journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'failed');
+  assert.ok(journal.expiredAt);
+  assert.equal(f.sent.length, 1);
+});
+
+test('a receipt without an account takes the signed-in account once Sogni answers for its project', async t => {
+  const f = fixture(t);
+  const interrupted = async () => { throw new Error('wait interrupted'); };
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  legacyTrackingAttempt(f, new Date(Date.now() - 25 * 60 * 60_000).toISOString());
+  f.session.client.projects.getStatus = async () => ({ finished: false, status: 'processing' });
+  await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+  const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+  assert.equal(journal.status, 'submitted');
+  assert.equal(journal.submittedBy, 'tester');
+});
+
+test('an unanswered lookup never assigns an account, and a null account never matches a null signed-in user', async t => {
+  for (const item of [{ name: 'status lookup 404', getStatus: notFound }, { name: 'status lookup 503', getStatus: async () => { throw new ApiError(503, { status: 'error', errorCode: 503, message: 'unknown' }); } }]) {
+    await t.test(item.name, async t => {
+      const f = fixture(t);
+      const interrupted = async () => { throw new Error('wait interrupted'); };
+      await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+      editTrackingAttempt(f, journal => { journal.submittedAt = new Date(Date.now() - 25 * 60 * 60_000).toISOString(); journal.submittedBy = null; });
+      f.session.username = null;
+      Object.assign(f.session.client.projects, allMissing, { getStatus: item.getStatus });
+      await assert.rejects(trackObject(f.task, f.session, f.refusals, { ...f.deps, wait: interrupted }), /wait interrupted/);
+      const journal = readJson(join(f.paths.selections, f.task.key + '.video.json'));
+      assert.equal(journal.status, 'submitted');
+      assert.equal(journal.submittedBy, null);
+    });
+  }
 });
 
 test('expiring a failed transfer of a completed project keeps its status and error beside the expiry', async t => {
