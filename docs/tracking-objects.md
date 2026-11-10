@@ -88,6 +88,14 @@ exactly as Sogni returned it. An object's `select.cleanup` overrides `keepRatio`
 changing `select.cleanup` asks for new tracking (and a new still outline). Tracks
 made before this rule keep the outlines they were traced with.
 
+A frame with no outline means the object is out of view there: the camera has
+moved off it, or something covers it completely. Nothing is drawn and nothing
+takes a click until it comes back. Track the neighbours of a moving object too.
+If one object's still outline is cut around another (a wall with a hole where a
+person stands), or holds it (a person whose outline includes the hand that a
+second object tracks), a still neighbour keeps showing the moving object's old
+shape while the object itself moves on.
+
 Receipts live at `selections/<place>-<object>.video.json`, with numbered attempt
 records, source hashes, the delivered mask and frame paths under
 `selections/video/`. The Kit verifies the downloaded bytes against the worker's
